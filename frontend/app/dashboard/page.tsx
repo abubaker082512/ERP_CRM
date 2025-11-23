@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
@@ -17,6 +19,15 @@ const salesData = [
 ];
 
 export default function DashboardPage() {
+    const router = useRouter();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            router.push('/login');
+        }
+    }, [router]);
+
     return (
         <div className="min-h-screen bg-background">
             {/* Top Bar */}

@@ -10,10 +10,27 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        // TODO: implement real authentication
-        router.push("/");
+        try {
+            const resp = await fetch('http://localhost:8000/api/v1/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                localStorage.setItem('token', data.access_token);
+                router.push("/dashboard");
+            } else {
+                const errorData = await resp.json();
+                alert(`Login failed: ${errorData.detail || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error("Login error:", error);
+            alert("An error occurred during login.");
+        }
     };
 
     return (

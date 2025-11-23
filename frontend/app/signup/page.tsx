@@ -12,15 +12,31 @@ export default function SignupPage() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
 
-    const handleSignup = (e: React.FormEvent) => {
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         if (password !== confirmPassword) {
             alert("Passwords do not match");
             return;
         }
-        // TODO: integrate with backend auth
-        console.log({ name, email, password });
-        router.push("/login");
+
+        try {
+            const resp = await fetch('http://localhost:8000/api/v1/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
+
+            if (resp.ok) {
+                alert("Signup successful! Please log in.");
+                router.push("/login");
+            } else {
+                const errorData = await resp.json();
+                alert(`Signup failed: ${errorData.detail || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error("Signup error:", error);
+            alert("An error occurred during signup.");
+        }
     };
 
     return (
