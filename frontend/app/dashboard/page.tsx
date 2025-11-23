@@ -61,7 +61,7 @@ export default function DashboardPage() {
                         </button>
                         <button className="w-full text-left px-3 py-2 rounded hover:bg-background text-sm">
                             Point of Sale
-button>
+                        </button>
                     </div>
 
                     <div className="mb-6">
