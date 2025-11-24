@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import TodoHeader from '@/components/TodoHeader';
-import { Plus, MoreHorizontal, Clock, Trash2, CheckCircle2 } from 'lucide-react';
+import { Plus, MoreHorizontal, Clock, Trash2, CheckCircle2, Settings } from 'lucide-react';
 
 type Task = {
     id: string;
