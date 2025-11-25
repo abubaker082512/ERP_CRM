@@ -115,6 +115,31 @@ CREATE TABLE IF NOT EXISTS stock_quant (
     UNIQUE(product_id, location_id)
 );
 
+-- PURCHASE MODULE TABLES
+
+-- Purchase Orders Table
+CREATE TABLE IF NOT EXISTS purchase_orders (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    name TEXT NOT NULL, -- e.g., PO001
+    partner_id UUID REFERENCES contacts(id), -- Supplier
+    date_order TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    state TEXT DEFAULT 'draft', -- draft, sent, purchase, done, cancel
+    amount_total NUMERIC(15, 2) DEFAULT 0.0,
+    user_id UUID
+);
+
+-- Purchase Order Lines Table
+CREATE TABLE IF NOT EXISTS purchase_order_lines (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id UUID REFERENCES purchase_orders(id) ON DELETE CASCADE,
+    product_id UUID REFERENCES products(id),
+    name TEXT NOT NULL, -- Description
+    product_qty NUMERIC(15, 2) DEFAULT 1.0,
+    price_unit NUMERIC(15, 2) DEFAULT 0.0,
+    price_subtotal NUMERIC(15, 2) DEFAULT 0.0
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
@@ -126,6 +151,8 @@ ALTER TABLE warehouses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_moves ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_quant ENABLE ROW LEVEL SECURITY;
+ALTER TABLE purchase_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE purchase_order_lines ENABLE ROW LEVEL SECURITY;
 
 -- Create Policies (Public access for demo purposes, restrict in production)
 CREATE POLICY "Enable read access for all users" ON contacts FOR SELECT USING (true);
@@ -167,3 +194,11 @@ CREATE POLICY "Enable update access for all users" ON stock_moves FOR UPDATE USI
 CREATE POLICY "Enable read access for all users" ON stock_quant FOR SELECT USING (true);
 CREATE POLICY "Enable insert access for all users" ON stock_quant FOR INSERT WITH CHECK (true);
 CREATE POLICY "Enable update access for all users" ON stock_quant FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON purchase_orders FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON purchase_orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON purchase_orders FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON purchase_order_lines FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON purchase_order_lines FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON purchase_order_lines FOR UPDATE USING (true);
