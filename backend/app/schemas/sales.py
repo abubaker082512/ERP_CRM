@@ -22,7 +22,8 @@ class SalesOrderLine(SalesOrderLineBase):
 
 class SalesOrderBase(BaseModel):
     name: str
-    customer_name: str
+    customer_name: Optional[str] = None # Keeping for backward compatibility or display
+    contact_id: Optional[UUID] = None
     state: Optional[str] = 'draft'
     amount_total: float = 0.0
 

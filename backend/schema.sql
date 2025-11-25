@@ -1,6 +1,17 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Contacts Table
+CREATE TABLE IF NOT EXISTS contacts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    name TEXT NOT NULL,
+    email TEXT,
+    phone TEXT,
+    address TEXT,
+    type TEXT DEFAULT 'customer' -- customer, supplier
+);
+
 -- Leads Table
 CREATE TABLE IF NOT EXISTS leads (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -47,7 +58,7 @@ CREATE TABLE IF NOT EXISTS sales_orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     name TEXT NOT NULL, -- e.g., SO001
-    customer_name TEXT NOT NULL,
+    contact_id UUID REFERENCES contacts(id), -- Linked to Contact
     date_order TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     state TEXT DEFAULT 'draft', -- draft, sent, sale, done, cancel
     amount_total NUMERIC(15, 2) DEFAULT 0.0,
@@ -66,6 +77,7 @@ CREATE TABLE IF NOT EXISTS sales_order_lines (
 );
 
 -- Enable Row Level Security (RLS)
+ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE opportunities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
@@ -73,6 +85,10 @@ ALTER TABLE sales_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_order_lines ENABLE ROW LEVEL SECURITY;
 
 -- Create Policies (Public access for demo purposes, restrict in production)
+CREATE POLICY "Enable read access for all users" ON contacts FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON contacts FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON contacts FOR UPDATE USING (true);
+
 CREATE POLICY "Enable read access for all users" ON leads FOR SELECT USING (true);
 CREATE POLICY "Enable insert access for all users" ON leads FOR INSERT WITH CHECK (true);
 CREATE POLICY "Enable update access for all users" ON leads FOR UPDATE USING (true);
