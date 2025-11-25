@@ -76,6 +76,45 @@ CREATE TABLE IF NOT EXISTS sales_order_lines (
     price_subtotal NUMERIC(15, 2) DEFAULT 0.0
 );
 
+-- INVENTORY MODULE TABLES
+
+-- Warehouses
+CREATE TABLE IF NOT EXISTS warehouses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    code TEXT NOT NULL
+);
+
+-- Locations
+CREATE TABLE IF NOT EXISTS locations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL, -- e.g., WH/Stock
+    usage TEXT DEFAULT 'internal', -- internal, customer, supplier, inventory, production
+    warehouse_id UUID REFERENCES warehouses(id)
+);
+
+-- Stock Moves
+CREATE TABLE IF NOT EXISTS stock_moves (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    name TEXT NOT NULL, -- e.g., WH/IN/0001
+    product_id UUID REFERENCES products(id),
+    quantity NUMERIC(15, 2) DEFAULT 0.0,
+    location_id UUID REFERENCES locations(id), -- Source Location
+    location_dest_id UUID REFERENCES locations(id), -- Destination Location
+    state TEXT DEFAULT 'draft', -- draft, confirmed, assigned, done, cancel
+    date TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Stock Quant (Current Stock)
+CREATE TABLE IF NOT EXISTS stock_quant (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID REFERENCES products(id),
+    location_id UUID REFERENCES locations(id),
+    quantity NUMERIC(15, 2) DEFAULT 0.0,
+    UNIQUE(product_id, location_id)
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
@@ -83,6 +122,10 @@ ALTER TABLE opportunities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_order_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE warehouses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_moves ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_quant ENABLE ROW LEVEL SECURITY;
 
 -- Create Policies (Public access for demo purposes, restrict in production)
 CREATE POLICY "Enable read access for all users" ON contacts FOR SELECT USING (true);
@@ -108,3 +151,19 @@ CREATE POLICY "Enable update access for all users" ON sales_orders FOR UPDATE US
 CREATE POLICY "Enable read access for all users" ON sales_order_lines FOR SELECT USING (true);
 CREATE POLICY "Enable insert access for all users" ON sales_order_lines FOR INSERT WITH CHECK (true);
 CREATE POLICY "Enable update access for all users" ON sales_order_lines FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON warehouses FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON warehouses FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON warehouses FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON locations FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON locations FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON locations FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON stock_moves FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON stock_moves FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON stock_moves FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON stock_quant FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON stock_quant FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON stock_quant FOR UPDATE USING (true);
