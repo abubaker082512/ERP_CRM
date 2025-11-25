@@ -203,6 +203,35 @@ CREATE TABLE IF NOT EXISTS hr_employee (
     image_url TEXT
 );
 
+-- MANUFACTURING (MRP) MODULE TABLES
+
+-- Bill of Materials (BOM)
+CREATE TABLE IF NOT EXISTS mrp_bom (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID REFERENCES products(id),
+    code TEXT, -- Reference
+    quantity NUMERIC(15, 2) DEFAULT 1.0
+);
+
+-- BOM Lines
+CREATE TABLE IF NOT EXISTS mrp_bom_line (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    bom_id UUID REFERENCES mrp_bom(id) ON DELETE CASCADE,
+    product_id UUID REFERENCES products(id), -- Component
+    product_qty NUMERIC(15, 2) DEFAULT 1.0
+);
+
+-- Manufacturing Orders
+CREATE TABLE IF NOT EXISTS mrp_production (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL, -- MO/0001
+    product_id UUID REFERENCES products(id),
+    product_qty NUMERIC(15, 2) DEFAULT 1.0,
+    bom_id UUID REFERENCES mrp_bom(id),
+    date_planned_start TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    state TEXT DEFAULT 'draft' -- draft, confirmed, progress, done, cancel
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
@@ -222,6 +251,9 @@ ALTER TABLE account_move ENABLE ROW LEVEL SECURITY;
 ALTER TABLE account_move_line ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hr_department ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hr_employee ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mrp_bom ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mrp_bom_line ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mrp_production ENABLE ROW LEVEL SECURITY;
 
 -- Create Policies (Public access for demo purposes, restrict in production)
 CREATE POLICY "Enable read access for all users" ON contacts FOR SELECT USING (true);
@@ -295,3 +327,15 @@ CREATE POLICY "Enable update access for all users" ON hr_department FOR UPDATE U
 CREATE POLICY "Enable read access for all users" ON hr_employee FOR SELECT USING (true);
 CREATE POLICY "Enable insert access for all users" ON hr_employee FOR INSERT WITH CHECK (true);
 CREATE POLICY "Enable update access for all users" ON hr_employee FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON mrp_bom FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON mrp_bom FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON mrp_bom FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON mrp_bom_line FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON mrp_bom_line FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON mrp_bom_line FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON mrp_production FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON mrp_production FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON mrp_production FOR UPDATE USING (true);
