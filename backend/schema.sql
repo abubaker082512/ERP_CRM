@@ -140,6 +140,69 @@ CREATE TABLE IF NOT EXISTS purchase_order_lines (
     price_subtotal NUMERIC(15, 2) DEFAULT 0.0
 );
 
+-- ACCOUNTING MODULE TABLES
+
+-- Chart of Accounts
+CREATE TABLE IF NOT EXISTS account_account (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code TEXT NOT NULL,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL -- receivable, payable, bank, cash, income, expense
+);
+
+-- Journals
+CREATE TABLE IF NOT EXISTS account_journal (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    code TEXT NOT NULL,
+    type TEXT NOT NULL -- sale, purchase, cash, bank, general
+);
+
+-- Journal Entries (Invoices, Bills, Misc)
+CREATE TABLE IF NOT EXISTS account_move (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL, -- INV/2023/0001
+    date DATE DEFAULT CURRENT_DATE,
+    ref TEXT,
+    journal_id UUID REFERENCES account_journal(id),
+    partner_id UUID REFERENCES contacts(id),
+    move_type TEXT NOT NULL, -- out_invoice, in_invoice, entry
+    state TEXT DEFAULT 'draft', -- draft, posted
+    amount_total NUMERIC(15, 2) DEFAULT 0.0
+);
+
+-- Journal Items
+CREATE TABLE IF NOT EXISTS account_move_line (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    move_id UUID REFERENCES account_move(id) ON DELETE CASCADE,
+    account_id UUID REFERENCES account_account(id),
+    partner_id UUID REFERENCES contacts(id),
+    name TEXT,
+    debit NUMERIC(15, 2) DEFAULT 0.0,
+    credit NUMERIC(15, 2) DEFAULT 0.0
+);
+
+-- HRMS MODULE TABLES
+
+-- Departments
+CREATE TABLE IF NOT EXISTS hr_department (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    manager_id UUID -- Self-reference to employee added later
+);
+
+-- Employees
+CREATE TABLE IF NOT EXISTS hr_employee (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    job_title TEXT,
+    department_id UUID REFERENCES hr_department(id),
+    work_email TEXT,
+    work_phone TEXT,
+    manager_id UUID REFERENCES hr_employee(id),
+    image_url TEXT
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
@@ -153,6 +216,12 @@ ALTER TABLE stock_moves ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_quant ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchase_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchase_order_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE account_account ENABLE ROW LEVEL SECURITY;
+ALTER TABLE account_journal ENABLE ROW LEVEL SECURITY;
+ALTER TABLE account_move ENABLE ROW LEVEL SECURITY;
+ALTER TABLE account_move_line ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hr_department ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hr_employee ENABLE ROW LEVEL SECURITY;
 
 -- Create Policies (Public access for demo purposes, restrict in production)
 CREATE POLICY "Enable read access for all users" ON contacts FOR SELECT USING (true);
@@ -202,3 +271,27 @@ CREATE POLICY "Enable update access for all users" ON purchase_orders FOR UPDATE
 CREATE POLICY "Enable read access for all users" ON purchase_order_lines FOR SELECT USING (true);
 CREATE POLICY "Enable insert access for all users" ON purchase_order_lines FOR INSERT WITH CHECK (true);
 CREATE POLICY "Enable update access for all users" ON purchase_order_lines FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON account_account FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON account_account FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON account_account FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON account_journal FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON account_journal FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON account_journal FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON account_move FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON account_move FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON account_move FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON account_move_line FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON account_move_line FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON account_move_line FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON hr_department FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON hr_department FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON hr_department FOR UPDATE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON hr_employee FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON hr_employee FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON hr_employee FOR UPDATE USING (true);
