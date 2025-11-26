@@ -309,3 +309,79 @@ The system will be deployed as an integrated modular platform with a centralized
 ---
 
 **End of SRS Document**
+
+---
+# **3.14 Point of Sale (POS)**
+### **3.14.1 Shop Management**
+- Manage multiple shops/restaurants.
+- **[AI] Smart Upselling**: Suggest products to cashiers based on current cart items.
+
+### **3.14.2 Session & Orders**
+- Open/Close sessions with cash control.
+- Fast checkout interface (Touch friendly).
+- Offline support (Architecture readiness).
+
+---
+# **3.15 Recruitment**
+### **3.15.1 Job Positions**
+- Manage job openings and descriptions.
+- Publish to website.
+
+### **3.15.2 Applicant Tracking**
+- Kanban view for applicants (Applied, Interview, Contract, Signed).
+- **[AI] Resume Screening**: Auto-rank applicants based on job description match.
+
+---
+# **3.16 Attendances**
+### **3.16.1 Check-in/Check-out**
+- Kiosk mode for employees.
+- PIN/Badge authentication.
+- Integration with Payroll.
+
+---
+# **3.17 Knowledge**
+### **3.17.1 Internal Wiki**
+- Create and share articles.
+- Rich text editor.
+- **[AI] Content Assistant**: Auto-summarize articles or suggest tags.
+
+---
+# **3.18 To Do**
+### **3.18.1 Task Management**
+- Personal to-do lists.
+- Prioritization and deadlines.
+
+---
+# **3.19 Appointments**
+### **3.19.1 Online Scheduling**
+- Define availability slots.
+- Public booking page.
+- Calendar integration.
+
+---
+# **3.20 Planning**
+### **3.20.1 Shift Management**
+- Employee shift planning.
+- Role-based allocation.
+- **[AI] Smart Scheduling**: Auto-fill shifts based on employee availability and historical demand.
+
+---
+# **3.21 Surveys**
+### **3.21.1 Forms & Feedback**
+- Create surveys (Multiple choice, text, etc.).
+- Share via email/link.
+- Analyze results.
+
+---
+# **3.22 Sign (eSignature)**
+### **3.22.1 Document Signing**
+- Upload PDFs.
+- Drag & drop signature fields.
+- Send for signature.
+
+---
+# **3.23 Barcode**
+### **3.23.1 Scanning**
+- Support for barcode scanners in Inventory and POS.
+- Mobile camera scanning.
+
