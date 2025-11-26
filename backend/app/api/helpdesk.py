@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
+from uuid import UUID
 
 from app.schemas.helpdesk import Ticket, TicketCreate, Message, MessageCreate
 from app.core.supabase_client import supabase
