@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function TodoLayout({ children }: { children: React.ReactNode }) {
+export default function KnowledgeLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
 
