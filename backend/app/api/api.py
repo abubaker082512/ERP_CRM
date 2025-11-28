@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api import leads, auth, opportunities, products, sales, contacts, inventory, purchase, accounting, hr, mrp, helpdesk, payroll, website, documents, discuss, ai, pos, recruitment, attendance, knowledge, todo
+from app.api import leads, auth, opportunities, products, sales, contacts, inventory, purchase, accounting, hr, mrp, helpdesk, payroll, website, documents, discuss, ai, pos, recruitment, attendance, knowledge, todo, appointments, planning
 
 api_router = APIRouter()
 api_router.include_router(leads.router, prefix="/leads", tags=["leads"])
@@ -23,4 +23,6 @@ api_router.include_router(recruitment.router, prefix="/recruitment", tags=["recr
 api_router.include_router(attendance.router, prefix="/attendance", tags=["attendance"])
 api_router.include_router(knowledge.router, prefix="/knowledge", tags=["knowledge"])
 api_router.include_router(todo.router, prefix="/todo", tags=["todo"])
+api_router.include_router(appointments.router, prefix="/appointments", tags=["appointments"])
+api_router.include_router(planning.router, prefix="/planning", tags=["planning"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
