@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
     LayoutDashboard,
     Calendar,
@@ -19,7 +20,9 @@ import {
     UserCheck,
     Target,
     Cog,
-    Palette
+    Palette,
+    MessageSquare,
+    PenTool
 } from "lucide-react";
 
 const apps = [
@@ -33,14 +36,15 @@ const apps = [
     { name: "Sales", icon: BarChart3, color: "bg-orange-600", href: "/sales" },
     { name: "Dashboards", icon: Grid3x3, color: "bg-pink-500", href: "/dashboard" },
     { name: "Point of Sale", icon: ShoppingCart, color: "bg-amber-600", href: "/pos" },
+    { name: "Purchase", icon: ShoppingCart, color: "bg-pink-600", href: "/purchase" },
     { name: "Accounting", icon: CreditCard, color: "bg-red-500", href: "/accounting" },
     { name: "Project", icon: Palette, color: "bg-blue-600", href: "/project" },
     { name: "Timesheets", icon: Clock, color: "bg-indigo-500", href: "/timesheets" },
     { name: "Planning", icon: Grid3x3, color: "bg-yellow-500", href: "/planning" },
-    { name: "Surveys", icon: ClipboardList, color: "bg-blue-400", href: "/surveys" },
+    { name: "Surveys", icon: MessageSquare, color: "bg-blue-400", href: "/surveys" },
     { name: "Inventory", icon: Package, color: "bg-purple-600", href: "/inventory" },
     { name: "Barcode", icon: Barcode, color: "bg-pink-600", href: "/barcode" },
-    { name: "Sign", icon: CheckSquare, color: "bg-cyan-400", href: "/sign" },
+    { name: "Sign", icon: PenTool, color: "bg-cyan-400", href: "/sign" },
     { name: "Employees", icon: UserCircle, color: "bg-indigo-600", href: "/employees" },
     { name: "Payroll", icon: CreditCard, color: "bg-pink-400", href: "/payroll" },
     { name: "Attendances", icon: UserCheck, color: "bg-orange-400", href: "/attendances" },
@@ -53,6 +57,17 @@ const apps = [
 
 export default function Home() {
     const router = useRouter();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        const token = localStorage.getItem("token");
+        if (!token) {
+            router.push("/login");
+        }
+    }, [router]);
+
+    if (!mounted) return null;
 
     return (
         <div className="min-h-screen bg-background p-8">

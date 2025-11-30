@@ -22,7 +22,7 @@ export default function LoginPage() {
             if (resp.ok) {
                 const data = await resp.json();
                 localStorage.setItem('token', data.access_token);
-                router.push("/dashboard");
+                router.push("/");
             } else {
                 const errorData = await resp.json();
                 alert(`Login failed: ${errorData.detail || 'Unknown error'}`);
