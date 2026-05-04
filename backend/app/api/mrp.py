@@ -1,19 +1,21 @@
-from fastapi import APIRouter, HTTPException
+from app.api.deps import get_supabase_client
+from supabase import Client
+from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.mrp import (
     Bom, BomCreate,
     Production, ProductionCreate
 )
-from app.core.supabase_client import supabase
+
 from typing import List
 
 router = APIRouter()
 
 # --- BOMs ---
 @router.post("/boms", response_model=Bom)
-def create_bom(bom: BomCreate):
+def create_bom(bom: BomCreate, client: Client = Depends(get_supabase_client)):
     # 1. Create BOM
     bom_data = bom.dict(exclude={'lines'}, exclude_unset=True)
-    response = supabase.table("mrp_bom").insert(bom_data).execute()
+    response = client.table("mrp_bom").insert(bom_data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create BOM")
     
@@ -28,26 +30,26 @@ def create_bom(bom: BomCreate):
             l_data['bom_id'] = bom_id
             lines_data.append(l_data)
         
-        lines_response = supabase.table("mrp_bom_line").insert(lines_data).execute()
+        lines_response = client.table("mrp_bom_line").insert(lines_data).execute()
         created_bom['lines'] = lines_response.data
 
     return created_bom
 
 @router.get("/boms", response_model=List[Bom])
-def read_boms():
-    response = supabase.table("mrp_bom").select("*").execute()
+def read_boms(client: Client = Depends(get_supabase_client)):
+    response = client.table("mrp_bom").select("*").execute()
     return response.data
 
 # --- Manufacturing Orders ---
 @router.post("/production", response_model=Production)
-def create_production(production: ProductionCreate):
+def create_production(production: ProductionCreate, client: Client = Depends(get_supabase_client)):
     data = production.dict(exclude_unset=True)
-    response = supabase.table("mrp_production").insert(data).execute()
+    response = client.table("mrp_production").insert(data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create manufacturing order")
     return response.data[0]
 
 @router.get("/production", response_model=List[Production])
-def read_production():
-    response = supabase.table("mrp_production").select("*").execute()
+def read_production(client: Client = Depends(get_supabase_client)):
+    response = client.table("mrp_production").select("*").execute()
     return response.data

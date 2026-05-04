@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import PurchaseHeader from '@/components/purchase/PurchaseHeader';
@@ -40,7 +41,7 @@ export default function NewRFQPage() {
 
     const fetchContacts = async () => {
         try {
-            const res = await fetch('http://localhost:8000/api/v1/contacts');
+            const res = await fetchAPI("/contacts");
             if (res.ok) setContacts(await res.json());
         } catch (error) {
             console.error("Failed to fetch contacts", error);
@@ -49,7 +50,7 @@ export default function NewRFQPage() {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('http://localhost:8000/api/v1/products');
+            const res = await fetchAPI("/products");
             if (res.ok) setProducts(await res.json());
         } catch (error) {
             console.error("Failed to fetch products", error);
@@ -100,7 +101,7 @@ export default function NewRFQPage() {
 
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:8000/api/v1/purchase', {
+            const res = await fetchAPI("/purchase", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

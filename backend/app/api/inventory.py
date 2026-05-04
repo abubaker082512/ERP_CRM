@@ -1,69 +1,61 @@
-from fastapi import APIRouter, HTTPException
+from app.api.deps import get_supabase_client
+from supabase import Client
+from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.inventory import (
     Warehouse, WarehouseCreate,
     Location, LocationCreate,
     StockMove, StockMoveCreate,
     StockQuant
 )
-from app.core.supabase_client import supabase
+
 from typing import List
 
 router = APIRouter()
 
 # --- Warehouses ---
 @router.post("/warehouses", response_model=Warehouse)
-def create_warehouse(warehouse: WarehouseCreate):
+def create_warehouse(warehouse: WarehouseCreate, client: Client = Depends(get_supabase_client)):
     data = warehouse.dict(exclude_unset=True)
-    response = supabase.table("warehouses").insert(data).execute()
+    response = client.table("inventory_warehouse").insert(data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create warehouse")
     return response.data[0]
 
 @router.get("/warehouses", response_model=List[Warehouse])
-def read_warehouses():
-    response = supabase.table("warehouses").select("*").execute()
+def read_warehouses(client: Client = Depends(get_supabase_client)):
+    response = client.table("inventory_warehouse").select("*").execute()
     return response.data
 
 # --- Locations ---
 @router.post("/locations", response_model=Location)
-def create_location(location: LocationCreate):
+def create_location(location: LocationCreate, client: Client = Depends(get_supabase_client)):
     data = location.dict(exclude_unset=True)
-    response = supabase.table("locations").insert(data).execute()
+    response = client.table("inventory_location").insert(data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create location")
     return response.data[0]
 
 @router.get("/locations", response_model=List[Location])
-def read_locations():
-    response = supabase.table("locations").select("*").execute()
+def read_locations(client: Client = Depends(get_supabase_client)):
+    response = client.table("inventory_location").select("*").execute()
     return response.data
 
 # --- Stock Moves ---
 @router.post("/moves", response_model=StockMove)
-def create_stock_move(move: StockMoveCreate):
+def create_stock_move(move: StockMoveCreate, client: Client = Depends(get_supabase_client)):
     data = move.dict(exclude_unset=True)
-    response = supabase.table("stock_moves").insert(data).execute()
+    response = client.table("inventory_move").insert(data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create stock move")
-    
-    created_move = response.data[0]
-
-    # If state is 'done', update stock_quant
-    if created_move['state'] == 'done':
-        # Decrease source location
-        # Increase dest location
-        # For MVP, let's just assume we handle this logic separately or via a 'validate' endpoint
-        pass
-
-    return created_move
+    return response.data[0]
 
 @router.get("/moves", response_model=List[StockMove])
-def read_stock_moves(skip: int = 0, limit: int = 100):
-    response = supabase.table("stock_moves").select("*").range(skip, skip + limit - 1).execute()
+def read_stock_moves(skip: int = 0, limit: int = 100, client: Client = Depends(get_supabase_client)):
+    response = client.table("inventory_move").select("*").range(skip, skip + limit - 1).execute()
     return response.data
 
 # --- Stock Quant ---
 @router.get("/quants", response_model=List[StockQuant])
-def read_stock_quants(skip: int = 0, limit: int = 100):
-    response = supabase.table("stock_quant").select("*").range(skip, skip + limit - 1).execute()
+def read_stock_quants(skip: int = 0, limit: int = 100, client: Client = Depends(get_supabase_client)):
+    response = client.table("inventory_quant").select("*").range(skip, skip + limit - 1).execute()
     return response.data

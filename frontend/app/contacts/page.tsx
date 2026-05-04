@@ -1,8 +1,10 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import ContactsHeader from '@/components/contacts/ContactsHeader';
 import { Plus, MapPin, Phone, Mail } from 'lucide-react';
+import Link from 'next/link';
 
 type Contact = {
     id: string;
@@ -28,7 +30,7 @@ export default function ContactsPage() {
 
     const fetchContacts = async () => {
         try {
-            const res = await fetch('http://localhost:8000/api/v1/contacts');
+            const res = await fetchAPI("/contacts");
             if (res.ok) setContacts(await res.json());
         } catch (error) {
             console.error("Failed to fetch contacts", error);
@@ -39,7 +41,7 @@ export default function ContactsPage() {
         if (!newName.trim()) return;
 
         try {
-            const res = await fetch('http://localhost:8000/api/v1/contacts', {
+            const res = await fetchAPI("/contacts", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -152,8 +154,8 @@ export default function ContactsPage() {
 
                 {/* Contacts Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {contacts.map((contact) => (
-                        <div key={contact.id} className="bg-[#1E293B] border border-gray-700 rounded-lg overflow-hidden hover:border-purple-500 transition-colors group cursor-pointer flex">
+                {contacts.map((contact) => (
+                        <Link key={contact.id} href={`/contacts/${contact.id}`} className="bg-[#1E293B] border border-gray-700 rounded-lg overflow-hidden hover:border-purple-500 transition-colors group cursor-pointer flex">
                             <div className="w-24 bg-gray-800 flex items-center justify-center shrink-0">
                                 {contact.image_url ? (
                                     <img src={contact.image_url} alt={contact.name} className="h-full w-full object-cover" />
@@ -184,7 +186,7 @@ export default function ContactsPage() {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </div>

@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import AppointmentsHeader from "@/components/appointments/AppointmentsHeader";
 import { useEffect, useState } from "react";
@@ -19,8 +20,8 @@ export default function AppointmentsPage() {
     const [newDate, setNewDate] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/appointments/appointments")
-            .then((r) => r.json())
+        fetchAPI("/appointments/appointments")
+            .then((r) => r.ok ? r.json() : [])
             .then(setAppointments)
             .catch(console.error);
     }, []);
@@ -32,7 +33,7 @@ export default function AppointmentsPage() {
         const start = new Date(newDate);
         const end = new Date(start.getTime() + 60 * 60 * 1000);
 
-        const res = await fetch("http://localhost:8000/api/v1/appointments/appointments", {
+        const res = await fetchAPI("/appointments/appointments", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

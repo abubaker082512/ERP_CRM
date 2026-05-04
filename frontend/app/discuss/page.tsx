@@ -1,8 +1,10 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import DiscussHeader from "@/components/discuss/DiscussHeader";
 import { useEffect, useState } from "react";
 import { Hash, Send, User } from "lucide-react";
+import { supabase } from '@/lib/supabaseClient';
 
 type Channel = {
     id: string;
@@ -25,48 +27,86 @@ export default function DiscussPage() {
     const [newMessage, setNewMessage] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/discuss/channels")
-            .then((r) => r.json())
+        fetchAPI("/discuss/channels")
+            .then((r) => r.ok ? r.json() : [])
             .then((data) => {
-                setChannels(data);
-                if (data.length > 0) setActiveChannel(data[0]);
+                const channelsArray = Array.isArray(data) ? data : [];
+                setChannels(channelsArray);
+                if (channelsArray.length > 0) setActiveChannel(channelsArray[0]);
             })
-            .catch(console.error);
+            .catch((err) => {
+                console.error(err);
+                setChannels([]);
+            });
     }, []);
 
     useEffect(() => {
-        if (activeChannel) {
-            fetch(`http://localhost:8000/api/v1/discuss/messages?channel_id=${activeChannel.id}`)
-                .then((r) => r.json())
-                .then(setMessages)
-                .catch(console.error);
-        }
+        if (!activeChannel) return;
+
+        // 1. Fetch historical messages
+        fetchAPI(`/discuss/messages?channel_id=${activeChannel.id}`)
+            .then((r) => r.ok ? r.json() : [])
+            .then(setMessages)
+            .catch(console.error);
+
+        // 2. Subscribe to real-time new messages
+        const channelSubscription = supabase
+            .channel(`public:mail_message:channel_id=eq.${activeChannel.id}`)
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'mail_message', filter: `channel_id=eq.${activeChannel.id}` },
+                (payload) => {
+                    const newMsg = payload.new as Message;
+                    // Prevent duplicate if we just sent it (React state might already have it, though usually we rely on DB)
+                    setMessages(prev => {
+                        if (prev.find(m => m.id === newMsg.id)) return prev;
+                        return [...prev, newMsg];
+                    });
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channelSubscription);
+        };
     }, [activeChannel]);
 
     const sendMessage = async () => {
         if (!newMessage.trim() || !activeChannel) return;
+        
+        const optimisticMsg = {
+            id: 'temp-' + Date.now(),
+            channel_id: activeChannel.id,
+            body: newMessage,
+            created_at: new Date().toISOString(),
+        };
+        
+        // Optimistic UI update
+        setMessages(prev => [...prev, optimisticMsg]);
+        setNewMessage("");
 
-        const res = await fetch("http://localhost:8000/api/v1/discuss/messages", {
+        const res = await fetchAPI("/discuss/messages", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 channel_id: activeChannel.id,
-                body: newMessage,
+                body: optimisticMsg.body,
                 message_type: "comment"
             }),
         });
 
-        if (res.ok) {
-            const msg = await res.json();
-            setMessages([...messages, msg]);
-            setNewMessage("");
+        if (!res.ok) {
+            console.error("Failed to send message");
+            // Revert optimistic update on failure
+            setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
+            setNewMessage(optimisticMsg.body);
         }
     };
 
     const createChannel = async () => {
         const name = prompt("Enter channel name:");
         if (!name) return;
-        const res = await fetch("http://localhost:8000/api/v1/discuss/channels", {
+        const res = await fetchAPI("/discuss/channels", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, channel_type: "channel" }),
@@ -79,8 +119,7 @@ export default function DiscussPage() {
     }
 
     return (
-        <div className="flex flex-col h-screen">
-            <DiscussHeader />
+        <div className="flex h-[calc(100vh-120px)] overflow-hidden rounded-2xl border border-white/5 bg-[#0F172A]/40 backdrop-blur-xl shadow-2xl">
 
             <div className="flex-1 flex overflow-hidden">
                 {/* Sidebar */}

@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import PayrollHeader from '@/components/payroll/PayrollHeader';
 import { Plus } from 'lucide-react';
@@ -23,8 +24,8 @@ export default function SalaryStructuresPage() {
   const [currency, setCurrency] = useState('USD');
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/v1/payroll/salary_structures')
-      .then((r) => r.json())
+    fetchAPI("/payroll/salary_structures")
+      .then((r) => r.ok ? r.json() : [])
       .then(setStructures)
       .catch(console.error);
   }, []);
@@ -37,7 +38,7 @@ export default function SalaryStructuresPage() {
       deductions: parseFloat(deductions) || 0,
       currency,
     };
-    const res = await fetch('http://localhost:8000/api/v1/payroll/salary_structures', {
+    const res = await fetchAPI("/payroll/salary_structures", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

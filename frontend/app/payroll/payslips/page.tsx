@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import PayrollHeader from "@/components/payroll/PayrollHeader";
 import { useEffect, useState } from "react";
@@ -18,8 +19,8 @@ export default function PayslipsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/payroll/payslips")
-            .then((r) => r.json())
+        fetchAPI("/payroll/payslips")
+            .then((r) => r.ok ? r.json() : [])
             .then(setPayslips)
             .catch(console.error);
     }, []);

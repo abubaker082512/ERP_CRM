@@ -1,8 +1,10 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import HelpdeskHeader from '@/components/helpdesk/HelpdeskHeader';
-import { Plus, MessageSquare, Clock, User } from 'lucide-react';
+import { Plus, Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 type Ticket = {
     id: string;
@@ -20,15 +22,15 @@ export default function HelpdeskPage() {
     const [newDesc, setNewDesc] = useState('');
 
     useEffect(() => {
-        fetch('http://localhost:8000/api/v1/helpdesk/tickets')
-            .then((r) => r.json())
+        fetchAPI("/helpdesk/tickets")
+            .then((r) => r.ok ? r.json() : [])
             .then(setTickets)
             .catch(console.error);
     }, []);
 
     const createTicket = async () => {
         if (!newTitle.trim()) return;
-        const res = await fetch('http://localhost:8000/api/v1/helpdesk/tickets', {
+        const res = await fetchAPI("/helpdesk/tickets", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: newTitle, description: newDesc }),
@@ -59,9 +61,10 @@ export default function HelpdeskPage() {
                 {/* Ticket Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {tickets.map((t) => (
-                        <div
+                        <Link
                             key={t.id}
-                            className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-purple-500 transition-colors cursor-pointer group"
+                            href={`/helpdesk/${t.id}`}
+                            className="block bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-purple-500 transition-colors cursor-pointer group"
                         >
                             <h3 className="font-semibold text-gray-200 mb-1 truncate group-hover:text-purple-400">
                                 {t.title}
@@ -72,7 +75,7 @@ export default function HelpdeskPage() {
                                 <Clock size={12} className="mr-1" />
                                 {new Date(t.created_at).toLocaleDateString()}
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </div>

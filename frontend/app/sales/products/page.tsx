@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import SalesHeader from '@/components/sales/SalesHeader';
@@ -26,7 +27,7 @@ export default function ProductsPage() {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('http://localhost:8000/api/v1/products');
+            const res = await fetchAPI("/products");
             if (res.ok) {
                 const data = await res.json();
                 setProducts(data);
@@ -40,7 +41,7 @@ export default function ProductsPage() {
         if (!newProductName.trim()) return;
 
         try {
-            const res = await fetch('http://localhost:8000/api/v1/products', {
+            const res = await fetchAPI("/products", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import ManufacturingHeader from "@/components/manufacturing/ManufacturingHeader";
 import { Plus, Wrench, Package, Clock, CheckCircle } from "lucide-react";
@@ -22,8 +23,8 @@ export default function ManufacturingPage() {
     const [quantity, setQuantity] = useState(1);
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/mrp/production")
-            .then((r) => r.json())
+        fetchAPI("/mrp/production")
+            .then((r) => r.ok ? r.json() : [])
             .then(setOrders)
             .catch(console.error);
     }, []);

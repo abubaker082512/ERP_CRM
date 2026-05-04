@@ -1,8 +1,10 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import EmployeesHeader from '@/components/employees/EmployeesHeader';
-import { Plus, Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
+import Link from 'next/link';
 
 type Employee = {
     id: string;
@@ -28,7 +30,7 @@ export default function EmployeesPage() {
 
     const fetchEmployees = async () => {
         try {
-            const res = await fetch('http://localhost:8000/api/v1/hr/employees');
+            const res = await fetchAPI("/hr/employees");
             if (res.ok) setEmployees(await res.json());
         } catch (error) {
             console.error("Failed to fetch employees", error);
@@ -39,7 +41,7 @@ export default function EmployeesPage() {
         if (!newName.trim()) return;
 
         try {
-            const res = await fetch('http://localhost:8000/api/v1/hr/employees', {
+            const res = await fetchAPI("/hr/employees", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -152,7 +154,7 @@ export default function EmployeesPage() {
                 {/* Employees Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {employees.map((emp) => (
-                        <div key={emp.id} className="bg-[#1E293B] border border-gray-700 rounded-lg overflow-hidden hover:border-purple-500 transition-colors group cursor-pointer flex">
+                        <Link href={`/employees/${emp.id}`} key={emp.id} className="bg-[#1E293B] border border-gray-700 rounded-lg overflow-hidden hover:border-purple-500 transition-colors group cursor-pointer flex">
                             <div className="w-24 bg-gray-800 flex items-center justify-center shrink-0">
                                 {emp.image_url ? (
                                     <img src={emp.image_url} alt={emp.name} className="h-full w-full object-cover" />
@@ -179,7 +181,7 @@ export default function EmployeesPage() {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </div>

@@ -9,6 +9,8 @@ class OpportunityBase(BaseModel):
     stage: Optional[str] = "New"
     close_date: Optional[date] = None
     lead_id: Optional[UUID] = None
+    notes: Optional[str] = None
+    priority: Optional[int] = 0
 
 class OpportunityCreate(OpportunityBase):
     pass

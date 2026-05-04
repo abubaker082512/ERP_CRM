@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import AttendanceHeader from "@/components/attendances/AttendanceHeader";
 import { useEffect, useState } from "react";
@@ -23,7 +24,7 @@ export default function AttendancePage() {
 
     const handleCheckIn = async () => {
         try {
-            const res = await fetch("http://localhost:8000/api/v1/attendance/attendances", {
+            const res = await fetchAPI("/attendance/attendances", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -44,7 +45,7 @@ export default function AttendancePage() {
     const handleCheckOut = async () => {
         if (!currentAttendance) return;
         try {
-            const res = await fetch(`http://localhost:8000/api/v1/attendance/attendances/${currentAttendance.id}/checkout`, {
+            const res = await fetchAPI(`/attendance/attendances/${currentAttendance.id}/checkout`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
             });

@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import KnowledgeHeader from "@/components/knowledge/KnowledgeHeader";
 import { useEffect, useState } from "react";
@@ -18,15 +19,20 @@ export default function KnowledgePage() {
     const [newCategory, setNewCategory] = useState("General");
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/knowledge/articles")
-            .then((r) => r.json())
-            .then(setArticles)
-            .catch(console.error);
+        fetchAPI("/knowledge/articles")
+            .then((r) => r.ok ? r.json() : [])
+            .then((data) => {
+                setArticles(Array.isArray(data) ? data : []);
+            })
+            .catch((err) => {
+                console.error(err);
+                setArticles([]);
+            });
     }, []);
 
     const createArticle = async () => {
         if (!newTitle.trim()) return;
-        const res = await fetch("http://localhost:8000/api/v1/knowledge/articles", {
+        const res = await fetchAPI("/knowledge/articles", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title: newTitle, category: newCategory }),
@@ -40,10 +46,8 @@ export default function KnowledgePage() {
     };
 
     return (
-        <div className="flex flex-col h-screen">
-            <KnowledgeHeader />
-
-            <div className="flex-1 overflow-auto p-6">
+        <div className="space-y-6">
+            <div className="flex-1 overflow-auto p-0">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold text-gray-200">Knowledge Base</h2>
                     <button
@@ -58,7 +62,7 @@ export default function KnowledgePage() {
                     {articles.map((article) => (
                         <div
                             key={article.id}
-                            className="bg-[#1E293B] border border-gray-700 rounded-lg p-6 hover:border-teal-500 transition-colors group cursor-pointer"
+                            className="galaxy-card p-6"
                         >
                             <div className="flex items-start gap-3 mb-4">
                                 <div className="bg-teal-500/20 p-2 rounded text-teal-500">
@@ -85,7 +89,7 @@ export default function KnowledgePage() {
 
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="bg-[#1E293B] rounded-lg p-6 w-full max-w-md border border-gray-700">
+                    <div className="galaxy-card p-6 w-full max-w-md border border-gray-700">
                         <h3 className="text-lg font-semibold text-white mb-4">Create Article</h3>
                         <div className="space-y-4">
                             <div>

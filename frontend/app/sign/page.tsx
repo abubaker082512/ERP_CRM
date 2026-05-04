@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import SignHeader from "@/components/sign/SignHeader";
 import { useEffect, useState } from "react";
@@ -16,8 +17,8 @@ export default function SignPage() {
     const [newTitle, setNewTitle] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/sign/requests")
-            .then((r) => r.json())
+        fetchAPI("/sign/requests")
+            .then((r) => r.ok ? r.json() : [])
             .then(setRequests)
             .catch(console.error);
     }, []);
@@ -25,7 +26,7 @@ export default function SignPage() {
     const createRequest = async () => {
         if (!newTitle.trim()) return;
 
-        const res = await fetch("http://localhost:8000/api/v1/sign/requests", {
+        const res = await fetchAPI("/sign/requests", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title: newTitle }),

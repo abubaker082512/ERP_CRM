@@ -4,9 +4,12 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
+import CosmicBackground from "@/components/CosmicBackground";
+import GalaxyAppShell from "@/components/layout/GalaxyAppShell";
+
 export const metadata: Metadata = {
-    title: "Next-Gen AI ERP",
-    description: "AI-Enhanced ERP System",
+    title: "Galaxy AI ERP",
+    description: "Next-Gen AI-Enhanced ERP System",
 };
 
 export default function RootLayout({
@@ -16,7 +19,10 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={inter.className}>{children}</body>
+            <body className={`${inter.className} relative min-h-screen text-white bg-transparent`}>
+                <CosmicBackground />
+                <GalaxyAppShell>{children}</GalaxyAppShell>
+            </body>
         </html>
     );
 }

@@ -10,7 +10,7 @@ def test_supabase_client():
         # Try to fetch something simple, like count of users or just a table check
         # We'll try to select from 'knowledge_article' which we just created (or tried to)
         # Or just 'leads' which exists.
-        res = supabase.table("leads").select("count", count="exact").execute()
+        res = supabase.table("crm_lead").select("count", count="exact").execute()
         print(f"Success! Count: {res.count}")
         print(f"Data: {res.data}")
     except Exception as e:

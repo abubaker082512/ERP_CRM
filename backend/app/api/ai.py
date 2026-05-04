@@ -1,6 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional
+from app.api.deps import get_supabase_client
+from supabase import Client
 
 router = APIRouter()
 
@@ -38,21 +40,44 @@ class NLResponse(BaseModel):
     chart_type: Optional[str] = None
 
 @router.post("/ask", response_model=NLResponse)
-def ask_data(q: NLQuery):
-    # Mock AI response
+def ask_data(q: NLQuery, client: Client = Depends(get_supabase_client)):
+    # Semi-intelligent response using real data aggregations
     question = q.question.lower()
     
-    if "sales" in question and "month" in question:
+    # 1. Handle Sales Queries
+    if "sales" in question or "revenue" in question:
+        resp = client.table("sale_order").select("amount_total, state").execute()
+        orders = resp.data or []
+        total = sum(float(o.get("amount_total") or 0) for o in orders if o.get("state") in ("sale", "done"))
+        count = len([o for o in orders if o.get("state") in ("sale", "done")])
+        
         return NLResponse(
-            answer="Total sales for this month are $45,230.00, which is a 12% increase from last month.",
-            data=[{"label": "Week 1", "value": 10000}, {"label": "Week 2", "value": 12000}],
+            answer=f"Total confirmed sales revenue is ${total:,.2f} across {count} orders.",
+            data=[{"label": "Confirmed", "value": total}],
             chart_type="bar"
         )
-    elif "stock" in question:
+        
+    # 2. Handle Contact Queries
+    elif "contact" in question or "customer" in question:
+        resp = client.table("contacts").select("id").execute()
+        count = len(resp.data or [])
         return NLResponse(
-            answer="Low stock alert: 'Office Chair' is below minimum quantity (5 units).",
-            data=[],
-            chart_type="alert"
+            answer=f"You currently have {count} contacts in your database.",
+            data=[]
+        )
+
+    # 3. Handle Lead/CRM Queries
+    elif "lead" in question or "pipeline" in question:
+        resp = client.table("crm_lead").select("expected_revenue").execute()
+        leads = resp.data or []
+        total = sum(float(l.get("expected_revenue") or 0) for l in leads)
+        return NLResponse(
+            answer=f"Your CRM pipeline has a total expected value of ${total:,.2f}.",
+            data=[{"label": "Pipeline", "value": total}],
+            chart_type="bar"
         )
     
-    return NLResponse(answer="I'm not sure how to answer that yet. Try asking about sales or stock.")
+    # 4. Fallback
+    return NLResponse(
+        answer="I can help you with sales metrics, contact counts, or CRM pipeline value. Try asking 'What are my total sales?' or 'How many contacts do I have?'"
+    )

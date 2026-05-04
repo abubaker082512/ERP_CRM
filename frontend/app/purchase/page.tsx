@@ -1,8 +1,9 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import PurchaseHeader from '@/components/purchase/PurchaseHeader';
-import { Plus, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 type PurchaseOrder = {
@@ -24,7 +25,7 @@ export default function PurchasePage() {
 
     const fetchOrders = async () => {
         try {
-            const res = await fetch('http://localhost:8000/api/v1/purchase');
+            const res = await fetchAPI("/purchase");
             if (res.ok) setOrders(await res.json());
         } catch (error) {
             console.error("Failed to fetch purchase orders", error);
@@ -63,9 +64,9 @@ export default function PurchasePage() {
                         </thead>
                         <tbody>
                             {orders.map((o) => (
-                                <tr key={o.id} className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer">
-                                    <td className="px-6 py-4 font-medium text-white">{o.name}</td>
-                                    <td className="px-6 py-4">{o.partner_id}</td> {/* Needs enrichment */}
+                                <tr key={o.id} onClick={() => router.push(`/purchase/${o.id}`)} className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer">
+                                    <td className="px-6 py-4 font-medium text-purple-400 hover:underline">{o.name}</td>
+                                    <td className="px-6 py-4 font-mono text-xs text-gray-400">{o.partner_id}</td>
                                     <td className="px-6 py-4">{new Date(o.date_order).toLocaleDateString()}</td>
                                     <td className="px-6 py-4">
                                         <Clock size={16} className="text-gray-500" />

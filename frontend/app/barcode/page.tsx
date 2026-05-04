@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import BarcodeHeader from "@/components/barcode/BarcodeHeader";
 import { useEffect, useState } from "react";
@@ -15,8 +16,8 @@ export default function BarcodePage() {
     const [barcodeInput, setBarcodeInput] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/barcode/logs")
-            .then((r) => r.json())
+        fetchAPI("/barcode/logs")
+            .then((r) => r.ok ? r.json() : [])
             .then(setLogs)
             .catch(console.error);
     }, []);
@@ -25,7 +26,7 @@ export default function BarcodePage() {
         e.preventDefault();
         if (!barcodeInput.trim()) return;
 
-        const res = await fetch("http://localhost:8000/api/v1/barcode/scan", {
+        const res = await fetchAPI("/barcode/scan", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ barcode: barcodeInput }),

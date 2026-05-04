@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import TodoHeader from "@/components/todo/TodoHeader";
 import { useEffect, useState } from "react";
@@ -15,9 +16,15 @@ export default function TodoPage() {
     const [newTask, setNewTask] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/todo/tasks")
+        fetchAPI("/todo/tasks")
             .then((r) => r.json())
-            .then(setTasks)
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setTasks(data);
+                } else {
+                    console.error("Failed to load tasks:", data);
+                }
+            })
             .catch(console.error);
     }, []);
 
@@ -25,9 +32,8 @@ export default function TodoPage() {
         e.preventDefault();
         if (!newTask.trim()) return;
 
-        const res = await fetch("http://localhost:8000/api/v1/todo/tasks", {
+        const res = await fetchAPI("/todo/tasks", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title: newTask }),
         });
 
@@ -39,7 +45,7 @@ export default function TodoPage() {
     };
 
     const toggleTask = async (id: string, currentStatus: boolean) => {
-        const res = await fetch(`http://localhost:8000/api/v1/todo/tasks/${id}/toggle?is_completed=${!currentStatus}`, {
+        const res = await fetchAPI(`/todo/tasks/${id}/toggle?is_completed=${!currentStatus}`, {
             method: "PUT",
         });
 

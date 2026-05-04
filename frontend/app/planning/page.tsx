@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import PlanningHeader from "@/components/planning/PlanningHeader";
 import { useEffect, useState } from "react";
@@ -18,8 +19,8 @@ export default function PlanningPage() {
     const [end, setEnd] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/planning/slots")
-            .then((r) => r.json())
+        fetchAPI("/planning/slots")
+            .then((r) => r.ok ? r.json() : [])
             .then(setSlots)
             .catch(console.error);
     }, []);
@@ -27,7 +28,7 @@ export default function PlanningPage() {
     const createSlot = async () => {
         if (!start || !end) return;
 
-        const res = await fetch("http://localhost:8000/api/v1/planning/slots", {
+        const res = await fetchAPI("/planning/slots", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

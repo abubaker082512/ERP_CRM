@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import PosHeader from "@/components/pos/PosHeader";
 import { useEffect, useState } from "react";
@@ -16,15 +17,15 @@ export default function PosPage() {
     const [newName, setNewName] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/pos/configs")
-            .then((r) => r.json())
+        fetchAPI("/pos/configs")
+            .then((r) => r.ok ? r.json() : [])
             .then(setConfigs)
             .catch(console.error);
     }, []);
 
     const createConfig = async () => {
         if (!newName.trim()) return;
-        const res = await fetch("http://localhost:8000/api/v1/pos/configs", {
+        const res = await fetchAPI("/pos/configs", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: newName }),

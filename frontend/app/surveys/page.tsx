@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import SurveysHeader from "@/components/surveys/SurveysHeader";
 import { useEffect, useState } from "react";
@@ -16,8 +17,8 @@ export default function SurveysPage() {
     const [newTitle, setNewTitle] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/surveys/surveys")
-            .then((r) => r.json())
+        fetchAPI("/surveys/surveys")
+            .then((r) => r.ok ? r.json() : [])
             .then(setSurveys)
             .catch(console.error);
     }, []);
@@ -25,7 +26,7 @@ export default function SurveysPage() {
     const createSurvey = async () => {
         if (!newTitle.trim()) return;
 
-        const res = await fetch("http://localhost:8000/api/v1/surveys/surveys", {
+        const res = await fetchAPI("/surveys/surveys", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title: newTitle }),

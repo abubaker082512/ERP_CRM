@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import RecruitmentHeader from "@/components/recruitment/RecruitmentHeader";
 import { useEffect, useState } from "react";
@@ -17,15 +18,15 @@ export default function RecruitmentPage() {
     const [newJobName, setNewJobName] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/recruitment/jobs")
-            .then((r) => r.json())
+        fetchAPI("/recruitment/jobs")
+            .then((r) => r.ok ? r.json() : [])
             .then(setJobs)
             .catch(console.error);
     }, []);
 
     const createJob = async () => {
         if (!newJobName.trim()) return;
-        const res = await fetch("http://localhost:8000/api/v1/recruitment/jobs", {
+        const res = await fetchAPI("/recruitment/jobs", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: newJobName }),

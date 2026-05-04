@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from app.api.deps import get_supabase_client
+from supabase import Client
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from uuid import UUID
 
@@ -6,30 +8,30 @@ from app.schemas.website import (
     WebProduct, WebProductCreate,
     Order, OrderCreate
 )
-from app.core.supabase_client import supabase
+
 
 router = APIRouter()
 
 # --- Products ---
 @router.post("/products", response_model=WebProduct)
-def create_product(product: WebProductCreate):
+def create_product(product: WebProductCreate, client: Client = Depends(get_supabase_client)):
     data = product.dict(exclude_unset=True)
-    resp = supabase.table("website_product").insert(data).execute()
+    resp = client.table("website_product").insert(data).execute()
     if not resp.data:
         raise HTTPException(status_code=400, detail="Could not create product")
     return resp.data[0]
 
 @router.get("/products", response_model=List[WebProduct])
-def read_products():
-    resp = supabase.table("website_product").select("*").execute()
+def read_products(client: Client = Depends(get_supabase_client)):
+    resp = client.table("website_product").select("*").execute()
     return resp.data
 
 # --- Orders ---
 @router.post("/orders", response_model=Order)
-def create_order(order: OrderCreate):
+def create_order(order: OrderCreate, client: Client = Depends(get_supabase_client)):
     # 1. Create Order
     order_data = order.dict(exclude={'items'}, exclude_unset=True)
-    resp = supabase.table("website_order").insert(order_data).execute()
+    resp = client.table("website_order").insert(order_data).execute()
     if not resp.data:
         raise HTTPException(status_code=400, detail="Could not create order")
     
@@ -47,12 +49,12 @@ def create_order(order: OrderCreate):
             i_data['price_subtotal'] = i_data['quantity'] * i_data['price_unit']
             items_data.append(i_data)
         
-        items_resp = supabase.table("website_order_line").insert(items_data).execute()
+        items_resp = client.table("website_order_line").insert(items_data).execute()
         created_order['items'] = items_resp.data
 
     return created_order
 
 @router.get("/orders", response_model=List[Order])
-def read_orders():
-    resp = supabase.table("website_order").select("*, items:website_order_line(*)").execute()
+def read_orders(client: Client = Depends(get_supabase_client)):
+    resp = client.table("website_order").select("*, items:website_order_line(*)").execute()
     return resp.data

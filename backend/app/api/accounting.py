@@ -1,48 +1,50 @@
-from fastapi import APIRouter, HTTPException
+from app.api.deps import get_supabase_client
+from supabase import Client
+from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.accounting import (
     Account, AccountCreate,
     Journal, JournalCreate,
     Move, MoveCreate
 )
-from app.core.supabase_client import supabase
+
 from typing import List
 
 router = APIRouter()
 
 # --- Accounts ---
 @router.post("/accounts", response_model=Account)
-def create_account(account: AccountCreate):
+def create_account(account: AccountCreate, client: Client = Depends(get_supabase_client)):
     data = account.dict(exclude_unset=True)
-    response = supabase.table("account_account").insert(data).execute()
+    response = client.table("account_account").insert(data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create account")
     return response.data[0]
 
 @router.get("/accounts", response_model=List[Account])
-def read_accounts():
-    response = supabase.table("account_account").select("*").execute()
+def read_accounts(client: Client = Depends(get_supabase_client)):
+    response = client.table("account_account").select("*").execute()
     return response.data
 
 # --- Journals ---
 @router.post("/journals", response_model=Journal)
-def create_journal(journal: JournalCreate):
+def create_journal(journal: JournalCreate, client: Client = Depends(get_supabase_client)):
     data = journal.dict(exclude_unset=True)
-    response = supabase.table("account_journal").insert(data).execute()
+    response = client.table("account_journal").insert(data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create journal")
     return response.data[0]
 
 @router.get("/journals", response_model=List[Journal])
-def read_journals():
-    response = supabase.table("account_journal").select("*").execute()
+def read_journals(client: Client = Depends(get_supabase_client)):
+    response = client.table("account_journal").select("*").execute()
     return response.data
 
 # --- Moves (Invoices/Entries) ---
 @router.post("/moves", response_model=Move)
-def create_move(move: MoveCreate):
+def create_move(move: MoveCreate, client: Client = Depends(get_supabase_client)):
     # 1. Create Move
     move_data = move.dict(exclude={'lines'}, exclude_unset=True)
-    response = supabase.table("account_move").insert(move_data).execute()
+    response = client.table("account_move").insert(move_data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create move")
     
@@ -57,13 +59,13 @@ def create_move(move: MoveCreate):
             l_data['move_id'] = move_id
             lines_data.append(l_data)
         
-        lines_response = supabase.table("account_move_line").insert(lines_data).execute()
+        lines_response = client.table("account_move_line").insert(lines_data).execute()
         created_move['lines'] = lines_response.data
 
     return created_move
 
 @router.get("/moves", response_model=List[Move])
-def read_moves(skip: int = 0, limit: int = 100):
+def read_moves(skip: int = 0, limit: int = 100, client: Client = Depends(get_supabase_client)):
     # Fetch moves
-    response = supabase.table("account_move").select("*").range(skip, skip + limit - 1).execute()
+    response = client.table("account_move").select("*").range(skip, skip + limit - 1).execute()
     return response.data

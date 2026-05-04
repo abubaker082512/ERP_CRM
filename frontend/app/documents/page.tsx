@@ -1,4 +1,5 @@
 "use client";
+import { fetchAPI } from '@/lib/api';
 
 import DocumentsHeader from "@/components/documents/DocumentsHeader";
 import { useEffect, useState } from "react";
@@ -18,15 +19,15 @@ export default function DocumentsPage() {
     const [newType, setNewType] = useState("folder");
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/documents/documents")
-            .then((r) => r.json())
+        fetchAPI("/documents/documents")
+            .then((r) => r.ok ? r.json() : [])
             .then(setDocs)
             .catch(console.error);
     }, []);
 
     const createDoc = async () => {
         if (!newName.trim()) return;
-        const res = await fetch("http://localhost:8000/api/v1/documents/documents", {
+        const res = await fetchAPI("/documents/documents", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: newName, type: newType }),
