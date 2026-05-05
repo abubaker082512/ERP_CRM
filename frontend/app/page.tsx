@@ -22,7 +22,10 @@ import {
     Cog,
     Palette,
     MessageSquare,
-    PenTool
+    PenTool,
+    LogOut,
+    Bell,
+    Database
 } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
@@ -126,18 +129,55 @@ export default function Home() {
 
     return (
         <div className="min-h-screen bg-transparent p-8">
+            {/* Top Header Section */}
+            <div className="max-w-7xl mx-auto mb-10 flex justify-between items-center bg-[#0F172A]/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 shadow-2xl">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-purple-500/20 border border-white/10">
+                        {userData?.metadata?.name?.charAt(0) || "U"}
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-white">
+                            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{userData?.metadata?.name || "User"}</span>!
+                        </h1>
+                        <p className="text-gray-400 text-sm font-medium flex items-center gap-2">
+                            <Database size={12} className="text-purple-400" /> {userData?.tenant?.name || "Galaxy Workspace"}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <button className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all border border-white/5">
+                        <Bell size={20} />
+                    </button>
+                    <button 
+                        onClick={() => {
+                            localStorage.removeItem("token");
+                            window.location.href = "/login";
+                        }}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-all border border-white/5 font-medium"
+                    >
+                        <LogOut size={18} /> Logout
+                    </button>
+                </div>
+            </div>
+
             {/* Trial Banner */}
             {trialDays !== null && (
-                <div className="max-w-7xl mx-auto mb-8 bg-amber-900/50 border border-amber-700 rounded-lg p-4 text-amber-200 flex justify-between items-center shadow-lg">
-                    <p className="text-sm">
-                        Hello {userData?.metadata?.name || "User"}! Your free trial will expire in <span className="font-bold underline">{trialDays} days</span>.{" "}
-                        Unlock all premium features today.
-                    </p>
+                <div className="max-w-7xl mx-auto mb-10 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-2xl p-5 text-amber-200 flex justify-between items-center shadow-xl backdrop-blur-md">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400">
+                            <Clock size={18} />
+                        </div>
+                        <p className="text-sm font-medium">
+                            Your free trial will expire in <span className="text-amber-400 font-bold underline decoration-2 underline-offset-4">{trialDays} days</span>. 
+                            Unlock the full power of the Galaxy today.
+                        </p>
+                    </div>
                     <button 
                         onClick={() => router.push('/billing')}
-                        className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-1.5 rounded text-xs font-bold transition-all shadow-md"
+                        className="bg-amber-500 hover:bg-amber-400 text-[#0F172A] px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-amber-500/20 active:scale-95"
                     >
-                        Buy Subscription
+                        Upgrade Now
                     </button>
                 </div>
             )}
