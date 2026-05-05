@@ -26,17 +26,27 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
     const pathname = usePathname();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [mounted, setMounted] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         setMounted(true);
+        // Check for Super Admin privileges
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                // Restrict SaaS Admin panel to the platform owner
+                if (user.email === 'admin2@erp-crm.com') {
+                    setIsAdmin(true);
+                }
+            } catch (e) {}
+        }
     }, []);
 
     if (!mounted) return null;
 
-    const isLoggedIn = typeof window !== 'undefined' ? !!localStorage.getItem("token") : false;
-
-    // Don't show shell on landing, login, or signup pages
-    const isLandingPage = pathname === '/about' || pathname === '/contact' || (pathname === '/' && !isLoggedIn);
+    // Don't show shell on landing, login, signup, or the main launcher page
+    const isLandingPage = pathname === '/about' || pathname === '/contact' || pathname === '/';
     const isAuthPage = pathname === '/login' || pathname === '/signup' || isLandingPage;
     
     if (isAuthPage) return <>{children}</>;
@@ -63,7 +73,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
                 {/* Nav Items */}
                 <nav className="px-3 space-y-1">
-                    {navItems.map((item) => {
+                    {navItems.filter(item => item.name !== 'SaaS Admin' || isAdmin).map((item) => {
                         const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                         return (
                             <Link
