@@ -21,7 +21,7 @@ def list_all_workspaces(client: Client = Depends(get_supabase_client)):
     """
     token = token_ctx_var.get()
     user_resp = client.auth.get_user(token)
-    if not user_resp.user or user_resp.user.email != "admin@erp-crm.com":
+    if not user_resp.user or user_resp.user.email not in ["admin@erp-crm.com", "admin2@erp-crm.com"]:
         raise HTTPException(status_code=403, detail="Only the Platform Super Admin can access this dashboard.")
 
     # Fetch workspaces
@@ -49,7 +49,7 @@ def get_global_stats(client: Client = Depends(get_supabase_client)):
     """Global SaaS metrics for the Super Admin."""
     token = token_ctx_var.get()
     user_resp = client.auth.get_user(token)
-    if not user_resp.user or user_resp.user.email != "admin@erp-crm.com":
+    if not user_resp.user or user_resp.user.email not in ["admin@erp-crm.com", "admin2@erp-crm.com"]:
         raise HTTPException(status_code=403, detail="Only the Platform Super Admin can access this dashboard.")
         
     ws_count = client.table("workspaces").select("id", count="exact").execute().count
@@ -65,3 +65,31 @@ def get_global_stats(client: Client = Depends(get_supabase_client)):
         "platform_revenue": total_revenue,
         "active_trials": user_count # Simplified
     }
+
+class UserSummary(BaseModel):
+    id: str
+    email: str
+    created_at: str
+
+@router.get("/users", response_model=List[UserSummary])
+def list_all_users(client: Client = Depends(get_supabase_client)):
+    """
+    SUPER ADMIN: List all users across the entire SaaS platform.
+    """
+    token = token_ctx_var.get()
+    user_resp = client.auth.get_user(token)
+    if not user_resp.user or user_resp.user.email not in ["admin@erp-crm.com", "admin2@erp-crm.com"]:
+        raise HTTPException(status_code=403, detail="Only the Platform Super Admin can access this dashboard.")
+
+    users_resp = client.table("tenants").select("id, email, created_at").execute()
+    users = users_resp.data or []
+    
+    results = []
+    for u in users:
+        results.append(UserSummary(
+            id=u['id'],
+            email=u['email'],
+            created_at=u.get('created_at', '')
+        ))
+    
+    return results

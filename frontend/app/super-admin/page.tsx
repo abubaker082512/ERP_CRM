@@ -11,6 +11,12 @@ type Workspace = {
     created_at: string;
 };
 
+type GlobalUser = {
+    id: string;
+    email: string;
+    created_at: string;
+};
+
 type GlobalStats = {
     total_workspaces: number;
     total_users: number;
@@ -20,9 +26,11 @@ type GlobalStats = {
 
 export default function SuperAdminPage() {
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+    const [users, setUsers] = useState<GlobalUser[]>([]);
     const [stats, setStats] = useState<GlobalStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [userSearchTerm, setUserSearchTerm] = useState("");
 
     const [error, setError] = useState<string | null>(null);
 
@@ -58,6 +66,13 @@ export default function SuperAdminPage() {
             const statsData = await statsRes.json();
             console.log("[SuperAdmin] Stats fetched successfully.");
             setStats(statsData);
+
+            console.log("[SuperAdmin] Attempting to fetch users...");
+            const usersRes = await fetchAPI("/super-admin/users");
+            if (usersRes.ok) {
+                const usersData = await usersRes.json();
+                setUsers(usersData);
+            }
         } catch (err: any) {
             console.error("[SuperAdmin] Fetch error:", err);
             setError(err.message || "Failed to connect to the backend server.");
@@ -69,6 +84,10 @@ export default function SuperAdminPage() {
     const filteredWorkspaces = workspaces.filter(ws => 
         ws.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
         ws.owner_email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const filteredUsers = users.filter(u => 
+        u.email.toLowerCase().includes(userSearchTerm.toLowerCase())
     );
 
     return (
@@ -167,6 +186,65 @@ export default function SuperAdminPage() {
                                                 className="flex items-center gap-1 ml-auto text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
                                             >
                                                 <ExternalLink size={14} /> Manage
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Users Table */}
+                <div className="galaxy-card overflow-hidden mt-8">
+                    <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-[#1E293B]/50">
+                        <h2 className="text-xl font-bold">Manage Users</h2>
+                        <div className="relative w-72">
+                            <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
+                            <input 
+                                type="text" 
+                                placeholder="Filter by email..."
+                                value={userSearchTerm}
+                                onChange={(e) => setUserSearchTerm(e.target.value)}
+                                className="w-full bg-[#0F172A] border border-gray-700 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-[#0F172A] text-gray-500 text-xs uppercase tracking-widest font-bold">
+                                <tr>
+                                    <th className="px-6 py-4">User Email</th>
+                                    <th className="px-6 py-4">User ID</th>
+                                    <th className="px-6 py-4">Joined At</th>
+                                    <th className="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-800">
+                                {loading ? (
+                                    <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500">Loading users...</td></tr>
+                                ) : filteredUsers.length === 0 ? (
+                                    <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500">No users found.</td></tr>
+                                ) : filteredUsers.map(u => (
+                                    <tr key={u.id} className="hover:bg-gray-800/30 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center text-blue-400 font-bold border border-white/5">
+                                                    <Users size={18} />
+                                                </div>
+                                                <span className="font-medium text-gray-200">{u.email}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 text-xs font-mono">{u.id}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-500">
+                                            {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button 
+                                                className="flex items-center gap-1 ml-auto text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                                            >
+                                                <ExternalLink size={14} /> Details
                                             </button>
                                         </td>
                                     </tr>
