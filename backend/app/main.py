@@ -33,9 +33,15 @@ class JWTContextMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(JWTContextMiddleware)
 
+import os
+cors_origins = settings.CORS_ORIGINS
+env_cors = os.getenv("CORS_ORIGINS")
+if env_cors:
+    cors_origins = [o.strip() for o in env_cors.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
