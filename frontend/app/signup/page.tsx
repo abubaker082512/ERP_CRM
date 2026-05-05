@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 function SignupForm() {
     const router = useRouter();
@@ -36,9 +37,8 @@ function SignupForm() {
 
         setLoading(true);
         try {
-            const resp = await fetch('http://127.0.0.1:8000/api/v1/auth/signup', {
+            const resp = await fetchAPI('/auth/signup', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     name, 
                     email, 

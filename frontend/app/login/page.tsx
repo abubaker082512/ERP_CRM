@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -17,9 +18,8 @@ export default function LoginPage() {
         setError("");
         setLoading(true);
         try {
-            const resp = await fetch('http://localhost:8000/api/v1/auth/login', {
+            const resp = await fetchAPI('/auth/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
 
