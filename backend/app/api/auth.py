@@ -25,6 +25,15 @@ def signup(user: UserSignup):
 
         new_user_id = str(res.user.id)
 
+        # Explicitly ensure the user exists in the tenants table
+        try:
+            supabase.table("tenants").insert({
+                "id": new_user_id,
+                "email": user.email
+            }).execute()
+        except Exception as e:
+            print(f"[Signup] Tenant insertion warning: {e}")
+
         # If an invite_id is provided, join the existing workspace
         if user.invite_id:
             invite_resp = supabase.table("invitations").select("*").eq("id", user.invite_id).eq("status", "pending").execute()
@@ -40,6 +49,21 @@ def signup(user: UserSignup):
                 supabase.table("invitations").update({"status": "accepted"}).eq("id", user.invite_id).execute()
             else:
                 raise HTTPException(status_code=400, detail="Invite is invalid or has already been used.")
+        else:
+            # Create a new workspace for the user since it's a fresh signup
+            ws_name = user.company_name if user.account_type == "company" else f"{user.name or 'My'} Workspace"
+            ws_resp = supabase.table("workspaces").insert({
+                "name": ws_name,
+                "owner_id": new_user_id
+            }).execute()
+            
+            if ws_resp.data:
+                new_ws_id = ws_resp.data[0]['id']
+                supabase.table("user_workspaces").insert({
+                    "user_id": new_user_id,
+                    "workspace_id": new_ws_id,
+                    "role": "owner"
+                }).execute()
 
         return {"message": "User created successfully", "user": res.user}
     except HTTPException:
