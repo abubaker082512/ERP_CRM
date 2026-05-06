@@ -284,6 +284,57 @@ export default function DashboardPage() {
                         </table>
                     </div>
                 </div>
+
+                {/* ── AI Ask Data Widget ── */}
+                <div className="galaxy-card p-6 mt-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Sparkles className="text-purple-400" size={20} />
+                        <h3 className="text-lg font-semibold text-gray-100">Ask Galaxy AI</h3>
+                    </div>
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            const formData = new FormData(e.currentTarget);
+                            const question = formData.get("question") as string;
+                            if (!question) return;
+
+                            const inputEl = e.currentTarget.querySelector("input");
+                            if (inputEl) inputEl.disabled = true;
+
+                            try {
+                                const res = await fetchAPI("/ai/ask", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ question })
+                                });
+                                if (res.ok) {
+                                    const data = await res.json();
+                                    // Normally you'd store this in state and render it
+                                    // For simplicity in this widget, we'll alert the answer or you can extend it
+                                    alert(`Galaxy AI says:\n\n${data.answer}`);
+                                } else {
+                                    alert("AI failed to answer.");
+                                }
+                            } finally {
+                                if (inputEl) {
+                                    inputEl.disabled = false;
+                                    inputEl.value = "";
+                                }
+                            }
+                        }}
+                        className="flex gap-3"
+                    >
+                        <input 
+                            name="question"
+                            type="text" 
+                            placeholder="e.g. What is my total sales revenue?" 
+                            className="flex-1 bg-[#1E293B] border border-gray-700 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-purple-500 transition-colors shadow-inner"
+                        />
+                        <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-purple-600/20">
+                            Ask
+                        </button>
+                    </form>
+                </div>
             </div>
 
     );

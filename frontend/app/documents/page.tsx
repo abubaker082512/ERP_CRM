@@ -1,115 +1,171 @@
 "use client";
-import { fetchAPI } from '@/lib/api';
-
-import DocumentsHeader from "@/components/documents/DocumentsHeader";
-import { useEffect, useState } from "react";
-import { Folder, File, MoreVertical, Plus } from "lucide-react";
-
-type Document = {
-    id: string;
-    name: string;
-    type: string;
-    created_at: string;
-};
+import { fetchAPI } from "@/lib/api";
+import { useState, useEffect } from "react";
+import AppHeader from "@/components/layout/AppHeader";
+import { Folder, FileText, Upload, Plus, Download, Trash2, Search, Tag } from "lucide-react";
 
 export default function DocumentsPage() {
-    const [docs, setDocs] = useState<Document[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newName, setNewName] = useState("");
-    const [newType, setNewType] = useState("folder");
+  const [folders, setFolders] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [currentFolder, setCurrentFolder] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
 
-    useEffect(() => {
-        fetchAPI("/documents/documents")
-            .then((r) => r.ok ? r.json() : [])
-            .then(setDocs)
-            .catch(console.error);
-    }, []);
+  useEffect(() => { loadData(); }, [currentFolder, search]);
 
-    const createDoc = async () => {
-        if (!newName.trim()) return;
-        const res = await fetchAPI("/documents/documents", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: newName, type: newType }),
-        });
-        if (res.ok) {
-            const doc = await res.json();
-            setDocs([...docs, doc]);
-            setNewName("");
-            setIsModalOpen(false);
-        }
-    };
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      if (!search && !currentFolder) {
+        const foldRes = await fetchAPI("/documents/folders");
+        if (foldRes.ok) setFolders(await foldRes.json());
+      }
 
-    return (
-        <div className="flex flex-col h-screen">
-            <DocumentsHeader />
+      let url = "/documents/documents?";
+      if (currentFolder) url += `folder_id=${currentFolder}&`;
+      if (search) url += `search=${search}&`;
 
-            <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-gray-200">My Documents</h2>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded flex items-center gap-1"
-                    >
-                        <Plus size={16} /> New
-                    </button>
-                </div>
+      const docRes = await fetchAPI(url);
+      if (docRes.ok) setDocuments(await docRes.json());
+    } finally { setLoading(false); }
+  };
 
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {docs.map((doc) => (
-                        <div
-                            key={doc.id}
-                            className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer group flex flex-col items-center text-center"
-                        >
-                            <div className="mb-3 text-gray-400 group-hover:text-blue-400">
-                                {doc.type === 'folder' ? <Folder size={48} fill="currentColor" className="text-gray-600 group-hover:text-blue-900/50" /> : <File size={48} />}
-                            </div>
-                            <p className="text-sm font-medium text-gray-200 truncate w-full">{doc.name}</p>
-                            <p className="text-xs text-gray-500 mt-1">{new Date(doc.created_at).toLocaleDateString()}</p>
-                        </div>
-                    ))}
-                    {docs.length === 0 && (
-                        <div className="col-span-full text-center py-12 text-gray-500">
-                            No documents found. Upload or create one.
-                        </div>
-                    )}
-                </div>
-            </div>
+  const createFolder = async () => {
+    if (!newFolderName.trim()) return;
+    await fetchAPI("/documents/folders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newFolderName, folder_id: currentFolder })
+    });
+    setNewFolderName("");
+    setIsFolderModalOpen(false);
+    loadData();
+  };
 
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="bg-[#1E293B] rounded-lg p-6 w-full max-w-md border border-gray-700">
-                        <h3 className="text-lg font-semibold text-white mb-4">New Item</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Type</label>
-                                <select
-                                    value={newType}
-                                    onChange={(e) => setNewType(e.target.value)}
-                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500"
-                                >
-                                    <option value="folder">Folder</option>
-                                    <option value="file">File (Placeholder)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Name</label>
-                                <input
-                                    type="text"
-                                    value={newName}
-                                    onChange={(e) => setNewName(e.target.value)}
-                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500"
-                                    placeholder="e.g. Project Specs"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex justify-end gap-3 mt-6">
-                            <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-300 hover:text-white">Cancel</button>
-                            <button onClick={createDoc} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Create</button>
-                        </div>
-                    </div>
-                </div>
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (currentFolder) formData.append("folder_id", currentFolder);
+
+      const res = await fetchAPI("/documents/upload", { method: "POST", body: formData }, true);
+      if (res.ok) loadData();
+    } finally { setUploading(false); }
+  };
+
+  const deleteDoc = async (id: string, isFolder = false) => {
+    if (!confirm(`Delete this ${isFolder ? "folder and all its contents" : "document"}?`)) return;
+    await fetchAPI(`/documents/documents/${id}`, { method: "DELETE" });
+    loadData();
+  };
+
+  return (
+    <div className="flex flex-col h-screen">
+      <AppHeader title="Documents" />
+
+      <div className="flex-1 overflow-auto p-6 max-w-7xl mx-auto w-full">
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div className="flex items-center gap-2">
+            {currentFolder && (
+              <button onClick={() => setCurrentFolder(null)} className="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-sm transition-colors">
+                Back to root
+              </button>
             )}
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input type="text" placeholder="Search documents..." value={search} onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-4 py-2 bg-[#1E293B] border border-gray-700 rounded-lg text-sm text-white focus:border-indigo-500 outline-none w-64" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setIsFolderModalOpen(true)}
+              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+              <Folder size={16} /> New Folder
+            </button>
+            <label className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
+              <Upload size={16} /> {uploading ? "Uploading..." : "Upload File"}
+              <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading} />
+            </label>
+          </div>
         </div>
-    );
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {/* Folders (only in root or if not searching) */}
+            {!search && !currentFolder && folders.map(f => (
+              <div key={f.id} onClick={() => setCurrentFolder(f.id)}
+                className="bg-[#1E293B] border border-gray-700 hover:border-indigo-500 rounded-xl p-4 cursor-pointer transition-all group relative flex flex-col items-center justify-center aspect-square shadow-sm">
+                <Folder size={48} className="text-indigo-400 mb-3 group-hover:scale-110 transition-transform" />
+                <p className="text-sm font-medium text-white text-center truncate w-full px-2">{f.name}</p>
+                <button onClick={(e) => { e.stopPropagation(); deleteDoc(f.id, true); }}
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-400 hover:bg-red-500/20 p-1.5 rounded transition-all">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+
+            {/* Documents */}
+            {documents.map(d => (
+              <div key={d.id}
+                className="bg-[#1E293B] border border-gray-700 hover:border-gray-500 rounded-xl p-4 transition-all group relative flex flex-col items-center justify-center aspect-square shadow-sm">
+                {d.mimetype?.includes("image") ? (
+                  <div className="w-16 h-16 rounded mb-3 overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
+                    <img src={d.file_url} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <FileText size={48} className="text-gray-400 mb-3 group-hover:text-white transition-colors" />
+                )}
+                <p className="text-xs font-medium text-white text-center truncate w-full px-1">{d.name}</p>
+                <p className="text-[10px] text-gray-500 mt-1">{(d.file_size / 1024).toFixed(1)} KB</p>
+                
+                {/* Actions overlay */}
+                <div className="absolute inset-0 bg-black/60 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity backdrop-blur-[1px]">
+                  <a href={d.file_url} target="_blank" rel="noreferrer"
+                    className="bg-white/20 hover:bg-white/40 text-white p-2 rounded-full transition-colors" title="Download">
+                    <Download size={16} />
+                  </a>
+                  <button onClick={() => deleteDoc(d.id)}
+                    className="bg-red-500/20 hover:bg-red-500/50 text-red-400 p-2 rounded-full transition-colors" title="Delete">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {folders.length === 0 && documents.length === 0 && (
+              <div className="col-span-full py-20 text-center text-gray-500">
+                <Folder size={48} className="mx-auto text-gray-600 mb-4 opacity-50" />
+                <p>This folder is empty. Upload files or create folders.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Folder Modal */}
+      {isFolderModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-[#1E293B] rounded-xl p-6 w-full max-w-sm border border-gray-700 shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-4">Create Folder</h3>
+            <input type="text" value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)}
+              className="w-full bg-[#0F172A] border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-indigo-500 outline-none mb-6" placeholder="Folder Name" />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setIsFolderModalOpen(false)} className="px-4 py-2 text-gray-300 hover:text-white text-sm font-medium">Cancel</button>
+              <button onClick={createFolder} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Create</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
