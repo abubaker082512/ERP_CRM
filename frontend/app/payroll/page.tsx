@@ -84,7 +84,6 @@ export default function PayrollPage() {
             <p className="text-gray-400 mb-6 max-w-sm">Create a new payroll batch to automatically generate payslips for all active employees.</p>
             <button onClick={() => setIsModalOpen(true)} className="bg-emerald-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-emerald-500 transition-colors">Create First Batch</button>
           </div>
-        ) : (
         ) : activeTab === 'batches' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {runs.map(run => (
@@ -159,7 +158,6 @@ export default function PayrollPage() {
                 </tbody>
               </table>
           </div>
-        )}
         )}
       </div>
 
