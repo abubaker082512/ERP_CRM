@@ -30,13 +30,19 @@ def get_supabase_client(request: Request, credentials: HTTPAuthorizationCredenti
         raise HTTPException(status_code=401, detail="Invalid token: could not identify user")
     
     uid = user_resp.user.id
+    user_email = user_resp.user.email
+    
+    # Identify Super Admin (e.g. any @galaxy.com email or specific admin emails)
+    is_super_admin = False
+    if user_email and (user_email.endswith('@galaxy.com') or user_email == 'abubaker@galaxy.com' or user_email == 'admin@galaxy.com'):
+        is_super_admin = True
     
     # Enforce Subscription / Trial status ONLY for mutating endpoints (POST, PUT, DELETE)
     # except for billing which always needs to pass through to let them pay.
     is_mutation = request.method in ["POST", "PUT", "DELETE"]
     is_billing = request.url.path.startswith("/api/v1/billing")
 
-    if is_mutation and not is_billing:
+    if is_mutation and not is_billing and not is_super_admin:
         try:
             # Use service-level client (anon key) to query tenants table for this uid
             tenant_res = client.table("tenants").select("subscription_status, trial_ends_at").eq("id", str(uid)).execute()
