@@ -2,40 +2,16 @@ from app.api.deps import get_supabase_client
 from supabase import Client
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
-from pydantic import BaseModel
-from datetime import date
+from datetime import datetime, date, timezone
+from app.schemas.mrp import (
+    Bom, BomCreate, BomLineCreate, 
+    Production, ProductionCreate, ProductionUpdate,
+    WorkCenter, WorkCenterCreate,
+    WorkOrder, WorkOrderCreate
+)
 
 
 router = APIRouter()
-
-
-class BomLineCreate(BaseModel):
-    product_id: str
-    product_qty: float = 1.0
-
-
-class BomCreate(BaseModel):
-    product_id: Optional[str] = None
-    code: Optional[str] = None
-    product_qty: Optional[float] = 1.0
-    type: Optional[str] = "normal"
-    lines: Optional[List[BomLineCreate]] = []
-
-
-class ProductionCreate(BaseModel):
-    name: Optional[str] = "MO/New"
-    product_id: Optional[str] = None
-    product_qty: Optional[float] = 1.0
-    state: Optional[str] = "draft"
-    bom_id: Optional[str] = None
-    scheduled_date: Optional[str] = None
-
-
-class ProductionUpdate(BaseModel):
-    product_qty: Optional[float] = None
-    state: Optional[str] = None
-    bom_id: Optional[str] = None
-    scheduled_date: Optional[str] = None
 
 
 # ─── BOMs ────────────────────────────────────────────────────

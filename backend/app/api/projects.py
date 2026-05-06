@@ -2,7 +2,7 @@ from app.api.deps import get_supabase_client
 from supabase import Client
 from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.project import Project, ProjectCreate, ProjectTask, ProjectTaskCreate
-from typing import List
+from typing import List, Optional
 
 router = APIRouter()
 
