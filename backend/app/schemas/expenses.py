@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from uuid import UUID
-from datetime import date, datetime
+from datetime import date as DateType, datetime
 
 class ExpenseBase(BaseModel):
     name: str
@@ -11,7 +11,7 @@ class ExpenseBase(BaseModel):
     unit_amount: float = 0.0
     quantity: float = 1.0
     state: str = "draft"
-    date: date = date.today()
+    date: Optional[DateType] = None
 
 class ExpenseCreate(ExpenseBase):
     pass

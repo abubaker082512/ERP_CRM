@@ -46,6 +46,12 @@ class ProductionBase(BaseModel):
 class ProductionCreate(ProductionBase):
     pass
 
+class ProductionUpdate(BaseModel):
+    product_qty: Optional[float] = None
+    state: Optional[str] = None
+    bom_id: Optional[UUID] = None
+    scheduled_date: Optional[str] = None
+
 class Production(ProductionBase):
     id: UUID
     date_planned_start: datetime
