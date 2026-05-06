@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional, Any
 from pydantic import BaseModel
 from datetime import date
+from app.schemas.accounting import Payment, PaymentCreate
 
 
 router = APIRouter()

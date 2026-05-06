@@ -261,3 +261,17 @@ CREATE TABLE IF NOT EXISTS maintenance_request (
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 11. Payroll Runs (Batches) — required by Payroll API
+CREATE TABLE IF NOT EXISTS hr_payroll_run (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    run_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    state TEXT DEFAULT 'draft', -- draft, done
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 12. Todo task enhancements
+ALTER TABLE todo_task ADD COLUMN IF NOT EXISTS date_deadline DATE;
+ALTER TABLE todo_task ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;
+ALTER TABLE todo_task ADD COLUMN IF NOT EXISTS tag_ids TEXT[];

@@ -35,7 +35,7 @@ class PayslipCreate(PayslipBase):
 
 class Payslip(PayslipBase):
     id: UUID
-    generated_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
