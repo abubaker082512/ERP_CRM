@@ -93,12 +93,12 @@ CREATE TABLE IF NOT EXISTS mrp_workorder (
 ALTER TABLE mrp_production ADD COLUMN IF NOT EXISTS reservation_state TEXT DEFAULT 'waiting';
 
 -- 6. CRM & Helpdesk
-ALTER TABLE lead ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'lead';
-ALTER TABLE lead ADD COLUMN IF NOT EXISTS expected_revenue NUMERIC(15, 2) DEFAULT 0.0;
-ALTER TABLE lead ADD COLUMN IF NOT EXISTS prorated_revenue NUMERIC(15, 2) DEFAULT 0.0;
-ALTER TABLE lead ADD COLUMN IF NOT EXISTS date_deadline DATE;
-ALTER TABLE lead ADD COLUMN IF NOT EXISTS lost_reason TEXT;
-ALTER TABLE lead ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;
+ALTER TABLE crm_lead ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'lead';
+ALTER TABLE crm_lead ADD COLUMN IF NOT EXISTS expected_revenue NUMERIC(15, 2) DEFAULT 0.0;
+ALTER TABLE crm_lead ADD COLUMN IF NOT EXISTS prorated_revenue NUMERIC(15, 2) DEFAULT 0.0;
+ALTER TABLE crm_lead ADD COLUMN IF NOT EXISTS date_deadline DATE;
+ALTER TABLE crm_lead ADD COLUMN IF NOT EXISTS lost_reason TEXT;
+ALTER TABLE crm_lead ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS helpdesk_team (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -224,7 +224,7 @@ CREATE TABLE IF NOT EXISTS hr_expense (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     employee_id UUID REFERENCES hr_employee(id),
-    product_id UUID REFERENCES product(id),
+    product_id UUID REFERENCES product_product(id),
     total_amount NUMERIC(15, 2) DEFAULT 0.0,
     unit_amount NUMERIC(15, 2) DEFAULT 0.0,
     quantity NUMERIC(15, 2) DEFAULT 1.0,
