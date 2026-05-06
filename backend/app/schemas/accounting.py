@@ -60,7 +60,9 @@ class MoveBase(BaseModel):
     partner_id: Optional[UUID] = None
     move_type: str
     state: str = 'draft'
+    payment_state: str = 'not_paid'
     amount_total: float = 0.0
+    amount_residual: float = 0.0
 
 class MoveCreate(MoveBase):
     lines: List[MoveLineCreate] = []
@@ -68,6 +70,26 @@ class MoveCreate(MoveBase):
 class Move(MoveBase):
     id: UUID
     lines: List[MoveLine] = []
+
+    class Config:
+        from_attributes = True
+
+# Payment
+class PaymentBase(BaseModel):
+    date: Optional[date] = None
+    amount: float
+    payment_type: str # inbound, outbound
+    partner_id: UUID
+    journal_id: UUID
+    state: str = 'draft'
+    ref: Optional[str] = None
+
+class PaymentCreate(PaymentBase):
+    invoice_ids: List[UUID] = []
+
+class Payment(PaymentBase):
+    id: UUID
+    name: str
 
     class Config:
         from_attributes = True

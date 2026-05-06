@@ -6,13 +6,16 @@ import CRMHeader from '@/components/crm/CRMHeader';
 import { Plus, Settings, Star, Clock } from 'lucide-react';
 import Link from 'next/link';
 
-type Opportunity = {
+type Lead = {
     id: string;
     name: string;
+    type: 'lead' | 'opportunity';
     expected_revenue: number;
-    stage: 'New' | 'Qualified' | 'Proposition' | 'Won';
-    win_probability: number;
-    priority?: number; // 0, 1, 2, 3 stars
+    status: string;
+    probability: number;
+    priority: number;
+    company_name?: string;
+    email?: string;
 };
 
 const initialStages = [
@@ -23,50 +26,49 @@ const initialStages = [
 ];
 
 export default function CRMPage() {
-    const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [activeView, setActiveView] = useState<'leads' | 'pipeline'>('pipeline');
     const [isNewModalOpen, setIsNewModalOpen] = useState(false);
     const [newOppName, setNewOppName] = useState('');
     const [newOppRevenue, setNewOppRevenue] = useState('');
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchOpportunities();
-    }, []);
-
-    const fetchOpportunities = async () => {
+    const fetchLeads = async () => {
         try {
-            const res = await fetchAPI("/opportunities");
+            const res = await fetchAPI("/leads");
             if (res.ok) {
                 const data = await res.json();
-                setOpportunities(Array.isArray(data) ? data : []);
-            } else {
-                setOpportunities([]);
+                setLeads(Array.isArray(data) ? data : []);
             }
         } catch (error) {
-            console.error("Failed to fetch opportunities", error);
-            setOpportunities([]);
+            console.error("Failed to fetch leads", error);
         } finally {
             setLoading(false);
         }
     };
 
+    useEffect(() => {
+        fetchLeads();
+    }, []);
+
     const handleAddOpportunity = async () => {
         if (!newOppName.trim()) return;
 
         try {
-            const res = await fetchAPI("/opportunities", {
+            const res = await fetchAPI("/leads", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: newOppName,
                     expected_revenue: parseFloat(newOppRevenue) || 0,
-                    stage: 'New'
+                    status: 'New',
+                    type: 'opportunity'
                 })
             });
 
             if (res.ok) {
-                const newOpp = await res.json();
-                setOpportunities([...opportunities, newOpp]);
+                const newLead = await res.json();
+                setLeads([...leads, newLead]);
                 setNewOppName('');
                 setNewOppRevenue('');
                 setIsNewModalOpen(false);
@@ -77,8 +79,8 @@ export default function CRMPage() {
     };
 
     const getStageTotal = (stageId: string) => {
-        return opportunities
-            .filter(o => o.stage === stageId)
+        return leads
+            .filter(o => o.status === stageId && o.type === 'opportunity')
             .reduce((sum, o) => sum + (o.expected_revenue || 0), 0);
     };
 
@@ -91,28 +93,24 @@ export default function CRMPage() {
         const oppId = e.dataTransfer.getData('opp_id');
         if (!oppId) return;
 
-        const opp = opportunities.find(o => o.id === oppId);
-        if (!opp || opp.stage === newStageId) return;
+        const opp = leads.find(o => o.id === oppId);
+        if (!opp || opp.status === newStageId) return;
 
         // Optimistic UI update
-        const originalStage = opp.stage;
-        setOpportunities(prev => prev.map(o => o.id === oppId ? { ...o, stage: newStageId as any } : o));
+        const originalStage = opp.status;
+        setLeads(prev => prev.map(o => o.id === oppId ? { ...o, status: newStageId } : o));
 
         try {
-            const res = await fetchAPI(`/opportunities/${oppId}`, {
+            const res = await fetchAPI(`/leads/${oppId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ stage: newStageId })
+                body: JSON.stringify({ status: newStageId })
             });
 
-            if (!res.ok) {
-                throw new Error("Failed to update stage");
-            }
+            if (!res.ok) throw new Error("Failed to update stage");
         } catch (error) {
-            console.error(error);
-            // Revert on failure
-            setOpportunities(prev => prev.map(o => o.id === oppId ? { ...o, stage: originalStage } : o));
-            alert("Failed to move opportunity. Please try again.");
+            setLeads(prev => prev.map(o => o.id === oppId ? { ...o, status: originalStage } : o));
+            alert("Failed to move opportunity.");
         }
     };
 
@@ -122,9 +120,23 @@ export default function CRMPage() {
 
     return (
         <div className="flex flex-col h-[calc(100vh-120px)]">
+            <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-[#1E293B]">
+                <div className="flex gap-4">
+                    <button onClick={() => setActiveView('pipeline')} className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-widest transition-all ${activeView === 'pipeline' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20' : 'text-gray-400 hover:text-white'}`}>
+                        Pipeline
+                    </button>
+                    <button onClick={() => setActiveView('leads')} className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-widest transition-all ${activeView === 'leads' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20' : 'text-gray-400 hover:text-white'}`}>
+                        Leads
+                    </button>
+                </div>
+                <button onClick={() => setIsNewModalOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-purple-900/20 transition-all">
+                    <Plus size={18} /> New {activeView === 'leads' ? 'Lead' : 'Opportunity'}
+                </button>
+            </div>
 
             <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
-                <div className="flex h-full gap-4 min-w-max">
+                {activeView === 'pipeline' ? (
+                    <div className="flex h-full gap-4 min-w-max">
                     {initialStages.map((stage) => {
                         const stageOpps = opportunities.filter(o => o.stage === stage.id);
                         return (
@@ -230,7 +242,7 @@ export default function CRMPage() {
                                             <Link href={`/crm/${opp.id}`} className="block">
                                                 <div className="flex justify-between items-start mb-1">
                                                     <h4 className="text-sm font-medium text-gray-200 truncate pr-2 group-hover:text-purple-400 transition-colors">{opp.name}</h4>
-                                                    <div className="w-2 h-2 rounded-full bg-green-500 shrink-0 mt-1.5"></div>
+                                                    <div className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${opp.priority > 1 ? 'bg-orange-500 animate-pulse' : 'bg-green-500'}`}></div>
                                                 </div>
 
                                                 <div className="text-sm text-gray-300 font-medium mb-2">
@@ -240,7 +252,7 @@ export default function CRMPage() {
                                                 <div className="flex items-center justify-between mt-2">
                                                     <div className="flex gap-0.5">
                                                         {[1, 2, 3].map(i => (
-                                                            <Star key={i} size={12} className="text-gray-600 hover:text-yellow-500 cursor-pointer" />
+                                                            <Star key={i} size={12} className={i <= (opp.priority || 0) ? "text-yellow-500 fill-yellow-500" : "text-gray-600"} />
                                                         ))}
                                                     </div>
                                                     <div className="flex items-center gap-2">
@@ -258,6 +270,40 @@ export default function CRMPage() {
                         );
                     })}
                 </div>
+                ) : (
+                    <div className="galaxy-card overflow-hidden">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-[#1E293B] text-[10px] uppercase tracking-widest text-gray-500 border-b border-gray-800">
+                                <tr>
+                                    <th className="px-6 py-4">Lead Name</th>
+                                    <th className="px-6 py-4">Company</th>
+                                    <th className="px-6 py-4">Email</th>
+                                    <th className="px-6 py-4">Status</th>
+                                    <th className="px-6 py-4">Probability</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-800">
+                                {leads.filter(l => l.type === 'lead').map(lead => (
+                                    <tr key={lead.id} className="hover:bg-white/5 transition-colors group">
+                                        <td className="px-6 py-4">
+                                            <Link href={`/crm/${lead.id}`} className="text-purple-400 hover:underline font-medium">{lead.name}</Link>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-400">{lead.company_name || '—'}</td>
+                                        <td className="px-6 py-4 text-gray-500 font-mono text-xs">{lead.email || '—'}</td>
+                                        <td className="px-6 py-4">
+                                            <span className="px-2 py-0.5 rounded-full bg-gray-700 text-[10px] font-bold uppercase text-gray-300">{lead.status}</span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                                <div className="bg-purple-500 h-full" style={{ width: `${lead.probability}%` }}></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -60,10 +60,10 @@ def create_bom(bom: BomCreate, client: Client = Depends(get_supabase_client)):
     return created_bom
 
 
-@router.get("/boms")
-def read_boms(client: Client = Depends(get_supabase_client)):
-    resp = client.table("mrp_bom").select("*, product_product(name), mrp_bom_line(*, product_product(name))").execute()
-    return resp.data or []
+@router.get("/boms", response_model=List[Bom])
+def read_boms(skip: int = 0, limit: int = 100, client: Client = Depends(get_supabase_client)):
+    response = client.table("mrp_bom").select("*, lines:mrp_bom_line(*)").range(skip, skip + limit - 1).execute()
+    return response.data
 
 
 @router.get("/boms/{bom_id}")
@@ -79,6 +79,55 @@ def delete_bom(bom_id: str, client: Client = Depends(get_supabase_client)):
     client.table("mrp_bom_line").delete().eq("bom_id", bom_id).execute()
     client.table("mrp_bom").delete().eq("id", bom_id).execute()
     return {"message": "BOM deleted"}
+
+
+# --- Work Centers ---
+@router.post("/workcenters", response_model=WorkCenter)
+def create_work_center(wc: WorkCenterCreate, client: Client = Depends(get_supabase_client)):
+    response = client.table("mrp_workcenter").insert(wc.dict()).execute()
+    if not response.data:
+        raise HTTPException(status_code=400, detail="Could not create work center")
+    return response.data[0]
+
+
+@router.get("/workcenters", response_model=List[WorkCenter])
+def read_work_centers(client: Client = Depends(get_supabase_client)):
+    response = client.table("mrp_workcenter").select("*").execute()
+    return response.data
+
+
+# --- Work Orders ---
+@router.post("/workorders", response_model=WorkOrder)
+def create_work_order(wo: WorkOrderCreate, client: Client = Depends(get_supabase_client)):
+    response = client.table("mrp_workorder").insert(wo.dict()).execute()
+    if not response.data:
+        raise HTTPException(status_code=400, detail="Could not create work order")
+    return response.data[0]
+
+
+@router.get("/workorders", response_model=List[WorkOrder])
+def read_work_orders(production_id: Optional[str] = None, client: Client = Depends(get_supabase_client)):
+    query = client.table("mrp_workorder").select("*")
+    if production_id:
+        query = query.eq("production_id", production_id)
+    response = query.execute()
+    return response.data
+
+
+@router.post("/workorders/{wo_id}/start", response_model=WorkOrder)
+def start_work_order(wo_id: str, client: Client = Depends(get_supabase_client)):
+    response = client.table("mrp_workorder").update({"state": "progress", "date_start": datetime.now().isoformat()}).eq("id", wo_id).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Work order not found")
+    return response.data[0]
+
+
+@router.post("/workorders/{wo_id}/done", response_model=WorkOrder)
+def done_work_order(wo_id: str, client: Client = Depends(get_supabase_client)):
+    response = client.table("mrp_workorder").update({"state": "done", "date_finished": datetime.now().isoformat()}).eq("id", wo_id).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Work order not found")
+    return response.data[0]
 
 
 # ─── Manufacturing Orders ─────────────────────────────────────

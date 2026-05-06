@@ -14,6 +14,14 @@ def create_sales_order(order: SalesOrderCreate, client: Client = Depends(get_sup
         "name": order.name,
         "state": order.state or "draft",
         "amount_total": order.amount_total,
+        "user_id": str(order.user_id) if order.user_id else None,
+        "team_id": str(order.team_id) if order.team_id else None,
+        "payment_term_id": str(order.payment_term_id) if order.payment_term_id else None,
+        "pricelist_id": str(order.pricelist_id) if order.pricelist_id else None,
+        "fiscal_position_id": str(order.fiscal_position_id) if order.fiscal_position_id else None,
+        "validity_date": order.validity_date.isoformat() if order.validity_date else None,
+        "require_signature": order.require_signature,
+        "require_payment": order.require_payment,
     }
     if order.contact_id:
         order_data["partner_id"] = str(order.contact_id)
@@ -95,29 +103,39 @@ def confirm_sales_order(order_id: str, client: Client = Depends(get_supabase_cli
         }
         client.table("account_move").insert(move_data).execute()
 
-    # 4. Automation: Create Inventory Delivery Order (Stock Move)
+    # 4. Automation: Create Inventory Delivery Order (Stock Picking + Moves)
     lines = order_data.get("sale_order_line", [])
     if lines:
-        stock_moves = []
-        for line in lines:
-            if line.get("product_id"):
-                stock_moves.append({
-                    "name": f"OUT/{order_data.get('name', 'Draft')}",
-                    "product_id": line["product_id"],
-                    "quantity": line.get("product_uom_qty", 1),
-                    "state": "waiting",
-                    # Provide generic UUIDs for locations or fetch real ones in production
-                    "location_id": "00000000-0000-0000-0000-000000000000",
-                    "location_dest_id": "00000000-0000-0000-0000-000000000000"
-                })
-        if stock_moves:
-            # We must ignore RLS location UUID foreign key errors for this demo
-            # or we should make sure the foreign key allows these placeholder UUIDs.
-            # Assuming the backend schema handles it or we handle exceptions gracefully.
-            try:
-                client.table("inventory_move").insert(stock_moves).execute()
-            except Exception as e:
-                print(f"Warning: Failed to create inventory move (likely location FK error): {e}")
+        # Create Picking first
+        picking_data = {
+            "partner_id": order_data.get("partner_id"),
+            "sale_id": order_id,
+            "picking_type_code": "outgoing",
+            "origin": order_data.get("name"),
+            "state": "confirmed"
+        }
+        picking_resp = client.table("inventory_picking").insert(picking_data).execute()
+        
+        if picking_resp.data:
+            picking_id = picking_resp.data[0]["id"]
+            stock_moves = []
+            for line in lines:
+                if line.get("product_id"):
+                    stock_moves.append({
+                        "name": f"OUT/{order_data.get('name', 'Draft')}",
+                        "product_id": line["product_id"],
+                        "quantity": line.get("product_uom_qty", 1),
+                        "state": "confirmed",
+                        "picking_id": picking_id,
+                        # Provide generic UUIDs for locations
+                        "location_id": "00000000-0000-0000-0000-000000000000",
+                        "location_dest_id": "00000000-0000-0000-0000-000000000000"
+                    })
+            if stock_moves:
+                try:
+                    client.table("inventory_move").insert(stock_moves).execute()
+                except Exception as e:
+                    print(f"Warning: Failed to create inventory moves: {e}")
 
     # Refetch updated order
     updated_order_resp = client.table("sale_order").select("*, sale_order_line(*)").eq("id", order_id).execute()
@@ -135,8 +153,17 @@ def _map_sale_order(row: dict) -> dict:
         "name": row.get("name"),
         "customer_name": row.get("customer_name"),
         "contact_id": row.get("partner_id"),
+        "user_id": row.get("user_id"),
+        "team_id": row.get("team_id"),
+        "payment_term_id": row.get("payment_term_id"),
+        "pricelist_id": row.get("pricelist_id"),
+        "fiscal_position_id": row.get("fiscal_position_id"),
         "state": row.get("state", "draft"),
         "amount_total": row.get("amount_total", 0.0),
+        "invoice_status": row.get("invoice_status", "no"),
+        "validity_date": row.get("validity_date"),
+        "require_signature": row.get("require_signature", False),
+        "require_payment": row.get("require_payment", False),
         "date_order": row.get("date_order") or row.get("created_at"),
         "created_at": row.get("date_order") or row.get("created_at"),
         "lines": row.get("sale_order_line", row.get("lines", [])),

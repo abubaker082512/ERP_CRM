@@ -23,11 +23,12 @@ class SalaryStructure(SalaryStructureBase):
 # Payslip
 class PayslipBase(BaseModel):
     employee_id: UUID
-    period_start: Optional[date] = None
-    period_end: Optional[date] = None
-    gross_amount: float = 0.0
-    net_amount: float = 0.0
-    salary_structure_id: Optional[UUID] = None
+    date_from: date
+    date_to: date
+    number: Optional[str] = None
+    state: str = "draft"
+    basic_wage: float = 0.0
+    net_wage: float = 0.0
 
 class PayslipCreate(PayslipBase):
     pass

@@ -20,6 +20,8 @@ type Move = {
     state: string;
     journal_id: string;
     amount_total: number;
+    amount_residual: number;
+    payment_state: string;
     lines?: MoveLine[];
 };
 
@@ -28,6 +30,34 @@ export default function AccountingMoveDetail() {
     const router = useRouter();
     const [move, setMove] = useState<Move | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const handleRegisterPayment = async () => {
+        if (!move) return;
+        try {
+            // Get a journal for payments (bank or cash)
+            const journals = await fetchAPI('/accounting/journals').then(r => r.json());
+            const bankJournal = journals.find((j: any) => j.type === 'bank') || journals[0];
+
+            const res = await fetchAPI('/accounting/payments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: move.amount_total,
+                    payment_type: move.move_type === 'out_invoice' ? 'inbound' : 'outbound',
+                    partner_id: (move as any).partner_id,
+                    journal_id: bankJournal.id,
+                    invoice_ids: [move.id]
+                })
+            });
+            if (res.ok) {
+                const updatedMove = await fetchAPI(`/accounting/moves/${id}`).then(r => r.json());
+                setMove(updatedMove);
+                alert("Payment Registered Successfully!");
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     useEffect(() => {
         if (!id) return;
@@ -56,12 +86,19 @@ export default function AccountingMoveDetail() {
                     <h1 className="text-xl font-bold">Journal Entry: {move.name}</h1>
                 </div>
                 <div className="flex gap-3">
+                    {move.payment_state === 'not_paid' && move.state === 'posted' && (
+                        <button onClick={() => handleRegisterPayment()} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-green-900/20">
+                            <DollarSign size={16} /> Register Payment
+                        </button>
+                    )}
                     <button className="flex items-center gap-2 px-4 py-2 border border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors text-sm font-medium">
                         <Trash2 size={16} /> Delete
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-purple-900/20">
-                        <CheckCircle size={16} /> Post Entry
-                    </button>
+                    {move.state === 'draft' && (
+                        <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-purple-900/20">
+                            <CheckCircle size={16} /> Post Entry
+                        </button>
+                    )}
                 </div>
             </div>
             
@@ -84,12 +121,16 @@ export default function AccountingMoveDetail() {
                             <p className="text-sm font-medium text-white mt-1">{move.ref || "—"}</p>
                         </div>
                         <div>
-                            <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mb-1">Status</label>
+                            <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mb-1">Payment</label>
                             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mt-1 inline-block ${
-                                move.state === 'posted' ? 'bg-green-500/20 text-green-400' : 'bg-gray-700 text-gray-300'
+                                move.payment_state === 'paid' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
                             }`}>
-                                {move.state}
+                                {move.payment_state?.replace('_', ' ')}
                             </span>
+                        </div>
+                        <div>
+                            <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mb-1">Due</label>
+                            <p className="text-sm font-bold text-white mt-1">${move.amount_residual?.toLocaleString(undefined, {minimumFractionDigits: 2}) || "0.00"}</p>
                         </div>
                     </div>
 

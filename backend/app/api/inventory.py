@@ -5,7 +5,8 @@ from app.schemas.inventory import (
     Warehouse, WarehouseCreate,
     Location, LocationCreate,
     StockMove, StockMoveCreate,
-    StockQuant
+    StockQuant,
+    StockPicking, StockPickingCreate
 )
 
 from typing import List
@@ -59,3 +60,36 @@ def read_stock_moves(skip: int = 0, limit: int = 100, client: Client = Depends(g
 def read_stock_quants(skip: int = 0, limit: int = 100, client: Client = Depends(get_supabase_client)):
     response = client.table("inventory_quant").select("*").range(skip, skip + limit - 1).execute()
     return response.data
+
+# --- Pickings ---
+@router.post("/pickings", response_model=StockPicking)
+def create_stock_picking(picking: StockPickingCreate, client: Client = Depends(get_supabase_client)):
+    data = picking.dict(exclude_unset=True)
+    response = client.table("inventory_picking").insert(data).execute()
+    if not response.data:
+        raise HTTPException(status_code=400, detail="Could not create stock picking")
+    return response.data[0]
+
+@router.get("/pickings", response_model=List[StockPicking])
+def read_stock_pickings(skip: int = 0, limit: int = 100, client: Client = Depends(get_supabase_client)):
+    response = client.table("inventory_picking").select("*").range(skip, skip + limit - 1).execute()
+    return response.data
+
+@router.get("/pickings/{picking_id}", response_model=StockPicking)
+def read_stock_picking(picking_id: str, client: Client = Depends(get_supabase_client)):
+    response = client.table("inventory_picking").select("*").eq("id", picking_id).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Stock picking not found")
+    return response.data[0]
+
+@router.post("/pickings/{picking_id}/validate", response_model=StockPicking)
+def validate_stock_picking(picking_id: str, client: Client = Depends(get_supabase_client)):
+    # 1. Update picking state to 'done'
+    response = client.table("inventory_picking").update({"state": "done", "date_done": datetime.now().isoformat()}).eq("id", picking_id).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Stock picking not found")
+    
+    # 2. Update related moves to 'done'
+    client.table("inventory_move").update({"state": "done"}).eq("picking_id", picking_id).execute()
+    
+    return response.data[0]

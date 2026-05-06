@@ -23,7 +23,12 @@ class EmployeeBase(BaseModel):
     department_id: Optional[UUID] = None
     work_email: Optional[str] = None
     work_phone: Optional[str] = None
-    manager_id: Optional[UUID] = None
+    parent_id: Optional[UUID] = None # Manager
+    coach_id: Optional[UUID] = None
+    private_email: Optional[str] = None
+    private_phone: Optional[str] = None
+    gender: Optional[str] = None
+    marital: Optional[str] = None
     image_url: Optional[str] = None
 
 class EmployeeCreate(EmployeeBase):

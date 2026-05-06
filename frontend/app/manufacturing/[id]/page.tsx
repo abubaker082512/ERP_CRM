@@ -1,201 +1,172 @@
 "use client";
-import { fetchAPI } from "@/lib/api";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { fetchAPI } from '@/lib/api';
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ArrowLeft, CheckCircle, Package, Wrench, Calendar, User, FileText, Trash2, Play, Check } from "lucide-react";
 import Link from "next/link";
-import {
-  ArrowLeft, Edit2, Save, X, CheckCircle, Trash2, PlayCircle,
-  Calendar, FileText, Package, CheckSquare
-} from "lucide-react";
 
-const STATE_STYLES: Record<string, string> = {
-  draft: "bg-gray-500/20 text-gray-400",
-  confirmed: "bg-blue-500/20 text-blue-400",
-  progress: "bg-yellow-500/20 text-yellow-400",
-  to_close: "bg-purple-500/20 text-purple-400",
-  done: "bg-green-500/20 text-green-400",
+const STATE_COLORS: Record<string, string> = {
+    draft: 'bg-gray-500/20 text-gray-400',
+    confirmed: 'bg-blue-500/20 text-blue-400',
+    progress: 'bg-orange-500/20 text-orange-400',
+    to_close: 'bg-indigo-500/20 text-indigo-400',
+    done: 'bg-green-500/20 text-green-400',
+    cancel: 'bg-red-500/20 text-red-400',
 };
 
-export default function ManufacturingOrderDetailPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
-  const [order, setOrder] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState<any>({});
-  const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+export default function ProductionDetailPage() {
+    const { id } = useParams();
+    const router = useRouter();
+    const [order, setOrder] = useState<any>(null);
+    const [workorders, setWorkorders] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetchOrder(); }, [params.id]);
+    useEffect(() => {
+        if (!id) return;
+        fetchData();
+    }, [id]);
 
-  const showToast = (msg: string, type: "success" | "error" = "success") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+    const fetchData = async () => {
+        try {
+            const [moRes, woRes] = await Promise.all([
+                fetchAPI(`/mrp/production/${id}`),
+                fetchAPI(`/mrp/workorders?production_id=${id}`)
+            ]);
+            if (moRes.ok) setOrder(await moRes.json());
+            if (woRes.ok) setWorkorders(await woRes.json());
+        } catch (e) { console.error(e); }
+        finally { setLoading(false); }
+    };
 
-  const fetchOrder = async () => {
-    try {
-      const res = await fetchAPI(`/mrp/production/${params.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setOrder(data); setForm(data);
-      } else router.push("/manufacturing");
-    } catch { router.push("/manufacturing"); }
-    finally { setLoading(false); }
-  };
+    const handleStartWorkOrder = async (woId: string) => {
+        const res = await fetchAPI(`/mrp/workorders/${woId}/start`, { method: "POST" });
+        if (res.ok) fetchData();
+    };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const res = await fetchAPI(`/mrp/production/${params.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product_qty: parseFloat(form.product_qty) || 1 }),
-      });
-      if (res.ok) { const d = await res.json(); setOrder({ ...order, ...d }); setEditing(false); showToast("Order saved"); }
-      else showToast("Failed to save", "error");
-    } finally { setSaving(false); }
-  };
+    const handleDoneWorkOrder = async (woId: string) => {
+        const res = await fetchAPI(`/mrp/workorders/${woId}/done`, { method: "POST" });
+        if (res.ok) fetchData();
+    };
 
-  const handleAction = async (action: "confirm" | "done") => {
-    try {
-      const res = await fetchAPI(`/mrp/production/${params.id}/${action}`, { method: "POST" });
-      if (res.ok) {
-        showToast(action === "confirm" ? "Order confirmed!" : "Production finished!");
-        fetchOrder();
-      } else showToast(`Failed to ${action}`, "error");
-    } catch { showToast(`Failed to ${action}`, "error"); }
-  };
+    if (loading) return <div className="p-8 text-white bg-[#0F172A] h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+    </div>;
+    if (!order) return null;
 
-  const handleDelete = async () => {
-    if (!confirm("Delete this manufacturing order?")) return;
-    await fetchAPI(`/mrp/production/${params.id}`, { method: "DELETE" });
-    router.push("/manufacturing");
-  };
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-  if (!order) return null;
-
-  const bomLines = order.mrp_bom?.mrp_bom_line || [];
-
-  return (
-    <div className="min-h-screen p-6 max-w-5xl mx-auto">
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-6 right-6 z-50 px-4 py-3 rounded-xl text-sm font-medium shadow-lg border ${toast.type === "success" ? "bg-green-500/20 border-green-500/30 text-green-400" : "bg-red-500/20 border-red-500/30 text-red-400"}`}>
-          {toast.msg}
-        </div>
-      )}
-
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-6 text-sm text-gray-400">
-        <Link href="/manufacturing" className="flex items-center gap-1 hover:text-purple-400 transition-colors">
-          <ArrowLeft size={16} /> Manufacturing
-        </Link>
-        <span>/</span>
-        <span className="text-white">{order.name}</span>
-      </div>
-
-      {/* Header */}
-      <div className="galaxy-card p-6 mb-6">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white mb-1">{order.name}</h1>
-            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${STATE_STYLES[order.state] || STATE_STYLES.draft}`}>
-              {order.state?.replace("_", " ").toUpperCase()}
-            </span>
-          </div>
-          <div className="flex gap-2">
-            {order.state === "draft" && (
-              <button onClick={() => handleAction("confirm")}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                <CheckCircle size={16} /> Confirm
-              </button>
-            )}
-            {order.state === "confirmed" && (
-              <button onClick={() => handleAction("done")}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                <CheckSquare size={16} /> Mark as Done
-              </button>
-            )}
-            {editing ? (
-              <>
-                <button onClick={handleSave} disabled={saving}
-                  className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm">
-                  <Save size={14} /> {saving ? "Saving..." : "Save"}
-                </button>
-                <button onClick={() => { setEditing(false); setForm(order); }}
-                  className="flex items-center gap-1 bg-white/5 text-gray-300 px-4 py-2 rounded-lg text-sm">
-                  <X size={14} /> Cancel
-                </button>
-              </>
-            ) : (
-              <>
-                {order.state === "draft" && (
-                  <button onClick={() => setEditing(true)}
-                    className="flex items-center gap-1 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2 rounded-lg text-sm">
-                    <Edit2 size={14} /> Edit
-                  </button>
-                )}
-                <button onClick={handleDelete}
-                  className="flex items-center gap-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm">
-                  <Trash2 size={14} /> Delete
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Info Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { icon: Package, label: "Product", value: order.product_product?.name || "—" },
-            { icon: FileText, label: "Quantity To Produce", value: editing ? null : order.product_qty },
-            { icon: FileText, label: "Bill of Materials", value: order.mrp_bom?.code || "—" },
-            { icon: Calendar, label: "Created On", value: order.created_at ? new Date(order.created_at).toLocaleDateString() : "—" },
-          ].map(({ icon: Icon, label, value }, i) => (
-            <div key={i} className="bg-white/3 rounded-xl p-3 border border-white/5">
-              <div className="flex items-center gap-1 text-xs text-gray-400 mb-1"><Icon size={11} /> {label}</div>
-              {value === null ? (
-                <input type="number" value={form.product_qty || ""} onChange={(e) => setForm({ ...form, product_qty: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-sm" />
-              ) : (
-                <p className="text-white font-medium text-sm">{value}</p>
-              )}
+    return (
+        <div className="flex flex-col h-screen bg-[#0F172A] text-gray-200">
+            <div className="bg-[#1E293B] border-b border-gray-800 p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Link href="/manufacturing" className="text-gray-400 hover:text-white transition-colors">
+                        <ArrowLeft size={20} />
+                    </Link>
+                    <h1 className="text-xl font-bold">MO: {order.name}</h1>
+                </div>
+                <div className="flex gap-3">
+                    {order.state === 'draft' && (
+                        <button className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-orange-900/20">
+                            <CheckCircle size={16} /> Confirm
+                        </button>
+                    )}
+                    <button className="flex items-center gap-2 px-4 py-2 border border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors text-sm font-medium">
+                        <Trash2 size={16} /> Cancel
+                    </button>
+                </div>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Components */}
-      <div className="galaxy-card p-6 mb-6">
-        <h2 className="text-sm font-semibold text-gray-300 mb-4">Components (To Consume)</h2>
-        {bomLines.length === 0 ? (
-          <p className="text-gray-500 text-sm text-center py-8">No components linked in the BOM.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-xs text-gray-400 uppercase border-b border-white/10">
-                <th className="text-left py-2">Product</th>
-                <th className="text-right py-2">To Consume</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bomLines.map((line: any, idx: number) => (
-                <tr key={idx} className="border-b border-white/5 hover:bg-white/3">
-                  <td className="py-3 text-white">{line.product_product?.name || line.product_id || "Component"}</td>
-                  <td className="py-3 text-right text-yellow-400 font-medium">
-                    {(line.product_qty * order.product_qty).toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
-  );
+            <div className="flex-1 overflow-auto p-6 max-w-6xl mx-auto w-full">
+                <div className="galaxy-card overflow-hidden mb-6">
+                    <div className="p-8 border-b border-gray-800 grid grid-cols-1 md:grid-cols-4 gap-8">
+                        <div>
+                            <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mb-1">Product</label>
+                            <p className="text-sm font-bold text-white uppercase">{order.product_id?.substring(0, 8)}...</p>
+                        </div>
+                        <div>
+                            <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mb-1">Quantity</label>
+                            <p className="text-sm font-bold text-white uppercase">{order.product_qty} Units</p>
+                        </div>
+                        <div>
+                            <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mb-1">Scheduled Date</label>
+                            <div className="flex items-center gap-2 mt-1">
+                                <Calendar size={14} className="text-orange-400" />
+                                <p className="text-sm font-medium text-white">{new Date(order.date_planned_start).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mb-1">Status</label>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mt-1 inline-block ${STATE_COLORS[order.state] || STATE_COLORS.draft}`}>
+                                {order.state}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="p-8">
+                        <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                            <Wrench size={20} className="text-orange-500" /> Work Orders
+                        </h2>
+                        
+                        <div className="bg-[#0F172A]/50 rounded-lg border border-gray-800 overflow-hidden">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-[10px] text-gray-500 uppercase border-b border-gray-800 bg-[#1E293B]">
+                                        <th className="px-6 py-3 text-left">Operation</th>
+                                        <th className="px-6 py-3 text-left">Work Center</th>
+                                        <th className="px-6 py-3 text-right">Expected</th>
+                                        <th className="px-6 py-3 text-center">Status</th>
+                                        <th className="px-6 py-3 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-800">
+                                    {workorders.map(wo => (
+                                        <tr key={wo.id} className="hover:bg-gray-800/50 transition-colors">
+                                            <td className="px-6 py-4 font-medium text-gray-300">{wo.name}</td>
+                                            <td className="px-6 py-4 text-gray-400">{wo.workcenter_id?.substring(0, 8)}...</td>
+                                            <td className="px-6 py-4 text-right font-mono text-blue-400">{wo.duration_expected}m</td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${STATE_COLORS[wo.state] || 'bg-gray-700'}`}>
+                                                    {wo.state}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                {wo.state === 'pending' && (
+                                                    <button onClick={() => handleStartWorkOrder(wo.id)} className="text-orange-400 hover:text-orange-300 transition-colors">
+                                                        <Play size={16} />
+                                                    </button>
+                                                )}
+                                                {wo.state === 'progress' && (
+                                                    <button onClick={() => handleDoneWorkOrder(wo.id)} className="text-green-400 hover:text-green-300 transition-colors">
+                                                        <Check size={16} />
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {workorders.length === 0 && (
+                                        <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500 italic">No work orders linked to this MO.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bill of Materials Info */}
+                <div className="galaxy-card p-6">
+                    <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <FileText size={16} className="text-orange-400" /> Bill of Materials
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-white/3 p-3 rounded-lg border border-white/5">
+                            <p className="text-[10px] text-gray-500 uppercase">BoM Type</p>
+                            <p className="text-sm text-white">Manufacture</p>
+                        </div>
+                        <div className="bg-white/3 p-3 rounded-lg border border-white/5">
+                            <p className="text-[10px] text-gray-500 uppercase">Components</p>
+                            <p className="text-sm text-white">4 Items</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }

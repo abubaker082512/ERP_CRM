@@ -8,6 +8,8 @@ class TaskBase(BaseModel):
     description: Optional[str] = None
     is_completed: bool = False
     due_date: Optional[datetime] = None
+    priority: int = 0
+    tags: Optional[list[str]] = None
 
 class TaskCreate(TaskBase):
     pass

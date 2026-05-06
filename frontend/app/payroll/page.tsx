@@ -7,6 +7,8 @@ import Link from "next/link";
 
 export default function PayrollPage() {
   const [runs, setRuns] = useState<any[]>([]);
+  const [payslips, setPayslips] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'batches' | 'payslips'>('batches');
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newRunName, setNewRunName] = useState("");
@@ -15,8 +17,12 @@ export default function PayrollPage() {
 
   const loadData = async () => {
     try {
-      const res = await fetchAPI("/payroll/runs");
-      if (res.ok) setRuns(await res.json());
+      const [runsRes, slipsRes] = await Promise.all([
+        fetchAPI("/payroll/runs"),
+        fetchAPI("/payroll/payslips")
+      ]);
+      if (runsRes.ok) setRuns(await runsRes.json());
+      if (slipsRes.ok) setPayslips(await slipsRes.json());
     } finally { setLoading(false); }
   };
 
@@ -43,19 +49,29 @@ export default function PayrollPage() {
       <AppHeader title="Payroll" />
 
       <div className="flex-1 overflow-auto p-6 max-w-6xl mx-auto w-full">
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 bg-[#1E293B] rounded-lg p-1 w-fit">
+          <button onClick={() => setActiveTab('batches')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'batches' ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+            Payroll Batches
+          </button>
+          <button onClick={() => setActiveTab('payslips')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'payslips' ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+            Individual Payslips
+          </button>
+        </div>
+
         {/* Toolbar */}
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <DollarSign className="text-emerald-500" /> Payroll Batches
+              <DollarSign className="text-emerald-500" /> {activeTab === 'batches' ? 'Payroll Batches' : 'Employee Payslips'}
             </h1>
             <div className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-semibold border border-emerald-500/20">
-              {runs.length} Batches
+              {activeTab === 'batches' ? runs.length : payslips.length} Records
             </div>
           </div>
           <button onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
-            <Plus size={16} /> New Batch
+            <Plus size={16} /> New {activeTab === 'batches' ? 'Batch' : 'Payslip'}
           </button>
         </div>
 
@@ -69,6 +85,7 @@ export default function PayrollPage() {
             <button onClick={() => setIsModalOpen(true)} className="bg-emerald-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-emerald-500 transition-colors">Create First Batch</button>
           </div>
         ) : (
+        ) : activeTab === 'batches' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {runs.map(run => (
               <div key={run.id} className="galaxy-card p-6 group hover:border-emerald-500/50 transition-colors flex flex-col h-full relative overflow-hidden">
@@ -109,6 +126,40 @@ export default function PayrollPage() {
               </div>
             ))}
           </div>
+        ) : (
+          <div className="galaxy-card overflow-hidden">
+             <table className="w-full text-sm text-left">
+                <thead className="bg-[#1E293B] text-[10px] uppercase tracking-widest text-gray-500 border-b border-gray-800">
+                  <tr>
+                    <th className="px-6 py-4">Reference</th>
+                    <th className="px-6 py-4">Employee</th>
+                    <th className="px-6 py-4">Period</th>
+                    <th className="px-6 py-4 text-right">Net Wage</th>
+                    <th className="px-6 py-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800">
+                  {payslips.map(slip => (
+                    <tr key={slip.id} className="hover:bg-white/5 transition-colors group">
+                      <td className="px-6 py-4 font-mono text-xs text-emerald-400">{slip.number || 'SLIP/NEW'}</td>
+                      <td className="px-6 py-4 font-medium text-gray-200">{slip.employee_name || 'Loading...'}</td>
+                      <td className="px-6 py-4 text-gray-400 text-xs">
+                        {new Date(slip.date_from).toLocaleDateString()} - {new Date(slip.date_to).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-right font-bold text-white">
+                        ${slip.net_wage?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          slip.state === 'done' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-700 text-gray-300'
+                        }`}>{slip.state}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+          </div>
+        )}
         )}
       </div>
 

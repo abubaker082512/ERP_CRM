@@ -13,11 +13,27 @@ class TicketBase(BaseModel):
     category: Optional[str] = None
     sla_deadline: Optional[datetime] = None
     assigned_to: Optional[UUID] = None
+    team_id: Optional[UUID] = None
 
 class TicketCreate(TicketBase):
     pass
 
 class Ticket(TicketBase):
+    id: UUID
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Team
+class HelpdeskTeamBase(BaseModel):
+    name: str
+    active: bool = True
+
+class HelpdeskTeamCreate(HelpdeskTeamBase):
+    pass
+
+class HelpdeskTeam(HelpdeskTeamBase):
     id: UUID
     created_at: datetime
 

@@ -20,7 +20,10 @@ def create_lead(lead: LeadCreate, client: Client = Depends(get_supabase_client))
         "email_from": lead.email,
         "phone": lead.phone,
         "stage_id": lead.status or "new",
-        "type": "lead",
+        "type": lead.type,
+        "expected_revenue": lead.expected_revenue,
+        "priority": lead.priority,
+        "date_deadline": lead.date_deadline.isoformat() if lead.date_deadline else None,
         "probability": probability,
     }
     # Remove None values
@@ -53,6 +56,8 @@ def update_lead(lead_id: str, lead: LeadUpdate, client: Client = Depends(get_sup
         "phone": lead.phone,
         "stage_id": lead.status,
         "probability": lead.probability,
+        "expected_revenue": getattr(lead, 'expected_revenue', None),
+        "priority": getattr(lead, 'priority', None),
     }
     update_data = {k: v for k, v in update_data.items() if v is not None}
     response = client.table("crm_lead").update(update_data).eq("id", lead_id).execute()
@@ -76,6 +81,12 @@ def _map_crm_lead(row: dict) -> dict:
         "probability": row.get("probability", 0.0),
         "sentiment_score": row.get("sentiment_score", 0.0),
         "company_name": row.get("company_name"),
+        "type": row.get("type", "lead"),
+        "expected_revenue": row.get("expected_revenue", 0.0),
+        "prorated_revenue": row.get("prorated_revenue", 0.0),
+        "priority": row.get("priority", 0),
+        "date_deadline": row.get("date_deadline"),
+        "lost_reason": row.get("lost_reason"),
         "source": row.get("source"),
         "notes": row.get("notes"),
         "created_at": row.get("created_at"),

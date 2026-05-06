@@ -6,15 +6,13 @@ import InventoryHeader from '@/components/inventory/InventoryHeader';
 import { Package, MoreHorizontal, TrendingUp, AlertTriangle, Warehouse, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
-type StockMove = {
+type StockPicking = {
     id: string;
     name: string;
-    product_id: string;
-    quantity: number;
     state: string;
-    date: string;
-    location_id: string;
-    location_dest_id: string;
+    picking_type_code: string;
+    scheduled_date: string;
+    origin: string;
 };
 
 type StockQuant = {
@@ -34,7 +32,7 @@ const STATE_COLORS: Record<string, string> = {
 };
 
 export default function InventoryPage() {
-    const [moves, setMoves] = useState<StockMove[]>([]);
+    const [pickings, setPickings] = useState<StockPicking[]>([]);
     const [quants, setQuants] = useState<StockQuant[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'moves' | 'stock'>('overview');
@@ -42,13 +40,13 @@ export default function InventoryPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [movesRes, quantsRes] = await Promise.all([
-                    fetchAPI("/inventory/moves"),
+                const [pickingsRes, quantsRes] = await Promise.all([
+                    fetchAPI("/inventory/pickings"),
                     fetchAPI("/inventory/quants")
                 ]);
-                if (movesRes.ok) {
-                    const data = await movesRes.json();
-                    setMoves(Array.isArray(data) ? data : []);
+                if (pickingsRes.ok) {
+                    const data = await pickingsRes.json();
+                    setPickings(Array.isArray(data) ? data : []);
                 }
                 if (quantsRes.ok) {
                     const data = await quantsRes.json();
@@ -65,16 +63,14 @@ export default function InventoryPage() {
         fetchData();
     }, []);
 
-    const getMovesCount = (type?: string) => {
-        // In a real app, we'd check move.picking_type_code or similar.
-        // For now, we filter by state and just return the count.
-        return moves.filter(m => m.state !== 'done' && m.state !== 'cancel').length;
+    const getPickingsCount = (type: string) => {
+        return pickings.filter(p => p.picking_type_code === type && p.state !== 'done' && p.state !== 'cancel').length;
     };
 
     const operations = [
-        { id: 1, name: 'Receipts', warehouse: 'Main Warehouse', count: getMovesCount('in'), color: 'text-blue-500', icon: '📥' },
-        { id: 2, name: 'Internal Transfers', warehouse: 'Main Warehouse', count: 0, color: 'text-orange-500', icon: '🔄' },
-        { id: 3, name: 'Delivery Orders', warehouse: 'Main Warehouse', count: getMovesCount('out'), color: 'text-green-500', icon: '📦' },
+        { id: 1, name: 'Receipts', warehouse: 'Main Warehouse', count: getPickingsCount('incoming'), color: 'text-blue-500', icon: '📥' },
+        { id: 2, name: 'Internal Transfers', warehouse: 'Main Warehouse', count: getPickingsCount('internal'), color: 'text-orange-500', icon: '🔄' },
+        { id: 3, name: 'Delivery Orders', warehouse: 'Main Warehouse', count: getPickingsCount('outgoing'), color: 'text-green-500', icon: '📦' },
         { id: 4, name: 'Returns', warehouse: 'Main Warehouse', count: 0, color: 'text-red-500', icon: '↩️' },
         { id: 5, name: 'Manufacturing', warehouse: 'Main Warehouse', count: 0, color: 'text-purple-500', icon: '🏭' },
     ];
@@ -175,23 +171,23 @@ export default function InventoryPage() {
                                 <tbody>
                                     {loading ? (
                                         <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">Loading...</td></tr>
-                                    ) : moves.length === 0 ? (
-                                        <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No stock movements found</td></tr>
-                                    ) : moves.map(move => (
-                                        <tr key={move.id} className="border-b border-gray-800 hover:bg-gray-800/30">
-                                            <td className="px-6 py-4 text-gray-400 font-medium">{move.name || '—'}</td>
+                                    ) : pickings.length === 0 ? (
+                                        <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No stock pickings found</td></tr>
+                                    ) : pickings.map(picking => (
+                                        <tr key={picking.id} className="border-b border-gray-800 hover:bg-gray-800/30">
                                             <td className="px-6 py-4">
-                                                <Link href={`/inventory/products/${move.product_id}`} className="text-purple-400 hover:underline font-mono text-xs">
-                                                    {move.product_id?.substring(0, 8)}...
+                                                <Link href={`/inventory/picking/${picking.id}`} className="text-purple-400 hover:underline font-medium">
+                                                    {picking.name || '—'}
                                                 </Link>
                                             </td>
-                                            <td className="px-6 py-4 text-right text-white font-semibold">{move.quantity}</td>
+                                            <td className="px-6 py-4 text-gray-300 uppercase text-[10px] tracking-widest font-bold">{picking.picking_type_code}</td>
+                                            <td className="px-6 py-4 text-right text-white font-mono">{picking.origin || '—'}</td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATE_COLORS[move.state] || STATE_COLORS.draft}`}>
-                                                    {move.state}
+                                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${STATE_COLORS[picking.state] || STATE_COLORS.draft}`}>
+                                                    {picking.state}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-gray-400">{move.date ? new Date(move.date).toLocaleDateString() : 'Draft'}</td>
+                                            <td className="px-6 py-4 text-gray-400">{picking.scheduled_date ? new Date(picking.scheduled_date).toLocaleDateString() : 'Draft'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

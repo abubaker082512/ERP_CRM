@@ -16,6 +16,7 @@ class TicketCreate(BaseModel):
     stage_id: Optional[str] = "new"
     priority: Optional[str] = "0"
     assigned_to: Optional[str] = None
+    team_id: Optional[str] = None
 
 
 class TicketUpdate(BaseModel):
@@ -25,12 +26,24 @@ class TicketUpdate(BaseModel):
     stage_id: Optional[str] = None
     priority: Optional[str] = None
     assigned_to: Optional[str] = None
+    team_id: Optional[str] = None
 
 
 class MessageCreate(BaseModel):
     ticket_id: str
     body: str
     author_name: Optional[str] = "User"
+
+# --- Helpdesk Teams ---
+@router.get("/teams")
+def read_teams(client: Client = Depends(get_supabase_client)):
+    resp = client.table("helpdesk_team").select("*").execute()
+    return resp.data or []
+
+@router.post("/teams")
+def create_team(name: str, client: Client = Depends(get_supabase_client)):
+    resp = client.table("helpdesk_team").insert({"name": name}).execute()
+    return resp.data[0]
 
 
 @router.post("/tickets")

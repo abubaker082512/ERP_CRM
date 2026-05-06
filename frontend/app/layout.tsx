@@ -20,6 +20,7 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${inter.className} relative min-h-screen text-white bg-transparent`}>
+                <div className="aurora-bg" />
                 <CosmicBackground />
                 <GalaxyAppShell>{children}</GalaxyAppShell>
             </body>

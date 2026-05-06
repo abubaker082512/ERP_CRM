@@ -186,3 +186,44 @@ def delete_move(move_id: str, client: Client = Depends(get_supabase_client)):
     client.table("account_move_line").delete().eq("move_id", move_id).execute()
     client.table("account_move").delete().eq("id", move_id).execute()
     return {"message": "Move deleted"}
+
+
+# --- Payments ---
+@router.post("/payments", response_model=Payment)
+def create_payment(payment: PaymentCreate, client: Client = Depends(get_supabase_client)):
+    # 1. Create Payment
+    data = payment.dict(exclude={"invoice_ids"}, exclude_unset=True)
+    if not data.get("date"):
+        data["date"] = date.today().isoformat()
+    
+    response = client.table("account_payment").insert(data).execute()
+    if not response.data:
+        raise HTTPException(status_code=400, detail="Could not create payment")
+    
+    created_payment = response.data[0]
+    payment_id = created_payment["id"]
+    
+    # 2. Reconcile with Invoices
+    if payment.invoice_ids:
+        rel_data = []
+        for inv_id in payment.invoice_ids:
+            # For simplicity, assume full payment or manual split in frontend
+            # In real Odoo, this computes amount_residual
+            rel_data.append({
+                "payment_id": payment_id,
+                "invoice_id": str(inv_id),
+                "amount": payment.amount / len(payment.invoice_ids)
+            })
+            
+            # Update invoice state
+            client.table("account_move").update({"payment_state": "paid", "amount_residual": 0.0}).eq("id", str(inv_id)).execute()
+            
+        client.table("account_payment_invoice_rel").insert(rel_data).execute()
+        
+    return created_payment
+
+
+@router.get("/payments", response_model=List[Payment])
+def read_payments(skip: int = 0, limit: int = 100, client: Client = Depends(get_supabase_client)):
+    response = client.table("account_payment").select("*").range(skip, skip + limit - 1).execute()
+    return response.data

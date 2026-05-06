@@ -153,11 +153,26 @@ export default function SalesOrderDetailPage({ params }: { params: { id: string 
           </div>
         </div>
 
-        {/* Info Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Info Row 1 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           {[
             { icon: User, label: "Customer", value: order.customer_name || "—" },
+            { icon: User, label: "Salesperson", value: order.user_id ? "Super Admin" : "—" },
             { icon: Calendar, label: "Order Date", value: order.date_order ? new Date(order.date_order).toLocaleDateString() : "—" },
+            { icon: Calendar, label: "Expiration", value: order.validity_date ? new Date(order.validity_date).toLocaleDateString() : "—" },
+          ].map(({ icon: Icon, label, value }) => (
+            <div key={label} className="bg-white/3 rounded-xl p-3 border border-white/5">
+              <div className="flex items-center gap-1 text-xs text-gray-400 mb-1"><Icon size={11} /> {label}</div>
+              <p className="text-white font-medium text-sm">{value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Info Row 2 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { icon: FileText, label: "Payment Terms", value: order.payment_term_id ? "Immediate Payment" : "—" },
+            { icon: FileText, label: "Pricelist", value: order.pricelist_id ? "Public Pricelist" : "Standard" },
             { icon: DollarSign, label: "Total Amount", value: `$${(order.amount_total || lineTotal || 0).toLocaleString()}` },
             { icon: FileText, label: "Reference", value: order.name },
           ].map(({ icon: Icon, label, value }) => (

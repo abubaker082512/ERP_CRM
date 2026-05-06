@@ -40,6 +40,8 @@ class StockMoveBase(BaseModel):
     location_id: UUID
     location_dest_id: UUID
     state: str = 'draft'
+    picking_id: Optional[UUID] = None
+    lot_id: Optional[UUID] = None
 
 class StockMoveCreate(StockMoveBase):
     pass
@@ -60,6 +62,29 @@ class StockQuantBase(BaseModel):
 
 class StockQuant(StockQuantBase):
     id: UUID
+
+    class Config:
+        from_attributes = True
+
+# Stock Picking
+class StockPickingBase(BaseModel):
+    name: Optional[str] = None
+    partner_id: Optional[UUID] = None
+    sale_id: Optional[UUID] = None
+    purchase_id: Optional[UUID] = None
+    state: str = 'draft'
+    picking_type_code: str # outgoing, incoming, internal
+    scheduled_date: Optional[datetime] = None
+    origin: Optional[str] = None
+
+class StockPickingCreate(StockPickingBase):
+    pass
+
+class StockPicking(StockPickingBase):
+    id: UUID
+    name: str
+    created_at: datetime
+    date_done: Optional[datetime] = None
 
     class Config:
         from_attributes = True
