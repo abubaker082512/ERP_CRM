@@ -32,9 +32,14 @@ def get_supabase_client(request: Request, credentials: HTTPAuthorizationCredenti
     uid = user_resp.user.id
     user_email = user_resp.user.email
     
-    # Identify Super Admin (e.g. any @galaxy.com email or specific admin emails)
+    # Identify Super Admin (e.g. any @galaxy.com or @erp-crm.com email or specific admin emails)
     is_super_admin = False
-    if user_email and (user_email.endswith('@galaxy.com') or user_email == 'abubaker@galaxy.com' or user_email == 'admin@galaxy.com'):
+    if user_email and (
+        user_email.endswith('@galaxy.com') or 
+        user_email.endswith('@erp-crm.com') or
+        user_email == 'abubaker@galaxy.com' or 
+        user_email == 'admin@galaxy.com'
+    ):
         is_super_admin = True
     
     # Enforce Subscription / Trial status ONLY for mutating endpoints (POST, PUT, DELETE)
