@@ -8,3 +8,4 @@ pydantic-settings
 supabase
 email-validator
 stripe
+python-multipart==0.0.9
