@@ -11,8 +11,10 @@ type Contact = {
     name: string;
     email?: string;
     phone?: string;
-    address?: string;
-    type: 'customer' | 'supplier';
+    street?: string;
+    city?: string;
+    is_company?: boolean;
+    type: 'contact' | 'invoice' | 'delivery' | 'private';
     image_url?: string;
 };
 
@@ -22,7 +24,8 @@ export default function ContactsPage() {
     const [newName, setNewName] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [newPhone, setNewPhone] = useState('');
-    const [newAddress, setNewAddress] = useState('');
+    const [newStreet, setNewStreet] = useState('');
+    const [newIsCompany, setNewIsCompany] = useState(false);
 
     useEffect(() => {
         fetchContacts();
@@ -46,10 +49,11 @@ export default function ContactsPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: newName,
-                    email: newEmail,
-                    phone: newPhone,
-                    address: newAddress,
-                    type: 'customer'
+                    email: newEmail || undefined,
+                    phone: newPhone || undefined,
+                    street: newStreet || undefined,
+                    is_company: newIsCompany,
+                    type: 'contact'
                 })
             });
 
@@ -59,7 +63,8 @@ export default function ContactsPage() {
                 setNewName('');
                 setNewEmail('');
                 setNewPhone('');
-                setNewAddress('');
+                setNewStreet('');
+                setNewIsCompany(false);
                 setIsNewModalOpen(false);
             }
         } catch (error) {
@@ -123,14 +128,24 @@ export default function ContactsPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Address</label>
+                                    <label className="block text-sm font-medium text-gray-400 mb-1">Street Address</label>
                                     <input
                                         type="text"
-                                        value={newAddress}
-                                        onChange={(e) => setNewAddress(e.target.value)}
+                                        value={newStreet}
+                                        onChange={(e) => setNewStreet(e.target.value)}
                                         className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-purple-500 outline-none"
                                         placeholder="123 Main St, City"
                                     />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="isCompany"
+                                        checked={newIsCompany}
+                                        onChange={(e) => setNewIsCompany(e.target.checked)}
+                                        className="rounded border-gray-600 bg-[#0F172A] text-purple-600 focus:ring-purple-500"
+                                    />
+                                    <label htmlFor="isCompany" className="text-sm font-medium text-gray-400">Is a Company</label>
                                 </div>
                             </div>
 
@@ -160,16 +175,16 @@ export default function ContactsPage() {
                                 {contact.image_url ? (
                                     <img src={contact.image_url} alt={contact.name} className="h-full w-full object-cover" />
                                 ) : (
-                                    <span className="text-3xl">👤</span>
+                                    <span className="text-3xl">{contact.is_company ? '🏢' : '👤'}</span>
                                 )}
                             </div>
                             <div className="p-3 flex-1 min-w-0">
                                 <h3 className="font-semibold text-gray-200 mb-1 truncate group-hover:text-purple-400">{contact.name}</h3>
                                 <div className="space-y-1">
-                                    {contact.address && (
+                                    {contact.street && (
                                         <div className="flex items-center gap-1.5 text-xs text-gray-400">
                                             <MapPin size={12} className="shrink-0" />
-                                            <span className="truncate">{contact.address}</span>
+                                            <span className="truncate">{contact.street}</span>
                                         </div>
                                     )}
                                     {contact.email && (

@@ -315,3 +315,24 @@ CREATE TABLE IF NOT EXISTS calendar_appointment (
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 15. Contacts (res.partner equivalent)
+CREATE TABLE IF NOT EXISTS contacts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    is_company BOOLEAN DEFAULT false,
+    parent_id UUID REFERENCES contacts(id) ON DELETE SET NULL,
+    type TEXT DEFAULT 'contact', -- contact, invoice, delivery, private
+    email TEXT,
+    phone TEXT,
+    mobile TEXT,
+    street TEXT,
+    city TEXT,
+    state TEXT,
+    country TEXT,
+    website TEXT,
+    tax_id TEXT,
+    image_url TEXT,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
