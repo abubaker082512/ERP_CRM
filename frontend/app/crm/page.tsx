@@ -138,7 +138,7 @@ export default function CRMPage() {
                 {activeView === 'pipeline' ? (
                     <div className="flex h-full gap-4 min-w-max">
                     {initialStages.map((stage) => {
-                        const stageOpps = opportunities.filter(o => o.stage === stage.id);
+                        const stageOpps = leads.filter(o => o.status === stage.id && o.type === 'opportunity');
                         return (
                              <div 
                                 key={stage.id} 

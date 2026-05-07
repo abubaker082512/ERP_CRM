@@ -336,3 +336,27 @@ CREATE TABLE IF NOT EXISTS contacts (
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 16. CRM (Leads & Opportunities)
+CREATE TABLE IF NOT EXISTS crm_lead (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    partner_id UUID REFERENCES contacts(id) ON DELETE SET NULL,
+    email_from TEXT,
+    phone TEXT,
+    company_name TEXT,
+    type TEXT DEFAULT 'lead', -- 'lead' or 'opportunity'
+    stage_id TEXT DEFAULT 'new',
+    priority INTEGER DEFAULT 0,
+    expected_revenue NUMERIC(15, 2) DEFAULT 0.0,
+    prorated_revenue NUMERIC(15, 2) DEFAULT 0.0,
+    probability NUMERIC(5, 2) DEFAULT 0.0,
+    sentiment_score NUMERIC(5, 2) DEFAULT 0.0,
+    date_deadline DATE,
+    close_date DATE,
+    lost_reason TEXT,
+    source TEXT,
+    notes TEXT,
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
