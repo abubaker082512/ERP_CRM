@@ -275,3 +275,43 @@ CREATE TABLE IF NOT EXISTS hr_payroll_run (
 ALTER TABLE todo_task ADD COLUMN IF NOT EXISTS date_deadline DATE;
 ALTER TABLE todo_task ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;
 ALTER TABLE todo_task ADD COLUMN IF NOT EXISTS tag_ids TEXT[];
+
+-- 13. Discuss (Mail Channel & Messages)
+CREATE TABLE IF NOT EXISTS mail_channel (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    description TEXT,
+    channel_type TEXT DEFAULT 'channel',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS mail_message (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    channel_id UUID REFERENCES mail_channel(id) ON DELETE CASCADE,
+    body TEXT NOT NULL,
+    author_name TEXT DEFAULT 'User',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 14. Calendar & Appointments
+CREATE TABLE IF NOT EXISTS calendar_appointment_type (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    duration INTEGER DEFAULT 60,
+    location TEXT,
+    description TEXT,
+    is_published BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS calendar_appointment (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    appointment_type_id UUID REFERENCES calendar_appointment_type(id) ON DELETE SET NULL,
+    customer_name TEXT NOT NULL,
+    customer_email TEXT,
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    state TEXT DEFAULT 'confirmed',
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

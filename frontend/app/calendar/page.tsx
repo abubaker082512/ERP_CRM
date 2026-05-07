@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, ChevronLeft, ChevronRight, Settings, Filter, Calendar as CalendarIcon, Share2, Plus } from 'lucide-react';
 import NewAppointmentModal from '@/components/NewAppointmentModal';
+import { fetchAPI } from '@/lib/api';
 
 export default function CalendarPage() {
     const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+    const [appointments, setAppointments] = useState<any[]>([]);
+    
     const hours = Array.from({ length: 18 }, (_, i) => i + 6); // 6am to 11pm
     const days = [
         { name: 'SUN', date: 23, isToday: true },
@@ -17,9 +20,20 @@ export default function CalendarPage() {
         { name: 'SAT', date: 29 },
     ];
 
+    const loadAppointments = async () => {
+        const res = await fetchAPI('/appointments/appointments');
+        if (res.ok) {
+            setAppointments(await res.json());
+        }
+    };
+
+    useEffect(() => {
+        loadAppointments();
+    }, []);
+
     return (
         <div className="flex flex-col h-full relative">
-            <NewAppointmentModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} />
+            <NewAppointmentModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} onSuccess={loadAppointments} />
             {/* Toolbar */}
             <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700 bg-[#1E293B]">
                 <div className="flex items-center gap-4">
