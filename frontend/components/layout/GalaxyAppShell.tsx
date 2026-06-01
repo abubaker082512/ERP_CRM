@@ -43,6 +43,15 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         }
     }, []);
 
+    useEffect(() => {
+        // Automatically collapse the sidebar when navigating to any specific page other than /dashboard
+        if (pathname && pathname !== '/dashboard') {
+            setIsSidebarOpen(false);
+        } else {
+            setIsSidebarOpen(true);
+        }
+    }, [pathname]);
+
     if (!mounted) return null;
 
     // Don't show shell on landing, login, signup, or the main launcher page
@@ -55,8 +64,8 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         <div className="flex h-screen overflow-hidden bg-[#020205]">
             {/* Sidebar */}
             <aside 
-                className={`fixed inset-y-0 left-0 z-50 bg-[#0F172A]/80 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 ease-in-out ${
-                    isSidebarOpen ? 'w-64' : 'w-20'
+                className={`fixed inset-y-0 left-0 z-50 bg-[#0F172A]/80 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 ease-in-out w-64 ${
+                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >
                 {/* Sidebar Header */}
@@ -117,20 +126,13 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                     </div>
                 </div>
 
-                {/* Toggle Button */}
-                <button 
-                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                    className="absolute -right-3 top-20 bg-[#1E293B] border border-white/10 rounded-full p-1 text-gray-400 hover:text-white transition-all hover:scale-110 z-50 shadow-lg shadow-black/50"
-                >
-                    {isSidebarOpen ? <X size={12} /> : <Menu size={12} />}
-                </button>
             </aside>
 
             {/* Main Content */}
             <main className={`flex-1 flex flex-col transition-all duration-500 ease-in-out ${
-                isSidebarOpen ? 'ml-64' : 'ml-20'
+                isSidebarOpen ? 'ml-64' : 'ml-0'
             }`}>
-                <GalaxyTopBar />
+                <GalaxyTopBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
                 <div className="flex-1 overflow-auto bg-[#020205] relative custom-scrollbar">
                     {/* Background Ambient Glows */}
                     <div className="fixed top-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/5 blur-[120px] rounded-full pointer-events-none"></div>

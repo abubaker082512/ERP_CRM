@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from 'react';
-import { Bell, User, Settings, LogOut, ChevronDown, Rocket, Sparkles, Users, ShoppingCart, MessageSquare, Package } from 'lucide-react';
+import { Bell, User, Settings, LogOut, ChevronDown, Rocket, Sparkles, Users, ShoppingCart, MessageSquare, Package, Menu } from 'lucide-react';
 import GlobalSearch from './GlobalSearch';
 import { useRouter } from 'next/navigation';
 
-export default function GalaxyTopBar() {
+export default function GalaxyTopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
     const [showProfile, setShowProfile] = useState(false);
     const router = useRouter();
 
@@ -17,7 +17,14 @@ export default function GalaxyTopBar() {
     return (
         <header className="sticky top-0 z-40 w-full bg-[#0F172A]/60 backdrop-blur-md border-b border-white/5 px-6 py-3 flex items-center justify-between">
             {/* Left Section: Branding & Search */}
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-4">
+                <button 
+                    onClick={onToggleSidebar}
+                    className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all mr-1"
+                    title="Toggle Global Menu"
+                >
+                    <Menu size={20} />
+                </button>
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/dashboard')}>
                     <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/20">
                         <Rocket size={18} className="text-white" />
