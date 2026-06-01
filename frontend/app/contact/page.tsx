@@ -1,6 +1,7 @@
 "use client";
 
 import Navbar from "@/components/landing/Navbar";
+import Footer from "@/components/landing/Footer";
 import CosmicBackground from "@/components/CosmicBackground";
 import { Mail, MessageSquare, MapPin, Send } from "lucide-react";
 import { useState } from "react";
@@ -33,39 +34,43 @@ export default function ContactPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
                     {/* Contact Info */}
                     <div className="space-y-8">
-                        <div className="galaxy-card p-8 flex items-start gap-4">
-                            <div className="bg-purple-500/20 p-4 rounded-xl text-purple-400 shrink-0">
+                        <div className="galaxy-card p-8 flex items-start gap-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
+                            <div className="bg-purple-500/20 p-4 rounded-xl text-purple-400 shrink-0 shadow-lg shadow-purple-500/10">
                                 <MessageSquare size={24} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold mb-2">Chat with Sales</h3>
-                                <p className="text-gray-400 mb-4">Speak directly to our experts about how Galaxy ERP can scale your business.</p>
-                                <a href="#" className="text-purple-400 font-medium hover:underline">sales@galaxy-erp.com</a>
+                                <h3 className="text-xl font-bold mb-2 text-white">Chat with Sales</h3>
+                                <p className="text-gray-400 mb-4">Speak directly to our experts about how Beraxis can scale your business.</p>
+                                <a href="mailto:sales@beraxis.online" className="text-purple-400 font-medium hover:underline">sales@beraxis.online</a>
                             </div>
                         </div>
 
-                        <div className="galaxy-card p-8 flex items-start gap-4">
-                            <div className="bg-pink-500/20 p-4 rounded-xl text-pink-400 shrink-0">
+                        <div className="galaxy-card p-8 flex items-start gap-4 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                            <div className="bg-pink-500/20 p-4 rounded-xl text-pink-400 shrink-0 shadow-lg shadow-pink-500/10">
                                 <Mail size={24} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold mb-2">Support</h3>
+                                <h3 className="text-xl font-bold mb-2 text-white">Email Support</h3>
                                 <p className="text-gray-400 mb-4">Current customer needing assistance? Our support team is available 24/7.</p>
-                                <a href="#" className="text-pink-400 font-medium hover:underline">support@galaxy-erp.com</a>
+                                <a href="mailto:support@beraxis.online" className="text-pink-400 font-medium hover:underline">support@beraxis.online</a>
                             </div>
                         </div>
 
-                        <div className="galaxy-card p-8 flex items-start gap-4">
-                            <div className="bg-blue-500/20 p-4 rounded-xl text-blue-400 shrink-0">
-                                <MapPin size={24} />
+                        <div className="galaxy-card p-8 flex items-start gap-4 animate-in fade-in slide-in-from-bottom-3 duration-700">
+                            <div className="bg-emerald-500/20 p-4 rounded-xl text-emerald-400 shrink-0 shadow-lg shadow-emerald-500/10">
+                                <MessageSquare size={24} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold mb-2">Headquarters</h3>
-                                <p className="text-gray-400">
-                                    100 Cosmic Way, Suite 404<br />
-                                    San Francisco, CA 94105<br />
-                                    United States
-                                </p>
+                                <h3 className="text-xl font-bold mb-2 text-white">WhatsApp & Phone Support</h3>
+                                <p className="text-gray-400 mb-4">Instant support hotline and WhatsApp chat integration for active clients.</p>
+                                <a href="https://wa.me/19707807993" target="_blank" rel="noreferrer" className="text-emerald-400 font-bold hover:text-emerald-300 transition-colors inline-flex items-center gap-1.5 mb-1.5 bg-emerald-500/10 px-3.5 py-1.5 rounded-lg border border-emerald-500/20 text-xs uppercase tracking-wider">
+                                    💬 Chat on WhatsApp
+                                </a>
+                                <div className="block mt-2">
+                                    <a href="tel:+19707807993" className="text-gray-300 hover:text-white transition-colors font-medium">
+                                        📞 +1 (970) 780-7993
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -138,11 +143,11 @@ export default function ContactPage() {
                     <div className="max-w-4xl mx-auto space-y-6">
                         <div className="galaxy-card p-6">
                             <h4 className="text-lg font-bold mb-2">Can I migrate my data from another ERP?</h4>
-                            <p className="text-gray-400">Yes! We provide robust import tools and dedicated migration support during onboarding to ensure all your legacy data transitions smoothly into Galaxy.</p>
+                            <p className="text-gray-400">Yes! We provide robust import tools and dedicated migration support during onboarding to ensure all your legacy data transitions smoothly into Beraxis.</p>
                         </div>
                         <div className="galaxy-card p-6">
                             <h4 className="text-lg font-bold mb-2">Do you offer on-premise deployments?</h4>
-                            <p className="text-gray-400">Galaxy ERP is primarily a cloud-native SaaS platform designed for high availability. However, we do offer dedicated private cloud solutions for Enterprise tier customers.</p>
+                            <p className="text-gray-400">Beraxis is primarily a cloud-native SaaS platform designed for high availability. However, we do offer dedicated private cloud solutions for Enterprise tier customers.</p>
                         </div>
                         <div className="galaxy-card p-6">
                             <h4 className="text-lg font-bold mb-2">How does pricing work as my team grows?</h4>
@@ -156,12 +161,7 @@ export default function ContactPage() {
                 </div>
             </div>
 
-            {/* Simple Footer */}
-            <footer className="border-t border-white/10 py-12 text-center text-gray-500 text-sm relative z-10 bg-[#0F172A] mt-20">
-                <div className="max-w-7xl mx-auto px-4">
-                    <p>© {new Date().getFullYear()} Galaxy ERP. All rights reserved.</p>
-                </div>
-            </footer>
+            <Footer />
         </main>
     );
 }

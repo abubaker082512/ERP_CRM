@@ -1,6 +1,7 @@
 "use client";
 
 import Navbar from "@/components/landing/Navbar";
+import Footer from "@/components/landing/Footer";
 import CosmicBackground from "@/components/CosmicBackground";
 import { Rocket, Target, Globe2 } from "lucide-react";
 
@@ -16,7 +17,7 @@ export default function AboutPage() {
                         Scaling businesses beyond <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">boundaries</span>
                     </h1>
                     <p className="text-xl text-gray-400 leading-relaxed">
-                        Galaxy ERP was born out of a simple frustration: why does enterprise software have to be so complicated, fragmented, and ugly? We decided to build a platform that is as beautiful as it is powerful.
+                        Beraxis was born out of a simple frustration: why does enterprise software have to be so complicated, fragmented, and ugly? We decided to build a platform that is as beautiful as it is powerful.
                     </p>
                 </div>
 
@@ -86,12 +87,7 @@ export default function AboutPage() {
                 </div>
             </div>
 
-            {/* Simple Footer */}
-            <footer className="border-t border-white/10 py-12 text-center text-gray-500 text-sm relative z-10 bg-[#0F172A]">
-                <div className="max-w-7xl mx-auto px-4">
-                    <p>© {new Date().getFullYear()} Galaxy ERP. All rights reserved.</p>
-                </div>
-            </footer>
+            <Footer />
         </main>
     );
 }
