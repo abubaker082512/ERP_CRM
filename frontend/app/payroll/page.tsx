@@ -17,12 +17,24 @@ export default function PayrollPage() {
 
   const loadData = async () => {
     try {
-      const [runsRes, slipsRes] = await Promise.all([
+      const [runsRes, slipsRes, empRes] = await Promise.all([
         fetchAPI("/payroll/runs"),
-        fetchAPI("/payroll/payslips")
+        fetchAPI("/payroll/payslips"),
+        fetchAPI("/hr/employees")
       ]);
+      
+      let employeesList: any[] = [];
+      if (empRes.ok) employeesList = await empRes.json();
+
       if (runsRes.ok) setRuns(await runsRes.json());
-      if (slipsRes.ok) setPayslips(await slipsRes.json());
+      if (slipsRes.ok) {
+        const slips = await slipsRes.json();
+        const mappedSlips = slips.map((s: any) => ({
+          ...s,
+          employee_name: employeesList.find((e: any) => e.id === s.employee_id)?.name || "Employee"
+        }));
+        setPayslips(mappedSlips);
+      }
     } finally { setLoading(false); }
   };
 

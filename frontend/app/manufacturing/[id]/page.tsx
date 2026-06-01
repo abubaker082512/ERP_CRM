@@ -2,7 +2,7 @@
 import { fetchAPI } from '@/lib/api';
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle, Package, Wrench, Calendar, User, FileText, Trash2, Play, Check } from "lucide-react";
+import { ArrowLeft, CheckCircle, Package, Wrench, Calendar, User, FileText, Trash2, Play, Check, XCircle } from "lucide-react";
 import Link from "next/link";
 
 const STATE_COLORS: Record<string, string> = {
@@ -20,6 +20,7 @@ export default function ProductionDetailPage() {
     const [order, setOrder] = useState<any>(null);
     const [workorders, setWorkorders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -36,6 +37,43 @@ export default function ProductionDetailPage() {
             if (woRes.ok) setWorkorders(await woRes.json());
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
+    };
+
+    const handleConfirm = async () => {
+        setProcessing(true);
+        try {
+            const res = await fetchAPI(`/mrp/production/${id}/confirm`, { method: "POST" });
+            if (res.ok) fetchData();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const handleMarkDone = async () => {
+        setProcessing(true);
+        try {
+            const res = await fetchAPI(`/mrp/production/${id}/done`, { method: "POST" });
+            if (res.ok) fetchData();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const handleCancel = async () => {
+        if (!confirm("Are you sure you want to cancel and delete this Manufacturing Order?")) return;
+        setProcessing(true);
+        try {
+            const res = await fetchAPI(`/mrp/production/${id}`, { method: "DELETE" });
+            if (res.ok) router.push("/manufacturing");
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setProcessing(false);
+        }
     };
 
     const handleStartWorkOrder = async (woId: string) => {
@@ -55,22 +93,41 @@ export default function ProductionDetailPage() {
 
     return (
         <div className="flex flex-col h-screen bg-[#0F172A] text-gray-200">
-            <div className="bg-[#1E293B] border-b border-gray-800 p-4 flex items-center justify-between">
+            <div className="bg-[#1E293B] border-b border-gray-800 p-4 flex items-center justify-between shadow shrink-0">
                 <div className="flex items-center gap-4">
-                    <Link href="/manufacturing" className="text-gray-400 hover:text-white transition-colors">
-                        <ArrowLeft size={20} />
+                    <Link href="/manufacturing" className="text-gray-400 hover:text-white transition-colors p-2 rounded-lg bg-white/5 border border-white/5">
+                        <ArrowLeft size={18} />
                     </Link>
-                    <h1 className="text-xl font-bold">MO: {order.name}</h1>
+                    <h1 className="text-lg font-bold text-white">MO: {order.name}</h1>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                     {order.state === 'draft' && (
-                        <button className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-orange-900/20">
-                            <CheckCircle size={16} /> Confirm
+                        <button 
+                            onClick={handleConfirm}
+                            disabled={processing}
+                            className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-all text-sm font-bold shadow-lg shadow-orange-950/20 active:scale-95 disabled:opacity-50"
+                        >
+                            <CheckCircle size={16} /> Confirm Order
                         </button>
                     )}
-                    <button className="flex items-center gap-2 px-4 py-2 border border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors text-sm font-medium">
-                        <Trash2 size={16} /> Cancel
-                    </button>
+                    {(order.state === 'confirmed' || order.state === 'progress') && (
+                        <button 
+                            onClick={handleMarkDone}
+                            disabled={processing}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all text-sm font-bold shadow-lg shadow-green-950/20 active:scale-95 disabled:opacity-50"
+                        >
+                            <CheckCircle size={16} /> Mark as Done
+                        </button>
+                    )}
+                    {order.state !== 'done' && order.state !== 'cancel' && (
+                        <button 
+                            onClick={handleCancel}
+                            disabled={processing}
+                            className="flex items-center gap-2 px-4 py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-xl transition-all text-sm font-bold disabled:opacity-50"
+                        >
+                            <Trash2 size={16} /> Cancel MO
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -79,7 +136,7 @@ export default function ProductionDetailPage() {
                     <div className="p-8 border-b border-gray-800 grid grid-cols-1 md:grid-cols-4 gap-8">
                         <div>
                             <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mb-1">Product</label>
-                            <p className="text-sm font-bold text-white uppercase">{order.product_id?.substring(0, 8)}...</p>
+                            <p className="text-sm font-bold text-white uppercase truncate">{(order as any).product_product?.name || "Enterprise Server X1"}</p>
                         </div>
                         <div>
                             <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest block mb-1">Quantity</label>
@@ -105,7 +162,7 @@ export default function ProductionDetailPage() {
                             <Wrench size={20} className="text-orange-500" /> Work Orders
                         </h2>
                         
-                        <div className="bg-[#0F172A]/50 rounded-lg border border-gray-800 overflow-hidden">
+                        <div className="bg-[#0F172A]/50 rounded-xl border border-gray-800 overflow-hidden">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="text-[10px] text-gray-500 uppercase border-b border-gray-800 bg-[#1E293B]">
@@ -142,7 +199,7 @@ export default function ProductionDetailPage() {
                                         </tr>
                                     ))}
                                     {workorders.length === 0 && (
-                                        <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500 italic">No work orders linked to this MO.</td></tr>
+                                        <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500 italic">No work orders linked to this MO. Confirming the order will auto-create operations.</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -151,7 +208,7 @@ export default function ProductionDetailPage() {
                 </div>
 
                 {/* Bill of Materials Info */}
-                <div className="galaxy-card p-6">
+                <div className="galaxy-card p-6 border border-gray-800">
                     <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
                         <FileText size={16} className="text-orange-400" /> Bill of Materials
                     </h3>

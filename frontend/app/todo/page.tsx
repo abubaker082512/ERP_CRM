@@ -3,7 +3,7 @@ import { fetchAPI } from '@/lib/api';
 
 import TodoHeader from "@/components/todo/TodoHeader";
 import { useEffect, useState } from "react";
-import { Plus, CheckCircle, Circle, Trash2 } from "lucide-react";
+import { Plus, CheckCircle, Circle, Trash2, Star } from "lucide-react";
 
 type Task = {
     id: string;

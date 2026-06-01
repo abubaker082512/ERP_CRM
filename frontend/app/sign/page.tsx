@@ -28,7 +28,7 @@ export default function SignPage() {
       // Quick file upload to documents first
       const formData = new FormData();
       formData.append("file", file);
-      const docRes = await fetchAPI("/documents/upload", { method: "POST", body: formData }, true);
+      const docRes = await fetchAPI("/documents/upload", { method: "POST", body: formData });
       
       let fileUrl = "";
       if (docRes.ok) {

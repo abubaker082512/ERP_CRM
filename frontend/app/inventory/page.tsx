@@ -54,7 +54,7 @@ export default function InventoryPage() {
                 }
             } catch (err) {
                 console.error("Inventory fetch failed", err);
-                setMoves([]);
+                setPickings([]);
                 setQuants([]);
             } finally {
                 setLoading(false);
@@ -128,7 +128,7 @@ export default function InventoryPage() {
                                     </div>
                                     <h3 className="font-semibold text-gray-200">Stock Movements</h3>
                                 </div>
-                                <p className="text-3xl font-bold text-white">{loading ? '...' : moves.length}</p>
+                                <p className="text-3xl font-bold text-white">{loading ? '...' : pickings.length}</p>
                                 <p className="text-xs text-gray-400 mt-1">Total recorded transfers</p>
                             </div>
                             

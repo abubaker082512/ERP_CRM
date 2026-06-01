@@ -55,7 +55,7 @@ export default function DocumentsPage() {
       formData.append("file", file);
       if (currentFolder) formData.append("folder_id", currentFolder);
 
-      const res = await fetchAPI("/documents/upload", { method: "POST", body: formData }, true);
+      const res = await fetchAPI("/documents/upload", { method: "POST", body: formData });
       if (res.ok) loadData();
     } finally { setUploading(false); }
   };

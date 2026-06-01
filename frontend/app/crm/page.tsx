@@ -104,7 +104,11 @@ export default function CRMPage() {
             const res = await fetchAPI(`/leads/${oppId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStageId })
+                body: JSON.stringify({ 
+                    name: opp.name, 
+                    status: newStageId, 
+                    type: opp.type 
+                })
             });
 
             if (!res.ok) throw new Error("Failed to update stage");

@@ -13,9 +13,12 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
     
     // Setup headers
     const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
         ...((options.headers as Record<string, string>) || {})
     };
+    
+    if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
 
     // Retrieve token from localStorage if in browser environment
     if (typeof window !== 'undefined') {

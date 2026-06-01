@@ -22,6 +22,7 @@ type Move = {
     amount_total: number;
     amount_residual: number;
     payment_state: string;
+    move_type?: string;
     lines?: MoveLine[];
 };
 

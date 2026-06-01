@@ -18,9 +18,25 @@ export default function AttendancePage() {
     const [employeeId, setEmployeeId] = useState("123e4567-e89b-12d3-a456-426614174000"); // Mock ID for now
 
     useEffect(() => {
-        // Check if user has an active attendance
-        // In real app, we'd fetch the latest attendance for the logged-in user
-    }, []);
+        const checkStatus = async () => {
+            try {
+                const res = await fetchAPI(`/attendance/attendances?employee_id=${employeeId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        const latest = data[0];
+                        if (!latest.check_out) {
+                            setIsCheckedIn(true);
+                            setCurrentAttendance(latest);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to check attendance status", e);
+            }
+        };
+        checkStatus();
+    }, [employeeId]);
 
     const handleCheckIn = async () => {
         try {
