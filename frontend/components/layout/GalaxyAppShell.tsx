@@ -72,11 +72,11 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                 <div className="h-16 flex items-center px-6 border-b border-white/5 mb-4">
                     {isSidebarOpen ? (
                         <div className="flex items-center gap-2">
-                            <Database className="text-purple-500" size={20} />
-                            <span className="text-lg font-bold tracking-tighter text-white">CORE</span>
+                            <img src="/logo2.png" alt="Beraxis Logo" className="h-6 w-auto" />
+                            <span className="text-lg font-bold tracking-tighter text-white">BERAXIS</span>
                         </div>
                     ) : (
-                        <Database className="text-purple-500 mx-auto" size={20} />
+                        <img src="/logo2.png" alt="Beraxis Logo" className="h-6 w-auto mx-auto" />
                     )}
                 </div>
 

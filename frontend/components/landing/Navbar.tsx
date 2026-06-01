@@ -11,7 +11,7 @@ export default function Navbar() {
                 <div className="flex justify-between items-center h-20">
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center gap-2">
-                        <Database className="text-purple-500" size={28} />
+                        <img src="/logo2.png" alt="Beraxis Logo" className="h-10 w-auto" />
                         <span className="text-2xl font-bold tracking-tighter text-white">BERAXIS<span className="text-purple-500">.</span></span>
                     </div>
 

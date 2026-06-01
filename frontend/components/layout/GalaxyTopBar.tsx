@@ -26,9 +26,7 @@ export default function GalaxyTopBar({ onToggleSidebar }: { onToggleSidebar?: ()
                     <Menu size={20} />
                 </button>
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/dashboard')}>
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/20">
-                        <Rocket size={18} className="text-white" />
-                    </div>
+                    <img src="/logo2.png" alt="Beraxis Logo" className="h-8 w-auto" />
                     <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 tracking-tight">
                         BERAXIS
                     </span>

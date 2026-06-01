@@ -118,7 +118,8 @@ export default function Home() {
                 
                 {/* Simple Footer */}
                 <footer className="border-t border-white/10 py-12 text-center text-gray-500 text-sm relative z-10 bg-[#0F172A]">
-                    <div className="max-w-7xl mx-auto px-4">
+                    <div className="max-w-7xl mx-auto px-4 flex flex-col items-center justify-center">
+                        <img src="/logo2.png" alt="Beraxis Logo" className="h-8 w-auto mb-4 opacity-80 hover:opacity-100 transition-opacity" />
                         <p>© {new Date().getFullYear()} Beraxis. All rights reserved.</p>
                         <p className="mt-2">Empowering businesses to scale beyond boundaries.</p>
                     </div>
