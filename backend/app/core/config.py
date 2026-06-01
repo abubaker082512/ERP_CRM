@@ -15,6 +15,8 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3001",
         "http://127.0.0.1:3002",
         "https://erp-crm-three.vercel.app",
+        "https://beraxis.online",
+        "https://www.beraxis.online",
         "https://your-production-domain.com",
     ]
 
