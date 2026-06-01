@@ -8,7 +8,7 @@ import CosmicBackground from "@/components/CosmicBackground";
 import GalaxyAppShell from "@/components/layout/GalaxyAppShell";
 
 export const metadata: Metadata = {
-    title: "Galaxy AI ERP",
+    title: "Beraxis AI ERP",
     description: "Next-Gen AI-Enhanced ERP System",
 };
 

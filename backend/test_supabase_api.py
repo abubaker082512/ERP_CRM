@@ -13,13 +13,12 @@ def test_supabase_client():
         # Let's just check if the client object is valid and URL is reachable
         print(f"Supabase URL: {supabase.supabase_url}")
         
-        # Simple query (will likely return empty or error if table doesn't exist, but connection is made)
-        response = supabase.table("users").select("*").limit(1).execute()
-        print(f"Supabase REST API Connection Successful. Response: {response}")
+        # Simple query (will attempt to write to mail_channel)
+        response = supabase.table("mail_channel").insert({"name": "Test General Channel"}).execute()
+        print(f"Supabase REST API Connection & Insert Successful. Response: {response}")
         
     except Exception as e:
-        # If table doesn't exist, it might throw an error, but that means we connected!
-        print(f"Supabase REST API Interaction: {e}")
+        print(f"Supabase REST API Interaction Error: {e}")
 
 if __name__ == "__main__":
     test_supabase_client()

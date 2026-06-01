@@ -119,7 +119,7 @@ export default function Home() {
                 {/* Simple Footer */}
                 <footer className="border-t border-white/10 py-12 text-center text-gray-500 text-sm relative z-10 bg-[#0F172A]">
                     <div className="max-w-7xl mx-auto px-4">
-                        <p>© {new Date().getFullYear()} Galaxy ERP. All rights reserved.</p>
+                        <p>© {new Date().getFullYear()} Beraxis. All rights reserved.</p>
                         <p className="mt-2">Empowering businesses to scale beyond boundaries.</p>
                     </div>
                 </footer>
@@ -140,7 +140,7 @@ export default function Home() {
                             Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{userData?.metadata?.name || "User"}</span>!
                         </h1>
                         <p className="text-gray-400 text-sm font-medium flex items-center gap-2">
-                            <Database size={12} className="text-purple-400" /> {userData?.tenant?.name || "Galaxy Workspace"}
+                            <Database size={12} className="text-purple-400" /> {userData?.tenant?.name || "Beraxis Workspace"}
                         </p>
                     </div>
                 </div>
@@ -170,7 +170,7 @@ export default function Home() {
                         </div>
                         <p className="text-sm font-medium">
                             Your free trial will expire in <span className="text-amber-400 font-bold underline decoration-2 underline-offset-4">{trialDays} days</span>. 
-                            Unlock the full power of the Galaxy today.
+                            Unlock the full power of Beraxis today.
                         </p>
                     </div>
                     <button 

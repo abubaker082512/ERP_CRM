@@ -19,13 +19,13 @@ export default function Hero() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
                     </span>
-                    <span className="text-xs font-medium text-purple-300 uppercase tracking-wider">Galaxy ERP 2.0 is Live</span>
+                    <span className="text-xs font-medium text-purple-300 uppercase tracking-wider">Beraxis ERP 2.0 is Live</span>
                 </div>
 
                 {/* Headline */}
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
                     Manage your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">universe</span><br />
-                    with Galaxy ERP
+                    with Beraxis ERP
                 </h1>
 
                 {/* Subheadline */}

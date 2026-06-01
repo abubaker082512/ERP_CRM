@@ -121,7 +121,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                             <ShieldCheck size={14} className="text-purple-400" />
                             <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Premium</span>
                         </div>
-                        <p className="text-xs text-gray-300 font-medium">Galaxy Elite Plan</p>
+                        <p className="text-xs text-gray-300 font-medium">Beraxis Elite Plan</p>
                         <p className="text-[10px] text-gray-500 mt-1">Unlimited Workspaces</p>
                     </div>
                 </div>

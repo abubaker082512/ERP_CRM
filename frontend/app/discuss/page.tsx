@@ -35,14 +35,21 @@ export default function DiscussPage() {
 
   const createChannel = async () => {
     if (!newChannelName.trim()) return;
-    const res = await fetchAPI("/discuss/channels", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newChannelName })
-    });
-    if (res.ok) {
-      setNewChannelName("");
-      setIsModalOpen(false);
-      loadChannels();
+    try {
+      const res = await fetchAPI("/discuss/channels", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newChannelName })
+      });
+      if (res.ok) {
+        setNewChannelName("");
+        setIsModalOpen(false);
+        loadChannels();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(`Failed to create channel: ${errData.detail || 'Unknown error'}`);
+      }
+    } catch (e: any) {
+      alert(`Error creating channel: ${e.message}`);
     }
   };
 

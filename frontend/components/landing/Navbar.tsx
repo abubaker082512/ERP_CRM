@@ -12,7 +12,7 @@ export default function Navbar() {
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center gap-2">
                         <Database className="text-purple-500" size={28} />
-                        <span className="text-2xl font-bold tracking-tighter text-white">GALAXY<span className="text-purple-500">.</span></span>
+                        <span className="text-2xl font-bold tracking-tighter text-white">BERAXIS<span className="text-purple-500">.</span></span>
                     </div>
 
                     {/* Desktop Menu */}

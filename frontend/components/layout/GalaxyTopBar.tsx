@@ -30,7 +30,7 @@ export default function GalaxyTopBar({ onToggleSidebar }: { onToggleSidebar?: ()
                         <Rocket size={18} className="text-white" />
                     </div>
                     <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 tracking-tight">
-                        GALAXY
+                        BERAXIS
                     </span>
                     <Sparkles size={12} className="text-purple-400 animate-pulse-glow" />
                 </div>
