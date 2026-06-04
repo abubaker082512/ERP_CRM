@@ -54,9 +54,9 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
     if (!mounted) return null;
 
-    // Don't show shell on landing, login, signup, or the main launcher page
-    const isLandingPage = pathname === '/about' || pathname === '/contact' || pathname === '/';
-    const isAuthPage = pathname === '/login' || pathname === '/signup' || isLandingPage;
+    // Don't show shell on landing, login, signup, shop, checkout, billing, or forgotten password page
+    const isLandingPage = pathname === '/about' || pathname === '/contact' || pathname === '/' || pathname === '/pricing';
+    const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || pathname.startsWith('/shop/') || isLandingPage;
     
     if (isAuthPage) return <>{children}</>;
 
