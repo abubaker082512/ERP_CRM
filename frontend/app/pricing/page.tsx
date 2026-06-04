@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import CosmicBackground from "@/components/CosmicBackground";
 import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall } from "lucide-react";
 
 export default function PricingPage() {
@@ -66,8 +65,7 @@ export default function PricingPage() {
     return (
         <main className="min-h-screen bg-[#020205] text-white overflow-hidden font-sans">
             <Navbar />
-            <CosmicBackground />
-
+ 
             {/* Hero Header */}
             <div className="relative z-10 pt-32 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 <div className="text-center max-w-3xl mx-auto mb-12">

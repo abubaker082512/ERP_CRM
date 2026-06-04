@@ -31,7 +31,13 @@ export default function LoginPage() {
                     localStorage.setItem('refresh_token', data.refresh_token);
                 }
                 localStorage.setItem('user', JSON.stringify(data.user));
-                router.push("/");
+                // Redirect super admins directly to the admin dashboard
+                const SUPER_ADMIN_EMAILS = ['admin@erp-crm.com', 'admin2@erp-crm.com'];
+                if (SUPER_ADMIN_EMAILS.includes(data.user?.email)) {
+                    router.push("/super-admin");
+                } else {
+                    router.push("/");
+                }
             } else {
                 setError(data.detail || 'Login failed. Please check your credentials.');
             }

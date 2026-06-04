@@ -15,7 +15,7 @@ export default function GalaxyTopBar({ onToggleSidebar }: { onToggleSidebar?: ()
     };
 
     return (
-        <header className="sticky top-0 z-40 w-full bg-[#0F172A]/60 backdrop-blur-md border-b border-white/5 px-6 py-3 flex items-center justify-between">
+        <header className="sticky top-0 z-40 w-full bg-[#0F172A]/60 backdrop-blur-md border-b border-white/5 px-6 py-3 flex items-center justify-between" style={{transform: 'translateZ(0)', willChange: 'transform'}}>
             {/* Left Section: Branding & Search */}
             <div className="flex items-center gap-4">
                 <button 

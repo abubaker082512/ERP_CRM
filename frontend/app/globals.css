@@ -3,13 +3,17 @@
 @tailwind utilities;
 
 html {
-  background-color: #020205 !important; /* Pitch black space */
+  background-color: #020205 !important;
+  scroll-behavior: smooth;
 }
 
 body {
   @apply text-white overflow-x-hidden;
   font-family: 'Inter', sans-serif;
   background-color: transparent !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .min-h-screen {
@@ -28,13 +32,14 @@ body {
   overflow: hidden;
 }
 
-/* Glassmorphism Components */
+/* Glassmorphism Components - GPU accelerated to prevent scroll jank */
 .glass-panel {
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transform: translateZ(0);
 }
 
 .glass-card {
@@ -44,12 +49,13 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1rem;
   transition: all 0.3s ease;
+  transform: translateZ(0);
 }
 
 .glass-card:hover {
   background: rgba(30, 41, 59, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
+  transform: translateY(-2px) translateZ(0);
   box-shadow: 0 10px 40px -10px rgba(124, 58, 237, 0.2);
 }
 
@@ -75,9 +81,15 @@ body {
   box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
 
+/* Custom scrollbar for specific elements */
+.custom-scrollbar {
+  scrollbar-gutter: stable;
+}
+
 /* Galaxy Component Tokens */
 .galaxy-card {
   @apply bg-[#1E293B]/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl transition-all duration-300;
+  transform: translateZ(0);
 }
 .galaxy-card:hover {
   @apply border-white/10 bg-[#1E293B]/60 -translate-y-1 shadow-[0_20px_50px_-12px_rgba(139,92,246,0.25)];
@@ -99,8 +111,8 @@ body {
 
 /* Animations */
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.05); }
+  0%, 100% { opacity: 0.5; transform: scale(1) translateZ(0); }
+  50% { opacity: 0.8; transform: scale(1.05) translateZ(0); }
 }
 
 .animate-pulse-glow {
@@ -108,9 +120,9 @@ body {
 }
 
 @keyframes star-float {
-  0% { transform: translateY(0) translateX(0); }
-  50% { transform: translateY(-20px) translateX(10px); }
-  100% { transform: translateY(0) translateX(0); }
+  0% { transform: translateY(0) translateX(0) translateZ(0); }
+  50% { transform: translateY(-20px) translateX(10px) translateZ(0); }
+  100% { transform: translateY(0) translateX(0) translateZ(0); }
 }
 
 .nebula-glow {
@@ -122,6 +134,7 @@ body {
   z-index: -1;
   opacity: 0.15;
   pointer-events: none;
+  will-change: opacity;
 }
 
 .nebula-purple { background: #8B5CF6; }
@@ -145,4 +158,6 @@ body {
   animation: aurora 12s ease-in-out infinite;
   z-index: -2;
   will-change: opacity;
+  transform: translateZ(0);
 }
+

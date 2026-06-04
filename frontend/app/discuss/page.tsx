@@ -12,6 +12,7 @@ export default function DiscussPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newChannelName, setNewChannelName] = useState("");
+  const [createLoading, setCreateLoading] = useState(false);
 
   useEffect(() => { loadChannels(); }, []);
   useEffect(() => {
@@ -34,22 +35,29 @@ export default function DiscussPage() {
   };
 
   const createChannel = async () => {
-    if (!newChannelName.trim()) return;
+    const trimmedName = newChannelName.trim();
+    if (!trimmedName) return;
+    setCreateLoading(true);
     try {
       const res = await fetchAPI("/discuss/channels", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newChannelName })
+        body: JSON.stringify({ name: trimmedName })
       });
       if (res.ok) {
+        const newChannel = await res.json();
         setNewChannelName("");
         setIsModalOpen(false);
-        loadChannels();
+        await loadChannels();
+        // Auto-select the newly created channel
+        if (newChannel?.id) setActiveChannel(newChannel);
       } else {
         const errData = await res.json().catch(() => ({}));
         alert(`Failed to create channel: ${errData.detail || 'Unknown error'}`);
       }
     } catch (e: any) {
       alert(`Error creating channel: ${e.message}`);
+    } finally {
+      setCreateLoading(false);
     }
   };
 
@@ -162,13 +170,32 @@ export default function DiscussPage() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#1E293B] rounded-2xl p-6 w-full max-w-sm border border-gray-700 shadow-2xl">
-            <h3 className="text-lg font-bold text-white mb-4">Create Channel</h3>
-            <input type="text" value={newChannelName} onChange={(e) => setNewChannelName(e.target.value)}
-              className="w-full bg-[#0F172A] border border-gray-600 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none mb-6" 
-              placeholder="e.g. general" autoFocus />
+            <h3 className="text-lg font-bold text-white mb-1">Create Channel</h3>
+            <p className="text-gray-400 text-sm mb-4">Give your channel a name to get started.</p>
+            <input 
+              type="text" 
+              value={newChannelName} 
+              onChange={(e) => setNewChannelName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') createChannel(); }}
+              className="w-full bg-[#0F172A] border border-gray-600 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none mb-6 focus:ring-2 focus:ring-indigo-500/30 transition-all" 
+              placeholder="e.g. general, announcements, team-chat" 
+              autoFocus 
+            />
             <div className="flex justify-end gap-3">
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-400 hover:text-white font-medium">Cancel</button>
-              <button onClick={createChannel} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-xl font-bold">Create</button>
+              <button 
+                onClick={() => { setIsModalOpen(false); setNewChannelName(""); }} 
+                className="px-4 py-2 text-gray-400 hover:text-white font-medium transition-colors"
+                disabled={createLoading}
+              >Cancel</button>
+              <button 
+                onClick={createChannel} 
+                disabled={!newChannelName.trim() || createLoading}
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2 rounded-xl font-bold transition-colors flex items-center gap-2"
+              >
+                {createLoading ? (
+                  <><span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Creating...</>
+                ) : 'Create Channel'}
+              </button>
             </div>
           </div>
         </div>

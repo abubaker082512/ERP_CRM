@@ -2,15 +2,13 @@
 
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import CosmicBackground from "@/components/CosmicBackground";
 import { Rocket, Target, Globe2 } from "lucide-react";
-
+ 
 export default function AboutPage() {
     return (
         <main className="min-h-screen bg-[#020205] text-white overflow-hidden font-sans">
             <Navbar />
-            <CosmicBackground />
-
+ 
             <div className="relative z-10 pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 <div className="text-center max-w-3xl mx-auto mb-20">
                     <h1 className="text-4xl md:text-6xl font-bold mb-6">

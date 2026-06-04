@@ -2,25 +2,23 @@
 
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import CosmicBackground from "@/components/CosmicBackground";
 import { Mail, MessageSquare, MapPin, Send } from "lucide-react";
 import { useState } from "react";
-
+ 
 export default function ContactPage() {
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
     const [submitted, setSubmitted] = useState(false);
-
+ 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         // Placeholder for actual form submission logic
         setTimeout(() => setSubmitted(true), 500);
     };
-
+ 
     return (
         <main className="min-h-screen bg-[#020205] text-white overflow-hidden font-sans">
             <Navbar />
-            <CosmicBackground />
-
+ 
             <div className="relative z-10 pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 <div className="text-center max-w-3xl mx-auto mb-16">
                     <h1 className="text-4xl md:text-5xl font-bold mb-6">

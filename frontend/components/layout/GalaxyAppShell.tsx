@@ -35,8 +35,10 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         if (userStr) {
             try {
                 const user = JSON.parse(userStr);
-                // Restrict SaaS Admin panel to the platform owner
-                if (user.email === 'admin2@erp-crm.com') {
+                // Restrict SaaS Admin panel to the platform super admin
+                // admin@erp-crm.com is the primary super admin account
+                const SUPER_ADMIN_EMAILS = ['admin@erp-crm.com', 'admin2@erp-crm.com'];
+                if (SUPER_ADMIN_EMAILS.includes(user.email)) {
                     setIsAdmin(true);
                 }
             } catch (e) {}
@@ -133,10 +135,17 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                 isSidebarOpen ? 'ml-64' : 'ml-0'
             }`}>
                 <GalaxyTopBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-                <div className="flex-1 overflow-auto bg-[#020205] relative custom-scrollbar">
-                    {/* Background Ambient Glows */}
-                    <div className="fixed top-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/5 blur-[120px] rounded-full pointer-events-none"></div>
-                    <div className="fixed bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-pink-600/5 blur-[120px] rounded-full pointer-events-none"></div>
+                <div 
+                    className="flex-1 overflow-y-auto overflow-x-hidden bg-[#020205] relative custom-scrollbar"
+                    style={{ 
+                        willChange: 'scroll-position',
+                        WebkitOverflowScrolling: 'touch',
+                        overscrollBehavior: 'contain'
+                    }}
+                >
+                    {/* Background Ambient Glows - use fixed for no layout cost */}
+                    <div className="fixed top-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/5 blur-[120px] rounded-full pointer-events-none" style={{zIndex:0}}></div>
+                    <div className="fixed bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-pink-600/5 blur-[120px] rounded-full pointer-events-none" style={{zIndex:0}}></div>
                     
                     <div className="relative z-10 p-8 min-h-full">
                         {children}
