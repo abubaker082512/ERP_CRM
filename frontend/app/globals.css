@@ -129,19 +129,20 @@ body {
 .nebula-blue { background: #3B82F6; }
 
 @keyframes aurora {
-  0% { transform: translate(-10%, -10%) rotate(0deg); }
-  100% { transform: translate(10%, 10%) rotate(360deg); }
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.9; }
 }
 
 .aurora-bg {
   position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at center, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
               radial-gradient(circle at 30% 30%, rgba(236, 72, 153, 0.03) 0%, transparent 40%),
               radial-gradient(circle at 70% 70%, rgba(59, 130, 246, 0.03) 0%, transparent 40%);
-  animation: aurora 30s linear infinite;
+  animation: aurora 12s ease-in-out infinite;
   z-index: -2;
+  will-change: opacity;
 }
