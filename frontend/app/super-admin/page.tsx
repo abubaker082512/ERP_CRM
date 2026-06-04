@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { 
     ShieldCheck, Users, Building2, TrendingUp, Search, 
     RefreshCw, Plus, ExternalLink, CreditCard, Calendar, 
-    Ban, CheckCircle, ShieldAlert
+    Ban, CheckCircle, ShieldAlert, Trash2, UserX
 } from 'lucide-react';
 
 type Workspace = {
@@ -19,6 +19,8 @@ type GlobalUser = {
     id: string;
     email: string;
     created_at: string;
+    subscription_status?: string;
+    workspace_name?: string;
 };
 
 type Tenant = {
@@ -281,7 +283,7 @@ export default function SuperAdminPage() {
                         <div className="p-6 border-b border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#1E293B]/20">
                             <div>
                                 <h2 className="text-xl font-bold">Platform User Accounts</h2>
-                                <p className="text-xs text-gray-500 mt-1">Direct authentication records</p>
+                                <p className="text-xs text-gray-500 mt-1">All registered users across the entire platform</p>
                             </div>
                             <div className="relative w-full md:w-72">
                                 <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
@@ -300,28 +302,68 @@ export default function SuperAdminPage() {
                                 <thead className="bg-[#0F172A] text-gray-500 text-xs uppercase tracking-widest font-bold border-b border-gray-850">
                                     <tr>
                                         <th className="px-6 py-4">User Email</th>
-                                        <th className="px-6 py-4">User ID</th>
+                                        <th className="px-6 py-4">Workspace</th>
+                                        <th className="px-6 py-4">Plan Status</th>
                                         <th className="px-6 py-4">Joined Date</th>
+                                        <th className="px-6 py-4 text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-850">
                                     {loading ? (
-                                        <tr><td colSpan={3} className="px-6 py-12 text-center text-gray-550">Loading users...</td></tr>
+                                        <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-550">Loading users...</td></tr>
                                     ) : filteredUsers.length === 0 ? (
-                                        <tr><td colSpan={3} className="px-6 py-12 text-center text-gray-550">No users found.</td></tr>
+                                        <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-550">No users found.</td></tr>
                                     ) : filteredUsers.map(u => (
                                         <tr key={u.id} className="hover:bg-gray-800/10 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center text-blue-400 font-bold border border-white/5">
-                                                        <Users size={18} />
+                                                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center text-blue-400 font-bold border border-white/5 text-sm">
+                                                        {u.email.charAt(0).toUpperCase()}
                                                     </div>
-                                                    <span className="font-semibold text-gray-200">{u.email}</span>
+                                                    <div>
+                                                        <span className="font-semibold text-gray-200 block">{u.email}</span>
+                                                        <span className="text-[10px] text-gray-600 font-mono">{u.id.slice(0, 16)}...</span>
+                                                    </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-gray-500 text-xs font-mono">{u.id}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-400">
+                                                {u.workspace_name ? (
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Building2 size={13} className="text-gray-500" />
+                                                        {u.workspace_name}
+                                                    </span>
+                                                ) : <span className="text-gray-600">—</span>}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 ${
+                                                    u.subscription_status === 'active'
+                                                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                        : u.subscription_status === 'trialing'
+                                                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                                        : u.subscription_status === 'past_due' || u.subscription_status === 'canceled'
+                                                        ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                                        : 'bg-gray-700/40 text-gray-400 border border-gray-700'
+                                                }`}>
+                                                    {u.subscription_status === 'active' && <CheckCircle size={10} />}
+                                                    {u.subscription_status || 'new'}
+                                                </span>
+                                            </td>
                                             <td className="px-6 py-4 text-sm text-gray-400">
                                                 {u.created_at ? new Date(u.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!confirm(`Delete user ${u.email}? This cannot be undone.`)) return;
+                                                        const res = await fetchAPI(`/super-admin/users/${u.id}`, { method: 'DELETE' });
+                                                        if (res.ok) fetchData();
+                                                        else alert('Failed to delete user');
+                                                    }}
+                                                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                                    title="Delete user"
+                                                >
+                                                    <Trash2 size={15} />
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}

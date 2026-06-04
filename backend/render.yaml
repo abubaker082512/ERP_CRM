@@ -12,5 +12,7 @@ services:
         sync: false
       - key: SUPABASE_KEY
         sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
       - key: CORS_ORIGINS
         value: "https://erp-crm-three.vercel.app,https://beraxis.online,https://www.beraxis.online,http://localhost:3000"
