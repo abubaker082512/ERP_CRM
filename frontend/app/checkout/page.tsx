@@ -15,6 +15,12 @@ export default function CheckoutPage() {
     const [processing, setProcessing] = useState(false);
     const [success, setSuccess] = useState(false);
 
+    // Promo code states
+    const [promoCode, setPromoCode] = useState("");
+    const [discount, setDiscount] = useState(0.0);
+    const [promoSuccess, setPromoSuccess] = useState("");
+    const [promoError, setPromoError] = useState("");
+
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -41,6 +47,29 @@ export default function CheckoutPage() {
         setForm({...form, [e.target.name]: e.target.value});
     };
 
+    const handleApplyPromo = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setPromoError("");
+        setPromoSuccess("");
+
+        const code = promoCode.trim().toUpperCase();
+        if (["FREE100", "BERAXIS100", "BERAXIS"].includes(code)) {
+            setDiscount(1.0);
+            setPromoSuccess("🎉 100% Promo applied! Order is free.");
+        } else if (code === "LAUNCH50") {
+            setDiscount(0.5);
+            setPromoSuccess("🎉 50% Promo applied!");
+        } else if (code === "LAUNCH20") {
+            setDiscount(0.2);
+            setPromoSuccess("🎉 20% Promo applied!");
+        } else if (code === "") {
+            setPromoError("Enter a promo code.");
+        } else {
+            setPromoError("Invalid code.");
+            setDiscount(0.0);
+        }
+    };
+
     const handleCheckout = async (e: React.FormEvent) => {
         e.preventDefault();
         setProcessing(true);
@@ -49,7 +78,7 @@ export default function CheckoutPage() {
             customer_name: form.name,
             customer_email: form.email,
             shipping_address: `${form.address}, ${form.city}, ${form.country}`,
-            total_amount: subtotal,
+            total_amount: total,
             items: cartItems.map(item => ({ product_id: item.id, quantity: item.quantity, price: item.price }))
         };
 
@@ -76,8 +105,9 @@ export default function CheckoutPage() {
     };
 
     const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-    const tax = subtotal * 0.1; // 10% mock tax
-    const total = subtotal + tax;
+    const discountAmount = subtotal * discount;
+    const tax = (subtotal - discountAmount) * 0.1; // 10% mock tax
+    const total = (subtotal - discountAmount) + tax;
 
     if (loading) return <div className="h-screen bg-[#0F172A] flex items-center justify-center text-white">Loading...</div>;
 
@@ -186,7 +216,7 @@ export default function CheckoutPage() {
                         <div className="bg-[#1E293B] border border-gray-800 rounded-2xl p-6 sticky top-24">
                             <h2 className="text-xl font-bold text-white mb-6">Order Summary</h2>
                             
-                            <div className="space-y-4 mb-6 max-h-[40vh] overflow-y-auto pr-2">
+                            <div className="space-y-4 mb-6 max-h-[30vh] overflow-y-auto pr-2">
                                 {cartItems.map(item => (
                                     <div key={item.id} className="flex justify-between items-start">
                                         <div className="flex gap-3">
@@ -202,12 +232,41 @@ export default function CheckoutPage() {
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Promo Code Fields */}
+                            <div className="border-t border-gray-800 pt-4 mb-4">
+                                <label className="block text-xs text-gray-400 mb-2 font-medium">Promo Code</label>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        placeholder="e.g. LAUNCH50" 
+                                        value={promoCode}
+                                        onChange={(e) => setPromoCode(e.target.value)}
+                                        className="flex-1 bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2.5 text-xs text-white outline-none focus:border-purple-500"
+                                    />
+                                    <button 
+                                        type="button"
+                                        onClick={handleApplyPromo}
+                                        className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-2 rounded-lg text-xs transition-colors shrink-0"
+                                    >
+                                        Apply
+                                    </button>
+                                </div>
+                                {promoSuccess && <p className="text-[10px] text-green-400 font-medium mt-1.5">{promoSuccess}</p>}
+                                {promoError && <p className="text-[10px] text-red-400 font-medium mt-1.5">{promoError}</p>}
+                            </div>
                             
                             <div className="border-t border-gray-800 pt-4 space-y-3">
                                 <div className="flex justify-between text-gray-400 text-sm">
                                     <span>Subtotal</span>
                                     <span className="text-white">${subtotal.toFixed(2)}</span>
                                 </div>
+                                {discountAmount > 0 && (
+                                    <div className="flex justify-between text-green-400 text-sm font-medium">
+                                        <span>Discount</span>
+                                        <span>-${discountAmount.toFixed(2)}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between text-gray-400 text-sm">
                                     <span>Tax (10%)</span>
                                     <span className="text-white">${tax.toFixed(2)}</span>

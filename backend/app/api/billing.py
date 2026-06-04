@@ -23,7 +23,9 @@ async def create_checkout_session(
     client: Client = Depends(get_supabase_client)
 ):
     # Fetch the user's tenant ID from the authenticated client
-    user_resp = client.auth.get_user()
+    from app.core.supabase_client import token_ctx_var
+    token = token_ctx_var.get()
+    user_resp = client.auth.get_user(token)
     if not user_resp or not user_resp.user:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
@@ -98,3 +100,56 @@ async def stripe_webhook(request: Request, client: Client = Depends(get_supabase
                 }).eq("id", ws_id).execute()
     
     return {"status": "success"}
+
+@router.post("/manual-activate")
+async def manual_activate(
+    payload: dict,
+    client: Client = Depends(get_supabase_client)
+):
+    from app.core.supabase_client import token_ctx_var
+    token = token_ctx_var.get()
+    user_resp = client.auth.get_user(token)
+    if not user_resp or not user_resp.user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user_id = user_resp.user.id
+    promo_code = payload.get("promo_code", "").strip().upper()
+    
+    # Validate promo codes: FREE100, BERAXIS100 (100% off), LAUNCH50 (50% off), LAUNCH20 (20% off)
+    discount = 0.0
+    if promo_code in ["FREE100", "BERAXIS100", "BERAXIS"]:
+        discount = 1.0
+    elif promo_code == "LAUNCH50":
+        discount = 0.5
+    elif promo_code == "LAUNCH20":
+        discount = 0.2
+    elif promo_code != "":
+        raise HTTPException(status_code=400, detail="Invalid promo code.")
+
+    try:
+        # 1. Update tenants table to make subscription active and clear or push trial_ends_at
+        client.table("tenants").update({
+            "subscription_status": "active",
+            "trial_ends_at": None  # Clear to avoid trial expiry checks
+        }).eq("id", user_id).execute()
+
+        # 2. Also try updating workspaces if applicable
+        try:
+            ws_resp = client.table("user_workspaces").select("workspace_id").eq("user_id", user_id).execute()
+            if ws_resp.data:
+                ws_id = ws_resp.data[0]["workspace_id"]
+                client.table("workspaces").update({
+                    "subscription_status": "active",
+                    "subscription_tier": "pro"
+                }).eq("id", ws_id).execute()
+        except Exception as ws_err:
+            print(f"[WARN] Failed to update workspaces: {ws_err}")
+
+        return {
+            "status": "success",
+            "message": "Subscription manually activated successfully.",
+            "discount_applied": discount
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Activation error: {str(e)}")
+
