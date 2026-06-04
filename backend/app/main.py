@@ -48,13 +48,30 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+ 
+from app.db.session import engine
+from sqlalchemy import text
+ 
+@app.on_event("startup")
+def run_db_migrations():
+    print("[MIGRATION] Running startup database migrations...")
+    try:
+        with engine.connect() as connection:
+            # 1. Alter mail_message to add author_name column
+            connection.execute(text("ALTER TABLE mail_message ADD COLUMN IF NOT EXISTS author_name TEXT DEFAULT 'User';"))
+            # 2. Reload PostgREST schema cache
+            connection.execute(text("NOTIFY pgrst, 'reload schema';"))
+            connection.commit()
+            print("[MIGRATION] Startup migrations applied successfully!")
+    except Exception as e:
+        print(f"[MIGRATION] [ERROR] Failed to run database migrations: {e}")
 
 from app.services.sentiment import sentiment_service
-
+ 
 @app.get("/test-ai/sentiment")
 def test_sentiment(text: str):
     return sentiment_service.analyze(text)
-
+ 
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Next-Gen AI ERP API"}
