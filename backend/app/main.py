@@ -51,9 +51,12 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
  
 from app.db.session import engine
 from sqlalchemy import text
- 
+
 @app.on_event("startup")
 def run_db_migrations():
+    if engine is None:
+        print("[MIGRATION] Skipping — no DATABASE_URL configured. Using Supabase client directly.")
+        return
     print("[MIGRATION] Running startup database migrations...")
     try:
         with engine.connect() as connection:
