@@ -9,3 +9,11 @@ supabase
 email-validator
 stripe
 python-multipart==0.0.9
+langgraph
+e2b
+langchain-core
+langchain-openai
+langchain-anthropic
+pgvector
+numpy
+openai

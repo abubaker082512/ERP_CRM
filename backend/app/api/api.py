@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.api import leads, auth, opportunities, products, sales, contacts, inventory, purchase, accounting, hr, mrp, helpdesk, payroll, website, documents, discuss, ai, pos, recruitment, attendance, knowledge, todo, appointments, planning, surveys, sign, barcode, team, billing, dashboard, super_admin, expenses, maintenance, projects, timesheets
+from app.api import leads, auth, opportunities, products, sales, contacts, inventory, purchase, accounting, hr, mrp, helpdesk, payroll, website, documents, discuss, ai, pos, recruitment, attendance, knowledge, todo, appointments, planning, surveys, sign, barcode, team, billing, dashboard, super_admin, expenses, maintenance, projects, timesheets, antigravity
 from app.api.deps import get_supabase_client
 
 api_router = APIRouter()
@@ -41,6 +41,7 @@ api_router.include_router(expenses.router, prefix="/expenses", tags=["expenses"]
 api_router.include_router(maintenance.router, prefix="/maintenance", tags=["maintenance"], dependencies=protected_deps)
 api_router.include_router(projects.router, prefix="/projects", tags=["projects"], dependencies=protected_deps)
 api_router.include_router(timesheets.router, prefix="/timesheets", tags=["timesheets"], dependencies=protected_deps)
+api_router.include_router(antigravity.router, prefix="/antigravity", tags=["antigravity"])
 
 @api_router.get("/ping", tags=["health"])
 def ping():
