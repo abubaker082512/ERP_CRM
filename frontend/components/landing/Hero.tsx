@@ -23,12 +23,12 @@ export default function Hero() {
                 {/* Headline */}
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
                     Manage your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">universe</span><br />
-                    with Beraxis ERP
+                    with AI & Voice Pilot
                 </h1>
 
                 {/* Subheadline */}
                 <p className="mt-4 text-xl text-gray-400 max-w-3xl mx-auto mb-10 font-light leading-relaxed">
-                    The ultimate SaaS platform that unifies CRM, Sales, Inventory, and Accounting into one intelligent, glassmorphic command center. Scale beyond boundaries.
+                    The ultimate SaaS platform that unifies CRM, Sales, Inventory, and Accounting under our intelligent **AI Dual-Brain** and duplex **Antigravity Voice Pilot**. Speak directly to execute transactions, run analytics reports, and trigger sandboxed workflows.
                 </p>
 
                 {/* CTAs */}

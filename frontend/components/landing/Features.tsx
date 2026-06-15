@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, ShoppingCart, Package, ShieldCheck, Zap } from 'lucide-react';
+import { LayoutDashboard, Users, ShoppingCart, Package, ShieldCheck, Zap, Sparkles, Mic } from 'lucide-react';
 
 const features = [
     {
@@ -21,6 +21,20 @@ const features = [
         icon: Package,
         color: "text-purple-400",
         bg: "bg-purple-500/10"
+    },
+    {
+        title: "AI Dual-Brain Engine",
+        description: "A hybrid framework combining global system rules (Macro-Brain) with secure, per-tenant vector memory logs (Micro-Brain) for hyper-personalized business insights.",
+        icon: Sparkles,
+        color: "text-purple-400",
+        bg: "bg-purple-500/10"
+    },
+    {
+        title: "Antigravity Voice Pilot",
+        description: "Control your entire ERP suite with low-latency streaming voice commands. Speak to run queries, draft transactions, and trigger E2B sandboxed routines.",
+        icon: Mic,
+        color: "text-sky-400",
+        bg: "bg-sky-500/10"
     },
     {
         title: "Executive Dashboards",
