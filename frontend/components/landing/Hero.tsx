@@ -27,8 +27,8 @@ export default function Hero() {
                 </h1>
 
                 {/* Subheadline */}
-                <p className="mt-4 text-xl text-gray-400 max-w-3xl mx-auto mb-10 font-light leading-relaxed">
-                    The ultimate SaaS platform that unifies CRM, Sales, Inventory, and Accounting under our intelligent **AI Dual-Brain** and duplex **Antigravity Voice Pilot**. Speak directly to execute transactions, run analytics reports, and trigger sandboxed workflows.
+                <p className="mt-6 text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mb-12 font-light leading-relaxed">
+                    The ultimate SaaS platform that unifies CRM, Sales, Inventory, and Accounting under a context-aware AI Dual-Brain framework and real-time duplex Voice Pilot. Speak naturally to manage transactions, analyze metrics, and trigger secure sandboxed automation.
                 </p>
 
                 {/* CTAs */}
