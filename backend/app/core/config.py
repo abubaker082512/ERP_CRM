@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
     DEEPGRAM_API_KEY: str = os.getenv("DEEPGRAM_API_KEY", "")
+    PLISIO_SECRET_KEY: str = os.getenv("PLISIO_SECRET_KEY", "")
+    BACKEND_URL: str = os.getenv("BACKEND_URL", "https://galaxy-erp-backend.onrender.com")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://erp-crm-three.vercel.app")
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:3001",

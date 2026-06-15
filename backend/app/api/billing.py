@@ -1,5 +1,9 @@
 import os
-import stripe
+import hashlib
+import hmac
+import json
+import uuid
+import httpx
 from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from typing import Optional
@@ -8,114 +12,245 @@ from supabase import Client
 
 router = APIRouter()
 
-# Configure Stripe
-stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "sk_test_mock_key_for_development")
-# The frontend URL where Stripe will redirect after payment
+# Plisio API Configuration
+PLISIO_SECRET_KEY = os.environ.get("PLISIO_SECRET_KEY", "")
+PLISIO_API_BASE = "https://api.plisio.net/api/v1"
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+BACKEND_URL = os.environ.get("BACKEND_URL", "https://galaxy-erp-backend.onrender.com")
 
-class CheckoutSessionRequest(BaseModel):
-    price_id: str
-    plan_name: str
+# Plan pricing in USD
+PLAN_PRICES = {
+    "pro": 199.00,
+    "starter": 49.00,
+    "enterprise": 499.00,
+}
 
-@router.post("/create-checkout-session")
-async def create_checkout_session(
-    request: CheckoutSessionRequest, 
+class CreateInvoiceRequest(BaseModel):
+    plan_name: str = "pro"
+    currency: str = "BTC"  # Crypto currency to pay in
+    email: Optional[str] = None
+
+class ManualActivateRequest(BaseModel):
+    promo_code: Optional[str] = ""
+
+
+def _verify_plisio_hash(data: dict, secret_key: str) -> bool:
+    """
+    Verify Plisio IPN callback authenticity using SHA1 hash.
+    Plisio computes: sha1(json_encode(sorted_params) + secret_key)
+    """
+    try:
+        verify_hash = data.pop("verify_hash", None)
+        if not verify_hash:
+            return False
+
+        # Sort params alphabetically, encode to JSON, append secret key
+        sorted_data = dict(sorted(data.items()))
+        json_str = json.dumps(sorted_data, separators=(",", ":"))
+        computed = hashlib.sha1((json_str + secret_key).encode()).hexdigest()
+
+        return hmac.compare_digest(computed, verify_hash)
+    except Exception as e:
+        print(f"[PLISIO] Hash verification error: {e}")
+        return False
+
+
+@router.post("/create-invoice")
+async def create_plisio_invoice(
+    request: CreateInvoiceRequest,
     client: Client = Depends(get_supabase_client)
 ):
-    # Fetch the user's tenant ID from the authenticated client
+    """
+    Create a Plisio crypto payment invoice.
+    Returns invoice_url to redirect the user to Plisio's hosted payment page.
+    """
     from app.core.supabase_client import token_ctx_var
     token = token_ctx_var.get()
     user_resp = client.auth.get_user(token)
     if not user_resp or not user_resp.user:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    
-    user_id = user_resp.user.id
+
+    user = user_resp.user
+    user_id = user.id
+    user_email = request.email or (user.email if user.email else "")
+
+    # Calculate price
+    plan_key = request.plan_name.lower()
+    source_amount = PLAN_PRICES.get(plan_key, 199.00)
+
+    # Generate a unique order number
+    order_number = str(uuid.uuid4())[:8].upper()
+
+    # Callback URL for Plisio to notify us on payment status changes
+    callback_url = f"{BACKEND_URL}/api/billing/plisio-callback"
+
+    # Build Plisio API params
+    params = {
+        "api_key": PLISIO_SECRET_KEY,
+        "currency": request.currency.upper(),
+        "source_currency": "USD",
+        "source_amount": str(source_amount),
+        "order_number": order_number,
+        "order_name": f"Beraxis {request.plan_name.title()} Plan",
+        "description": f"Beraxis SaaS - {request.plan_name.title()} Plan subscription",
+        "email": user_email,
+        "callback_url": callback_url,
+        "success_invoice_url": f"{FRONTEND_URL}/dashboard?billing_success=true&order={order_number}",
+        "fail_invoice_url": f"{FRONTEND_URL}/billing?canceled=true",
+        "language": "en",
+        # Pass user_id so the callback can activate the correct tenant
+        "plugin": f"beraxis|{user_id}|{plan_key}",
+    }
+
+    # If no secret key configured, return a mock response for development
+    if not PLISIO_SECRET_KEY:
+        print("[PLISIO] No PLISIO_SECRET_KEY configured. Returning mock invoice.")
+        return {
+            "invoice_url": f"{FRONTEND_URL}/dashboard?billing_success=true&mock=true",
+            "txn_id": f"mock_{order_number}",
+            "order_number": order_number,
+            "amount_usd": source_amount,
+            "currency": request.currency.upper(),
+            "mock": True,
+            "message": "Development mode: No Plisio key configured. Set PLISIO_SECRET_KEY in your environment."
+        }
 
     try:
-        # Create a Stripe Checkout Session
-        # In a real app, you should map user_id to a Stripe Customer ID
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'usd',
-                    'product_data': {
-                        'name': f"ERP-CRM SaaS - {request.plan_name} Plan",
-                    },
-                    'unit_amount': 2900 if 'pro' in request.plan_name.lower() else 9900,
-                    'recurring': {
-                        'interval': 'month'
-                    }
-                },
-                'quantity': 1,
-            }],
-            mode='subscription',
-            success_url=f"{FRONTEND_URL}/dashboard?session_id={{CHECKOUT_SESSION_ID}}&billing_success=true",
-            cancel_url=f"{FRONTEND_URL}/billing?canceled=true",
-            client_reference_id=user_id, # Link Stripe session back to our User/Tenant
-            metadata={
-                "user_id": user_id,
-                "plan_name": request.plan_name
+        async with httpx.AsyncClient(timeout=30.0) as http_client:
+            response = await http_client.get(
+                f"{PLISIO_API_BASE}/invoices/new",
+                params=params
+            )
+            result = response.json()
+
+        if result.get("status") == "success":
+            data = result["data"]
+            return {
+                "invoice_url": data.get("invoice_url"),
+                "txn_id": data.get("txn_id"),
+                "order_number": order_number,
+                "amount_usd": source_amount,
+                "currency": request.currency.upper(),
+                "mock": False
             }
-        )
-        return {"checkout_url": session.url}
-
-    except Exception as e:
-        # Fallback for development if Stripe key is invalid/missing
-        print(f"Stripe Error: {e}")
-        print("Falling back to simulated successful checkout URL.")
-        return {"checkout_url": f"{FRONTEND_URL}/dashboard?billing_success=true&mock=true"}
-
-@router.post("/webhook")
-async def stripe_webhook(request: Request, client: Client = Depends(get_supabase_client)):
-    # This endpoint receives events from Stripe
-    payload = await request.body()
-    sig_header = request.headers.get("stripe-signature")
-    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
-
-    event = None
-    try:
-        if webhook_secret and sig_header:
-            event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
         else:
-            import json
-            event = stripe.Event.construct_from(json.loads(payload), stripe.api_key)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+            error_msg = result.get("data", {}).get("message", "Failed to create invoice")
+            raise HTTPException(status_code=422, detail=f"Plisio error: {error_msg}")
 
-    # Handle successful subscription
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        user_id = session.get("client_reference_id")
-        
-        if user_id:
-            # We would typically update the tenant's subscription status here
-            # Since the tenant logic depends on `schema_team_support`, we find their workspace:
-            ws_resp = client.table("user_workspaces").select("workspace_id").eq("user_id", user_id).execute()
-            if ws_resp.data:
-                ws_id = ws_resp.data[0]["workspace_id"]
-                client.table("workspaces").update({
-                    "subscription_status": "active",
-                    "subscription_tier": session.get("metadata", {}).get("plan_name", "pro")
-                }).eq("id", ws_id).execute()
-    
-    return {"status": "success"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[PLISIO] Invoice creation error: {e}")
+        # Fallback: redirect to dashboard with mock success
+        return {
+            "invoice_url": f"{FRONTEND_URL}/dashboard?billing_success=true&fallback=true",
+            "txn_id": f"fallback_{order_number}",
+            "order_number": order_number,
+            "amount_usd": source_amount,
+            "currency": request.currency.upper(),
+            "mock": True,
+            "error": str(e)
+        }
+
+
+@router.post("/plisio-callback")
+async def plisio_callback(request: Request, client: Client = Depends(get_supabase_client)):
+    """
+    Plisio IPN (Instant Payment Notification) callback endpoint.
+    Called by Plisio when payment status changes.
+    Verifies the SHA1 hash and activates subscription on 'completed' status.
+    """
+    try:
+        body = await request.body()
+        # Plisio sends form-encoded or JSON data
+        try:
+            data = json.loads(body)
+        except Exception:
+            from urllib.parse import parse_qs
+            parsed = parse_qs(body.decode())
+            data = {k: v[0] if len(v) == 1 else v for k, v in parsed.items()}
+
+        print(f"[PLISIO] Callback received: status={data.get('status')}, txn={data.get('txn_id')}")
+
+        # Verify authenticity using SHA1 hash
+        if PLISIO_SECRET_KEY:
+            data_copy = dict(data)
+            if not _verify_plisio_hash(data_copy, PLISIO_SECRET_KEY):
+                print("[PLISIO] Hash verification FAILED — callback rejected")
+                raise HTTPException(status_code=400, detail="Invalid hash signature")
+
+        status = data.get("status", "")
+        txn_id = data.get("txn_id", "")
+
+        # Extract user_id and plan from the plugin field we set at invoice creation
+        # plugin format: "beraxis|{user_id}|{plan_key}"
+        plugin_str = data.get("plugin", "")
+        user_id = None
+        plan_key = "pro"
+
+        if plugin_str and "|" in plugin_str:
+            parts = plugin_str.split("|")
+            if len(parts) >= 2:
+                user_id = parts[1]
+            if len(parts) >= 3:
+                plan_key = parts[2]
+
+        # Only activate on 'completed' (fully confirmed) status
+        if status == "completed" and user_id:
+            print(f"[PLISIO] Payment completed for user {user_id}, plan: {plan_key}")
+            
+            # Activate tenant subscription using service role client (bypass RLS)
+            from app.core.supabase_client import get_service_role_client
+            service_client = get_service_role_client()
+
+            # Update tenants table
+            service_client.table("tenants").update({
+                "subscription_status": "active",
+                "trial_ends_at": None
+            }).eq("id", user_id).execute()
+
+            # Update workspaces table if applicable
+            try:
+                ws_resp = service_client.table("user_workspaces").select("workspace_id").eq("user_id", user_id).execute()
+                if ws_resp.data:
+                    ws_id = ws_resp.data[0]["workspace_id"]
+                    service_client.table("workspaces").update({
+                        "subscription_status": "active",
+                        "subscription_tier": plan_key
+                    }).eq("id", ws_id).execute()
+            except Exception as ws_err:
+                print(f"[PLISIO] Workspace update error: {ws_err}")
+
+            print(f"[PLISIO] ✅ Subscription activated for user {user_id}")
+
+        return {"status": "ok", "txn_id": txn_id, "received_status": status}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[PLISIO] Callback processing error: {e}")
+        return {"status": "error", "error": str(e)}
+
 
 @router.post("/manual-activate")
 async def manual_activate(
-    payload: dict,
+    payload: ManualActivateRequest,
     client: Client = Depends(get_supabase_client)
 ):
+    """
+    Manually activate subscription via promo code.
+    Supports: FREE100, BERAXIS100, BERAXIS (100% off), LAUNCH50 (50%), LAUNCH20 (20%)
+    """
     from app.core.supabase_client import token_ctx_var
     token = token_ctx_var.get()
     user_resp = client.auth.get_user(token)
     if not user_resp or not user_resp.user:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    
+
     user_id = user_resp.user.id
-    promo_code = payload.get("promo_code", "").strip().upper()
-    
-    # Validate promo codes: FREE100, BERAXIS100 (100% off), LAUNCH50 (50% off), LAUNCH20 (20% off)
+    promo_code = (payload.promo_code or "").strip().upper()
+
+    # Validate promo codes
     discount = 0.0
     if promo_code in ["FREE100", "BERAXIS100", "BERAXIS"]:
         discount = 1.0
@@ -126,14 +261,17 @@ async def manual_activate(
     elif promo_code != "":
         raise HTTPException(status_code=400, detail="Invalid promo code.")
 
+    if discount == 0.0 and promo_code == "":
+        raise HTTPException(status_code=400, detail="Please enter a promo code for manual activation.")
+
     try:
-        # 1. Update tenants table to make subscription active and clear or push trial_ends_at
+        # Activate tenant subscription
         client.table("tenants").update({
             "subscription_status": "active",
-            "trial_ends_at": None  # Clear to avoid trial expiry checks
+            "trial_ends_at": None
         }).eq("id", user_id).execute()
 
-        # 2. Also try updating workspaces if applicable
+        # Update workspace if applicable
         try:
             ws_resp = client.table("user_workspaces").select("workspace_id").eq("user_id", user_id).execute()
             if ws_resp.data:
@@ -143,13 +281,44 @@ async def manual_activate(
                     "subscription_tier": "pro"
                 }).eq("id", ws_id).execute()
         except Exception as ws_err:
-            print(f"[WARN] Failed to update workspaces: {ws_err}")
+            print(f"[BILLING] Workspace update warning: {ws_err}")
 
         return {
             "status": "success",
             "message": "Subscription manually activated successfully.",
             "discount_applied": discount
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Activation error: {str(e)}")
 
+
+@router.get("/status")
+async def get_billing_status(client: Client = Depends(get_supabase_client)):
+    """Get current subscription status for the authenticated user."""
+    from app.core.supabase_client import token_ctx_var
+    token = token_ctx_var.get()
+    user_resp = client.auth.get_user(token)
+    if not user_resp or not user_resp.user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    user_id = user_resp.user.id
+
+    try:
+        tenant_resp = client.table("tenants").select("subscription_status, trial_ends_at").eq("id", user_id).execute()
+        if tenant_resp.data:
+            tenant = tenant_resp.data[0]
+            return {
+                "subscription_status": tenant.get("subscription_status", "trial"),
+                "trial_ends_at": tenant.get("trial_ends_at"),
+                "plisio_enabled": bool(PLISIO_SECRET_KEY)
+            }
+    except Exception as e:
+        print(f"[BILLING] Status check error: {e}")
+
+    return {
+        "subscription_status": "unknown",
+        "trial_ends_at": None,
+        "plisio_enabled": bool(PLISIO_SECRET_KEY)
+    }

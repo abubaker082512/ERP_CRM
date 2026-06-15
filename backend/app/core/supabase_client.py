@@ -44,3 +44,8 @@ supabase = ProxiedSupabaseClient()
 
 # Service-role client (bypasses RLS) — ONLY for super admin use
 service_client = ServiceRoleClient()
+
+
+def get_service_role_client() -> "ServiceRoleClient":
+    """Return a service-role Supabase client instance that bypasses RLS."""
+    return ServiceRoleClient()
