@@ -90,7 +90,7 @@ def get_global_stats(client: Client = Depends(get_supabase_client)):
     ws_count = service_client.table("workspaces").select("id", count="exact").execute().count or 0
     user_count = service_client.table("tenants").select("id", count="exact").execute().count or 0
 
-    # Total revenue across all tenants
+    # Total revenue from ERP sales orders
     sales_resp = service_client.table("sale_order").select("amount_total").execute()
     total_revenue = sum(float(s['amount_total'] or 0) for s in sales_resp.data) if sales_resp.data else 0
 
@@ -98,12 +98,49 @@ def get_global_stats(client: Client = Depends(get_supabase_client)):
     trials_resp = service_client.table("tenants").select("id").eq("subscription_status", "trialing").execute()
     trials_count = len(trials_resp.data) if trials_resp.data else 0
 
+    # Count of paid (active) subscribers
+    paid_resp = service_client.table("tenants").select("id").eq("subscription_status", "active").execute()
+    paid_count = len(paid_resp.data) if paid_resp.data else 0
+
+    # Crypto subscription revenue: count active users × $199/month
+    crypto_revenue = paid_count * 199.0
+
     return {
         "total_workspaces": ws_count,
         "total_users": user_count,
         "platform_revenue": total_revenue,
-        "active_trials": trials_count
+        "active_trials": trials_count,
+        "paid_subscribers": paid_count,
+        "crypto_revenue": crypto_revenue,
     }
+
+
+@router.get("/payments")
+def list_all_payments(client: Client = Depends(get_supabase_client)):
+    """SUPER ADMIN: List all Plisio crypto payment records (from tenants table)."""
+    verify_super_admin(client)
+
+    # Fetch all tenants with subscription data
+    tenants_resp = service_client.table("tenants").select(
+        "id, email, subscription_status, trial_ends_at, created_at"
+    ).order("created_at", desc=True).execute()
+    tenants = tenants_resp.data or []
+
+    results = []
+    for t in tenants:
+        status = t.get("subscription_status", "trialing")
+        results.append({
+            "tenant_id": t.get("id"),
+            "email": t.get("email") or "Unknown",
+            "payment_status": status,
+            "plan": "Pro Enterprise" if status == "active" else "Trial / Unpaid",
+            "amount_usd": 199.00 if status == "active" else 0.00,
+            "currency": "Crypto (Plisio)",
+            "activated_at": t.get("trial_ends_at") or t.get("created_at") or "",
+            "registered_at": t.get("created_at") or "",
+        })
+
+    return results
 
 
 @router.get("/users", response_model=List[UserSummary])
