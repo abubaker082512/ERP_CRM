@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from app.api import leads, auth, opportunities, products, sales, contacts, inventory, purchase, accounting, hr, mrp, helpdesk, payroll, website, documents, discuss, ai, pos, recruitment, attendance, knowledge, todo, appointments, planning, surveys, sign, barcode, team, billing, dashboard, super_admin, expenses, maintenance, projects, timesheets, antigravity
+from app.api.billing import public_router as billing_public_router
 from app.api.deps import get_supabase_client
 
 api_router = APIRouter()
@@ -49,3 +50,6 @@ def ping():
 
 # Do NOT enforce JWT on auth routes (login/signup obviously requires no token)
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+
+# Public billing webhooks — no JWT (called by Plisio / Freemius payment servers)
+api_router.include_router(billing_public_router, prefix="/billing", tags=["billing-webhooks"])

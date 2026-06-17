@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
     DEEPGRAM_API_KEY: str = os.getenv("DEEPGRAM_API_KEY", "")
     PLISIO_SECRET_KEY: str = os.getenv("PLISIO_SECRET_KEY", "")
+    FREEMIUS_PRODUCT_ID: str = os.getenv("FREEMIUS_PRODUCT_ID", "")
+    FREEMIUS_STORE_ID: str = os.getenv("FREEMIUS_STORE_ID", "")
+    FREEMIUS_PUBLIC_KEY: str = os.getenv("FREEMIUS_PUBLIC_KEY", "")
+    FREEMIUS_SECRET_KEY: str = os.getenv("FREEMIUS_SECRET_KEY", "")
+    FREEMIUS_API_KEY: str = os.getenv("FREEMIUS_API_KEY", "")
     BACKEND_URL: str = os.getenv("BACKEND_URL", "https://galaxy-erp-backend.onrender.com")
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://www.beraxis.online")
     CORS_ORIGINS: list[str] = [

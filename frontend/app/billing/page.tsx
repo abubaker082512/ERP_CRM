@@ -1,9 +1,9 @@
 "use client";
 
-import { CheckCircle, Lock, Zap, Shield, ArrowRight, Loader2, Copy, ExternalLink, Bitcoin } from 'lucide-react';
+import { CheckCircle, Lock, Zap, Shield, ArrowRight, Loader2, Copy, ExternalLink, Bitcoin, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { fetchAPI } from '@/lib/api';
 
 // Supported crypto currencies
@@ -33,13 +33,28 @@ function BillingPageContent() {
     const isCanceled = searchParams.get("canceled") === "true";
 
     // Flow states
-    const [step, setStep] = useState<"plan" | "crypto" | "promo" | "pending" | "success">("plan");
+    const [step, setStep] = useState<"plan" | "crypto" | "freemius" | "promo" | "pending" | "success">("plan");
     const [loading, setLoading] = useState(false);
     const [selectedCurrency, setSelectedCurrency] = useState("BTC");
     const [invoiceUrl, setInvoiceUrl] = useState("");
     const [txnId, setTxnId] = useState("");
     const [orderNumber, setOrderNumber] = useState("");
     const [copyFeedback, setCopyFeedback] = useState(false);
+    const [userEmail, setUserEmail] = useState("");
+
+    useEffect(() => {
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user && user.email) {
+                    setUserEmail(user.email);
+                }
+            } catch (e) {
+                console.error("Error parsing user from localStorage:", e);
+            }
+        }
+    }, []);
 
     // Promo code states
     const [promoCode, setPromoCode] = useState("");
@@ -338,6 +353,14 @@ function BillingPageContent() {
 
                                     <div className="space-y-3">
                                         <button
+                                            onClick={() => setStep("freemius")}
+                                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 px-4 rounded-xl transition-all shadow-lg shadow-blue-500/25 active:scale-95 text-sm"
+                                        >
+                                            <CreditCard size={16} />
+                                            Pay with Card / PayPal
+                                            <ArrowRight size={16} />
+                                        </button>
+                                        <button
                                             onClick={() => setStep("crypto")}
                                             className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-4 px-4 rounded-xl transition-all shadow-lg shadow-purple-500/25 active:scale-95 text-sm"
                                         >
@@ -357,6 +380,89 @@ function BillingPageContent() {
                                             </Link>
                                         </div>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* --- CARD / PAYPAL (FREEMIUS) FLOW --- */}
+                            {step === "freemius" && (
+                                <div className="bg-[#0F172A]/90 border border-white/10 backdrop-blur-xl rounded-3xl p-7 shadow-2xl space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Choose Card / PayPal Plan</h3>
+                                        <button onClick={() => setStep("plan")} className="text-xs text-gray-500 hover:text-white transition-colors">
+                                            ← Back
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {/* Plan 1: One App Free */}
+                                        <div className="border border-white/5 bg-white/3 p-4 rounded-2xl hover:border-blue-500/30 transition-all flex flex-col justify-between">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h4 className="text-white text-sm font-bold">One App Free</h4>
+                                                    <p className="text-gray-400 text-[10px] mt-1">Unlock 1 ERP/CRM module of choice</p>
+                                                </div>
+                                                <div className="text-right flex flex-col items-end">
+                                                    <span className="text-white font-black text-lg">$2.99</span>
+                                                    <span className="text-gray-500 text-[10px]">/mo</span>
+                                                </div>
+                                            </div>
+                                            <a
+                                                href={`https://checkout.freemius.com/product/31108/plan/51030/?user_email=${encodeURIComponent(userEmail)}&readonly_user=true`}
+                                                className="w-full mt-2 text-center bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 font-bold py-2 px-3 rounded-lg text-xs transition-all flex items-center justify-center gap-1"
+                                            >
+                                                Checkout
+                                                <ExternalLink size={12} />
+                                            </a>
+                                        </div>
+
+                                        {/* Plan 2: Standard (Recommended) */}
+                                        <div className="border border-blue-500/20 bg-blue-500/5 p-4 rounded-2xl hover:border-blue-500/40 transition-all flex flex-col justify-between relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 bg-blue-600 text-white text-[8px] font-extrabold uppercase px-2.5 py-0.5 rounded-bl-lg">
+                                                Recommended
+                                            </div>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h4 className="text-white text-sm font-bold">Standard</h4>
+                                                    <p className="text-gray-400 text-[10px] mt-1">Unlock all 28 integrated modules</p>
+                                                </div>
+                                                <div className="text-right flex flex-col items-end">
+                                                    <span className="text-white font-black text-lg">$31.10</span>
+                                                    <span className="text-gray-500 text-[10px]">/mo</span>
+                                                </div>
+                                            </div>
+                                            <a
+                                                href={`https://checkout.freemius.com/product/31108/plan/51032/?user_email=${encodeURIComponent(userEmail)}&readonly_user=true`}
+                                                className="w-full mt-2 text-center bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-3 rounded-lg text-xs transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-600/20"
+                                            >
+                                                Checkout Standard
+                                                <ExternalLink size={12} />
+                                            </a>
+                                        </div>
+
+                                        {/* Plan 3: Premium */}
+                                        <div className="border border-white/5 bg-white/3 p-4 rounded-2xl hover:border-blue-500/30 transition-all flex flex-col justify-between">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h4 className="text-white text-sm font-bold">Premium</h4>
+                                                    <p className="text-gray-400 text-[10px] mt-1">Multi-company management</p>
+                                                </div>
+                                                <div className="text-right flex flex-col items-end">
+                                                    <span className="text-white font-black text-lg">$46.80</span>
+                                                    <span className="text-gray-500 text-[10px]">/mo</span>
+                                                </div>
+                                            </div>
+                                            <a
+                                                href={`https://checkout.freemius.com/product/31108/plan/51034/?user_email=${encodeURIComponent(userEmail)}&readonly_user=true`}
+                                                className="w-full mt-2 text-center bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 font-bold py-2 px-3 rounded-lg text-xs transition-all flex items-center justify-center gap-1"
+                                            >
+                                                Checkout Premium
+                                                <ExternalLink size={12} />
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <p className="text-[9px] text-gray-500 text-center">
+                                        Securely processed by Freemius.
+                                    </p>
                                 </div>
                             )}
 

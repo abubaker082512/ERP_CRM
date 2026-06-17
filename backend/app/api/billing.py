@@ -11,6 +11,8 @@ from app.api.deps import get_supabase_client
 from supabase import Client
 
 router = APIRouter()
+# Public router — no JWT required (used for payment provider webhooks)
+public_router = APIRouter()
 
 # Plisio API Configuration
 PLISIO_SECRET_KEY = os.environ.get("PLISIO_SECRET_KEY", "")
@@ -153,12 +155,13 @@ async def create_plisio_invoice(
         }
 
 
-@router.post("/plisio-callback")
-async def plisio_callback(request: Request, client: Client = Depends(get_supabase_client)):
+@public_router.post("/plisio-callback")
+async def plisio_callback(request: Request):
     """
     Plisio IPN (Instant Payment Notification) callback endpoint.
     Called by Plisio when payment status changes.
     Verifies the SHA1 hash and activates subscription on 'completed' status.
+    NOTE: This is a public endpoint — no JWT auth required.
     """
     try:
         body = await request.body()
@@ -203,10 +206,16 @@ async def plisio_callback(request: Request, client: Client = Depends(get_supabas
             from app.core.supabase_client import get_service_role_client
             service_client = get_service_role_client()
 
-            # Update tenants table
+            # Update tenants table with Plisio payment details
+            metadata = {
+                "gateway": "plisio",
+                "plan": "Pro Enterprise",
+                "amount": 199.00
+            }
             service_client.table("tenants").update({
                 "subscription_status": "active",
-                "trial_ends_at": None
+                "trial_ends_at": None,
+                "stripe_customer_id": json.dumps(metadata)
             }).eq("id", user_id).execute()
 
             # Update workspaces table if applicable
@@ -266,9 +275,16 @@ async def manual_activate(
 
     try:
         # Activate tenant subscription
+        metadata = {
+            "gateway": "promo_code",
+            "plan": "Pro Enterprise",
+            "amount": 0.00,
+            "code": promo_code
+        }
         client.table("tenants").update({
             "subscription_status": "active",
-            "trial_ends_at": None
+            "trial_ends_at": None,
+            "stripe_customer_id": json.dumps(metadata)
         }).eq("id", user_id).execute()
 
         # Update workspace if applicable
@@ -322,3 +338,140 @@ async def get_billing_status(client: Client = Depends(get_supabase_client)):
         "trial_ends_at": None,
         "plisio_enabled": bool(PLISIO_SECRET_KEY)
     }
+
+
+@public_router.post("/freemius-callback")
+async def freemius_callback(request: Request):
+    """
+    Freemius webhook callback endpoint.
+    Verifies HMAC-SHA256 signature using raw body and FREEMIUS_SECRET_KEY.
+    """
+    from app.core.config import settings
+    from app.core.supabase_client import get_service_role_client
+    
+    # 1. Fetch raw request body
+    body_bytes = await request.body()
+    
+    # 2. Verify Freemius signature
+    sig_header = request.headers.get("x-signature") or request.headers.get("http-x-signature") or ""
+    
+    if settings.FREEMIUS_SECRET_KEY:
+        computed = hmac.new(
+            settings.FREEMIUS_SECRET_KEY.encode(),
+            body_bytes,
+            hashlib.sha256
+        ).hexdigest()
+        
+        if sig_header and not hmac.compare_digest(computed, sig_header):
+            print(f"[FREEMIUS] Webhook signature verification FAILED. Computed: {computed}, Header: {sig_header}")
+            raise HTTPException(status_code=400, detail="Invalid signature")
+        elif not sig_header:
+            print(f"[FREEMIUS] No signature header present — allowing in non-strict mode")
+            
+    # 3. Process Event
+    try:
+        data = json.loads(body_bytes)
+    except Exception as e:
+        print(f"[FREEMIUS] Failed to parse body: {e}")
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+        
+    event_type = data.get("event_type", "")
+    print(f"[FREEMIUS] Webhook received: event={event_type}")
+    
+    # Extract email and objects
+    objects = data.get("objects", {})
+    user_data = objects.get("user", {})
+    email = user_data.get("email", "")
+    
+    if not email:
+        email = data.get("email", "")
+        
+    if not email:
+        print("[FREEMIUS] No email found in webhook payload. Skipping activation.")
+        return {"status": "skipped", "reason": "No email found in payload"}
+        
+    # Find user/tenant in our DB by email
+    service_client = get_service_role_client()
+    tenant_resp = service_client.table("tenants").select("id").eq("email", email).execute()
+    
+    if not tenant_resp.data:
+        print(f"[FREEMIUS] Tenant with email {email} not found in database. Skipping.")
+        return {"status": "skipped", "reason": f"Tenant {email} not found"}
+        
+    user_id = tenant_resp.data[0]["id"]
+    
+    # Identify Plan Info from objects
+    # Freemius plans mapping:
+    # 51030 -> One App Free ($2.99)
+    # 51032 -> Standard ($31.10)
+    # 51034 -> Premium ($46.80)
+    plan_id = str(objects.get("subscription", {}).get("plan_id", "")) or str(objects.get("license", {}).get("plan_id", ""))
+    
+    plan_key = "standard"
+    plan_title = "Standard"
+    plan_price = 31.10
+    
+    if plan_id == "51030":
+        plan_key = "oneappfree"
+        plan_title = "One App Free"
+        plan_price = 2.99
+    elif plan_id == "51034":
+        plan_key = "premium"
+        plan_title = "Premium"
+        plan_price = 46.80
+    elif plan_id == "51032":
+        plan_key = "standard"
+        plan_title = "Standard"
+        plan_price = 31.10
+        
+    # Handle Activations/Cancellations
+    if event_type in ["subscription.created", "subscription.updated", "license.created", "license.activated", "user.created"]:
+        print(f"[FREEMIUS] Activating subscription for user {user_id} ({email}) with plan {plan_title}")
+        
+        # Store JSON metadata in stripe_customer_id
+        metadata = {
+            "gateway": "freemius",
+            "plan": plan_title,
+            "amount": plan_price
+        }
+        
+        service_client.table("tenants").update({
+            "subscription_status": "active",
+            "trial_ends_at": None,
+            "stripe_customer_id": json.dumps(metadata)
+        }).eq("id", user_id).execute()
+        
+        # Update workspaces table
+        try:
+            ws_resp = service_client.table("user_workspaces").select("workspace_id").eq("user_id", user_id).execute()
+            if ws_resp.data:
+                ws_id = ws_resp.data[0]["workspace_id"]
+                service_client.table("workspaces").update({
+                    "subscription_status": "active",
+                    "subscription_tier": plan_key
+                }).eq("id", ws_id).execute()
+        except Exception as ws_err:
+            print(f"[FREEMIUS] Workspace update error: {ws_err}")
+            
+        print(f"[FREEMIUS] ✅ Subscription activated successfully for {email}")
+        
+    elif event_type in ["subscription.cancelled", "subscription.canceled", "subscription.deleted", "license.deactivated"]:
+        print(f"[FREEMIUS] Deactivating subscription for user {user_id} ({email})")
+        
+        service_client.table("tenants").update({
+            "subscription_status": "past_due"
+        }).eq("id", user_id).execute()
+        
+        try:
+            ws_resp = service_client.table("user_workspaces").select("workspace_id").eq("user_id", user_id).execute()
+            if ws_resp.data:
+                ws_id = ws_resp.data[0]["workspace_id"]
+                service_client.table("workspaces").update({
+                    "subscription_status": "past_due"
+                }).eq("id", ws_id).execute()
+        except Exception as ws_err:
+            print(f"[FREEMIUS] Workspace deactivation error: {ws_err}")
+            
+        print(f"[FREEMIUS] ❌ Subscription deactivated successfully for {email}")
+        
+    return {"status": "success", "event_processed": event_type}

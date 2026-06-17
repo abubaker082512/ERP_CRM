@@ -20,6 +20,7 @@ type PaymentRecord = {
 type GlobalStats = {
     total_workspaces: number; total_users: number; platform_revenue: number;
     active_trials: number; paid_subscribers: number; crypto_revenue: number;
+    cc_revenue?: number; total_saas_revenue?: number;
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -111,6 +112,7 @@ export default function SuperAdminPage() {
 
     const paidPayments = filteredPayments.filter(p => p.payment_status === "active");
     const pendingPayments = filteredPayments.filter(p => p.payment_status !== "active");
+    const monthlySaaSRevenue = paidPayments.reduce((acc, p) => acc + (p.amount_usd || 0), 0);
 
     return (
         <div className="space-y-8 pb-16">
@@ -139,14 +141,16 @@ export default function SuperAdminPage() {
                     </div>
                 )}
 
-                {/* Stats Grid — 6 cards */}
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-                    <StatCard label="Companies"       value={stats?.total_workspaces ?? 0}                                              icon={<Building2 size={20}/>}   color="text-blue-400"   bg="bg-blue-500/10" />
-                    <StatCard label="Total Users"     value={stats?.total_users ?? 0}                                                   icon={<Users size={20}/>}       color="text-purple-400" bg="bg-purple-500/10" />
-                    <StatCard label="Active Trials"   value={stats?.active_trials ?? 0}                                                 icon={<Clock size={20}/>}       color="text-amber-400"  bg="bg-amber-500/10" />
-                    <StatCard label="Paid Users"      value={stats?.paid_subscribers ?? 0}                                              icon={<CheckCircle size={20}/>} color="text-emerald-400" bg="bg-emerald-500/10" />
-                    <StatCard label="Crypto Revenue"  value={`$${(stats?.crypto_revenue ?? 0).toLocaleString()}`}                      icon={<Bitcoin size={20}/>}     color="text-orange-400" bg="bg-orange-500/10" />
-                    <StatCard label="ERP Revenue"     value={`$${(stats?.platform_revenue ?? 0).toLocaleString(undefined,{minimumFractionDigits:0})}`} icon={<DollarSign size={20}/>} color="text-green-400" bg="bg-green-500/10" />
+                {/* Stats Grid — 8 cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4 mb-8">
+                    <StatCard label="Companies"       value={stats?.total_workspaces ?? 0}                                              icon={<Building2 size={18}/>}   color="text-blue-400"   bg="bg-blue-500/10" />
+                    <StatCard label="Total Users"     value={stats?.total_users ?? 0}                                                   icon={<Users size={18}/>}       color="text-purple-400" bg="bg-purple-500/10" />
+                    <StatCard label="Active Trials"   value={stats?.active_trials ?? 0}                                                 icon={<Clock size={18}/>}       color="text-amber-400"  bg="bg-amber-500/10" />
+                    <StatCard label="Paid Users"      value={stats?.paid_subscribers ?? 0}                                              icon={<CheckCircle size={18}/>} color="text-emerald-400" bg="bg-emerald-500/10" />
+                    <StatCard label="Crypto Rev"      value={`$${(stats?.crypto_revenue ?? 0).toLocaleString()}`}                      icon={<Bitcoin size={18}/>}     color="text-orange-400" bg="bg-orange-500/10" />
+                    <StatCard label="Card Rev"        value={`$${(stats?.cc_revenue ?? 0).toLocaleString()}`}                          icon={<CreditCard size={18}/>}  color="text-cyan-400"    bg="bg-cyan-500/10" />
+                    <StatCard label="Total SaaS"      value={`$${(stats?.total_saas_revenue ?? 0).toLocaleString()}`}                  icon={<TrendingUp size={18}/>}  color="text-pink-400"    bg="bg-pink-500/10" />
+                    <StatCard label="ERP Revenue"     value={`$${(stats?.platform_revenue ?? 0).toLocaleString(undefined,{minimumFractionDigits:0})}`} icon={<DollarSign size={18}/>} color="text-green-400" bg="bg-green-500/10" />
                 </div>
 
                 {/* Tabs */}
@@ -214,7 +218,7 @@ export default function SuperAdminPage() {
                             <div className="galaxy-card p-5 border-l-4 border-emerald-500">
                                 <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Paid Subscribers</p>
                                 <p className="text-3xl font-black text-emerald-400">{paidPayments.length}</p>
-                                <p className="text-xs text-gray-600 mt-1">Active crypto payments</p>
+                                <p className="text-xs text-gray-600 mt-1">Active subscriptions</p>
                             </div>
                             <div className="galaxy-card p-5 border-l-4 border-amber-500">
                                 <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Pending / Trial</p>
@@ -222,9 +226,9 @@ export default function SuperAdminPage() {
                                 <p className="text-xs text-gray-600 mt-1">Users not yet converted</p>
                             </div>
                             <div className="galaxy-card p-5 border-l-4 border-purple-500">
-                                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Monthly Crypto Revenue</p>
-                                <p className="text-3xl font-black text-purple-400">${(paidPayments.length * 199).toLocaleString()}</p>
-                                <p className="text-xs text-gray-600 mt-1">@ $199/user/month via Plisio</p>
+                                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Monthly SaaS Revenue</p>
+                                <p className="text-3xl font-black text-purple-400">${monthlySaaSRevenue.toLocaleString()}</p>
+                                <p className="text-xs text-gray-600 mt-1">Combined Plisio & Freemius billing</p>
                             </div>
                         </div>
 
@@ -273,8 +277,14 @@ export default function SuperAdminPage() {
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="flex items-center gap-1.5 text-sm text-gray-400">
-                                                                <Bitcoin size={13} className="text-orange-400" />
-                                                                <span>Plisio Crypto</span>
+                                                                {p.currency.includes("Plisio") ? (
+                                                                    <Bitcoin size={14} className="text-orange-400 shrink-0" />
+                                                                ) : p.currency.includes("Freemius") ? (
+                                                                    <CreditCard size={14} className="text-cyan-400 shrink-0" />
+                                                                ) : (
+                                                                    <Zap size={14} className="text-amber-400 shrink-0" />
+                                                                )}
+                                                                <span>{p.currency}</span>
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4">
@@ -313,9 +323,9 @@ export default function SuperAdminPage() {
                             </div>
                             {/* Legend */}
                             <div className="px-6 py-4 border-t border-gray-800 flex flex-wrap gap-4 text-xs text-gray-600">
-                                <span className="flex items-center gap-1.5"><CheckCircle size={11} className="text-emerald-400"/>Active = paid via Plisio crypto</span>
+                                <span className="flex items-center gap-1.5"><CheckCircle size={11} className="text-emerald-400"/>Active = paid subscription</span>
                                 <span className="flex items-center gap-1.5"><Clock size={11} className="text-amber-400"/>Trialing = free trial period</span>
-                                <span className="flex items-center gap-1.5"><AlertTriangle size={11} className="text-red-400"/>Past due = payment failed or expired</span>
+                                <span className="flex items-center gap-1.5"><AlertTriangle size={11} className="text-red-400"/>Past due = payment expired or cancelled</span>
                             </div>
                         </div>
                     </div>

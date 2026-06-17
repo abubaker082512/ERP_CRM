@@ -99,11 +99,32 @@ def get_global_stats(client: Client = Depends(get_supabase_client)):
     trials_count = len(trials_resp.data) if trials_resp.data else 0
 
     # Count of paid (active) subscribers
-    paid_resp = service_client.table("tenants").select("id").eq("subscription_status", "active").execute()
-    paid_count = len(paid_resp.data) if paid_resp.data else 0
-
-    # Crypto subscription revenue: count active users × $199/month
-    crypto_revenue = paid_count * 199.0
+    active_tenants_resp = service_client.table("tenants").select("stripe_customer_id").eq("subscription_status", "active").execute()
+    active_tenants = active_tenants_resp.data or []
+    
+    crypto_revenue = 0.0
+    cc_revenue = 0.0
+    for t in active_tenants:
+        metadata_str = t.get("stripe_customer_id")
+        if metadata_str:
+            try:
+                import json
+                meta = json.loads(metadata_str)
+                gateway = meta.get("gateway", "")
+                amount = float(meta.get("amount", 0.0))
+                if gateway == "plisio":
+                    crypto_revenue += amount
+                elif gateway == "freemius":
+                    cc_revenue += amount
+            except Exception:
+                # Fallback to default plisio price if parsing fails
+                crypto_revenue += 199.0
+        else:
+            # Fallback to default plisio price if no metadata
+            crypto_revenue += 199.0
+            
+    total_saas_revenue = crypto_revenue + cc_revenue
+    paid_count = len(active_tenants)
 
     return {
         "total_workspaces": ws_count,
@@ -112,6 +133,8 @@ def get_global_stats(client: Client = Depends(get_supabase_client)):
         "active_trials": trials_count,
         "paid_subscribers": paid_count,
         "crypto_revenue": crypto_revenue,
+        "cc_revenue": cc_revenue,
+        "total_saas_revenue": total_saas_revenue
     }
 
 
@@ -122,20 +145,44 @@ def list_all_payments(client: Client = Depends(get_supabase_client)):
 
     # Fetch all tenants with subscription data
     tenants_resp = service_client.table("tenants").select(
-        "id, email, subscription_status, trial_ends_at, created_at"
+        "id, email, subscription_status, trial_ends_at, created_at, stripe_customer_id"
     ).order("created_at", desc=True).execute()
     tenants = tenants_resp.data or []
 
     results = []
     for t in tenants:
         status = t.get("subscription_status", "trialing")
+        
+        # Parse metadata from stripe_customer_id if available
+        gateway = "Crypto (Plisio)"
+        plan = "Pro Enterprise" if status == "active" else "Trial / Unpaid"
+        amount = 199.00 if status == "active" else 0.00
+        
+        metadata_str = t.get("stripe_customer_id")
+        if metadata_str:
+            try:
+                import json
+                meta = json.loads(metadata_str)
+                gateway_val = meta.get("gateway", "")
+                if gateway_val == "plisio":
+                    gateway = "Crypto (Plisio)"
+                elif gateway_val == "freemius":
+                    gateway = "Card/PayPal (Freemius)"
+                elif gateway_val == "promo_code":
+                    gateway = f"Promo Code ({meta.get('code', 'BERAXIS')})"
+                
+                plan = meta.get("plan", plan)
+                amount = float(meta.get("amount", amount))
+            except Exception:
+                pass
+
         results.append({
             "tenant_id": t.get("id"),
             "email": t.get("email") or "Unknown",
             "payment_status": status,
-            "plan": "Pro Enterprise" if status == "active" else "Trial / Unpaid",
-            "amount_usd": 199.00 if status == "active" else 0.00,
-            "currency": "Crypto (Plisio)",
+            "plan": plan,
+            "amount_usd": amount,
+            "currency": gateway,
             "activated_at": t.get("trial_ends_at") or t.get("created_at") or "",
             "registered_at": t.get("created_at") or "",
         })
