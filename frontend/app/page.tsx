@@ -28,7 +28,10 @@ import {
     Bell,
     Database,
     CheckCircle,
-    ArrowRight
+    ArrowRight,
+    Lock,
+    Zap,
+    X
 } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -69,12 +72,21 @@ const apps = [
     { name: "Settings", icon: Cog, color: "bg-gray-500", href: "/settings" },
 ];
 
+// Detect if app name matches the selected free module
+function matchesModule(appName: string, selectedModule: string): boolean {
+    if (!selectedModule) return false;
+    return appName.toLowerCase().trim() === selectedModule.toLowerCase().trim();
+}
+
 export default function Home() {
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [userData, setUserData] = useState<any>(null);
     const [trialDays, setTrialDays] = useState<number | null>(null);
     const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+    const [selectedModule, setSelectedModule] = useState<string>("");
+    const [isFreePlan, setIsFreePlan] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -84,6 +96,9 @@ export default function Home() {
             return;
         }
         setIsLoggedIn(true);
+        // Read selected module from localStorage (set during free plan checkout)
+        const mod = localStorage.getItem("selectedModule") || "";
+        setSelectedModule(mod);
         fetchUserData();
     }, [router]);
 
@@ -93,7 +108,7 @@ export default function Home() {
             if (res.ok) {
                 const data = await res.json();
                 setUserData(data);
-                
+
                 if (data.tenant?.trial_ends_at) {
                     const ends = new Date(data.tenant.trial_ends_at);
                     const now = new Date();
@@ -101,6 +116,14 @@ export default function Home() {
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     setTrialDays(diffDays > 0 ? diffDays : 0);
                 }
+
+                // Detect free plan: subscription active + metadata plan = "One App Free"
+                try {
+                    const meta = JSON.parse(data.tenant?.stripe_customer_id || "{}");
+                    if (data.tenant?.subscription_status === "active" && meta?.plan === "One App Free") {
+                        setIsFreePlan(true);
+                    }
+                } catch {}
             } else {
                 router.push("/login");
             }
@@ -427,23 +450,104 @@ export default function Home() {
                 </div>
             )}
 
+            {/* Free Plan Banner */}
+            {isFreePlan && (
+                <div className="max-w-7xl mx-auto mb-8 bg-gradient-to-r from-purple-900/40 to-pink-900/30 border border-purple-500/25 rounded-2xl p-5 flex justify-between items-center shadow-xl backdrop-blur-md">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400">
+                            <Zap size={18} />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-white">Free Plan — 1 Module Active</p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                                {selectedModule ? <><span className="text-purple-400 font-medium">{selectedModule}</span> is your active module. All others are locked.</> : "Upgrade to unlock all 28 modules."}
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => router.push('/billing')}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2"
+                    >
+                        <Zap size={12} /> Upgrade Now
+                    </button>
+                </div>
+            )}
+
             {/* App Grid */}
             <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                {apps.map((app) => (
-                    <button
-                        key={app.name}
-                        onClick={() => router.push(app.href)}
-                        className="flex flex-col items-center gap-3 p-4 rounded-lg hover:bg-surface/50 transition-all group"
-                    >
-                        <div className={`${app.color} p-4 rounded-2xl shadow-lg group-hover:scale-110 transition-transform`}>
-                            <app.icon className="w-8 h-8 text-white" />
-                        </div>
-                        <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
-                            {app.name}
-                        </span>
-                    </button>
-                ))}
+                {apps.map((app) => {
+                    const isLocked = isFreePlan && !matchesModule(app.name, selectedModule);
+                    return (
+                        <button
+                            key={app.name}
+                            onClick={() => {
+                                if (isLocked) { setShowUpgradeModal(true); return; }
+                                router.push(app.href);
+                            }}
+                            className={`flex flex-col items-center gap-3 p-4 rounded-lg transition-all group relative ${
+                                isLocked
+                                    ? "opacity-40 grayscale cursor-pointer hover:opacity-55"
+                                    : "hover:bg-surface/50"
+                            }`}
+                        >
+                            {/* Lock overlay */}
+                            {isLocked && (
+                                <div className="absolute top-1 right-1 w-5 h-5 bg-gray-800/90 border border-white/10 rounded-full flex items-center justify-center z-10">
+                                    <Lock size={9} className="text-gray-400" />
+                                </div>
+                            )}
+                            <div className={`${app.color} p-4 rounded-2xl shadow-lg transition-transform ${
+                                isLocked ? "" : "group-hover:scale-110"
+                            }`}>
+                                <app.icon className="w-8 h-8 text-white" />
+                            </div>
+                            <span className={`text-sm transition-colors ${
+                                isLocked ? "text-gray-500" : "text-gray-300 group-hover:text-white"
+                            }`}>
+                                {app.name}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
+
+            {/* Upgrade Modal for locked modules */}
+            {showUpgradeModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    style={{ background: "rgba(2,2,5,0.85)", backdropFilter: "blur(12px)" }}
+                    onClick={() => setShowUpgradeModal(false)}
+                >
+                    <div
+                        className="max-w-sm w-full bg-[#0F172A] border border-purple-500/25 rounded-3xl p-8 text-center shadow-2xl shadow-purple-500/15"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button onClick={() => setShowUpgradeModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white p-1">
+                            <X size={16} />
+                        </button>
+                        <div className="w-16 h-16 bg-purple-500/15 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-purple-500/20">
+                            <Lock size={28} className="text-purple-400" />
+                        </div>
+                        <h2 className="text-xl font-black text-white mb-2">Module Locked</h2>
+                        <p className="text-gray-400 text-sm mb-6">
+                            This module is only available on the <span className="text-white font-bold">Standard</span> or <span className="text-white font-bold">Premium</span> plan.
+                            {selectedModule && <> Your current free module is <span className="text-purple-400 font-bold">{selectedModule}</span>.</>}
+                        </p>
+                        <button
+                            onClick={() => { setShowUpgradeModal(false); router.push('/billing'); }}
+                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2"
+                        >
+                            <Zap size={16} /> Upgrade to Unlock All Modules
+                        </button>
+                        <button
+                            onClick={() => setShowUpgradeModal(false)}
+                            className="mt-3 text-xs text-gray-500 hover:text-white transition-colors"
+                        >
+                            Stay on Free Plan
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Persistent Floating WhatsApp Support Widget for logged-in users */}
             <a 
