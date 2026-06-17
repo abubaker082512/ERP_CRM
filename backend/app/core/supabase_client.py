@@ -28,12 +28,14 @@ class ServiceRoleClient:
     """
     A TRUE service-role Supabase client that bypasses ALL Row Level Security.
     Uses the service_role key — NEVER applies any user JWT.
-    Only used for Super Admin operations that must see ALL data across ALL tenants.
+    Only used for Super Admin operations and signup that must bypass RLS.
     """
     def __getattr__(self, name):
-        # Use the service_role key to create a privileged client
-        # This key bypasses RLS entirely — handle with care
-        service_key = settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_KEY
+        service_key = settings.SUPABASE_SERVICE_ROLE_KEY
+        if not service_key:
+            print("[CRITICAL] SUPABASE_SERVICE_ROLE_KEY is NOT set! "
+                  "Falling back to anon key — RLS will block workspace inserts during signup!")
+            service_key = settings.SUPABASE_KEY
         client = create_client(settings.SUPABASE_URL, service_key)
         # Explicitly DO NOT set any user auth token — service role key is enough
         return getattr(client, name)
