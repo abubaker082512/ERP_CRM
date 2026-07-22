@@ -32,7 +32,7 @@ export default function LoginPage() {
                 }
                 localStorage.setItem('user', JSON.stringify(data.user));
                 // Redirect super admins directly to the admin dashboard
-                const SUPER_ADMIN_EMAILS = ['admin@erp-crm.com', 'admin2@erp-crm.com'];
+                const SUPER_ADMIN_EMAILS = ['admin@beraxis.online', 'admin2@erp-crm.com'];
                 if (SUPER_ADMIN_EMAILS.includes(data.user?.email)) {
                     router.push("/super-admin");
                 } else {

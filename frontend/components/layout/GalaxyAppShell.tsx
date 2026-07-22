@@ -39,7 +39,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         if (userStr) {
             try {
                 const user = JSON.parse(userStr);
-                const SUPER_ADMIN_EMAILS = ['admin@erp-crm.com', 'admin2@erp-crm.com'];
+                const SUPER_ADMIN_EMAILS = ['admin@beraxis.online', 'admin2@erp-crm.com'];
                 if (SUPER_ADMIN_EMAILS.includes(user.email)) {
                     setIsAdmin(true);
                 }

@@ -20,12 +20,12 @@ def create_user_and_seed():
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     payload = {
-        "email": "admin@erp-crm.com",
+        "email": "admin@beraxis.online",
         "password": "SeedAdmin123!",
         "data": {"name": "Seed Administrator"}
     }
     
-    print(f"Creating user admin@erp-crm.com...")
+    print(f"Creating user admin@beraxis.online...")
     response = requests.post(url, headers=headers, json=payload)
     
     if response.status_code == 200:
@@ -37,7 +37,7 @@ def create_user_and_seed():
     # 2. Login to get token
     url = f"{settings.SUPABASE_URL}/auth/v1/token?grant_type=password"
     payload = {
-        "email": "admin@erp-crm.com",
+        "email": "admin@beraxis.online",
         "password": "SeedAdmin123!"
     }
     print("Logging in to get session token...")
@@ -98,7 +98,7 @@ def create_user_and_seed():
 
     print("Seeding completed successfully!")
     print("\n--- CREDENTIALS FOR TESTING ---")
-    print("Email: admin@erp-crm.com")
+    print("Email: admin@beraxis.online")
     print("Password: SeedAdmin123!")
     print("-------------------------------")
 

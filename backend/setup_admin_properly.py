@@ -9,18 +9,18 @@ def setup():
     # 1. Signup the specific admin email
     signup_url = f"{SUPABASE_URL}/auth/v1/signup"
     payload = {
-        "email": "admin@erp-crm.com",
+        "email": "admin@beraxis.online",
         "password": "SeedAdmin123!",
         "data": {"name": "Super Admin"}
     }
-    print("Creating admin@erp-crm.com...")
+    print("Creating admin@beraxis.online...")
     res = requests.post(signup_url, headers=headers, json=payload)
     if res.status_code != 200:
         print(f"Signup info: {res.text}")
     
     # 2. Login to get token
     login_url = f"{SUPABASE_URL}/auth/v1/token?grant_type=password"
-    login_payload = {"email": "admin@erp-crm.com", "password": "SeedAdmin123!"}
+    login_payload = {"email": "admin@beraxis.online", "password": "SeedAdmin123!"}
     res = requests.post(login_url, headers=headers, json=login_payload)
     if res.status_code != 200:
         print(f"Login failed: {res.text}")
@@ -41,7 +41,7 @@ def setup():
     print("Setting up tenant profile...")
     tenant_data = {
         "id": user_id,
-        "email": "admin@erp-crm.com",
+        "email": "admin@beraxis.online",
         "name": "Platform Admin",
         "plan": "premium",
         "trial_ends_at": "2030-01-01T00:00:00Z"

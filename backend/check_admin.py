@@ -5,7 +5,7 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 
 def check():
     url = f"{SUPABASE_URL}/auth/v1/token?grant_type=password"
-    payload = {"email": "admin@erp-crm.com", "password": "SeedAdmin123!"}
+    payload = {"email": "admin@beraxis.online", "password": "SeedAdmin123!"}
     res = requests.post(url, headers={"apikey": SUPABASE_KEY}, json=payload)
     if res.status_code == 200:
         print("ORIGINAL_ADMIN_ACTIVE")

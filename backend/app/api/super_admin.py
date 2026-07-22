@@ -11,7 +11,7 @@ import httpx
 
 router = APIRouter()
 
-SUPER_ADMIN_EMAILS = ["admin@erp-crm.com", "admin2@erp-crm.com"]
+SUPER_ADMIN_EMAILS = ["admin@beraxis.online", "admin2@erp-crm.com"]
 
 
 def verify_super_admin(client: Client):

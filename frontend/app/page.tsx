@@ -113,7 +113,7 @@ export default function Home() {
                 const data = await res.json();
                 setUserData(data);
 
-                const SUPER_ADMIN_EMAILS = ['admin@erp-crm.com', 'admin2@erp-crm.com'];
+                const SUPER_ADMIN_EMAILS = ['admin@beraxis.online', 'admin2@erp-crm.com'];
                 const isUserAdmin = SUPER_ADMIN_EMAILS.includes(data.email);
                 setIsAdmin(isUserAdmin);
 
