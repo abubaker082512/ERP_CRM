@@ -1,4 +1,4 @@
-from app.api.deps import get_supabase_client
+from app.api.deps import get_supabase_client, adjust_stock
 from supabase import Client
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
@@ -165,10 +165,25 @@ def create_payment(payment: PosPaymentCreate, client: Client = Depends(get_supab
             "state": "paid"
         }).eq("id", payment.order_id).execute()
 
-        # ─── LINK TO ACCOUNTING: Create Customer Invoice ───
+        # Resolve or create sale journal
+        journal_id = None
         try:
             journal_resp = client.table("account_journal").select("id").eq("type", "sale").limit(1).execute()
-            journal_id = journal_resp.data[0]["id"] if journal_resp.data else None
+            if journal_resp.data:
+                journal_id = journal_resp.data[0]["id"]
+            else:
+                new_j = client.table("account_journal").insert({
+                    "name": "Customer Invoices",
+                    "code": "INV",
+                    "type": "sale"
+                }).execute()
+                if new_j.data:
+                    journal_id = new_j.data[0]["id"]
+        except Exception as je:
+            print(f"[POS-JOURNAL ERR]: {je}")
+
+        # ─── LINK TO ACCOUNTING: Create Customer Invoice ───
+        try:
             move_data = {
                 "name": f"INV/{order_name}",
                 "move_type": "out_invoice",
@@ -180,7 +195,35 @@ def create_payment(payment: PosPaymentCreate, client: Client = Depends(get_supab
         except Exception as e:
             print(f"[POS-ACCOUNTING LINK WARN] Failed: {e}")
 
-        # ─── LINK TO INVENTORY: Decrease Stock ───
+        # ─── LINK TO SALES MODULE: Create Confirmed Sales Order ───
+        try:
+            lines_resp = client.table("pos_order_line").select("product_id, qty, price_unit").eq("order_id", payment.order_id).execute()
+            lines = lines_resp.data or []
+            
+            so_resp = client.table("sale_order").insert({
+                "name": f"SO/{order_name}",
+                "state": "sale",
+                "amount_total": total
+            }).execute()
+            
+            if so_resp.data and lines:
+                so_id = so_resp.data[0]["id"]
+                so_lines = [{
+                    "order_id": so_id,
+                    "product_id": line["product_id"],
+                    "name": "POS Sale Line",
+                    "product_uom_qty": float(line["qty"]),
+                    "price_unit": float(line["price_unit"]),
+                    "price_subtotal": float(line["qty"]) * float(line["price_unit"]),
+                    "price_total": float(line["qty"]) * float(line["price_unit"])
+                } for line in lines if line.get("product_id")]
+                
+                if so_lines:
+                    client.table("sale_order_line").insert(so_lines).execute()
+        except Exception as e:
+            print(f"[POS-SALES LINK WARN] Failed: {e}")
+
+        # ─── LINK TO INVENTORY: Decrease Stock & Update Quants ───
         try:
             lines_resp = client.table("pos_order_line").select("product_id, qty").eq("order_id", payment.order_id).execute()
             lines = lines_resp.data or []
@@ -210,6 +253,9 @@ def create_payment(payment: PosPaymentCreate, client: Client = Depends(get_supab
                                 "location_id": internal_loc_id,
                                 "location_dest_id": "00000000-0000-0000-0000-000000000000"
                             })
+                            # Decrease active stock in quant table
+                            adjust_stock(client, line["product_id"], internal_loc_id, -float(line.get("qty") or 1.0))
+                            
                     if stock_moves:
                         client.table("inventory_move").insert(stock_moves).execute()
         except Exception as e:

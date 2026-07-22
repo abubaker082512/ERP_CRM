@@ -17,6 +17,17 @@ export default function POSPage() {
   // Receipt Modal State
   const [receiptOrder, setReceiptOrder] = useState<any>(null);
 
+  const getCurrencySymbol = () => {
+    if (typeof window !== "undefined") {
+      const cur = localStorage.getItem("settings_currency") || "USD";
+      const symbols: Record<string, string> = {
+        USD: "$", EUR: "€", GBP: "£", AUD: "$", CAD: "$", JPY: "¥", PKR: "₨", INR: "₹"
+      };
+      return symbols[cur] || "$";
+    }
+    return "$";
+  };
+
   // New Product Modal States
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [newProdName, setNewProdName] = useState("");
@@ -312,7 +323,7 @@ export default function POSPage() {
                   </div>
                   <div className="mt-2 text-center">
                     <p className="text-sm font-medium text-white truncate px-1">{p.name}</p>
-                    <p className="text-green-400 font-bold mt-1">${(p.list_price || 0).toFixed(2)}</p>
+                    <p className="text-green-400 font-bold mt-1">{getCurrencySymbol()}{(p.list_price || 0).toFixed(2)}</p>
                   </div>
                 </div>
               ))}
@@ -336,10 +347,10 @@ export default function POSPage() {
               <div key={i} className="bg-[#1E293B] border border-gray-700 rounded-lg p-3 flex flex-col gap-2 shadow-sm">
                 <div className="flex justify-between items-start">
                   <h4 className="text-white font-medium text-sm w-3/4 leading-tight">{item.name}</h4>
-                  <p className="text-green-400 font-bold text-sm">${(item.list_price * item.qty).toFixed(2)}</p>
+                  <p className="text-green-400 font-bold text-sm">{getCurrencySymbol()}{(item.list_price * item.qty).toFixed(2)}</p>
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-gray-400">${item.list_price.toFixed(2)} / unit</p>
+                  <p className="text-xs text-gray-400">{getCurrencySymbol()}{item.list_price.toFixed(2)} / unit</p>
                   <div className="flex items-center bg-black/30 rounded-lg border border-gray-700 overflow-hidden">
                     <button onClick={() => updateQty(item.id, -1)} className="px-3 py-1 text-gray-300 hover:bg-white/10 hover:text-white transition-colors">-</button>
                     <span className="px-3 py-1 text-white text-sm font-medium min-w-[2.5rem] text-center">{item.qty}</span>
@@ -351,9 +362,9 @@ export default function POSPage() {
           </div>
 
           <div className="p-6 bg-[#0B101E] border-t border-gray-800 shrink-0 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.2)]">
-            <div className="flex justify-between mb-2 text-gray-400 text-sm"><span>Subtotal</span><span>${total.toFixed(2)}</span></div>
-            <div className="flex justify-between mb-4 text-gray-400 text-sm"><span>Taxes</span><span>$0.00</span></div>
-            <div className="flex justify-between mb-6 text-xl font-bold text-white"><span>Total</span><span className="text-green-400">${total.toFixed(2)}</span></div>
+            <div className="flex justify-between mb-2 text-gray-400 text-sm"><span>Subtotal</span><span>{getCurrencySymbol()}{total.toFixed(2)}</span></div>
+            <div className="flex justify-between mb-4 text-gray-400 text-sm"><span>Taxes</span><span>{getCurrencySymbol()}0.00</span></div>
+            <div className="flex justify-between mb-6 text-xl font-bold text-white"><span>Total</span><span className="text-green-400">{getCurrencySymbol()}{total.toFixed(2)}</span></div>
             
             {checkoutMode ? (
               <div className="space-y-4 animate-in slide-in-from-bottom-4">
@@ -411,18 +422,18 @@ export default function POSPage() {
                   <div key={i} className="grid grid-cols-12 py-0.5">
                     <span className="col-span-6 truncate">{item.name}</span>
                     <span className="col-span-2 text-center">{item.qty}</span>
-                    <span className="col-span-4 text-right">${(item.list_price * item.qty).toFixed(2)}</span>
+                    <span className="col-span-4 text-right">{getCurrencySymbol()}{(item.list_price * item.qty).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
 
               <div className="space-y-1 text-right mt-2">
-                <div className="flex justify-between"><span>Subtotal:</span><span>${receiptOrder.total.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Subtotal:</span><span>{getCurrencySymbol()}{receiptOrder.total.toFixed(2)}</span></div>
                 <div className="flex justify-between font-bold text-sm border-t border-dashed border-gray-300 pt-1 mt-1">
-                  <span>TOTAL:</span><span>${receiptOrder.total.toFixed(2)}</span>
+                  <span>TOTAL:</span><span>{getCurrencySymbol()}{receiptOrder.total.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between mt-2"><span>Amount Paid:</span><span>${receiptOrder.amountPaid.toFixed(2)}</span></div>
-                <div className="flex justify-between font-semibold text-green-600"><span>Change Due:</span><span>${receiptOrder.changeDue.toFixed(2)}</span></div>
+                <div className="flex justify-between mt-2"><span>Amount Paid:</span><span>{getCurrencySymbol()}{receiptOrder.amountPaid.toFixed(2)}</span></div>
+                <div className="flex justify-between font-semibold text-green-600"><span>Change Due:</span><span>{getCurrencySymbol()}{receiptOrder.changeDue.toFixed(2)}</span></div>
               </div>
 
               <div className="text-center mt-6 pt-4 border-t border-dashed border-gray-400 text-[10px] text-gray-400">

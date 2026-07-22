@@ -1,4 +1,4 @@
-from app.api.deps import get_supabase_client
+from app.api.deps import get_supabase_client, adjust_stock
 from supabase import Client
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
@@ -185,14 +185,17 @@ def mark_production_done(production_id: str, client: Client = Depends(get_supaba
             stock_moves = []
             for line in bom_lines:
                 if line.get("product_id"):
+                    qty_consumed = float(line.get("product_qty") or 1.0) * prod_qty
                     stock_moves.append({
                         "name": f"CONSUME/{mo_name}",
                         "product_id": line["product_id"],
-                        "quantity": float(line.get("product_qty") or 1.0) * prod_qty,
+                        "quantity": qty_consumed,
                         "state": "done",
                         "location_id": internal_loc_id,
                         "location_dest_id": "00000000-0000-0000-0000-000000000000" # consumed / external
                     })
+                    # Decrease stock quant
+                    adjust_stock(client, line["product_id"], internal_loc_id, -qty_consumed)
             if stock_moves:
                 client.table("inventory_move").insert(stock_moves).execute()
 
@@ -206,6 +209,8 @@ def mark_production_done(production_id: str, client: Client = Depends(get_supaba
                 "location_id": "00000000-0000-0000-0000-000000000000", # production virtual source
                 "location_dest_id": internal_loc_id
             }).execute()
+            # Increase stock quant
+            adjust_stock(client, product_id, internal_loc_id, prod_qty)
 
     except Exception as e:
         print(f"[MRP-INVENTORY LINK WARN] Failed: {e}")

@@ -2,7 +2,7 @@
 import { fetchAPI } from '@/lib/api';
 import { useState, useEffect } from 'react';
 import InventoryHeader from '@/components/inventory/InventoryHeader';
-import { Package, MoreHorizontal, TrendingUp, AlertTriangle, Warehouse, RefreshCw, Plus, Search, X, Loader2, Barcode } from 'lucide-react';
+import { Package, MoreHorizontal, TrendingUp, AlertTriangle, Warehouse, RefreshCw, Plus, Search, X, Loader2, Edit3, Settings } from 'lucide-react';
 import Link from 'next/link';
 
 type StockPicking = {
@@ -31,6 +31,12 @@ type Product = {
     description?: string;
 };
 
+type Location = {
+    id: string;
+    name: string;
+    usage: string;
+};
+
 const STATE_COLORS: Record<string, string> = {
     draft:   'bg-gray-500/20 text-gray-400',
     waiting: 'bg-yellow-500/20 text-yellow-400',
@@ -43,6 +49,7 @@ export default function InventoryPage() {
     const [pickings, setPickings] = useState<StockPicking[]>([]);
     const [quants, setQuants] = useState<StockQuant[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
+    const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'moves' | 'stock' | 'products'>('overview');
     
@@ -58,31 +65,50 @@ export default function InventoryPage() {
     const [addLoading, setAddLoading] = useState(false);
     const [addError, setAddError] = useState("");
 
+    // Edit Product States
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [editName, setEditName] = useState("");
+    const [editSku, setEditSku] = useState("");
+    const [editPrice, setEditPrice] = useState("");
+    const [editCost, setEditCost] = useState("");
+    const [editDesc, setEditDesc] = useState("");
+    const [editLoading, setEditLoading] = useState(false);
+    const [editError, setEditError] = useState("");
+
+    // Stock Adjustment States
+    const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
+    const [selectedLocation, setSelectedLocation] = useState("");
+    const [adjustType, setAdjustType] = useState<"add" | "remove" | "set">("add");
+    const [adjustQty, setAdjustQty] = useState("");
+    const [adjustLoading, setAdjustLoading] = useState(false);
+    const [adjustError, setAdjustError] = useState("");
+
+    const getCurrencySymbol = () => {
+        if (typeof window !== "undefined") {
+            const cur = localStorage.getItem("settings_currency") || "USD";
+            const symbols: Record<string, string> = {
+                USD: "$", EUR: "€", GBP: "£", AUD: "$", CAD: "$", JPY: "¥", PKR: "₨", INR: "₹"
+            };
+            return symbols[cur] || "$";
+        }
+        return "$";
+    };
+
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [pickingsRes, quantsRes, productsRes] = await Promise.all([
+            const [pickingsRes, quantsRes, productsRes, locationsRes] = await Promise.all([
                 fetchAPI("/inventory/pickings"),
                 fetchAPI("/inventory/quants"),
-                fetchAPI("/inventory/products")
+                fetchAPI("/inventory/products"),
+                fetchAPI("/inventory/locations")
             ]);
-            if (pickingsRes.ok) {
-                const data = await pickingsRes.json();
-                setPickings(Array.isArray(data) ? data : []);
-            }
-            if (quantsRes.ok) {
-                const data = await quantsRes.json();
-                setQuants(Array.isArray(data) ? data : []);
-            }
-            if (productsRes.ok) {
-                const data = await productsRes.json();
-                setProducts(Array.isArray(data) ? data : []);
-            }
+            if (pickingsRes.ok) setPickings(await pickingsRes.json());
+            if (quantsRes.ok) setQuants(await quantsRes.json());
+            if (productsRes.ok) setProducts(await productsRes.json());
+            if (locationsRes.ok) setLocations(await locationsRes.json());
         } catch (err) {
             console.error("Inventory fetch failed", err);
-            setPickings([]);
-            setQuants([]);
-            setProducts([]);
         } finally {
             setLoading(false);
         }
@@ -124,7 +150,6 @@ export default function InventoryPage() {
                 setNewCost("");
                 setNewDesc("");
                 setNewQty("");
-                // Reload list
                 fetchData();
             } else {
                 const err = await res.json().catch(() => ({ detail: "Failed to create product" }));
@@ -137,8 +162,130 @@ export default function InventoryPage() {
         }
     };
 
+    const handleEditProduct = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingProduct || !editName.trim() || !editPrice) return;
+        setEditError("");
+        setEditLoading(true);
+
+        try {
+            const res = await fetchAPI(`/products/${editingProduct.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: editName.trim(),
+                    list_price: parseFloat(editPrice),
+                    cost_price: editCost ? parseFloat(editCost) : 0.0,
+                    sku: editSku.trim() || undefined,
+                    description: editDesc.trim() || undefined
+                })
+            });
+
+            if (res.ok) {
+                setEditingProduct(null);
+                fetchData();
+            } else {
+                const err = await res.json().catch(() => ({ detail: "Failed to update product" }));
+                setEditError(err.detail || "Failed to update product");
+            }
+        } catch (err: any) {
+            setEditError(err.message || "Network error");
+        } finally {
+            setEditLoading(false);
+        }
+    };
+
+    const handleAdjustStock = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!adjustingProduct || !selectedLocation || !adjustQty) return;
+        setAdjustError("");
+        setAdjustLoading(true);
+
+        const qtyVal = parseFloat(adjustQty);
+        if (isNaN(qtyVal) || qtyVal <= 0) {
+            setAdjustError("Please enter a valid positive quantity");
+            setAdjustLoading(false);
+            return;
+        }
+
+        try {
+            let finalQty = qtyVal;
+            let srcLoc = "00000000-0000-0000-0000-000000000000"; // supplier/virtual
+            let destLoc = selectedLocation;
+
+            if (adjustType === "remove") {
+                srcLoc = selectedLocation;
+                destLoc = "00000000-0000-0000-0000-000000000000"; // customers/virtual
+            } else if (adjustType === "set") {
+                const currentQty = getProductStockAtLocation(adjustingProduct.id, selectedLocation);
+                const diff = qtyVal - currentQty;
+                if (diff === 0) {
+                    setAdjustingProduct(null);
+                    setAdjustQty("");
+                    setAdjustLoading(false);
+                    return;
+                }
+                finalQty = Math.abs(diff);
+                if (diff > 0) {
+                    srcLoc = "00000000-0000-0000-0000-000000000000";
+                    destLoc = selectedLocation;
+                } else {
+                    srcLoc = selectedLocation;
+                    destLoc = "00000000-0000-0000-0000-000000000000";
+                }
+            }
+
+            const res = await fetchAPI("/inventory/moves", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: `Manual Adjustment (${adjustType.toUpperCase()})`,
+                    product_id: adjustingProduct.id,
+                    quantity: finalQty,
+                    location_id: srcLoc,
+                    location_dest_id: destLoc,
+                    state: "done"
+                })
+            });
+
+            if (res.ok) {
+                setAdjustingProduct(null);
+                setAdjustQty("");
+                fetchData();
+            } else {
+                const err = await res.json().catch(() => ({ detail: "Failed to adjust stock" }));
+                setAdjustError(err.detail || "Failed to adjust stock");
+            }
+        } catch (err: any) {
+            setAdjustError(err.message || "Network error");
+        } finally {
+            setAdjustLoading(false);
+        }
+    };
+
     const getProductStock = (prodId: string) => {
         return quants.filter(q => q.product_id === prodId).reduce((sum, q) => sum + (q.quantity || 0), 0);
+    };
+
+    const getProductStockAtLocation = (prodId: string, locId: string) => {
+        return quants.filter(q => q.product_id === prodId && q.location_id === locId).reduce((sum, q) => sum + (q.quantity || 0), 0);
+    };
+
+    const openEditModal = (product: Product) => {
+        setEditingProduct(product);
+        setEditName(product.name);
+        setEditSku(product.sku || "");
+        setEditPrice(product.list_price.toString());
+        setEditCost(product.cost_price.toString());
+        setEditDesc(product.description || "");
+    };
+
+    const openAdjustModal = (product: Product) => {
+        setAdjustingProduct(product);
+        const internalLocs = locations.filter(l => l.usage === "internal");
+        if (internalLocs.length > 0) {
+            setSelectedLocation(internalLocs[0].id);
+        }
     };
 
     const operations = [
@@ -153,6 +300,8 @@ export default function InventoryPage() {
         p.name.toLowerCase().includes(prodSearch.toLowerCase()) || 
         (p.sku && p.sku.toLowerCase().includes(prodSearch.toLowerCase()))
     );
+
+    const currencySymbol = getCurrencySymbol();
 
     return (
         <div className="space-y-6">
@@ -240,8 +389,8 @@ export default function InventoryPage() {
                                 <thead>
                                     <tr className="text-xs text-gray-400 uppercase border-b border-gray-800 bg-[#0F172A]">
                                         <th className="px-6 py-3 text-left">Reference</th>
-                                        <th className="px-6 py-3 text-left">Product ID</th>
-                                        <th className="px-6 py-3 text-right">Quantity</th>
+                                        <th className="px-6 py-3 text-left">Type</th>
+                                        <th className="px-6 py-3 text-right">Origin</th>
                                         <th className="px-6 py-3 text-center">State</th>
                                         <th className="px-6 py-3 text-left">Date</th>
                                     </tr>
@@ -255,7 +404,7 @@ export default function InventoryPage() {
                                         <tr key={picking.id} className="border-b border-gray-800 hover:bg-gray-800/30">
                                             <td className="px-6 py-4">
                                                 <Link href={`/inventory/picking/${picking.id}`} className="text-purple-400 hover:underline font-medium">
-                                                    {picking.name || '—'}
+                                                    {picking.name || `PICK/${picking.id.substring(0,8)}`}
                                                 </Link>
                                             </td>
                                             <td className="px-6 py-4 text-gray-300 uppercase text-[10px] tracking-widest font-bold">{picking.picking_type_code}</td>
@@ -281,8 +430,8 @@ export default function InventoryPage() {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="text-xs text-gray-400 uppercase border-b border-gray-800 bg-[#0F172A]">
-                                        <th className="px-6 py-3 text-left">Product ID</th>
-                                        <th className="px-6 py-3 text-left">Location ID</th>
+                                        <th className="px-6 py-3 text-left">Product</th>
+                                        <th className="px-6 py-3 text-left">Location</th>
                                         <th className="px-6 py-3 text-right">On Hand</th>
                                         <th className="px-6 py-3 text-right">Reserved</th>
                                         <th className="px-6 py-3 text-right">Available</th>
@@ -293,19 +442,23 @@ export default function InventoryPage() {
                                         <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">Loading...</td></tr>
                                     ) : quants.length === 0 ? (
                                         <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No stock data found</td></tr>
-                                    ) : quants.map(q => (
-                                        <tr key={q.id} className="border-b border-gray-800 hover:bg-gray-800/30">
-                                            <td className="px-6 py-4">
-                                                <Link href={`/inventory/products/${q.product_id}`} className="text-purple-400 hover:underline font-mono text-xs">
-                                                    {q.product_id?.substring(0, 8)}...
-                                                </Link>
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-300 font-mono text-xs">{q.location_id?.substring(0, 8)}...</td>
-                                            <td className="px-6 py-4 text-right font-bold text-white">{q.quantity}</td>
-                                            <td className="px-6 py-4 text-right text-yellow-400">{q.reserved_quantity}</td>
-                                            <td className="px-6 py-4 text-right text-green-400">{q.quantity - q.reserved_quantity}</td>
-                                        </tr>
-                                    ))}
+                                    ) : quants.map(q => {
+                                        const prod = products.find(p => p.id === q.product_id);
+                                        const loc = locations.find(l => l.id === q.location_id);
+                                        return (
+                                            <tr key={q.id} className="border-b border-gray-800 hover:bg-gray-800/30">
+                                                <td className="px-6 py-4 font-semibold text-gray-200">
+                                                    {prod ? prod.name : q.product_id}
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-300 font-medium">
+                                                    {loc ? loc.name : q.location_id}
+                                                </td>
+                                                <td className="px-6 py-4 text-right font-bold text-white">{q.quantity}</td>
+                                                <td className="px-6 py-4 text-right text-yellow-400">{q.reserved_quantity}</td>
+                                                <td className="px-6 py-4 text-right text-green-400">{q.quantity - q.reserved_quantity}</td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
@@ -342,7 +495,7 @@ export default function InventoryPage() {
                                         <th className="px-6 py-4 text-right">Sale Price</th>
                                         <th className="px-6 py-4 text-right">Cost Price</th>
                                         <th className="px-6 py-4 text-right">Stock On Hand</th>
-                                        <th className="px-6 py-4 text-center">Trace</th>
+                                        <th className="px-6 py-4 text-center">Actions</th>
                                       </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-800">
@@ -354,15 +507,27 @@ export default function InventoryPage() {
                                         <tr key={p.id} className="hover:bg-white/5 transition-colors">
                                             <td className="px-6 py-4 font-semibold text-gray-200">{p.name}</td>
                                             <td className="px-6 py-4 font-mono text-xs text-gray-400">{p.sku || '—'}</td>
-                                            <td className="px-6 py-4 text-right font-medium text-green-400">${(p.list_price || 0).toFixed(2)}</td>
-                                            <td className="px-6 py-4 text-right text-gray-400">${(p.cost_price || 0).toFixed(2)}</td>
+                                            <td className="px-6 py-4 text-right font-medium text-green-400">{currencySymbol}{(p.list_price || 0).toFixed(2)}</td>
+                                            <td className="px-6 py-4 text-right text-gray-400">{currencySymbol}{(p.cost_price || 0).toFixed(2)}</td>
                                             <td className="px-6 py-4 text-right font-bold text-white">{getProductStock(p.id)} units</td>
-                                            <td className="px-6 py-4 text-center">
+                                            <td className="px-6 py-4 text-center flex items-center justify-center gap-2">
+                                                <button 
+                                                    onClick={() => openEditModal(p)}
+                                                    className="bg-blue-600/10 hover:bg-blue-600 border border-blue-600/20 text-blue-400 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button 
+                                                    onClick={() => openAdjustModal(p)}
+                                                    className="bg-green-600/10 hover:bg-green-600 border border-green-600/20 text-green-400 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                                >
+                                                    Adjust Stock
+                                                </button>
                                                 <Link 
                                                     href={`/inventory/products/${p.id}`}
-                                                    className="bg-purple-600/10 hover:bg-purple-600 border border-purple-600/20 text-purple-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all inline-block"
+                                                    className="bg-purple-600/10 hover:bg-purple-600 border border-purple-600/20 text-purple-400 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all"
                                                 >
-                                                    Audit Trail
+                                                    Audit
                                                 </Link>
                                             </td>
                                         </tr>
@@ -477,9 +642,191 @@ export default function InventoryPage() {
                                 <button
                                     type="submit"
                                     disabled={addLoading || !newName.trim() || !newPrice}
-                                    className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2"
+                                    className="bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2"
                                 >
                                     {addLoading ? <><Loader2 size={15} className="animate-spin" /> Registering...</> : <><Plus size={15} /> Save Product</>}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Product Modal */}
+            {editingProduct && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#1A2236] rounded-2xl p-6 w-full max-w-lg border border-white/8 shadow-2xl">
+                        <div className="flex items-center justify-between mb-5">
+                            <div>
+                                <h3 className="text-lg font-bold text-white">Edit Product Details</h3>
+                                <p className="text-gray-500 text-xs mt-0.5">Update catalog details for this item</p>
+                            </div>
+                            <button onClick={() => setEditingProduct(null)} className="text-gray-500 hover:text-white p-1 rounded-xl hover:bg-white/5">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleEditProduct} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Product Name *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editName}
+                                    onChange={e => setEditName(e.target.value)}
+                                    className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-purple-500 outline-none transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">SKU / Barcode</label>
+                                <input
+                                    type="text"
+                                    value={editSku}
+                                    onChange={e => setEditSku(e.target.value)}
+                                    className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-purple-500 outline-none transition-all"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Sales Price ($) *</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        required
+                                        value={editPrice}
+                                        onChange={e => setEditPrice(e.target.value)}
+                                        className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-purple-500 outline-none transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Cost Price ($)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={editCost}
+                                        onChange={e => setEditCost(e.target.value)}
+                                        className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-purple-500 outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Internal Notes / Description</label>
+                                <textarea
+                                    value={editDesc}
+                                    onChange={e => setEditDesc(e.target.value)}
+                                    rows={3}
+                                    className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-purple-500 outline-none transition-all resize-none"
+                                />
+                            </div>
+
+                            {editError && (
+                                <div className="px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400 flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">⚠</span>
+                                    <span>{editError}</span>
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/5">
+                                <button type="button" onClick={() => setEditingProduct(null)} disabled={editLoading}
+                                    className="px-4 py-2.5 text-sm text-gray-400 hover:text-white font-medium transition-colors">
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={editLoading || !editName.trim() || !editPrice}
+                                    className="bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2"
+                                >
+                                    {editLoading ? <><Loader2 size={15} className="animate-spin" /> Saving...</> : "Save Changes"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Stock Adjustment Modal */}
+            {adjustingProduct && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#1A2236] rounded-2xl p-6 w-full max-w-md border border-white/8 shadow-2xl">
+                        <div className="flex items-center justify-between mb-5">
+                            <div>
+                                <h3 className="text-lg font-bold text-white">Adjust Product Stock</h3>
+                                <p className="text-gray-400 text-xs mt-0.5">Manage stock count for: <span className="text-purple-400 font-semibold">{adjustingProduct.name}</span></p>
+                            </div>
+                            <button onClick={() => setAdjustingProduct(null)} className="text-gray-500 hover:text-white p-1 rounded-xl hover:bg-white/5">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleAdjustStock} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Select Stock Location</label>
+                                <select 
+                                    value={selectedLocation}
+                                    onChange={e => setSelectedLocation(e.target.value)}
+                                    className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-purple-500 outline-none"
+                                >
+                                    {locations.filter(l => l.usage === "internal").map(l => (
+                                        <option key={l.id} value={l.id}>{l.name} (On hand: {getProductStockAtLocation(adjustingProduct.id, l.id)} units)</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Adjustment Action</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {(["add", "remove", "set"] as const).map(type => (
+                                        <button 
+                                            key={type}
+                                            type="button"
+                                            onClick={() => setAdjustType(type)}
+                                            className={`py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all ${
+                                                adjustType === type 
+                                                    ? "bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/20" 
+                                                    : "bg-[#0F172A] border-white/10 text-gray-400 hover:bg-white/5"
+                                            }`}
+                                        >
+                                            {type === "add" ? "➕ Add" : type === "remove" ? "➖ Remove" : "⚙️ Set (New Total)"}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Quantity</label>
+                                <input
+                                    type="number"
+                                    min="0.01"
+                                    step="0.01"
+                                    required
+                                    placeholder={adjustType === "set" ? "Enter final absolute quantity..." : "Enter adjustment quantity..."}
+                                    value={adjustQty}
+                                    onChange={e => setAdjustQty(e.target.value)}
+                                    className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-purple-500 outline-none transition-all"
+                                />
+                            </div>
+
+                            {adjustError && (
+                                <div className="px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400 flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">⚠</span>
+                                    <span>{adjustError}</span>
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/5">
+                                <button type="button" onClick={() => setAdjustingProduct(null)} disabled={adjustLoading}
+                                    className="px-4 py-2.5 text-sm text-gray-400 hover:text-white font-medium transition-colors">
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={adjustLoading || !selectedLocation || !adjustQty}
+                                    className="bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2"
+                                >
+                                    {adjustLoading ? <><Loader2 size={15} className="animate-spin" /> Adjusting...</> : "Apply Adjustment"}
                                 </button>
                             </div>
                         </form>

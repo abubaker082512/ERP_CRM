@@ -77,3 +77,22 @@ def get_supabase_client(request: Request, credentials: HTTPAuthorizationCredenti
             print(f"[WARN] Tenant subscription check failed for uid={uid}: {e}")
     
     return client
+
+def adjust_stock(client: Client, product_id: str, location_id: str, qty_change: float):
+    """Adjusts the inventory quant table for a specific product and location by qty_change."""
+    try:
+        # Check if a quant exists for this product and location
+        res = client.table("inventory_quant").select("*").eq("product_id", product_id).eq("location_id", location_id).execute()
+        if res.data:
+            quant_id = res.data[0]["id"]
+            new_qty = float(res.data[0]["quantity"] or 0.0) + qty_change
+            client.table("inventory_quant").update({"quantity": new_qty}).eq("id", quant_id).execute()
+        else:
+            client.table("inventory_quant").insert({
+                "product_id": product_id,
+                "location_id": location_id,
+                "quantity": qty_change,
+                "reserved_quantity": 0.0
+            }).execute()
+    except Exception as e:
+        print(f"[adjust_stock err]: {e}")

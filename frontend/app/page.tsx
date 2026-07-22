@@ -31,7 +31,8 @@ import {
     ArrowRight,
     Lock,
     Zap,
-    X
+    X,
+    PieChart
 } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -69,6 +70,7 @@ const apps = [
     { name: "Helpdesk", icon: CheckSquare, color: "bg-indigo-500", href: "/helpdesk" },
     { name: "Documents", icon: BookOpen, color: "bg-blue-400", href: "/documents" },
     { name: "Team", icon: Users, color: "bg-purple-600", href: "/team" },
+    { name: "Reports", icon: PieChart, color: "bg-purple-700", href: "/reports" },
     { name: "Settings", icon: Cog, color: "bg-gray-500", href: "/settings" },
 ];
 
