@@ -169,6 +169,25 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
             className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm font-medium transition-all">
             <XCircle size={16} /> Mark as Lost
           </button>
+          <button onClick={async () => {
+            try {
+              const res = await fetchAPI(`/opportunities/${params.id}/convert-to-sale`, {
+                method: "POST"
+              });
+              if (res.ok) {
+                const data = await res.json();
+                alert(`Successfully converted to Sales Order: ${data.sale_order?.name || ''}`);
+                router.push("/sales");
+              } else {
+                alert("Failed to convert opportunity to Sales Order.");
+              }
+            } catch (e: any) {
+              alert(`Error: ${e.message || 'Could not connect'}`);
+            }
+          }}
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-md active:scale-95">
+            <FileText size={16} /> Convert to Quotation
+          </button>
         </div>
       </div>
 

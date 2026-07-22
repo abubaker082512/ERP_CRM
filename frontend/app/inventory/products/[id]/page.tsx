@@ -38,6 +38,7 @@ export default function ProductAuditPage({ params }: { params: { id: string } })
     const [quants, setQuants] = useState<StockQuant[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [generatingBarcode, setGeneratingBarcode] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -68,6 +69,21 @@ export default function ProductAuditPage({ params }: { params: { id: string } })
         }
     };
 
+    const handleGenerateBarcode = async () => {
+        setGeneratingBarcode(true);
+        try {
+            const res = await fetchAPI(`/barcode/generate/${params.id}`, { method: "POST" });
+            if (res.ok) {
+                const data = await res.json();
+                setProduct(prev => prev ? { ...prev, sku: data.barcode } : null);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setGeneratingBarcode(false);
+        }
+    };
+
     const totalStock = quants.reduce((sum, q) => sum + (q.quantity || 0), 0);
 
     if (loading) return <div className="p-8 text-white">Loading product trace...</div>;
@@ -87,6 +103,12 @@ export default function ProductAuditPage({ params }: { params: { id: string } })
                             <span className="bg-gray-800 text-gray-300 text-xs px-2 py-1 rounded border border-gray-700 font-mono">
                                 {product.sku || 'NO-SKU'}
                             </span>
+                            {!product.sku && (
+                                <button onClick={handleGenerateBarcode} disabled={generatingBarcode}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-1 rounded-lg font-bold transition-all shadow-md active:scale-95 disabled:opacity-50">
+                                    {generatingBarcode ? "Generating..." : "Generate Barcode"}
+                                </button>
+                            )}
                         </div>
                         <p className="text-sm text-gray-500 mt-1">Inventory Traceability Audit</p>
                     </div>

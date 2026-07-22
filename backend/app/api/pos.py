@@ -154,15 +154,66 @@ def create_payment(payment: PosPaymentCreate, client: Client = Depends(get_supab
         raise HTTPException(status_code=400, detail="Could not record payment")
 
     # Update order amount_paid and state
-    order_resp = client.table("pos_order").select("amount_total").eq("id", payment.order_id).execute()
+    order_resp = client.table("pos_order").select("amount_total, name").eq("id", payment.order_id).execute()
     if order_resp.data:
         total = float(order_resp.data[0].get("amount_total") or 0)
+        order_name = order_resp.data[0].get("name") or "POS Order"
         change = max(0, payment.amount - total)
         client.table("pos_order").update({
             "amount_paid": payment.amount,
             "amount_return": change,
             "state": "paid"
         }).eq("id", payment.order_id).execute()
+
+        # ─── LINK TO ACCOUNTING: Create Customer Invoice ───
+        try:
+            journal_resp = client.table("account_journal").select("id").eq("type", "sale").limit(1).execute()
+            journal_id = journal_resp.data[0]["id"] if journal_resp.data else None
+            move_data = {
+                "name": f"INV/{order_name}",
+                "move_type": "out_invoice",
+                "journal_id": journal_id,
+                "amount_total": total,
+                "state": "posted"
+            }
+            client.table("account_move").insert(move_data).execute()
+        except Exception as e:
+            print(f"[POS-ACCOUNTING LINK WARN] Failed: {e}")
+
+        # ─── LINK TO INVENTORY: Decrease Stock ───
+        try:
+            lines_resp = client.table("pos_order_line").select("product_id, qty").eq("order_id", payment.order_id).execute()
+            lines = lines_resp.data or []
+            if lines:
+                picking_data = {
+                    "picking_type_code": "outgoing",
+                    "origin": order_name,
+                    "state": "done"
+                }
+                picking_resp = client.table("inventory_picking").insert(picking_data).execute()
+                
+                if picking_resp.data:
+                    picking_id = picking_resp.data[0]["id"]
+                    
+                    loc_resp = client.table("inventory_location").select("id").eq("usage", "internal").limit(1).execute()
+                    internal_loc_id = loc_resp.data[0]["id"] if loc_resp.data else "00000000-0000-0000-0000-000000000000"
+                    
+                    stock_moves = []
+                    for line in lines:
+                        if line.get("product_id"):
+                            stock_moves.append({
+                                "name": f"POS/{order_name}",
+                                "product_id": line["product_id"],
+                                "quantity": float(line.get("qty") or 1.0),
+                                "state": "done",
+                                "picking_id": picking_id,
+                                "location_id": internal_loc_id,
+                                "location_dest_id": "00000000-0000-0000-0000-000000000000"
+                            })
+                    if stock_moves:
+                        client.table("inventory_move").insert(stock_moves).execute()
+        except Exception as e:
+            print(f"[POS-INVENTORY LINK WARN] Failed: {e}")
 
     return resp.data[0]
 

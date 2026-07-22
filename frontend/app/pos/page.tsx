@@ -2,7 +2,7 @@
 import { fetchAPI } from "@/lib/api";
 import { useState, useEffect } from "react";
 import AppHeader from "@/components/layout/AppHeader";
-import { Calculator, ShoppingCart, DollarSign, X, Check, Search, CreditCard, Clock } from "lucide-react";
+import { Calculator, ShoppingCart, DollarSign, X, Check, Search, CreditCard, Clock, Plus, Loader2 } from "lucide-react";
 
 export default function POSPage() {
   const [session, setSession] = useState<any>(null);
@@ -13,6 +13,15 @@ export default function POSPage() {
   const [checkoutMode, setCheckoutMode] = useState(false);
   const [amountPaid, setAmountPaid] = useState("");
   const [processing, setProcessing] = useState(false);
+
+  // New Product Modal States
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [newProdName, setNewProdName] = useState("");
+  const [newProdPrice, setNewProdPrice] = useState("");
+  const [newProdCost, setNewProdCost] = useState("");
+  const [newProdSku, setNewProdSku] = useState("");
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState("");
 
   useEffect(() => { loadData(); }, []);
 
@@ -28,14 +37,12 @@ export default function POSPage() {
   };
 
   const openSession = async () => {
-    // Check for configs first
     let configs: any[] = [];
     const cfgRes = await fetchAPI("/pos/configs");
     if (cfgRes.ok) configs = await cfgRes.json();
     
     let configId = configs.length > 0 ? configs[0].id : null;
     
-    // Create default config if none exists
     if (!configId) {
       const newCfg = await fetchAPI("/pos/configs", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -80,7 +87,6 @@ export default function POSPage() {
     if (isNaN(paid) || paid < total) return alert("Paid amount must be >= total.");
     setProcessing(true);
     try {
-      // Create Order
       const orderRes = await fetchAPI("/pos/orders", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,7 +97,6 @@ export default function POSPage() {
       });
       const order = await orderRes.json();
 
-      // Create Payment
       await fetchAPI("/pos/payments", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ order_id: order.id, amount: paid, payment_method: "cash" })
@@ -102,6 +107,43 @@ export default function POSPage() {
       setCheckoutMode(false);
       setAmountPaid("");
     } finally { setProcessing(false); }
+  };
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddError("");
+    if (!newProdName.trim() || !newProdPrice) return;
+
+    setAddLoading(true);
+    try {
+      const res = await fetchAPI("/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newProdName.trim(),
+          list_price: parseFloat(newProdPrice),
+          cost_price: newProdCost ? parseFloat(newProdCost) : 0.0,
+          sku: newProdSku.trim() || undefined
+        })
+      });
+
+      if (res.ok) {
+        const newProd = await res.json();
+        setProducts(prev => [newProd, ...prev]);
+        setIsAddProductOpen(false);
+        setNewProdName("");
+        setNewProdPrice("");
+        setNewProdCost("");
+        setNewProdSku("");
+      } else {
+        const err = await res.json().catch(() => ({ detail: "Failed to create product" }));
+        setAddError(err.detail || "Failed to create product");
+      }
+    } catch (err: any) {
+      setAddError(err.message || "Network error");
+    } finally {
+      setAddLoading(false);
+    }
   };
 
   if (loading) return (
@@ -148,10 +190,15 @@ export default function POSPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Products Grid */}
         <div className="flex-1 flex flex-col p-6 overflow-hidden">
-          <div className="relative mb-6 shrink-0">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input type="text" placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full bg-[#1E293B] border border-gray-700 rounded-xl pl-11 pr-4 py-3 text-white outline-none focus:border-green-500 shadow-sm" />
+          <div className="flex gap-4 mb-6 shrink-0">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input type="text" placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)}
+                className="w-full bg-[#1E293B] border border-gray-700 rounded-xl pl-11 pr-4 py-3 text-white outline-none focus:border-green-500 shadow-sm" />
+            </div>
+            <button onClick={() => setIsAddProductOpen(true)} className="bg-green-600 hover:bg-green-700 text-white px-5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-green-600/20 active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
+              <Plus size={16} /> Add Product
+            </button>
           </div>
           <div className="flex-1 overflow-y-auto pr-2">
             <div className="grid grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
@@ -229,6 +276,95 @@ export default function POSPage() {
           </div>
         </div>
       </div>
+
+      {/* Add Product Modal */}
+      {isAddProductOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1A2236] rounded-2xl p-6 w-full max-w-md border border-white/8 shadow-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="text-lg font-bold text-white">Quick Add Product</h3>
+                <p className="text-gray-500 text-xs mt-0.5">Create a product and make it available instantly</p>
+              </div>
+              <button onClick={() => setIsAddProductOpen(false)} className="text-gray-500 hover:text-white p-1.5 rounded-xl hover:bg-white/5 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddProduct} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Product Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={newProdName}
+                  onChange={e => setNewProdName(e.target.value)}
+                  className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500 outline-none transition-all"
+                  placeholder="e.g. Premium Coffee beans"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Sale Price ($) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={newProdPrice}
+                    onChange={e => setNewProdPrice(e.target.value)}
+                    className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500 outline-none transition-all"
+                    placeholder="12.99"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Cost Price ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newProdCost}
+                    onChange={e => setNewProdCost(e.target.value)}
+                    className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500 outline-none transition-all"
+                    placeholder="4.50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Barcode / SKU</label>
+                <input
+                  type="text"
+                  value={newProdSku}
+                  onChange={e => setNewProdSku(e.target.value)}
+                  className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500 outline-none transition-all"
+                  placeholder="e.g. 200847294872"
+                />
+              </div>
+
+              {addError && (
+                <div className="px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400 flex items-start gap-2">
+                  <span className="shrink-0 mt-0.5">⚠</span>
+                  <span>{addError}</span>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/5">
+                <button type="button" onClick={() => { setIsAddProductOpen(false); setAddError(""); }} disabled={addLoading}
+                  className="px-4 py-2.5 text-sm text-gray-400 hover:text-white font-medium transition-colors">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addLoading || !newProdName.trim() || !newProdPrice}
+                  className="bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2"
+                >
+                  {addLoading ? <><Loader2 size={15} className="animate-spin" /> Creating...</> : <><Plus size={15} /> Create Product</>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

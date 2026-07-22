@@ -156,17 +156,79 @@ def mark_production_done(production_id: str, client: Client = Depends(get_supaba
     now = datetime.now(timezone.utc).isoformat()
 
     # Get production details
-    prod_resp = client.table("mrp_production").select("*, mrp_bom(mrp_bom_line(*))").eq("id", production_id).execute()
+    prod_resp = client.table("mrp_production").select("*, product_product(name, list_price)").eq("id", production_id).execute()
     if not prod_resp.data:
         raise HTTPException(status_code=404, detail="Manufacturing order not found")
 
     prod = prod_resp.data[0]
+    bom_id = prod.get("bom_id")
+    mo_name = prod.get("name") or "MO"
+    prod_qty = float(prod.get("product_qty") or 1.0)
+    product_id = prod.get("product_id")
 
-    # Mark as done
+    # Mark manufacturing order as done
     resp = client.table("mrp_production").update({
         "state": "done",
         "date_finished": now
     }).eq("id", production_id).execute()
+
+    # ─── LINK TO INVENTORY: Consume Raw Materials & Produce Finished Product ───
+    try:
+        # Get internal location
+        loc_resp = client.table("inventory_location").select("id").eq("usage", "internal").limit(1).execute()
+        internal_loc_id = loc_resp.data[0]["id"] if loc_resp.data else "00000000-0000-0000-0000-000000000000"
+
+        # 1. Consume raw materials (BOM lines)
+        if bom_id:
+            lines_resp = client.table("mrp_bom_line").select("product_id, product_qty").eq("bom_id", bom_id).execute()
+            bom_lines = lines_resp.data or []
+            stock_moves = []
+            for line in bom_lines:
+                if line.get("product_id"):
+                    stock_moves.append({
+                        "name": f"CONSUME/{mo_name}",
+                        "product_id": line["product_id"],
+                        "quantity": float(line.get("product_qty") or 1.0) * prod_qty,
+                        "state": "done",
+                        "location_id": internal_loc_id,
+                        "location_dest_id": "00000000-0000-0000-0000-000000000000" # consumed / external
+                    })
+            if stock_moves:
+                client.table("inventory_move").insert(stock_moves).execute()
+
+        # 2. Produce finished product
+        if product_id:
+            client.table("inventory_move").insert({
+                "name": f"PRODUCE/{mo_name}",
+                "product_id": product_id,
+                "quantity": prod_qty,
+                "state": "done",
+                "location_id": "00000000-0000-0000-0000-000000000000", # production virtual source
+                "location_dest_id": internal_loc_id
+            }).execute()
+
+    except Exception as e:
+        print(f"[MRP-INVENTORY LINK WARN] Failed: {e}")
+
+    # ─── LINK TO ACCOUNTING: Create WIP/COGM entry ───
+    try:
+        journal_resp = client.table("account_journal").select("id").eq("type", "general").limit(1).execute()
+        journal_id = journal_resp.data[0]["id"] if journal_resp.data else None
+        
+        # Calculate cost
+        list_price = float((prod.get("product_product") or {}).get("list_price") or 0.0)
+        total_cost = list_price * prod_qty
+
+        move_data = {
+            "name": f"MFG/{mo_name}",
+            "move_type": "entry", # Journal Entry
+            "journal_id": journal_id,
+            "amount_total": total_cost,
+            "state": "posted"
+        }
+        client.table("account_move").insert(move_data).execute()
+    except Exception as e:
+        print(f"[MRP-ACCOUNTING LINK WARN] Failed: {e}")
 
     return resp.data[0] if resp.data else {"message": "Production marked as done"}
 

@@ -11,6 +11,7 @@ protected_deps = [Depends(get_supabase_client)]
 api_router.include_router(leads.router, prefix="/leads", tags=["leads"], dependencies=protected_deps)
 api_router.include_router(opportunities.router, prefix="/opportunities", tags=["opportunities"], dependencies=protected_deps)
 api_router.include_router(products.router, prefix="/products", tags=["products"], dependencies=protected_deps)
+api_router.include_router(products.router, prefix="/inventory/products", tags=["inventory-products"], dependencies=protected_deps)
 api_router.include_router(sales.router, prefix="/sales", tags=["sales"], dependencies=protected_deps)
 api_router.include_router(contacts.router, prefix="/contacts", tags=["contacts"], dependencies=protected_deps)
 api_router.include_router(inventory.router, prefix="/inventory", tags=["inventory"], dependencies=protected_deps)

@@ -71,6 +71,76 @@ def delete_purchase_order(order_id: str, client: Client = Depends(get_supabase_c
     client.table("purchase_order").delete().eq("id", order_id).execute()
     return {"message": "Purchase order deleted"}
 
+@router.post("/{order_id}/confirm", response_model=PurchaseOrder)
+def confirm_purchase_order(order_id: str, client: Client = Depends(get_supabase_client)):
+    # 1. Fetch order and lines
+    order_resp = client.table("purchase_order").select("*, purchase_order_line(*)").eq("id", order_id).execute()
+    if not order_resp.data:
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+    
+    order_data = order_resp.data[0]
+    if order_data.get("state") == "purchase":
+        raise HTTPException(status_code=400, detail="Order is already confirmed")
+
+    # 2. Mark order as confirmed
+    client.table("purchase_order").update({"state": "purchase"}).eq("id", order_id).execute()
+
+    # 3. Create Accounting Vendor Bill (in_invoice)
+    try:
+        journal_resp = client.table("account_journal").select("id").eq("type", "purchase").limit(1).execute()
+        journal_id = journal_resp.data[0]["id"] if journal_resp.data else None
+        move_data = {
+            "name": f"BILL/{order_data.get('name', 'Draft')}",
+            "move_type": "in_invoice",
+            "journal_id": journal_id,
+            "partner_id": order_data.get("partner_id"),
+            "amount_total": order_data.get("amount_total", 0.0),
+            "state": "draft"
+        }
+        client.table("account_move").insert(move_data).execute()
+    except Exception as e:
+        print(f"[PURCHASE-ACCOUNTING LINK WARN] Failed: {e}")
+
+    # 4. Create Inventory Receipt Order (incoming)
+    lines = order_data.get("purchase_order_line", [])
+    if lines:
+        try:
+            picking_data = {
+                "partner_id": order_data.get("partner_id"),
+                "purchase_id": order_id,
+                "picking_type_code": "incoming",
+                "origin": order_data.get("name"),
+                "state": "confirmed"
+            }
+            picking_resp = client.table("inventory_picking").insert(picking_data).execute()
+            
+            if picking_resp.data:
+                picking_id = picking_resp.data[0]["id"]
+                
+                loc_resp = client.table("inventory_location").select("id").eq("usage", "internal").limit(1).execute()
+                internal_loc_id = loc_resp.data[0]["id"] if loc_resp.data else "00000000-0000-0000-0000-000000000000"
+                
+                stock_moves = []
+                for line in lines:
+                    if line.get("product_id"):
+                        stock_moves.append({
+                            "name": f"IN/{order_data.get('name', 'Draft')}",
+                            "product_id": line["product_id"],
+                            "quantity": float(line.get("product_qty") or 1.0),
+                            "state": "confirmed",
+                            "picking_id": picking_id,
+                            "location_id": "00000000-0000-0000-0000-000000000000", # external vendor
+                            "location_dest_id": internal_loc_id
+                        })
+                if stock_moves:
+                    client.table("inventory_move").insert(stock_moves).execute()
+        except Exception as e:
+            print(f"[PURCHASE-INVENTORY LINK WARN] Failed: {e}")
+
+    # Refetch updated order
+    updated_order_resp = client.table("purchase_order").select("*, purchase_order_line(*)").eq("id", order_id).execute()
+    return _map_purchase_order(updated_order_resp.data[0])
+
 def _map_purchase_order(row: dict) -> dict:
     """Map purchase_order DB row to PurchaseOrder schema."""
     return {

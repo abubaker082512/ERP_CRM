@@ -77,3 +77,34 @@ def delete_opportunity(opp_id: str, client: Client = Depends(get_supabase_client
     client.table("crm_lead").delete().eq("id", opp_id).execute()
     return {"message": "Opportunity deleted successfully"}
 
+@router.post("/{opp_id}/convert-to-sale")
+def convert_to_sale(opp_id: str, client: Client = Depends(get_supabase_client)):
+    from datetime import datetime
+    
+    # 1. Fetch opportunity
+    opp_resp = client.table("crm_lead").select("*").eq("id", opp_id).execute()
+    if not opp_resp.data:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    opp = opp_resp.data[0]
+    
+    # 2. Create sales order (Draft)
+    sale_name = f"SO/CRM/{opp['name'][:10].upper()}/{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    sale_data = {
+        "name": sale_name,
+        "state": "draft",
+        "amount_total": float(opp.get("expected_revenue") or 0.0),
+        "partner_id": opp.get("partner_id") or "00000000-0000-0000-0000-000000000000"
+    }
+    
+    sale_resp = client.table("sale_order").insert(sale_data).execute()
+    if not sale_resp.data:
+        raise HTTPException(status_code=400, detail="Could not create sales order from opportunity")
+        
+    # 3. Update opportunity stage to Won
+    client.table("crm_lead").update({
+        "stage_id": "Won",
+        "probability": 100.0
+    }).eq("id", opp_id).execute()
+    
+    return {"message": "Opportunity converted to sales order", "sale_order": sale_resp.data[0]}
+
