@@ -120,7 +120,10 @@ export default function Home() {
                 // Detect free plan: subscription active + metadata plan = "One App Free"
                 try {
                     const meta = JSON.parse(data.tenant?.stripe_customer_id || "{}");
-                    if (data.tenant?.subscription_status === "active" && meta?.plan === "One App Free") {
+                    const SUPER_ADMIN_EMAILS = ['admin@erp-crm.com', 'admin2@erp-crm.com'];
+                    const isAdmin = SUPER_ADMIN_EMAILS.includes(data.email);
+                    
+                    if (data.tenant?.subscription_status === "active" && meta?.plan === "One App Free" && !isAdmin) {
                         setIsFreePlan(true);
                     }
                 } catch {}
