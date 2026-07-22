@@ -31,6 +31,7 @@ class CreateInvoiceRequest(BaseModel):
     plan_name: str = "pro"
     currency: str = "BTC"  # Crypto currency to pay in
     email: Optional[str] = None
+    amount_usd: Optional[float] = None
 
 class ManualActivateRequest(BaseModel):
     promo_code: Optional[str] = ""
@@ -78,7 +79,10 @@ async def create_plisio_invoice(
 
     # Calculate price
     plan_key = request.plan_name.lower()
-    source_amount = PLAN_PRICES.get(plan_key, 199.00)
+    if request.amount_usd and request.amount_usd > 0:
+        source_amount = round(request.amount_usd, 2)
+    else:
+        source_amount = PLAN_PRICES.get(plan_key, 199.00)
 
     # Generate a unique order number
     order_number = str(uuid.uuid4())[:8].upper()

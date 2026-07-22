@@ -2,7 +2,7 @@
 
 import {
     CheckCircle, Lock, Zap, Shield, ArrowRight, Loader2,
-    Copy, ExternalLink, Bitcoin, CreditCard, Star, X, Check
+    Copy, ExternalLink, Bitcoin, CreditCard, Star, X, Check, Calendar as CalendarIcon, Plus, Minus
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -177,12 +177,14 @@ function ModuleSelectorModal({
 
 function CryptoStep({
     plan,
-    billing,
+    totalPrice,
+    durationLabel,
     onBack,
     userEmail,
 }: {
     plan: Plan;
-    billing: "monthly" | "annual";
+    totalPrice: number;
+    durationLabel: string;
     onBack: () => void;
     userEmail: string;
 }) {
@@ -193,7 +195,6 @@ function CryptoStep({
     const [orderNumber, setOrderNumber] = useState("");
     const [copyFeedback, setCopyFeedback] = useState(false);
     const router = useRouter();
-    const price = billing === "annual" ? plan.annualPrice : plan.monthlyPrice;
 
     const handleCreate = async () => {
         setLoading(true);
@@ -201,7 +202,11 @@ function CryptoStep({
             const res = await fetchAPI("/billing/create-invoice", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ plan_name: plan.cryptoPlanKey, currency: selected }),
+                body: JSON.stringify({
+                    plan_name: plan.cryptoPlanKey,
+                    currency: selected,
+                    amount_usd: totalPrice
+                }),
             });
             const data = await res.json();
             if (res.ok && data.invoice_url) {
@@ -224,7 +229,8 @@ function CryptoStep({
                     <h3 className="font-bold text-white">Complete Your Payment</h3>
                     {[
                         ["Plan", plan.name],
-                        ["Amount", `$${price.toFixed(2)}/mo`],
+                        ["Duration", durationLabel],
+                        ["Total Amount", `$${totalPrice.toFixed(2)}`],
                         ["Currency", selected],
                         orderNumber && ["Order #", orderNumber],
                         txnId && ["Txn ID", txnId.slice(0, 20) + "..."],
@@ -256,8 +262,8 @@ function CryptoStep({
                 <button onClick={onBack} className="text-xs text-gray-500 hover:text-white transition-colors">← Back</button>
             </div>
             <div className="bg-purple-500/5 border border-purple-500/15 p-3 rounded-xl flex justify-between items-center">
-                <span className="text-xs text-gray-400">Total ({billing === "annual" ? "Annual" : "Monthly"})</span>
-                <span className="text-xl font-black text-white">${price.toFixed(2)}/mo</span>
+                <span className="text-xs text-gray-400">Total ({durationLabel})</span>
+                <span className="text-xl font-black text-white">${totalPrice.toFixed(2)}</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
                 {CRYPTO_CURRENCIES.map(coin => (
@@ -292,17 +298,25 @@ function CryptoStep({
 function PlanCard({
     plan,
     billing,
+    durationCount,
     userEmail,
     onSelectFree,
     onSelectCrypto,
 }: {
     plan: Plan;
     billing: "monthly" | "annual";
+    durationCount: number;
     userEmail: string;
     onSelectFree: () => void;
-    onSelectCrypto: (plan: Plan) => void;
+    onSelectCrypto: (plan: Plan, totalPrice: number, durationLabel: string) => void;
 }) {
-    const price = billing === "annual" ? plan.annualPrice : plan.monthlyPrice;
+    const monthlyRate = billing === "annual" ? plan.annualPrice : plan.monthlyPrice;
+    const monthsTotal = billing === "annual" ? durationCount * 12 : durationCount;
+    const totalPrice = monthlyRate * monthsTotal;
+    const durationLabel = billing === "annual"
+        ? `${durationCount} ${durationCount === 1 ? 'Year' : 'Years'}`
+        : `${durationCount} ${durationCount === 1 ? 'Month' : 'Months'}`;
+
     const freemiusUrl = `https://checkout.freemius.com/product/31108/plan/${plan.freemiusPlanId}/?user_email=${encodeURIComponent(userEmail)}&billing_cycle=${billing === "annual" ? "annual" : "monthly"}&readonly_user=true`;
 
     return (
@@ -319,26 +333,25 @@ function PlanCard({
             )}
 
             {/* Plan header */}
-            <div className="mb-6">
+            <div className="mb-5">
                 <h3 className="text-lg font-black text-white mb-1">{plan.name}</h3>
                 <p className="text-xs text-gray-400">{plan.tagline}</p>
             </div>
 
             {/* Price */}
-            <div className="flex items-end gap-1 mb-2">
+            <div className="flex items-end gap-1 mb-1">
                 <span className={`text-5xl font-black ${plan.highlight ? "text-white" : "text-gray-200"}`}>
-                    ${price.toFixed(2)}
+                    ${monthlyRate.toFixed(2)}
                 </span>
                 <span className="text-gray-500 text-xs mb-2">/mo</span>
             </div>
-            {billing === "annual" && (
-                <div className="inline-flex items-center gap-1.5 mb-5">
-                    <span className="text-green-400 text-xs font-bold bg-green-400/10 px-2 py-0.5 rounded-full">
-                        Save 19% annually
-                    </span>
+
+            {/* Total Duration Badge */}
+            <div className="mb-5">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-xl">
+                    <span>Total: <strong className="text-white">${totalPrice.toFixed(2)}</strong> for {durationLabel}</span>
                 </div>
-            )}
-            {billing === "monthly" && <div className="mb-5" />}
+            </div>
 
             {/* Features */}
             <ul className="space-y-2.5 mb-8 flex-1">
@@ -381,7 +394,7 @@ function PlanCard({
 
                 {/* Crypto */}
                 <button
-                    onClick={() => onSelectCrypto(plan)}
+                    onClick={() => onSelectCrypto(plan, totalPrice, durationLabel)}
                     className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all ${
                         plan.highlight
                             ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/25"
@@ -403,9 +416,10 @@ function BillingPageContent() {
     const isCanceled = searchParams.get("canceled") === "true";
 
     const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+    const [durationCount, setDurationCount] = useState<number>(1);
     const [userEmail, setUserEmail] = useState("");
     const [showModuleModal, setShowModuleModal] = useState(false);
-    const [cryptoPlan, setCryptoPlan] = useState<Plan | null>(null);
+    const [cryptoSelection, setCryptoSelection] = useState<{ plan: Plan; totalPrice: number; durationLabel: string } | null>(null);
 
     // Promo code
     const [promoCode, setPromoCode] = useState("");
@@ -483,7 +497,7 @@ function BillingPageContent() {
     }
 
     // ── Crypto step ──
-    if (cryptoPlan) {
+    if (cryptoSelection) {
         return (
             <div className="min-h-screen bg-[#020205] flex items-center justify-center p-4">
                 <div className="max-w-md w-full bg-[#0F172A]/90 border border-white/10 rounded-3xl p-7 shadow-2xl">
@@ -491,11 +505,12 @@ function BillingPageContent() {
                         <img src="/logo2.png" alt="Beraxis" className="h-6 w-auto" />
                         <span className="text-white font-bold tracking-tight text-sm">BERAXIS<span className="text-purple-500">.</span></span>
                     </div>
-                    <h2 className="text-white font-black text-lg mb-6">{cryptoPlan.name} — Crypto Payment</h2>
+                    <h2 className="text-white font-black text-lg mb-6">{cryptoSelection.plan.name} — Crypto Payment</h2>
                     <CryptoStep
-                        plan={cryptoPlan}
-                        billing={billing}
-                        onBack={() => setCryptoPlan(null)}
+                        plan={cryptoSelection.plan}
+                        totalPrice={cryptoSelection.totalPrice}
+                        durationLabel={cryptoSelection.durationLabel}
+                        onBack={() => setCryptoSelection(null)}
                         userEmail={userEmail}
                     />
                 </div>
@@ -534,7 +549,7 @@ function BillingPageContent() {
 
             <div className="relative z-10 flex flex-col items-center min-h-screen px-4 pt-24 pb-16">
                 {/* Hero */}
-                <div className="text-center mb-12 max-w-2xl">
+                <div className="text-center mb-10 max-w-2xl">
                     <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-6">
                         <Lock size={12} /> Choose Your Plan
                     </div>
@@ -545,35 +560,82 @@ function BillingPageContent() {
                         </span>
                     </h1>
                     <p className="text-gray-400 text-base">
-                        Start free with one module, or unlock the entire suite. Cancel anytime.
+                        Start free with one module, or unlock the entire suite. Custom duration supported.
                     </p>
                 </div>
 
-                {/* Monthly / Annual toggle */}
-                <div className="flex items-center gap-4 mb-12 bg-white/5 border border-white/10 rounded-2xl p-1.5">
-                    <button
-                        onClick={() => setBilling("monthly")}
-                        className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${
-                            billing === "monthly"
-                                ? "bg-white text-gray-900 shadow"
-                                : "text-gray-400 hover:text-white"
-                        }`}
-                    >
-                        Monthly
-                    </button>
-                    <button
-                        onClick={() => setBilling("annual")}
-                        className={`px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
-                            billing === "annual"
-                                ? "bg-white text-gray-900 shadow"
-                                : "text-gray-400 hover:text-white"
-                        }`}
-                    >
-                        Annual
-                        <span className="bg-green-500/20 text-green-400 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-green-500/20">
-                            SAVE 19%
+                {/* Billing Cycle & Duration Selection Bar */}
+                <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 mb-12 bg-[#0F172A]/70 border border-white/10 rounded-3xl p-4 md:px-6 shadow-2xl backdrop-blur-xl">
+                    {/* Cycle Toggle */}
+                    <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-2xl p-1">
+                        <button
+                            onClick={() => { setBilling("monthly"); setDurationCount(1); }}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                                billing === "monthly"
+                                    ? "bg-white text-gray-900 shadow"
+                                    : "text-gray-400 hover:text-white"
+                            }`}
+                        >
+                            Monthly
+                        </button>
+                        <button
+                            onClick={() => { setBilling("annual"); setDurationCount(1); }}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                billing === "annual"
+                                    ? "bg-white text-gray-900 shadow"
+                                    : "text-gray-400 hover:text-white"
+                            }`}
+                        >
+                            Annual
+                            <span className="bg-green-500/20 text-green-400 text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-green-500/20">
+                                SAVE 19%
+                            </span>
+                        </button>
+                    </div>
+
+                    <div className="hidden md:block w-px h-8 bg-white/10" />
+
+                    {/* Duration Quantity Stepper */}
+                    <div className="flex items-center gap-3">
+                        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            Duration:
                         </span>
-                    </button>
+                        <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-2xl p-1">
+                            <button
+                                onClick={() => setDurationCount(Math.max(1, durationCount - 1))}
+                                disabled={durationCount <= 1}
+                                className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm flex items-center justify-center transition-all disabled:opacity-30 active:scale-95"
+                            >
+                                <Minus size={14} />
+                            </button>
+                            <span className="px-3 text-xs font-black text-white min-w-[70px] text-center">
+                                {durationCount} {billing === "annual" ? (durationCount === 1 ? "Year" : "Years") : (durationCount === 1 ? "Month" : "Months")}
+                            </span>
+                            <button
+                                onClick={() => setDurationCount(Math.min(billing === "annual" ? 5 : 36, durationCount + 1))}
+                                className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm flex items-center justify-center transition-all active:scale-95"
+                            >
+                                <Plus size={14} />
+                            </button>
+                        </div>
+
+                        {/* Quick Presets */}
+                        <div className="flex items-center gap-1">
+                            {(billing === "monthly" ? [1, 3, 6, 12, 24] : [1, 2, 3, 5]).map((val) => (
+                                <button
+                                    key={val}
+                                    onClick={() => setDurationCount(val)}
+                                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                        durationCount === val
+                                            ? "bg-purple-500/30 text-purple-300 border border-purple-500/40 font-bold"
+                                            : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                                    }`}
+                                >
+                                    {val}{billing === "annual" ? "yr" : "mo"}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Plan Cards */}
@@ -583,9 +645,10 @@ function BillingPageContent() {
                             key={plan.id}
                             plan={plan}
                             billing={billing}
+                            durationCount={durationCount}
                             userEmail={userEmail}
                             onSelectFree={handleSelectFree}
-                            onSelectCrypto={(p) => setCryptoPlan(p)}
+                            onSelectCrypto={(p, total, label) => setCryptoSelection({ plan: p, totalPrice: total, durationLabel: label })}
                         />
                     ))}
                 </div>
