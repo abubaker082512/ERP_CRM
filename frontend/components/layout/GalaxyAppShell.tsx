@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { 
     LayoutDashboard, ShoppingCart, Users, Package, 
     BarChart3, MessageSquare, BookOpen, Settings, 
-    Menu, X, Sparkles, Database, ShieldCheck
+    Menu, X, Sparkles, Database, ShieldCheck, Wifi, WifiOff, Loader2
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import GalaxyTopBar from './GalaxyTopBar';
 import CommandOverlay from '../antigravity/CommandOverlay';
 
@@ -29,6 +29,8 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
     const [mounted, setMounted] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isAntigravityOpen, setIsAntigravityOpen] = useState(false);
+    const [backendStatus, setBackendStatus] = useState<'unknown' | 'waking' | 'ready'>('unknown');
+    const warmupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         setMounted(true);
@@ -37,14 +39,38 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         if (userStr) {
             try {
                 const user = JSON.parse(userStr);
-                // Restrict SaaS Admin panel to the platform super admin
-                // admin@erp-crm.com is the primary super admin account
                 const SUPER_ADMIN_EMAILS = ['admin@erp-crm.com', 'admin2@erp-crm.com'];
                 if (SUPER_ADMIN_EMAILS.includes(user.email)) {
                     setIsAdmin(true);
                 }
             } catch (e) {}
         }
+
+        // ── Backend Warm-up ──────────────────────────────────────────────
+        // Ping the backend immediately on app load so Render wakes up
+        // BEFORE the user tries to do something. This eliminates cold-start
+        // delays for the user's first real action.
+        const pingBackend = async () => {
+            try {
+                // Show banner only after 2 seconds (if still waiting)
+                warmupRef.current = setTimeout(() => setBackendStatus('waking'), 2000);
+                const res = await fetch('/api/v1/ping', { method: 'GET' });
+                if (warmupRef.current) clearTimeout(warmupRef.current);
+                if (res.ok) {
+                    setBackendStatus('ready');
+                    // Hide the 'ready' banner after 2 seconds
+                    setTimeout(() => setBackendStatus('unknown'), 2000);
+                }
+            } catch {
+                if (warmupRef.current) clearTimeout(warmupRef.current);
+                setBackendStatus('waking');
+                // Retry after 5 seconds
+                setTimeout(pingBackend, 5000);
+            }
+        };
+        pingBackend();
+
+        return () => { if (warmupRef.current) clearTimeout(warmupRef.current); };
     }, []);
 
     useEffect(() => {
@@ -65,7 +91,21 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
     if (isAuthPage) return <>{children}</>;
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[#020205]">
+        <div className="flex h-screen overflow-hidden bg-[#020205] flex-col">
+            {/* Backend Connection Banner */}
+            {backendStatus === 'waking' && (
+                <div className="w-full bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-center gap-2 text-xs text-amber-400 shrink-0 z-[100]">
+                    <Loader2 size={12} className="animate-spin" />
+                    <span>Connecting to server — this takes up to 30 seconds on cold start. Please wait...</span>
+                </div>
+            )}
+            {backendStatus === 'ready' && (
+                <div className="w-full bg-green-500/10 border-b border-green-500/20 px-4 py-2 flex items-center justify-center gap-2 text-xs text-green-400 shrink-0 z-[100]">
+                    <Wifi size={12} />
+                    <span>Server connected ✓ — you're good to go!</span>
+                </div>
+            )}
+            <div className="flex flex-1 overflow-hidden">
             {/* Sidebar */}
             <aside 
                 className={`fixed inset-y-0 left-0 z-50 bg-[#0F172A]/80 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 ease-in-out w-64 ${
@@ -166,6 +206,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
             {/* Antigravity Cockpit Overlay */}
             <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />
+            </div>{/* end flex-1 overflow-hidden */}
         </div>
     );
 }

@@ -1,33 +1,33 @@
 """
 discuss.py — Full-featured Discuss/Messaging backend.
-Supports:
-  - Channels (group conversations) 
-  - Direct Messages (1-on-1 between users)
-  - Messages with author info (name, email, avatar letter)
-  - Reactions (emoji) on messages
-  - Real-time polling via ?after= timestamp filter
-  - Team member list for the sidebar
+- Channels (group, broadcast)
+- Direct Messages (1-on-1)
+- Real-time polling (?after= timestamp)
+- Emoji reactions
+- Team member list
+- Author extracted from JWT without extra API call (faster)
 """
 
+import base64
+import json
 from app.api.deps import get_supabase_client
 from supabase import Client
-from fastapi import APIRouter, HTTPException, Depends, Request, Security
+from fastapi import APIRouter, HTTPException, Depends, Security, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel
-from datetime import datetime
 from app.core.supabase_client import supabase as service_client
 
 router = APIRouter()
 security = HTTPBearer()
 
 
-# ─── Schemas ────────────────────────────────────────────────────────────────
+# ─── Schemas ─────────────────────────────────────────────────────────────────
 
 class ChannelCreate(BaseModel):
     name: str
     description: Optional[str] = None
-    channel_type: Optional[str] = "channel"   # "channel" | "dm"
+    channel_type: Optional[str] = "channel"
 
 
 class ChannelUpdate(BaseModel):
@@ -48,87 +48,106 @@ class ReactionCreate(BaseModel):
 
 
 class DMCreate(BaseModel):
-    target_user_id: str    # the other user's ID
+    target_user_id: str
     initial_message: Optional[str] = None
 
 
-# ─── Helpers ────────────────────────────────────────────────────────────────
+# ─── JWT Helper (no extra network call) ──────────────────────────────────────
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security)):
-    """Lightweight token → user info extraction."""
+def extract_user_from_token(token: str) -> dict:
+    """
+    Decode the JWT payload locally — no extra Supabase API call needed.
+    The token is already verified by get_supabase_client.
+    Returns dict with id, email, name.
+    """
     try:
-        resp = service_client.auth.get_user(credentials.credentials)
-        if not resp.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        u = resp.user
-        name = (u.user_metadata or {}).get("name", "") or u.email.split("@")[0]
-        return {
-            "id": str(u.id),
-            "email": u.email,
-            "name": name,
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        parts = token.split(".")
+        if len(parts) != 3:
+            return {}
+        payload_b64 = parts[1]
+        # Fix base64 padding
+        payload_b64 += "=" * (4 - len(payload_b64) % 4)
+        raw = base64.urlsafe_b64decode(payload_b64)
+        payload = json.loads(raw)
+        uid = payload.get("sub", "")
+        email = payload.get("email", "")
+        meta = payload.get("user_metadata", {}) or {}
+        name = meta.get("name") or (email.split("@")[0] if email else "User")
+        return {"id": uid, "email": email, "name": name}
+    except Exception:
+        return {}
 
 
-# ─── Team Members ────────────────────────────────────────────────────────────
+# ─── Team Members ─────────────────────────────────────────────────────────────
 
 @router.get("/members")
 def get_members(
-    client: Client = Depends(get_supabase_client),
     credentials: HTTPAuthorizationCredentials = Security(security),
+    client: Client = Depends(get_supabase_client),
 ):
-    """
-    Returns all users in the same workspace/org as the logged-in user.
-    Falls back to reading from Supabase auth.users via service role if
-    the workspace tables aren't populated yet.
-    """
+    """Returns all users in the same workspace as the current user."""
+    me = extract_user_from_token(credentials.credentials)
+    my_id = me.get("id", "")
+
     try:
-        # First try workspace members via user_workspaces table
-        me = get_current_user(credentials)
-        ws_resp = service_client.table("user_workspaces").select("workspace_id").eq("user_id", me["id"]).execute()
-        if ws_resp.data:
-            workspace_id = ws_resp.data[0]["workspace_id"]
-            members_resp = service_client.table("user_workspaces").select("user_id, role").eq("workspace_id", workspace_id).execute()
-            member_ids = [m["user_id"] for m in (members_resp.data or []) if m["user_id"] != me["id"]]
+        # Find current user's workspace
+        ws_resp = service_client.table("user_workspaces") \
+            .select("workspace_id").eq("user_id", my_id).execute()
+        if not ws_resp.data:
+            return []
 
-            # Get user details from tenants table (has email)
-            result = []
-            for uid in member_ids:
-                t_resp = service_client.table("tenants").select("id, email").eq("id", uid).execute()
-                if t_resp.data:
-                    row = t_resp.data[0]
-                    result.append({
-                        "id": row["id"],
-                        "email": row["email"],
-                        "name": row.get("name") or (row["email"].split("@")[0] if row.get("email") else "User"),
-                        "online": False,
-                    })
-            return result
+        workspace_id = ws_resp.data[0]["workspace_id"]
+
+        # Get all members of that workspace
+        members_resp = service_client.table("user_workspaces") \
+            .select("user_id, role").eq("workspace_id", workspace_id).execute()
+
+        result = []
+        for m in (members_resp.data or []):
+            uid = m["user_id"]
+            if uid == my_id:
+                continue  # exclude self
+            t_resp = service_client.table("tenants") \
+                .select("id, email").eq("id", uid).execute()
+            if t_resp.data:
+                row = t_resp.data[0]
+                email = row.get("email", "")
+                result.append({
+                    "id": uid,
+                    "email": email,
+                    "name": row.get("name") or email.split("@")[0] or "User",
+                    "online": False,
+                })
+        return result
     except Exception as e:
-        print(f"[DISCUSS] Members lookup via workspaces failed: {e}")
-
-    # Fallback: return empty (safe — just means DM list shows nobody yet)
-    return []
+        print(f"[DISCUSS] Members error: {e}")
+        return []
 
 
-# ─── Channels ────────────────────────────────────────────────────────────────
+# ─── Channels ─────────────────────────────────────────────────────────────────
 
 @router.post("/channels")
 def create_channel(
     channel: ChannelCreate,
     client: Client = Depends(get_supabase_client),
-    credentials: HTTPAuthorizationCredentials = Security(security),
 ):
-    me = get_current_user(credentials)
-    data = channel.dict(exclude_unset=True)
-    data["created_by"] = me["id"]
-    resp = client.table("mail_channel").insert(data).execute()
-    if not resp.data:
+    """Create a new channel. Only inserts columns that exist in mail_channel."""
+    data = {
+        "name": channel.name,
+        "channel_type": channel.channel_type or "channel",
+    }
+    if channel.description:
+        data["description"] = channel.description
+
+    try:
+        resp = client.table("mail_channel").insert(data).execute()
+        if resp.data:
+            return resp.data[0]
         raise HTTPException(status_code=400, detail="Could not create channel")
-    return resp.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Channel creation failed: {str(e)}")
 
 
 @router.get("/channels")
@@ -146,7 +165,11 @@ def read_channel(channel_id: str, client: Client = Depends(get_supabase_client))
 
 
 @router.put("/channels/{channel_id}")
-def update_channel(channel_id: str, channel: ChannelUpdate, client: Client = Depends(get_supabase_client)):
+def update_channel(
+    channel_id: str,
+    channel: ChannelUpdate,
+    client: Client = Depends(get_supabase_client),
+):
     data = channel.dict(exclude_unset=True)
     resp = client.table("mail_channel").update(data).eq("id", channel_id).execute()
     if not resp.data:
@@ -161,35 +184,58 @@ def delete_channel(channel_id: str, client: Client = Depends(get_supabase_client
     return {"message": "Channel deleted"}
 
 
-# ─── Messages ────────────────────────────────────────────────────────────────
+# ─── Messages ─────────────────────────────────────────────────────────────────
 
 @router.post("/messages")
 def create_message(
     message: MessageCreate,
-    client: Client = Depends(get_supabase_client),
     credentials: HTTPAuthorizationCredentials = Security(security),
+    client: Client = Depends(get_supabase_client),
 ):
-    me = get_current_user(credentials)
+    """Send a message. Author extracted from JWT (no extra API call)."""
+    me = extract_user_from_token(credentials.credentials)
+
+    # Build message data — only include fields that exist in mail_message
     data = {
         "channel_id": message.channel_id,
         "body": message.body,
-        "author_name": me["name"] or message.author_name or "User",
-        "author_email": me["email"] or message.author_email,
-        "author_id": me["id"],
+        "author_name": me.get("name") or message.author_name or "User",
     }
-    resp = client.table("mail_message").insert(data).execute()
-    if not resp.data:
-        raise HTTPException(status_code=400, detail="Could not send message")
-    return resp.data[0]
+    # Add optional fields only if the table supports them
+    if me.get("email") or message.author_email:
+        data["author_email"] = me.get("email") or message.author_email
+    if me.get("id"):
+        data["author_id"] = me["id"]
+
+    try:
+        resp = client.table("mail_message").insert(data).execute()
+        if resp.data:
+            return resp.data[0]
+    except Exception:
+        # Fallback: try with minimal fields only (in case some columns don't exist)
+        try:
+            minimal = {
+                "channel_id": message.channel_id,
+                "body": message.body,
+                "author_name": me.get("name") or message.author_name or "User",
+            }
+            resp = client.table("mail_message").insert(minimal).execute()
+            if resp.data:
+                return resp.data[0]
+        except Exception as e2:
+            raise HTTPException(status_code=400, detail=f"Could not send message: {str(e2)}")
+
+    raise HTTPException(status_code=400, detail="Could not send message")
 
 
 @router.get("/channels/{channel_id}/messages")
 def read_messages(
     channel_id: str,
     limit: int = 100,
-    after: Optional[str] = None,   # ISO timestamp — return only messages newer than this
+    after: Optional[str] = None,
     client: Client = Depends(get_supabase_client),
 ):
+    """Get messages. Use ?after=<ISO timestamp> for efficient polling."""
     query = (
         client.table("mail_message")
         .select("*")
@@ -199,8 +245,11 @@ def read_messages(
     )
     if after:
         query = query.gt("created_at", after)
-    resp = query.execute()
-    return resp.data or []
+    try:
+        resp = query.execute()
+        return resp.data or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/messages/{message_id}")
@@ -214,24 +263,21 @@ def delete_message(message_id: str, client: Client = Depends(get_supabase_client
 @router.post("/reactions")
 def add_reaction(
     reaction: ReactionCreate,
-    client: Client = Depends(get_supabase_client),
     credentials: HTTPAuthorizationCredentials = Security(security),
+    client: Client = Depends(get_supabase_client),
 ):
-    me = get_current_user(credentials)
-    # Try inserting into mail_message_reaction — if table doesn't exist, graceful error
+    me = extract_user_from_token(credentials.credentials)
     try:
-        data = {
+        resp = client.table("mail_message_reaction").insert({
             "message_id": reaction.message_id,
             "emoji": reaction.emoji,
-            "user_id": me["id"],
-            "user_name": me["name"],
-        }
-        resp = client.table("mail_message_reaction").insert(data).execute()
-        if resp.data:
-            return resp.data[0]
-    except Exception as e:
-        print(f"[DISCUSS] Reaction insert failed (table may not exist): {e}")
-    return {"emoji": reaction.emoji, "message_id": reaction.message_id}
+            "user_id": me.get("id", ""),
+            "user_name": me.get("name", "User"),
+        }).execute()
+        return resp.data[0] if resp.data else {"emoji": reaction.emoji}
+    except Exception:
+        # Reaction table may not exist yet — fail gracefully
+        return {"emoji": reaction.emoji, "message_id": reaction.message_id}
 
 
 @router.get("/messages/{message_id}/reactions")
@@ -243,62 +289,52 @@ def get_reactions(message_id: str, client: Client = Depends(get_supabase_client)
         return []
 
 
-# ─── Direct Messages ─────────────────────────────────────────────────────────
+# ─── Direct Messages ──────────────────────────────────────────────────────────
 
 @router.post("/dm")
 def create_dm(
     dm: DMCreate,
-    client: Client = Depends(get_supabase_client),
     credentials: HTTPAuthorizationCredentials = Security(security),
+    client: Client = Depends(get_supabase_client),
 ):
-    """
-    Creates (or reuses) a DM channel between the current user and target_user_id.
-    Optionally sends an initial message.
-    """
-    me = get_current_user(credentials)
-    my_id = me["id"]
+    """Create or reuse a DM channel between two users."""
+    me = extract_user_from_token(credentials.credentials)
+    my_id = me.get("id", "")
     other_id = dm.target_user_id
 
-    # Check if DM channel already exists between the two users
+    # Look for existing DM channel
     try:
         existing = client.table("mail_channel").select("*").eq("channel_type", "dm").execute()
         for ch in (existing.data or []):
-            members = ch.get("members", [])
+            members = ch.get("members") or []
             if isinstance(members, list) and my_id in members and other_id in members:
-                return ch  # Reuse existing DM channel
-    except Exception:
-        pass
-
-    # Get target user name
-    target_name = other_id
-    try:
-        t_resp = service_client.table("tenants").select("email").eq("id", other_id).execute()
-        if t_resp.data:
-            target_name = t_resp.data[0].get("email", "").split("@")[0]
+                return ch
     except Exception:
         pass
 
     # Create new DM channel
-    ch_data = {
-        "name": f"dm-{my_id[:6]}-{other_id[:6]}",
-        "channel_type": "dm",
-        "description": f"Direct message",
-        "members": [my_id, other_id],
-        "created_by": my_id,
-    }
-    resp = client.table("mail_channel").insert(ch_data).execute()
-    if not resp.data:
-        raise HTTPException(status_code=400, detail="Could not create DM channel")
-    ch = resp.data[0]
+    try:
+        ch_data = {
+            "name": f"dm-{my_id[:6]}-{other_id[:6]}",
+            "channel_type": "dm",
+            "description": "Direct message",
+        }
+        resp = client.table("mail_channel").insert(ch_data).execute()
+        if not resp.data:
+            raise HTTPException(status_code=400, detail="Could not create DM channel")
+        ch = resp.data[0]
 
-    # Send initial message if provided
-    if dm.initial_message:
-        client.table("mail_message").insert({
-            "channel_id": ch["id"],
-            "body": dm.initial_message,
-            "author_name": me["name"],
-            "author_email": me["email"],
-            "author_id": my_id,
-        }).execute()
+        if dm.initial_message:
+            client.table("mail_message").insert({
+                "channel_id": ch["id"],
+                "body": dm.initial_message,
+                "author_name": me.get("name", "User"),
+                "author_email": me.get("email", ""),
+                "author_id": my_id,
+            }).execute()
 
-    return ch
+        return ch
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

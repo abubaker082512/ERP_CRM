@@ -163,6 +163,7 @@ export default function DiscussPage() {
   const [newChannelName, setNewChannelName] = useState("");
   const [newChannelDesc, setNewChannelDesc] = useState("");
   const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState("");
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string } | null>(null);
   const [lastMessageTime, setLastMessageTime] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -286,6 +287,7 @@ export default function DiscussPage() {
     const trimmedName = newChannelName.trim();
     if (!trimmedName) return;
     setCreateLoading(true);
+    setCreateError("");
     try {
       const res = await fetchAPI("/discuss/channels", {
         method: "POST",
@@ -299,11 +301,12 @@ export default function DiscussPage() {
         await loadChannels();
         setActiveChannel(ch);
       } else {
-        const err = await res.json().catch(() => ({ detail: "Unknown error" }));
-        alert(err.detail || "Failed to create channel");
+        let detail = "Failed to create channel";
+        try { const j = await res.json(); detail = j.detail || detail; } catch {}
+        setCreateError(detail);
       }
     } catch (e: any) {
-      alert(`Network error: ${e.message}`);
+      setCreateError(`Network error: ${e.message || 'Could not reach server'}`);
     } finally {
       setCreateLoading(false);
     }
@@ -749,8 +752,16 @@ export default function DiscussPage() {
               </div>
             </div>
 
+            {/* Inline error — no browser alert needed */}
+            {createError && (
+              <div className="mt-3 px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400 flex items-start gap-2">
+                <span className="shrink-0 mt-0.5">⚠</span>
+                <span>{createError}</span>
+              </div>
+            )}
+
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/5">
-              <button onClick={() => setIsModalOpen(false)} disabled={createLoading}
+              <button onClick={() => { setIsModalOpen(false); setCreateError(""); }} disabled={createLoading}
                 className="px-4 py-2.5 text-sm text-gray-400 hover:text-white font-medium transition-colors">
                 Cancel
               </button>
