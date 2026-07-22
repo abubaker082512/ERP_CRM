@@ -87,6 +87,7 @@ export default function Home() {
     const [selectedModule, setSelectedModule] = useState<string>("");
     const [isFreePlan, setIsFreePlan] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -109,6 +110,10 @@ export default function Home() {
                 const data = await res.json();
                 setUserData(data);
 
+                const SUPER_ADMIN_EMAILS = ['admin@erp-crm.com', 'admin2@erp-crm.com'];
+                const isUserAdmin = SUPER_ADMIN_EMAILS.includes(data.email);
+                setIsAdmin(isUserAdmin);
+
                 if (data.tenant?.trial_ends_at) {
                     const ends = new Date(data.tenant.trial_ends_at);
                     const now = new Date();
@@ -120,10 +125,7 @@ export default function Home() {
                 // Detect free plan: subscription active + metadata plan = "One App Free"
                 try {
                     const meta = JSON.parse(data.tenant?.stripe_customer_id || "{}");
-                    const SUPER_ADMIN_EMAILS = ['admin@erp-crm.com', 'admin2@erp-crm.com'];
-                    const isAdmin = SUPER_ADMIN_EMAILS.includes(data.email);
-                    
-                    if (data.tenant?.subscription_status === "active" && meta?.plan === "One App Free" && !isAdmin) {
+                    if (data.tenant?.subscription_status === "active" && meta?.plan === "One App Free" && !isUserAdmin) {
                         setIsFreePlan(true);
                     }
                 } catch {}
@@ -433,7 +435,7 @@ export default function Home() {
             </div>
 
             {/* Trial Banner */}
-            {trialDays !== null && (
+            {trialDays !== null && !isAdmin && (
                 <div className="max-w-7xl mx-auto mb-10 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-2xl p-5 text-amber-200 flex justify-between items-center shadow-xl backdrop-blur-md">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400">
