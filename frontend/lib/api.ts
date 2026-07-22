@@ -2,20 +2,21 @@
 
 /**
  * Global fetch wrapper for the SaaS ERP-CRM.
- * Automatically handles the injection of the Authorization Bearer token 
- * from the local storage (auth payload) to support multi-tenant isolation.
+ * All requests go to /api/v1/* which Next.js proxies to the backend server.
+ * This completely eliminates CORS issues since the request is same-origin.
  */
 export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
-    
-    // Ensure the endpoint starts with a slash
+    // Always use the relative path — Next.js rewrites handle the proxy to the backend.
+    // This means requests are always same-origin (beraxis.online → beraxis.online/api/v1/*)
+    // and Next.js forwards them server-side to Render. No CORS ever.
     const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    
+    const baseUrl = '/api/v1';
+
     // Setup headers
     const headers: Record<string, string> = {
-        ...((options.headers as Record<string, string>) || {})
+        ...((options.headers as Record<string, string>) || {}),
     };
-    
+
     if (!(options.body instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
     }
@@ -23,7 +24,6 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
     // Retrieve token from localStorage if in browser environment
     if (typeof window !== 'undefined') {
         const directToken = localStorage.getItem('token');
-        // Robust check for valid token strings
         if (directToken && directToken !== 'null' && directToken !== 'undefined' && directToken.length > 10) {
             headers['Authorization'] = `Bearer ${directToken}`;
         } else {
@@ -49,7 +49,7 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
     const finalUrl = `${baseUrl}${path}`;
     const response = await fetch(finalUrl, config);
     console.log(`[API] ${options.method || 'GET'} ${path} => ${response.status}`);
-    
+
     // SaaS Interceptor: If trial is expired or payment is required
     if (response.status === 402) {
         if (typeof window !== 'undefined') {
@@ -65,6 +65,6 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
             window.location.href = '/login';
         }
     }
-    
+
     return response;
 }
