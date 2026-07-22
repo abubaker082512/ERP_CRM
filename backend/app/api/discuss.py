@@ -1,9 +1,14 @@
 """
 discuss.py — Fully functional Discuss/Messaging backend.
-Fixed:
- - read_channels: try/except + no ordering (column may differ per tenant)
- - create_message: value-based fallback (no exception-based), service_client
-   bypasses RLS for inserts so RETURNING always has data
+Features:
+- Channels (group conversations)
+- Direct Messages (1-on-1 between users)
+- Real-time polling via ?after= timestamp
+- Emoji reactions
+- Team member list
+- Uses JSON serialization inside the 'body' column of mail_message.
+  This bypasses database schema differences and avoids foreign key constraint
+  violations on mail_message.author_id.
 """
 
 import base64
@@ -50,7 +55,7 @@ class DMCreate(BaseModel):
     initial_message: Optional[str] = None
 
 
-# ─── JWT Helper (zero extra network calls) ───────────────────────────────────
+# ─── Helpers ─────────────────────────────────────────────────────────────────
 
 def extract_user_from_token(token: str) -> dict:
     """Decode Supabase JWT payload locally — no extra API call."""
@@ -68,6 +73,26 @@ def extract_user_from_token(token: str) -> dict:
         return {"id": uid, "email": email, "name": name}
     except Exception:
         return {}
+
+
+def unpack_message(m: dict) -> dict:
+    """Helper to unpack a serialized message dictionary."""
+    if not m:
+        return m
+    try:
+        # Check if the body is a serialized JSON string
+        body_data = json.loads(m["body"])
+        if isinstance(body_data, dict):
+            m["body"] = body_data.get("text", "")
+            m["author_name"] = body_data.get("author_name", "User")
+            m["author_email"] = body_data.get("author_email", "")
+            m["author_id"] = body_data.get("author_id", "")
+    except Exception:
+        # Fallback if body is a normal string
+        m["author_name"] = "User"
+        m["author_email"] = ""
+        m["author_id"] = m.get("author_id") or ""
+    return m
 
 
 # ─── Team Members ─────────────────────────────────────────────────────────────
@@ -124,7 +149,7 @@ def create_channel(
         resp = client.table("mail_channel").insert(data).execute()
         if resp.data:
             return resp.data[0]
-        raise HTTPException(status_code=400, detail="Could not create channel — no data returned")
+        raise HTTPException(status_code=400, detail="Could not create channel")
     except HTTPException:
         raise
     except Exception as e:
@@ -133,17 +158,10 @@ def create_channel(
 
 @router.get("/channels")
 def read_channels(client: Client = Depends(get_supabase_client)):
-    """
-    Returns all public channels (non-DM).
-    Uses try/except so any Supabase error returns [] instead of 500.
-    Sorts in Python to avoid relying on column ordering at DB level.
-    """
     try:
         resp = client.table("mail_channel").select("*").execute()
         rows = resp.data or []
-        # Filter DMs out of the public list
         public = [c for c in rows if c.get("channel_type") != "dm"]
-        # Sort by created_at in Python (avoids .order() column dependency)
         try:
             public.sort(key=lambda x: x.get("created_at") or "")
         except Exception:
@@ -207,55 +225,34 @@ def create_message(
     client: Client = Depends(get_supabase_client),
 ):
     """
-    Send a message. Uses service_client for the INSERT so RETURNING * is never
-    blocked by RLS — we only use the JWT-scoped client for auth validation.
-    Tries progressively simpler payloads until one succeeds.
+    Send a message. We serialize the body + author metadata as a JSON string
+    inside the 'body' column to avoid missing column / foreign key validation errors.
     """
     me = extract_user_from_token(credentials.credentials)
     author_name = me.get("name") or message.author_name or "User"
     author_email = me.get("email") or message.author_email or ""
     author_id   = me.get("id") or ""
 
-    # Progressive fallback: richest → minimal
-    # The service_client (service role) bypasses RLS so RETURNING always works.
-    attempts = [
-        # 1. Full payload (works if mail_message has author_email + author_id columns)
-        {
-            "channel_id": message.channel_id,
-            "body": message.body,
-            "author_name": author_name,
-            "author_email": author_email,
-            "author_id": author_id,
-        },
-        # 2. Without author_id (if that column doesn't exist)
-        {
-            "channel_id": message.channel_id,
-            "body": message.body,
-            "author_name": author_name,
-            "author_email": author_email,
-        },
-        # 3. Minimal — only columns guaranteed to exist in the original schema
-        {
-            "channel_id": message.channel_id,
-            "body": message.body,
-            "author_name": author_name,
-        },
-    ]
+    body_data = {
+        "text": message.body,
+        "author_name": author_name,
+        "author_email": author_email,
+        "author_id": author_id
+    }
 
-    last_error = "Could not send message"
-    for data in attempts:
-        try:
-            # Use service_client so RETURNING * is never RLS-blocked
-            resp = service_client.table("mail_message").insert(data).execute()
-            if resp.data:
-                return resp.data[0]
-            # Empty data but no exception — try next simpler attempt
-        except Exception as e:
-            last_error = str(e)
-            # Try next attempt
+    try:
+        # Only channel_id and body (sets author_id to None/omitted to avoid fkey contact constraint)
+        resp = service_client.table("mail_message").insert({
+            "channel_id": message.channel_id,
+            "body": json.dumps(body_data)
+        }).execute()
+        
+        if resp.data:
+            return unpack_message(resp.data[0])
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not send message: {str(e)}")
 
-    # All attempts failed — raise 400 with the last error detail
-    raise HTTPException(status_code=400, detail=f"Could not send message: {last_error}")
+    raise HTTPException(status_code=400, detail="Could not send message")
 
 
 @router.get("/channels/{channel_id}/messages")
@@ -265,7 +262,6 @@ def read_messages(
     after: Optional[str] = None,
     client: Client = Depends(get_supabase_client),
 ):
-    """Fetch messages. Use ?after=<ISO> for efficient real-time polling."""
     try:
         query = (
             client.table("mail_message")
@@ -277,7 +273,8 @@ def read_messages(
         if after:
             query = query.gt("created_at", after)
         resp = query.execute()
-        return resp.data or []
+        rows = resp.data or []
+        return [unpack_message(r) for r in rows]
     except Exception as e:
         print(f"[DISCUSS] read_messages error: {e}")
         return []
@@ -358,11 +355,15 @@ def create_dm(
         ch = resp.data[0]
 
         if dm.initial_message:
-            service_client.table("mail_message").insert({
-                "channel_id": ch["id"],
-                "body": dm.initial_message,
+            body_data = {
+                "text": dm.initial_message,
                 "author_name": me.get("name", "User"),
                 "author_email": me.get("email", ""),
+                "author_id": my_id
+            }
+            service_client.table("mail_message").insert({
+                "channel_id": ch["id"],
+                "body": json.dumps(body_data),
             }).execute()
 
         return ch
