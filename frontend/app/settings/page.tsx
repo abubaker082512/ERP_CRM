@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import AppHeader from "@/components/layout/AppHeader";
-import { Settings, Save, Mail, Building2, Globe, Database, CreditCard, Scale, Plus, Trash2, Check, Search, ChevronDown, X } from "lucide-react";
+import { Settings, Save, Mail, Building2, Globe, Database, CreditCard, Scale, Plus, Trash2, Check, Search, ChevronDown, X, Printer } from "lucide-react";
 
 // Default global units of measure
 const DEFAULT_UOMS = [
@@ -144,6 +144,11 @@ export default function SettingsPage() {
   const [country, setCountry] = useState("US");
   const [dateFormat, setDateFormat] = useState("YYYY-MM-DD");
 
+  // POS Receipt template states
+  const [receiptHeader, setReceiptHeader] = useState("Welcome to Beraxis Cloud ERP");
+  const [receiptFooter, setReceiptFooter] = useState("Thank you for shopping with us!");
+  const [receiptPaperSize, setReceiptPaperSize] = useState("58mm");
+
   // Search filter query for general locale search
   const [searchLocale, setSearchLocale] = useState("");
   const [isLocaleDropdownOpen, setIsLocaleDropdownOpen] = useState(false);
@@ -175,6 +180,9 @@ export default function SettingsPage() {
     const savedEnc = localStorage.getItem("settings_encryption");
     const savedUser = localStorage.getItem("settings_smtp_username");
     const savedUoms = localStorage.getItem("settings_uoms");
+    const savedRecHeader = localStorage.getItem("settings_receipt_header");
+    const savedRecFooter = localStorage.getItem("settings_receipt_footer");
+    const savedRecSize = localStorage.getItem("settings_receipt_size");
 
     if (savedCompany) setCompanyName(savedCompany);
     if (savedCurrency) setCurrency(savedCurrency);
@@ -185,6 +193,9 @@ export default function SettingsPage() {
     if (savedPort) setSmtpPort(savedPort);
     if (savedEnc) setEncryption(savedEnc);
     if (savedUser) setSmtpUser(savedUser);
+    if (savedRecHeader) setReceiptHeader(savedRecHeader);
+    if (savedRecFooter) setReceiptFooter(savedRecFooter);
+    if (savedRecSize) setReceiptPaperSize(savedRecSize);
     if (savedUoms) {
       try { setUoms(JSON.parse(savedUoms)); } catch (e) {}
     }
@@ -212,6 +223,9 @@ export default function SettingsPage() {
       localStorage.setItem("settings_encryption", encryption);
       localStorage.setItem("settings_smtp_username", smtpUser);
       localStorage.setItem("settings_uoms", JSON.stringify(uoms));
+      localStorage.setItem("settings_receipt_header", receiptHeader);
+      localStorage.setItem("settings_receipt_footer", receiptFooter);
+      localStorage.setItem("settings_receipt_size", receiptPaperSize);
       
       setSaving(false);
       alert("Settings saved successfully!");
@@ -261,6 +275,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "general", label: "General & Locale", icon: Building2 },
+    { id: "pos", label: "POS Receipts", icon: Printer },
     { id: "uom", label: "Units of Measure", icon: Scale },
     { id: "email", label: "Email Setup", icon: Mail },
     { id: "users", label: "Users & Teams", icon: Globe },
@@ -427,6 +442,47 @@ export default function SettingsPage() {
                     <p className="text-sm text-gray-400">Drag and drop your logo here, or click to browse</p>
                     <p className="text-xs text-gray-500 mt-2">Recommended size: 512x512px</p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* POS Receipt Tab */}
+            {activeTab === "pos" && (
+              <div className="space-y-6 max-w-2xl">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Receipt Header Text</label>
+                  <input 
+                    type="text" 
+                    value={receiptHeader} 
+                    onChange={e => setReceiptHeader(e.target.value)} 
+                    className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
+                    placeholder="Welcome message or shop details..." 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Receipt Footer Text</label>
+                  <input 
+                    type="text" 
+                    value={receiptFooter} 
+                    onChange={e => setReceiptFooter(e.target.value)} 
+                    className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
+                    placeholder="Thank you message, return policies, or social tags..." 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Default Receipt Paper Size</label>
+                  <select 
+                    value={receiptPaperSize} 
+                    onChange={e => setReceiptPaperSize(e.target.value)}
+                    className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
+                  >
+                    <option value="58mm">Thermal Roll - 58mm (Ultra Compact POS)</option>
+                    <option value="80mm">Thermal Roll - 80mm (Standard POS)</option>
+                    <option value="A4">A4 / Letter (Standard Office Printer)</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-2">Adjusts receipt formatting and column spacing when sending orders to the printer.</p>
                 </div>
               </div>
             )}

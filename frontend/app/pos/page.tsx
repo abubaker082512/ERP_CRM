@@ -28,6 +28,20 @@ export default function POSPage() {
     return "$";
   };
 
+  // Dynamic Receipt Configuration States
+  const [receiptHeader, setReceiptHeader] = useState("Welcome to Beraxis Cloud ERP");
+  const [receiptFooter, setReceiptFooter] = useState("Thank you for shopping with us!");
+  const [receiptPaperSize, setReceiptPaperSize] = useState("58mm");
+
+  useEffect(() => {
+    const savedHeader = localStorage.getItem("settings_receipt_header");
+    const savedFooter = localStorage.getItem("settings_receipt_footer");
+    const savedSize = localStorage.getItem("settings_receipt_size");
+    if (savedHeader) setReceiptHeader(savedHeader);
+    if (savedFooter) setReceiptFooter(savedFooter);
+    if (savedSize) setReceiptPaperSize(savedSize);
+  }, [receiptOrder]);
+
   // New Product Modal States
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [newProdName, setNewProdName] = useState("");
@@ -266,11 +280,13 @@ export default function POSPage() {
             position: absolute;
             left: 0;
             top: 0;
-            width: 100% !important;
-            max-width: 100% !important;
+            width: ${receiptPaperSize === "58mm" ? "58mm" : receiptPaperSize === "80mm" ? "80mm" : "210mm"} !important;
+            max-width: ${receiptPaperSize === "58mm" ? "58mm" : receiptPaperSize === "80mm" ? "80mm" : "210mm"} !important;
             background: white !important;
             color: black !important;
-            padding: 20px !important;
+            padding: ${receiptPaperSize === "58mm" ? "3mm" : receiptPaperSize === "80mm" ? "5mm" : "20mm"} !important;
+            font-size: ${receiptPaperSize === "58mm" ? "9px" : receiptPaperSize === "80mm" ? "11px" : "14px"} !important;
+            line-height: 1.25 !important;
           }
           .no-print { display: none !important; }
         }
@@ -393,21 +409,25 @@ export default function POSPage() {
       {/* Bill Printing / Receipt Modal */}
       {receiptOrder && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1A2236] rounded-2xl p-6 w-full max-w-sm border border-white/8 shadow-2xl flex flex-col gap-5 max-h-[90vh]">
+          <div className={`bg-[#1A2236] rounded-2xl p-6 w-full border border-white/8 shadow-2xl flex flex-col gap-5 max-h-[90vh] transition-all duration-300 ${
+            receiptPaperSize === "58mm" ? "max-w-[280px]" : receiptPaperSize === "80mm" ? "max-w-[360px]" : "max-w-[650px]"
+          }`}>
             
             {/* Modal Actions */}
             <div className="flex items-center justify-between no-print border-b border-white/5 pb-3">
-              <h3 className="text-md font-bold text-white">Order Receipt</h3>
+              <h3 className="text-md font-bold text-white">Order Receipt ({receiptPaperSize})</h3>
               <button onClick={resetTransaction} className="text-gray-500 hover:text-white p-1 rounded hover:bg-white/5">
                 <X size={18} />
               </button>
             </div>
 
             {/* Printable Receipt Block */}
-            <div className="printable-receipt bg-white text-black p-4 rounded-xl font-mono text-xs overflow-y-auto flex-1 shadow-inner">
+            <div className={`printable-receipt bg-white text-black rounded-xl font-mono overflow-y-auto flex-1 shadow-inner ${
+              receiptPaperSize === "58mm" ? "text-[9px] leading-tight p-2.5" : receiptPaperSize === "80mm" ? "text-xs p-4" : "text-sm p-8"
+            }`}>
               <div className="text-center mb-4">
                 <h2 className="text-md font-bold uppercase tracking-wider">BERAXIS</h2>
-                <p className="text-[10px] text-gray-500">Retail Point of Sale</p>
+                <p className="text-[10px] text-gray-500 mt-1">{receiptHeader}</p>
                 <p className="text-[10px] text-gray-500 mt-1">{receiptOrder.date}</p>
                 <p className="font-bold mt-2 text-[10px]">{receiptOrder.name}</p>
               </div>
@@ -437,7 +457,7 @@ export default function POSPage() {
               </div>
 
               <div className="text-center mt-6 pt-4 border-t border-dashed border-gray-400 text-[10px] text-gray-400">
-                <p>Thank you for shopping with us!</p>
+                <p>{receiptFooter}</p>
                 <p className="mt-1">Beraxis Cloud ERP</p>
               </div>
             </div>
