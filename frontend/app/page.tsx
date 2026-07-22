@@ -88,6 +88,7 @@ export default function Home() {
     const [isFreePlan, setIsFreePlan] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isPaidUser, setIsPaidUser] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -122,11 +123,15 @@ export default function Home() {
                     setTrialDays(diffDays > 0 ? diffDays : 0);
                 }
 
-                // Detect free plan: subscription active + metadata plan = "One App Free"
+                // Detect free plan vs paid plan
                 try {
                     const meta = JSON.parse(data.tenant?.stripe_customer_id || "{}");
-                    if (data.tenant?.subscription_status === "active" && meta?.plan === "One App Free" && !isUserAdmin) {
-                        setIsFreePlan(true);
+                    if (data.tenant?.subscription_status === "active") {
+                        if (meta?.plan === "One App Free" && !isUserAdmin) {
+                            setIsFreePlan(true);
+                        } else {
+                            setIsPaidUser(true);
+                        }
                     }
                 } catch {}
             } else {
@@ -435,7 +440,7 @@ export default function Home() {
             </div>
 
             {/* Trial Banner */}
-            {trialDays !== null && !isAdmin && (
+            {trialDays !== null && !isAdmin && !isPaidUser && (
                 <div className="max-w-7xl mx-auto mb-10 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-2xl p-5 text-amber-200 flex justify-between items-center shadow-xl backdrop-blur-md">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400">
