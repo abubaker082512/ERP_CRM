@@ -21,7 +21,32 @@ def create_product(product: ProductCreate, client: Client = Depends(get_supabase
     response = client.table("product_product").insert(product_data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create product")
-    return _map_product(response.data[0])
+    
+    created_product = response.data[0]
+    
+    # Initialize stock quant if quantity_on_hand is provided
+    if product.quantity_on_hand and product.quantity_on_hand > 0:
+        try:
+            loc_res = client.table("inventory_location").select("*").execute()
+            if loc_res.data:
+                location_id = loc_res.data[0]["id"]
+            else:
+                new_loc = client.table("inventory_location").insert({
+                    "name": "WH/Stock",
+                    "usage": "internal"
+                }).execute()
+                location_id = new_loc.data[0]["id"]
+            
+            client.table("inventory_quant").insert({
+                "product_id": created_product["id"],
+                "location_id": location_id,
+                "quantity": product.quantity_on_hand,
+                "reserved_quantity": 0
+            }).execute()
+        except Exception as e:
+            print("Failed to auto-create inventory quant:", e)
+
+    return _map_product(created_product)
 
 @router.get("", response_model=List[Product])
 def read_products(skip: int = 0, limit: int = 100, client: Client = Depends(get_supabase_client)):
