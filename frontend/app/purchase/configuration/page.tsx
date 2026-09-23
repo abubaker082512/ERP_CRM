@@ -89,7 +89,7 @@ export default function PurchaseConfigurationPage() {
                         <div className="flex items-center justify-between py-3 border-b border-gray-700">
                             <div>
                                 <div className="font-medium text-white">Purchase Order Approval</div>
-                                <div className="text-sm text-gray-400">Required for orders > $5,000</div>
+                                <div className="text-sm text-gray-400">Required for orders &gt; $5,000</div>
                             </div>
                             <button className="text-sm text-blue-400 hover:text-blue-300">Edit</button>
                         </div>

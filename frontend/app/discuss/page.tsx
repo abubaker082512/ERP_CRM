@@ -9,118 +9,444 @@ import {
   CheckCheck, Loader2
 } from "lucide-react";
 
-import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
-import { MessageSquare, Hash, Star, Inbox, Send, Settings } from "lucide-react";
-import { useState } from "react";
+// ─── Types ──────────────────────────────────────────────────────────────────
 
-const MENU_ITEMS = [
-    { name: "Inbox", href: "/discuss" },
-    { name: "Channels", href: "/discuss/channels" },
-    { name: "Configuration", href: "/discuss/configuration" },
-];
+interface Channel {
+  id: string;
+  name: string;
+  description?: string;
+  channel_type: "channel" | "dm";
+  members?: string[];
+}
 
-type Message = {
-    id: string;
-    sender: string;
-    subject: string;
-    preview: string;
-    date: string;
-    read: boolean;
-    starred: boolean;
-};
+interface Message {
+  id: string;
+  channel_id: string;
+  body: string;
+  author_name: string;
+  author_email?: string;
+  author_id?: string;
+  created_at: string;
+}
 
-const mockMessages: Message[] = [
-    { id: "MSG/001", sender: "System Notification", subject: "Welcome to ERP", preview: "Your account has been successfully created...", date: "10:30 AM", read: false, starred: true },
-    { id: "MSG/002", sender: "John Doe", subject: "Project Update", preview: "Hey, just wanted to share the latest progress on...", date: "Yesterday", read: true, starred: false },
-    { id: "MSG/003", sender: "Jane Smith", subject: "Meeting Reminder", preview: "Don't forget about the team meeting at 2 PM...", date: "Dec 01", read: true, starred: false },
-];
+interface Member {
+  id: string;
+  name: string;
+  email: string;
+  online?: boolean;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const EMOJI_QUICK = ["👍", "❤️", "😂", "🎉", "🙏", "🔥", "✅", "👀"];
+
+function avatarColor(name: string) {
+  const colors = [
+    "bg-purple-600", "bg-blue-600", "bg-green-600",
+    "bg-pink-600", "bg-orange-500", "bg-teal-600",
+    "bg-red-600", "bg-indigo-600",
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
+  const dims = size === "sm" ? "w-7 h-7 text-xs" : size === "lg" ? "w-11 h-11 text-base" : "w-9 h-9 text-sm";
+  return (
+    <div className={`${dims} ${avatarColor(name)} rounded-full flex items-center justify-center font-bold text-white shrink-0 shadow-md`}>
+      {(name || "?")[0].toUpperCase()}
+    </div>
+  );
+}
+
+function formatTime(iso: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  if (isToday) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleDateString([], { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+// ─── Message Component ────────────────────────────────────────────────────────
+
+function MessageBubble({
+  msg,
+  isMe,
+  showAvatar,
+  onDelete,
+  onReact,
+}: {
+  msg: Message;
+  isMe: boolean;
+  showAvatar: boolean;
+  onDelete: (id: string) => void;
+  onReact: (msgId: string, emoji: string) => void;
+}) {
+  const [hover, setHover] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+
+  return (
+    <div
+      className={`group flex gap-3 px-4 py-1 hover:bg-white/[0.02] transition-colors relative ${isMe ? "flex-row-reverse" : ""}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => { setHover(false); setShowEmoji(false); }}
+    >
+      {/* Avatar */}
+      <div className="w-9 shrink-0">
+        {showAvatar && <Avatar name={msg.author_name} />}
+      </div>
+
+      {/* Content */}
+      <div className={`flex flex-col max-w-[72%] ${isMe ? "items-end" : "items-start"}`}>
+        {showAvatar && (
+          <div className={`flex items-baseline gap-2 mb-1 ${isMe ? "flex-row-reverse" : ""}`}>
+            <span className="text-[13px] font-bold text-gray-200">{msg.author_name}</span>
+            <span className="text-[11px] text-gray-600">{formatTime(msg.created_at)}</span>
+          </div>
+        )}
+        <div className={`relative group/bubble`}>
+          <div className={`px-4 py-2.5 rounded-2xl text-[14px] leading-relaxed whitespace-pre-wrap break-words shadow-sm transition-all ${
+            isMe
+              ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-tr-sm"
+              : "bg-[#1E293B] text-gray-200 border border-white/5 rounded-tl-sm"
+          }`}>
+            {msg.body}
+          </div>
+          {!showAvatar && (
+            <span className={`absolute -bottom-5 text-[10px] text-gray-600 ${isMe ? "right-1" : "left-1"} opacity-0 group-hover/bubble:opacity-100 transition-opacity whitespace-nowrap`}>
+              {formatTime(msg.created_at)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Hover Actions */}
+      {hover && (
+        <div className={`absolute top-0 ${isMe ? "left-4" : "right-4"} flex items-center gap-1 bg-[#1E293B] border border-white/10 rounded-xl px-2 py-1 shadow-lg z-10`}>
+          <button onClick={() => setShowEmoji(v => !v)}
+            className="text-gray-400 hover:text-yellow-400 p-1 rounded-lg hover:bg-white/5 transition-colors" title="React">
+            <Smile size={14} />
+          </button>
+          {isMe && (
+            <button onClick={() => onDelete(msg.id)}
+              className="text-gray-400 hover:text-red-400 p-1 rounded-lg hover:bg-white/5 transition-colors" title="Delete">
+              <Trash2 size={14} />
+            </button>
+          )}
+          {showEmoji && (
+            <div className="absolute top-8 right-0 bg-[#0F172A] border border-white/10 rounded-xl p-2 flex gap-1 shadow-xl z-20">
+              {EMOJI_QUICK.map(e => (
+                <button key={e} onClick={() => { onReact(msg.id, e); setShowEmoji(false); }}
+                  className="text-lg hover:scale-125 transition-transform p-0.5">{e}</button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function DiscussPage() {
-    const [activeTab, setActiveTab] = useState("inbox");
+  // State
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMsg, setNewMsg] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newChannelName, setNewChannelName] = useState("");
+  const [newChannelDesc, setNewChannelDesc] = useState("");
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [lastMessageTime, setLastMessageTime] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [membersExpanded, setMembersExpanded] = useState(true);
+  const [channelsExpanded, setChannelsExpanded] = useState(true);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
-    return (
-        <div className="flex flex-col h-screen bg-[#0F172A]">
-            <StandardModuleHeader
-                moduleName="Discuss"
-                moduleIcon={<MessageSquare size={20} />}
-                menuItems={MENU_ITEMS}
-                searchPlaceholder="Search messages..."
-            />
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-            <div className="flex-1 flex overflow-hidden">
-                {/* Sidebar */}
-                <div className="w-64 bg-[#1E293B] border-r border-gray-700 flex flex-col">
-                    <div className="p-4 space-y-2">
-                        <button
-                            onClick={() => setActiveTab("inbox")}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${activeTab === 'inbox' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
-                        >
-                            <Inbox size={18} />
-                            <span className="font-medium">Inbox</span>
-                            <span className="ml-auto bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">1</span>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("starred")}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${activeTab === 'starred' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
-                        >
-                            <Star size={18} />
-                            <span className="font-medium">Starred</span>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("history")}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${activeTab === 'history' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
-                        >
-                            <Clock size={18} /> {/* Using Clock icon, need to import it */}
-                            <span className="font-medium">History</span>
-                        </button>
-                    </div>
+  // ─── Bootstrap ───────────────────────────────────────────────────────────
 
-                    <div className="p-4 border-t border-gray-700">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Channels</h3>
-                        <div className="space-y-1">
-                            <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                                <Hash size={18} />
-                                <span>general</span>
-                            </button>
-                            <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                                <Hash size={18} />
-                                <span>sales</span>
-                            </button>
-                            <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                                <Hash size={18} />
-                                <span>random</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+  useEffect(() => {
+    // Load current user from localStorage
+    try {
+      const stored = localStorage.getItem("auth_data") || localStorage.getItem("user_data");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const name = parsed.name || parsed.user?.name || parsed.email?.split("@")[0] || "You";
+        setCurrentUser({ id: parsed.id || parsed.user?.id || "", email: parsed.email || parsed.user?.email || "", name });
+      }
+    } catch { }
 
-                {/* Message List */}
-                <div className="flex-1 overflow-auto bg-[#0F172A] p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-semibold text-gray-200 capitalize">{activeTab}</h2>
-                        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2">
-                            <Send size={18} /> New Message
-                        </button>
-                    </div>
+    loadChannels();
+    loadMembers();
 
-                    <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
-                        {mockMessages.map((msg) => (
-                            <div key={msg.id} className={`flex items-center p-4 border-b border-gray-700 hover:bg-[#2D3748] transition-colors cursor-pointer ${!msg.read ? 'bg-[#2D3748]/50' : ''}`}>
-                                <div className="mr-4">
-                                    <Star size={18} className={`${msg.starred ? 'text-yellow-400 fill-yellow-400' : 'text-gray-500 hover:text-yellow-400'}`} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className={`font-medium ${!msg.read ? 'text-white' : 'text-gray-300'}`}>{msg.sender}</span>
-                                        <span className="text-xs text-gray-500">{msg.date}</span>
-                                    </div>
-                                    <div className={`text-sm mb-1 ${!msg.read ? 'text-gray-200 font-medium' : 'text-gray-400'}`}>{msg.subject}</div>
-                                    <div className="text-sm text-gray-500 truncate">{msg.preview}</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
+  }, []);
+
+  // ─── Auto-scroll on new messages ─────────────────────────────────────────
+
+  useEffect(() => {
+    if (messages.length) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages.length]);
+
+  // ─── Polling for new messages ─────────────────────────────────────────────
+
+  const startPolling = useCallback((channelId: string) => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    pollingRef.current = setInterval(async () => {
+      const url = lastMessageTime
+        ? `/discuss/channels/${channelId}/messages?after=${encodeURIComponent(lastMessageTime)}&limit=50`
+        : `/discuss/channels/${channelId}/messages?limit=100`;
+      try {
+        const res = await fetchAPI(url);
+        if (!res.ok) return;
+        const newMsgs: Message[] = await res.json();
+        if (newMsgs.length > 0) {
+          setMessages(prev => {
+            const existingIds = new Set(prev.map(m => m.id));
+            const fresh = newMsgs.filter(m => !existingIds.has(m.id));
+            if (fresh.length === 0) return prev;
+            const latest = fresh[fresh.length - 1].created_at;
+            setLastMessageTime(latest);
+            return [...prev, ...fresh];
+          });
+        }
+      } catch { }
+    }, 3000); // Poll every 3 seconds
+  }, [lastMessageTime]);
+
+  // ─── Channel Selection ────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (activeChannel) {
+      setMessages([]);
+      setLastMessageTime(null);
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      loadMessages(activeChannel.id);
+    }
+  }, [activeChannel?.id]);
+
+  // Restart polling when lastMessageTime changes
+  useEffect(() => {
+    if (activeChannel) startPolling(activeChannel.id);
+  }, [activeChannel?.id, startPolling]);
+
+  // ─── API Calls ────────────────────────────────────────────────────────────
+
+  const loadChannels = async () => {
+    try {
+      const res = await fetchAPI("/discuss/channels");
+      if (res.ok) {
+        const data: Channel[] = await res.json();
+        // Only show public channels (not DMs) in the channel list
+        const publicChannels = data.filter(c => c.channel_type !== "dm");
+        setChannels(publicChannels);
+        if (publicChannels.length > 0 && !activeChannel) {
+          setActiveChannel(publicChannels[0]);
+        }
+      }
+    } catch { }
+    setLoading(false);
+  };
+
+  const loadMembers = async () => {
+    try {
+      const res = await fetchAPI("/discuss/members");
+      if (res.ok) {
+        const data: Member[] = await res.json();
+        setMembers(data);
+      }
+    } catch { }
+  };
+
+  const loadMessages = async (channelId: string) => {
+    try {
+      const res = await fetchAPI(`/discuss/channels/${channelId}/messages?limit=100`);
+      if (res.ok) {
+        const data: Message[] = await res.json();
+        setMessages(data);
+        if (data.length > 0) setLastMessageTime(data[data.length - 1].created_at);
+      }
+    } catch { }
+  };
+
+  const createChannel = async () => {
+    const trimmedName = newChannelName.trim();
+    if (!trimmedName) return;
+    setCreateLoading(true);
+    setCreateError("");
+    try {
+      const res = await fetchAPI("/discuss/channels", {
+        method: "POST",
+        body: JSON.stringify({ name: trimmedName, description: newChannelDesc.trim(), channel_type: "channel" }),
+      });
+      if (res.ok) {
+        const ch = await res.json();
+        setIsModalOpen(false);
+        setNewChannelName("");
+        setNewChannelDesc("");
+        await loadChannels();
+        setActiveChannel(ch);
+      } else {
+        let detail = "Failed to create channel";
+        try { const j = await res.json(); detail = j.detail || detail; } catch {}
+        setCreateError(detail);
+      }
+    } catch (e: any) {
+      setCreateError(`Network error: ${e.message || 'Could not reach server'}`);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const sendMessage = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const body = newMsg.trim();
+    if (!body || !activeChannel) return;
+    setSending(true);
+    setNewMsg("");
+
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const tempMsg: Message = {
+      id: tempId,
+      channel_id: activeChannel.id,
+      body,
+      author_name: currentUser?.name || "You",
+      author_email: currentUser?.email,
+      author_id: currentUser?.id,
+      created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, tempMsg]);
+
+    try {
+      const res = await fetchAPI("/discuss/messages", {
+        method: "POST",
+        body: JSON.stringify({
+          channel_id: activeChannel.id,
+          body,
+          author_name: currentUser?.name || "You",
+          author_email: currentUser?.email,
+        }),
+      });
+      if (res.ok) {
+        const saved: Message = await res.json();
+        // Replace temp message with real one
+        setMessages(prev => prev.map(m => m.id === tempId ? saved : m));
+        setLastMessageTime(saved.created_at);
+      } else {
+        // Remove temp on failure
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        setNewMsg(body); // restore input
+      }
+    } catch {
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setNewMsg(body);
+    } finally {
+      setSending(false);
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const deleteMessage = async (msgId: string) => {
+    setMessages(prev => prev.filter(m => m.id !== msgId));
+    await fetchAPI(`/discuss/messages/${msgId}`, { method: "DELETE" });
+  };
+
+  const reactToMessage = async (msgId: string, emoji: string) => {
+    await fetchAPI("/discuss/reactions", {
+      method: "POST",
+      body: JSON.stringify({ message_id: msgId, emoji }),
+    });
+  };
+
+  const startDM = async (member: Member) => {
+    try {
+      const res = await fetchAPI("/discuss/dm", {
+        method: "POST",
+        body: JSON.stringify({ target_user_id: member.id }),
+      });
+      if (res.ok) {
+        const dmCh: Channel = await res.json();
+        // Add display name for DM
+        (dmCh as any).display_name = member.name;
+        setActiveChannel(dmCh);
+      }
+    } catch (e) {
+      // If DM endpoint not fully ready, just show a toast
+      console.error("DM error", e);
+    }
+  };
+
+  // ─── Derived ──────────────────────────────────────────────────────────────
+
+  const isMe = (msg: Message) => {
+    if (currentUser?.id && msg.author_id === currentUser.id) return true;
+    if (currentUser?.name && msg.author_name === currentUser.name) return true;
+    return false;
+  };
+
+  const filteredChannels = channels.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Group consecutive messages by same author
+  const shouldShowAvatar = (msgs: Message[], idx: number) => {
+    if (idx === 0) return true;
+    const prev = msgs[idx - 1];
+    const curr = msgs[idx];
+    if (prev.author_id !== curr.author_id || prev.author_name !== curr.author_name) return true;
+    // More than 5 minutes apart → show avatar again
+    const timeDiff = new Date(curr.created_at).getTime() - new Date(prev.created_at).getTime();
+    return timeDiff > 5 * 60 * 1000;
+  };
+
+  const activeChannelName = activeChannel
+    ? ((activeChannel as any).display_name || activeChannel.name)
+    : "";
+
+  // ─── Render ───────────────────────────────────────────────────────────────
+
+  return (
+    <div className="flex flex-col h-screen bg-[#0B101E]">
+      <AppHeader title="Discuss" />
+
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* ── Sidebar ──────────────────────────────────────────────────────── */}
+        <div className="w-64 bg-[#0D1117] border-r border-white/[0.06] flex flex-col shrink-0">
+
+          {/* Search */}
+          <div className="p-3 border-b border-white/[0.06]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={13} />
+              <input
+                type="text"
+                placeholder="Search channels..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full bg-[#161B26] border border-white/5 rounded-lg pl-8 pr-3 py-2 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-purple-500/40"
+              />
             </div>
           </div>
 
@@ -453,6 +779,3 @@ export default function DiscussPage() {
     </div>
   );
 }
-
-// Need to import Clock icon
-import { Clock } from "lucide-react";

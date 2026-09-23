@@ -1,137 +1,100 @@
 "use client";
-
-import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
-import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
-import { useState } from "react";
-import { FileText, Folder, Share2, Settings, Image, FileSpreadsheet } from "lucide-react";
-
-const MENU_ITEMS = [
-    { name: "Documents", href: "/documents" },
-    { name: "Shares", href: "/documents/shares" },
-    { name: "Reporting", href: "/documents/reporting" },
-    { name: "Configuration", href: "/documents/configuration" },
-];
-
-type Document = {
-    id: string;
-    name: string;
-    type: string;
-    size: string;
-    owner: string;
-    modified: string;
-    tags: string[];
-};
-
-const mockDocuments: Document[] = [
-    { id: "DOC/001", name: "Project Proposal.pdf", type: "pdf", size: "2.5 MB", owner: "John Doe", modified: "2025-12-01", tags: ["Sales", "Proposal"] },
-    { id: "DOC/002", name: "Financial Report Q4.xlsx", type: "xlsx", size: "1.2 MB", owner: "Jane Smith", modified: "2025-12-02", tags: ["Finance", "Q4"] },
-    { id: "DOC/003", name: "Office Layout.png", type: "image", size: "4.8 MB", owner: "Bob Wilson", modified: "2025-11-28", tags: ["Admin", "Office"] },
-];
+import { fetchAPI } from "@/lib/api";
+import { useState, useEffect } from "react";
+import AppHeader from "@/components/layout/AppHeader";
+import { Folder, FileText, Upload, Plus, Download, Trash2, Search, Tag } from "lucide-react";
 
 export default function DocumentsPage() {
-    const [documents] = useState<Document[]>(mockDocuments);
-    const [currentView, setCurrentView] = useState<ViewType>("kanban");
+  const [folders, setFolders] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [currentFolder, setCurrentFolder] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
 
-    return (
-        <div className="flex flex-col h-screen bg-[#0F172A]">
-            <StandardModuleHeader
-                moduleName="Documents"
-                moduleIcon={<FileText size={20} />}
-                menuItems={MENU_ITEMS}
-                searchPlaceholder="Search documents..."
-            />
+  useEffect(() => { loadData(); }, [currentFolder, search]);
 
-            <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                        <div>
-                            <h2 className="text-2xl font-semibold text-gray-200">Documents</h2>
-                            <p className="text-sm text-gray-400 mt-1">{documents.length} files • 8.5 MB used</p>
-                        </div>
-                        <ViewSwitcher
-                            currentView={currentView}
-                            availableViews={["list", "kanban"]}
-                            onViewChange={setCurrentView}
-                        />
-                    </div>
-                </div>
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      if (!search && !currentFolder) {
+        const foldRes = await fetchAPI("/documents/folders");
+        if (foldRes.ok) setFolders(await foldRes.json());
+      }
 
-                {currentView === "list" && (
-                    <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
-                        <table className="w-full">
-                            <thead className="bg-[#0F172A] border-b border-gray-700">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Name</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Owner</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Type</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Size</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Modified</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Tags</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {documents.map(doc => (
-                                    <tr key={doc.id} className="border-b border-gray-700 hover:bg-[#1E293B] transition-colors">
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                {doc.type === 'pdf' ? <FileText size={16} className="text-red-400" /> :
-                                                    doc.type === 'xlsx' ? <FileSpreadsheet size={16} className="text-green-400" /> :
-                                                        <Image size={16} className="text-blue-400" />}
-                                                <span className="font-medium text-white">{doc.name}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-300">{doc.owner}</td>
-                                        <td className="px-4 py-3 text-gray-400 uppercase text-xs">{doc.type}</td>
-                                        <td className="px-4 py-3 text-gray-400">{doc.size}</td>
-                                        <td className="px-4 py-3 text-gray-400">{new Date(doc.modified).toLocaleDateString()}</td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex gap-1">
-                                                {doc.tags.map(tag => (
-                                                    <span key={tag} className="px-2 py-0.5 bg-gray-700 rounded text-xs text-gray-300">
-                                                        {tag}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <button className="text-blue-400 hover:text-blue-300 text-sm">Download</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+      let url = "/documents/documents?";
+      if (currentFolder) url += `folder_id=${currentFolder}&`;
+      if (search) url += `search=${search}&`;
 
-                {currentView === "kanban" && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {documents.map(doc => (
-                            <div key={doc.id} className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-all group cursor-pointer">
-                                <div className="aspect-[4/3] bg-gray-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                                    {doc.type === 'pdf' ? <FileText size={48} className="text-gray-600 group-hover:text-red-400 transition-colors" /> :
-                                        doc.type === 'xlsx' ? <FileSpreadsheet size={48} className="text-gray-600 group-hover:text-green-400 transition-colors" /> :
-                                            <Image size={48} className="text-gray-600 group-hover:text-blue-400 transition-colors" />}
-                                </div>
+      const docRes = await fetchAPI(url);
+      if (docRes.ok) setDocuments(await docRes.json());
+    } finally { setLoading(false); }
+  };
 
-                                <h3 className="font-medium text-white truncate mb-1" title={doc.name}>{doc.name}</h3>
-                                <div className="flex justify-between text-xs text-gray-400 mb-2">
-                                    <span>{doc.size}</span>
-                                    <span>{new Date(doc.modified).toLocaleDateString()}</span>
-                                </div>
+  const createFolder = async () => {
+    if (!newFolderName.trim()) return;
+    await fetchAPI("/documents/folders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newFolderName, folder_id: currentFolder })
+    });
+    setNewFolderName("");
+    setIsFolderModalOpen(false);
+    loadData();
+  };
 
-                                <div className="flex flex-wrap gap-1">
-                                    {doc.tags.map(tag => (
-                                        <span key={tag} className="px-1.5 py-0.5 bg-gray-700 rounded text-[10px] text-gray-300">
-                                            {tag}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (currentFolder) formData.append("folder_id", currentFolder);
+
+      const res = await fetchAPI("/documents/upload", { method: "POST", body: formData });
+      if (res.ok) loadData();
+    } finally { setUploading(false); }
+  };
+
+  const deleteDoc = async (id: string, isFolder = false) => {
+    if (!confirm(`Delete this ${isFolder ? "folder and all its contents" : "document"}?`)) return;
+    await fetchAPI(`/documents/documents/${id}`, { method: "DELETE" });
+    loadData();
+  };
+
+  return (
+    <div className="flex flex-col h-screen">
+      <AppHeader title="Documents" />
+
+      <div className="flex-1 overflow-auto p-6 max-w-7xl mx-auto w-full">
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div className="flex items-center gap-2">
+            {currentFolder && (
+              <button onClick={() => setCurrentFolder(null)} className="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-sm transition-colors">
+                Back to root
+              </button>
+            )}
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input type="text" placeholder="Search documents..." value={search} onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-4 py-2 bg-[#1E293B] border border-gray-700 rounded-lg text-sm text-white focus:border-indigo-500 outline-none w-64" />
             </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setIsFolderModalOpen(true)}
+              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+              <Folder size={16} /> New Folder
+            </button>
+            <label className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
+              <Upload size={16} /> {uploading ? "Uploading..." : "Upload File"}
+              <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading} />
+            </label>
+          </div>
         </div>
 
         {loading ? (

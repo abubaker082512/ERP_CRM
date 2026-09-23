@@ -1,65 +1,87 @@
 "use client";
 import { fetchAPI } from '@/lib/api';
 
-import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
-import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
-import { useEffect, useState } from "react";
-import { Plus, Mail, Phone, DollarSign, Calendar, User, TrendingUp, Target } from "lucide-react";
-import {
-    DndContext,
-    DragEndEvent,
-    DragOverlay,
-    DragStartEvent,
-    PointerSensor,
-    useSensor,
-    useSensors,
-} from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { useState, useEffect } from 'react';
+import CRMHeader from '@/components/crm/CRMHeader';
+import { Plus, Settings, Star, Clock } from 'lucide-react';
+import Link from 'next/link';
 
 type Lead = {
     id: string;
     name: string;
-    email: string;
-    phone: string;
-    company: string;
-    stage: string;
+    type: 'lead' | 'opportunity';
     expected_revenue: number;
+    status: string;
     probability: number;
-    created_at: string;
+    priority: number;
+    company_name?: string;
+    email?: string;
 };
 
-const STAGES = [
-    { id: 'new', name: 'New', color: 'bg-blue-500' },
-    { id: 'qualified', name: 'Qualified', color: 'bg-purple-500' },
-    { id: 'proposition', name: 'Proposition', color: 'bg-yellow-500' },
-    { id: 'won', name: 'Won', color: 'bg-green-500' },
-    { id: 'lost', name: 'Lost', color: 'bg-red-500' },
+const initialStages = [
+    { name: 'New', id: 'New' },
+    { name: 'Qualified', id: 'Qualified' },
+    { name: 'Proposition', id: 'Proposition' },
+    { name: 'Won', id: 'Won' },
 ];
 
-const MENU_ITEMS = [
-    { name: "My Pipeline", href: "/crm" },
-    { name: "My Activities", href: "/crm/activities" },
-    { name: "Sales", href: "/crm/sales" },
-    { name: "Reporting", href: "/crm/reporting" },
-    { name: "Configuration", href: "/crm/configuration" },
-];
+export default function CRMPage() {
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [activeView, setActiveView] = useState<'leads' | 'pipeline'>('pipeline');
+    const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+    const [newOppName, setNewOppName] = useState('');
+    const [newOppRevenue, setNewOppRevenue] = useState('');
+    const [loading, setLoading] = useState(true);
 
-function LeadCard({ lead }: { lead: Lead }) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: lead.id });
+    const fetchLeads = async () => {
+        try {
+            const res = await fetchAPI("/leads");
+            if (res.ok) {
+                const data = await res.json();
+                setLeads(Array.isArray(data) ? data : []);
+            }
+        } catch (error) {
+            console.error("Failed to fetch leads", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
+    useEffect(() => {
+        fetchLeads();
+    }, []);
+
+    const handleAddOpportunity = async () => {
+        if (!newOppName.trim()) return;
+
+        try {
+            const res = await fetchAPI("/leads", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: newOppName,
+                    expected_revenue: parseFloat(newOppRevenue) || 0,
+                    status: 'New',
+                    type: 'opportunity'
+                })
+            });
+
+            if (res.ok) {
+                const newLead = await res.json();
+                setLeads([...leads, newLead]);
+                setNewOppName('');
+                setNewOppRevenue('');
+                setIsNewModalOpen(false);
+            }
+        } catch (error) {
+            console.error("Failed to create opportunity", error);
+        }
+    };
+
+    const getStageTotal = (stageId: string) => {
+        return leads
+            .filter(o => o.status === stageId && o.type === 'opportunity')
+            .reduce((sum, o) => sum + (o.expected_revenue || 0), 0);
     };
 
     const handleDragStart = (e: React.DragEvent, oppId: string) => {
@@ -101,53 +123,156 @@ function LeadCard({ lead }: { lead: Lead }) {
     };
 
     return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-            className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 mb-3 hover:border-blue-500 transition-all cursor-grab active:cursor-grabbing"
-        >
-            <div className="flex items-start justify-between mb-3">
-                <div>
-                    <h4 className="font-semibold text-white mb-1">{lead.name}</h4>
-                    <p className="text-sm text-gray-400">{lead.company}</p>
+        <div className="flex flex-col h-[calc(100vh-120px)]">
+            <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-[#1E293B]">
+                <div className="flex gap-4">
+                    <button onClick={() => setActiveView('pipeline')} className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-widest transition-all ${activeView === 'pipeline' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20' : 'text-gray-400 hover:text-white'}`}>
+                        Pipeline
+                    </button>
+                    <button onClick={() => setActiveView('leads')} className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-widest transition-all ${activeView === 'leads' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20' : 'text-gray-400 hover:text-white'}`}>
+                        Leads
+                    </button>
                 </div>
-                <div className="flex items-center gap-1 text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
-                    <TrendingUp size={12} />
-                    {lead.probability}%
-                </div>
+                <button onClick={() => setIsNewModalOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-purple-900/20 transition-all">
+                    <Plus size={18} /> New {activeView === 'leads' ? 'Lead' : 'Opportunity'}
+                </button>
             </div>
 
-            <div className="space-y-2 text-sm text-gray-400">
-                {lead.email && (
-                    <div className="flex items-center gap-2">
-                        <Mail size={14} />
-                        <span className="truncate">{lead.email}</span>
-                    </div>
-                )}
-                {lead.phone && (
-                    <div className="flex items-center gap-2">
-                        <Phone size={14} />
-                        <span>{lead.phone}</span>
-                    </div>
-                )}
-                {lead.expected_revenue > 0 && (
-                    <div className="flex items-center gap-2">
-                        <DollarSign size={14} />
-                        <span className="font-semibold text-green-400">${lead.expected_revenue.toLocaleString()}</span>
-                    </div>
-                )}
-            </div>
+            <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
+                {activeView === 'pipeline' ? (
+                    <div className="flex h-full gap-4 min-w-max">
+                    {initialStages.map((stage) => {
+                        const stageOpps = leads.filter(o => o.status === stage.id && o.type === 'opportunity');
+                        return (
+                             <div 
+                                key={stage.id} 
+                                className="w-80 flex flex-col h-full group galaxy-card !bg-white/5 p-3"
+                                onDrop={(e) => handleDrop(e, stage.id)}
+                                onDragOver={handleDragOver}
+                            >
+                                {/* Column Header */}
+                                <div className="flex items-center justify-between mb-2 px-1">
+                                    <div className="flex items-center gap-2 font-semibold text-gray-200">
+                                        <h3>{stage.name}</h3>
+                                        <span className="text-gray-500 text-sm">{stageOpps.length}</span>
+                                    </div>
+                                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
+                                        <button
+                                            onClick={() => {
+                                                if (stage.id === 'New') setIsNewModalOpen(true);
+                                            }}
+                                            className="text-gray-400 hover:text-white p-1"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                        <button className="text-gray-400 hover:text-white p-1">
+                                            <Settings size={14} />
+                                        </button>
+                                    </div>
+                                </div>
 
-            <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-between text-xs text-gray-500">
-                <div className="flex items-center gap-1">
-                    <Calendar size={12} />
-                    {new Date(lead.created_at).toLocaleDateString()}
-                </div>
-                <div className="flex items-center gap-1">
-                    <User size={12} />
-                    Unassigned
+                                {/* Progress Bar / Total */}
+                                <div className="mb-4 px-1">
+                                    <div className="h-1 bg-gray-700 rounded-full mb-1 overflow-hidden">
+                                        <div className="h-full bg-purple-500 w-full"></div>
+                                    </div>
+                                    <div className="flex justify-between text-xs font-medium">
+                                        <span className="text-gray-400">Total</span>
+                                        <span className="text-gray-200">${getStageTotal(stage.id).toLocaleString()}</span>
+                                    </div>
+                                </div>
+
+                                {/* Opportunities Container */}
+                                <div className="flex-1 overflow-y-auto space-y-3 px-1 pb-2">
+                                    {/* New Opportunity Form (Inline) */}
+                                    {stage.id === 'New' && isNewModalOpen && (
+                                        <div className="bg-[#1E293B] rounded border border-purple-500/50 p-3 shadow-lg animate-in fade-in slide-in-from-top-2">
+                                            <div className="mb-3">
+                                                <label className="text-xs text-purple-400 font-medium mb-1 block">Organization / Contact <span className="text-purple-400">*</span></label>
+                                                <input
+                                                    type="text"
+                                                    value={newOppName}
+                                                    onChange={(e) => setNewOppName(e.target.value)}
+                                                    placeholder="e.g. Acme Corp"
+                                                    className="w-full bg-transparent border-b border-purple-500/50 focus:border-purple-500 outline-none text-sm py-1 text-white placeholder-gray-500"
+                                                    autoFocus
+                                                />
+                                            </div>
+                                            <div className="mb-4">
+                                                <label className="text-xs text-gray-400 font-medium mb-1 block">Expected Revenue</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-0 top-1 text-gray-500 text-sm">$</span>
+                                                    <input
+                                                        type="number"
+                                                        value={newOppRevenue}
+                                                        onChange={(e) => setNewOppRevenue(e.target.value)}
+                                                        className="w-full bg-transparent border-b border-gray-600 focus:border-purple-500 outline-none text-sm py-1 pl-4 text-white"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={handleAddOpportunity}
+                                                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-medium uppercase"
+                                                    >
+                                                        Add
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setIsNewModalOpen(false)}
+                                                        className="bg-transparent border border-gray-600 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded text-xs font-medium uppercase"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    onClick={() => setIsNewModalOpen(false)}
+                                                    className="text-gray-500 hover:text-red-400"
+                                                >
+                                                    <Settings size={16} /> {/* Using Settings as trash placeholder for now or import Trash2 */}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Opportunity Cards */}
+                                    {stageOpps.map((opp) => (
+                                         <div 
+                                            key={opp.id} 
+                                            draggable
+                                            onDragStart={(e) => handleDragStart(e, opp.id)}
+                                            className="block galaxy-card !p-3 !rounded-lg !bg-white/10 hover:!bg-white/20 cursor-grab active:cursor-grabbing group relative shadow-sm transition-all border-none"
+                                        >
+                                            <Link href={`/crm/${opp.id}`} className="block">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <h4 className="text-sm font-medium text-gray-200 truncate pr-2 group-hover:text-purple-400 transition-colors">{opp.name}</h4>
+                                                    <div className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${opp.priority > 1 ? 'bg-orange-500 animate-pulse' : 'bg-green-500'}`}></div>
+                                                </div>
+
+                                                <div className="text-sm text-gray-300 font-medium mb-2">
+                                                    ${opp.expected_revenue?.toLocaleString()}
+                                                </div>
+
+                                                <div className="flex items-center justify-between mt-2">
+                                                    <div className="flex gap-0.5">
+                                                        {[1, 2, 3].map(i => (
+                                                            <Star key={i} size={12} className={i <= (opp.priority || 0) ? "text-yellow-500 fill-yellow-500" : "text-gray-600"} />
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock size={14} className="text-gray-500" />
+                                                        <div className="w-5 h-5 bg-gray-700 rounded-full flex items-center justify-center text-[10px] text-gray-300">
+                                                            A
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
                 ) : (
                     <div className="galaxy-card overflow-hidden">
@@ -184,332 +309,6 @@ function LeadCard({ lead }: { lead: Lead }) {
                     </div>
                 )}
             </div>
-        </div>
-    );
-}
-
-function LeadListItem({ lead }: { lead: Lead }) {
-    return (
-        <tr className="border-b border-gray-700 hover:bg-[#1E293B] transition-colors">
-            <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                    <input type="checkbox" className="w-4 h-4" />
-                    <div>
-                        <div className="font-medium text-white">{lead.name}</div>
-                        <div className="text-sm text-gray-400">{lead.company}</div>
-                    </div>
-                </div>
-            </td>
-            <td className="px-4 py-3 text-gray-300">{lead.email}</td>
-            <td className="px-4 py-3 text-gray-300">{lead.phone}</td>
-            <td className="px-4 py-3">
-                <span className={`px-2 py-1 rounded text-xs font-medium ${lead.stage === 'won' ? 'bg-green-500/20 text-green-400' :
-                        lead.stage === 'lost' ? 'bg-red-500/20 text-red-400' :
-                            'bg-blue-500/20 text-blue-400'
-                    }`}>
-                    {STAGES.find(s => s.id === lead.stage)?.name || lead.stage}
-                </span>
-            </td>
-            <td className="px-4 py-3 text-green-400 font-semibold">
-                ${lead.expected_revenue.toLocaleString()}
-            </td>
-            <td className="px-4 py-3 text-gray-300">{lead.probability}%</td>
-            <td className="px-4 py-3 text-gray-400 text-sm">
-                {new Date(lead.created_at).toLocaleDateString()}
-            </td>
-        </tr>
-    );
-}
-
-export default function CRMPage() {
-    const [leads, setLeads] = useState<Lead[]>([]);
-    const [activeId, setActiveId] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentView, setCurrentView] = useState<ViewType>("kanban");
-    const [newLead, setNewLead] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        company: '',
-        expected_revenue: 0,
-    });
-
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        })
-    );
-
-    useEffect(() => {
-        fetchLeads();
-    }, []);
-
-    const fetchLeads = async () => {
-        try {
-            const res = await fetch("http://localhost:8000/api/v1/leads/");
-            if (res.ok) {
-                const data = await res.json();
-                setLeads(data);
-            }
-        } catch (error) {
-            console.error("Error fetching leads:", error);
-        }
-    };
-
-    const createLead = async () => {
-        if (!newLead.name.trim()) return;
-
-        try {
-            const res = await fetch("http://localhost:8000/api/v1/leads/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ...newLead,
-                    stage: 'new',
-                }),
-            });
-
-            if (res.ok) {
-                await fetchLeads();
-                setIsModalOpen(false);
-                setNewLead({ name: '', email: '', phone: '', company: '', expected_revenue: 0 });
-            }
-        } catch (error) {
-            console.error("Error creating lead:", error);
-        }
-    };
-
-    const handleDragStart = (event: DragStartEvent) => {
-        setActiveId(event.active.id as string);
-    };
-
-    const handleDragEnd = async (event: DragEndEvent) => {
-        const { active, over } = event;
-
-        if (!over) return;
-
-        const leadId = active.id as string;
-        const newStage = over.id as string;
-
-        try {
-            const res = await fetch(`http://localhost:8000/api/v1/leads/${leadId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ stage: newStage }),
-            });
-
-            if (res.ok) {
-                setLeads(leads.map(lead =>
-                    lead.id === leadId ? { ...lead, stage: newStage } : lead
-                ));
-            }
-        } catch (error) {
-            console.error("Error updating lead:", error);
-        }
-
-        setActiveId(null);
-    };
-
-    const getLeadsByStage = (stageId: string) => {
-        return leads.filter(lead => lead.stage === stageId);
-    };
-
-    const activeLead = activeId ? leads.find(lead => lead.id === activeId) : null;
-
-    return (
-        <div className="flex flex-col h-screen bg-[#0F172A]">
-            <StandardModuleHeader
-                moduleName="CRM"
-                moduleIcon={<Target size={20} />}
-                menuItems={MENU_ITEMS}
-                searchPlaceholder="Search leads, opportunities..."
-            />
-
-            <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                        <div>
-                            <h2 className="text-2xl font-semibold text-gray-200">My Pipeline</h2>
-                            <p className="text-sm text-gray-400 mt-1">
-                                {leads.length} leads • ${leads.reduce((sum, lead) => sum + lead.expected_revenue, 0).toLocaleString()} expected revenue
-                            </p>
-                        </div>
-                        <ViewSwitcher
-                            currentView={currentView}
-                            availableViews={["kanban", "list"]}
-                            onViewChange={setCurrentView}
-                        />
-                    </div>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
-                    >
-                        <Plus size={18} /> New Lead
-                    </button>
-                </div>
-
-                {currentView === "kanban" && (
-                    <DndContext
-                        sensors={sensors}
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                            {STAGES.map(stage => {
-                                const stageLeads = getLeadsByStage(stage.id);
-                                const stageRevenue = stageLeads.reduce((sum, lead) => sum + lead.expected_revenue, 0);
-
-                                return (
-                                    <SortableContext
-                                        key={stage.id}
-                                        id={stage.id}
-                                        items={stageLeads.map(l => l.id)}
-                                        strategy={verticalListSortingStrategy}
-                                    >
-                                        <div className="bg-[#1E293B]/50 rounded-lg p-4 border border-gray-700">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className={`w-3 h-3 rounded-full ${stage.color}`}></div>
-                                                    <h3 className="font-semibold text-white">{stage.name}</h3>
-                                                </div>
-                                                <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
-                                                    {stageLeads.length}
-                                                </span>
-                                            </div>
-
-                                            {stageRevenue > 0 && (
-                                                <div className="mb-3 text-sm text-gray-400">
-                                                    ${stageRevenue.toLocaleString()}
-                                                </div>
-                                            )}
-
-                                            <div className="space-y-3 min-h-[200px]">
-                                                {stageLeads.map(lead => (
-                                                    <LeadCard key={lead.id} lead={lead} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </SortableContext>
-                                );
-                            })}
-                        </div>
-
-                        <DragOverlay>
-                            {activeLead ? <LeadCard lead={activeLead} /> : null}
-                        </DragOverlay>
-                    </DndContext>
-                )}
-
-                {currentView === "list" && (
-                    <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
-                        <table className="w-full">
-                            <thead className="bg-[#0F172A] border-b border-gray-700">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">
-                                        <input type="checkbox" className="w-4 h-4 mr-2" />
-                                        Lead
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Email</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Phone</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Stage</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Expected Revenue</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Probability</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Created</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {leads.map(lead => (
-                                    <LeadListItem key={lead.id} lead={lead} />
-                                ))}
-                                {leads.length === 0 && (
-                                    <tr>
-                                        <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
-                                            No leads found. Create your first lead to get started.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
-
-            {/* Create Lead Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="bg-[#1E293B] rounded-lg p-6 w-full max-w-md border border-gray-700">
-                        <h3 className="text-lg font-semibold text-white mb-4">Create Lead</h3>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Name *</label>
-                                <input
-                                    type="text"
-                                    value={newLead.name}
-                                    onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
-                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-                                    placeholder="e.g. John Doe"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
-                                <input
-                                    type="email"
-                                    value={newLead.email}
-                                    onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
-                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-                                    placeholder="john@example.com"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Phone</label>
-                                <input
-                                    type="tel"
-                                    value={newLead.phone}
-                                    onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })}
-                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-                                    placeholder="+1 234 567 8900"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Company</label>
-                                <input
-                                    type="text"
-                                    value={newLead.company}
-                                    onChange={(e) => setNewLead({ ...newLead, company: e.target.value })}
-                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-                                    placeholder="e.g. Acme Corp"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Expected Revenue</label>
-                                <input
-                                    type="number"
-                                    value={newLead.expected_revenue}
-                                    onChange={(e) => setNewLead({ ...newLead, expected_revenue: parseFloat(e.target.value) || 0 })}
-                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-                                    placeholder="10000"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-3 mt-6">
-                            <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-300 hover:text-white">
-                                Cancel
-                            </button>
-                            <button onClick={createLead} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                                Create
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
