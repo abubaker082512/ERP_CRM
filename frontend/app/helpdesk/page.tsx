@@ -1,181 +1,141 @@
 "use client";
 import { fetchAPI } from '@/lib/api';
 
-import HelpdeskHeader from '@/components/helpdesk/HelpdeskHeader';
-import { Plus, Clock } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
+import { useState } from "react";
+import { LifeBuoy, Users, Clock, AlertCircle, CheckCircle } from "lucide-react";
+
+const MENU_ITEMS = [
+    { name: "Tickets", href: "/helpdesk" },
+    { name: "Teams", href: "/helpdesk/teams" },
+    { name: "SLA Policies", href: "/helpdesk/sla" },
+    { name: "Reporting", href: "/helpdesk/reporting" },
+    { name: "Configuration", href: "/helpdesk/configuration" },
+];
 
 type Ticket = {
     id: string;
-    title: string;
-    description?: string;
-    state: string;
+    subject: string;
+    customer: string;
+    team: string;
     priority: string;
-    team_id?: string;
-    created_at: string;
+    status: string;
+    created: string;
+    assigned_to: string;
 };
 
-type Team = {
-    id: string;
-    name: string;
-};
+const mockTickets: Ticket[] = [
+    { id: "TICKET/001", subject: "Login Issue", customer: "John Doe", team: "Support L1", priority: "high", status: "new", created: "2025-12-01", assigned_to: "" },
+    { id: "TICKET/002", subject: "Billing Question", customer: "Jane Smith", team: "Billing", priority: "medium", status: "in_progress", created: "2025-12-02", assigned_to: "Alice" },
+    { id: "TICKET/003", subject: "Feature Request", customer: "Bob Wilson", team: "Product", priority: "low", status: "solved", created: "2025-11-28", assigned_to: "Mike" },
+];
 
 export default function HelpdeskPage() {
-    const [tickets, setTickets] = useState<Ticket[]>([]);
-    const [teams, setTeams] = useState<Team[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'all' | 'my' | 'teams'>('all');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newTitle, setNewTitle] = useState('');
-    const [newDesc, setNewDesc] = useState('');
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [ticketsRes, teamsRes] = await Promise.all([
-                    fetchAPI("/helpdesk/tickets"),
-                    fetchAPI("/helpdesk/teams")
-                ]);
-                if (ticketsRes.ok) setTickets(await ticketsRes.json());
-                if (teamsRes.ok) setTeams(await teamsRes.json());
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
-
-    const createTicket = async () => {
-        if (!newTitle.trim()) return;
-        const res = await fetchAPI("/helpdesk/tickets", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: newTitle, description: newDesc }),
-        });
-        if (res.ok) {
-            const ticket = await res.json();
-            setTickets([...tickets, ticket]);
-            setNewTitle('');
-            setNewDesc('');
-            setIsModalOpen(false);
-        }
-    };
+    const [tickets] = useState<Ticket[]>(mockTickets);
+    const [currentView, setCurrentView] = useState<ViewType>("kanban");
 
     return (
-        <div className="flex flex-col h-screen">
-            <HelpdeskHeader />
+        <div className="flex flex-col h-screen bg-[#0F172A]">
+            <StandardModuleHeader
+                moduleName="Helpdesk"
+                moduleIcon={<LifeBuoy size={20} />}
+                menuItems={MENU_ITEMS}
+                searchPlaceholder="Search tickets..."
+            />
+
             <div className="flex-1 overflow-auto p-6">
-                <div className="flex gap-1 mb-6 bg-[#1E293B] rounded-lg p-1 w-fit">
-                    <button onClick={() => setActiveTab('all')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'all' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-                        All Tickets
-                    </button>
-                    <button onClick={() => setActiveTab('teams')} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'teams' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-                        Support Teams
-                    </button>
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                        <div>
+                            <h2 className="text-2xl font-semibold text-gray-200">Helpdesk Tickets</h2>
+                            <p className="text-sm text-gray-400 mt-1">{tickets.length} active tickets</p>
+                        </div>
+                        <ViewSwitcher
+                            currentView={currentView}
+                            availableViews={["list", "kanban"]}
+                            onViewChange={setCurrentView}
+                        />
+                    </div>
                 </div>
 
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-gray-200">
-                        {activeTab === 'teams' ? 'Support Teams' : 'Tickets'}
-                    </h2>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded flex items-center gap-1 font-bold shadow-lg shadow-purple-900/20 transition-all"
-                    >
-                        <Plus size={16} /> New Ticket
-                    </button>
-                </div>
+                {currentView === "list" && (
+                    <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
+                        <table className="w-full">
+                            <thead className="bg-[#0F172A] border-b border-gray-700">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">ID</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Subject</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Customer</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Team</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Priority</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Status</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Assigned To</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {tickets.map(ticket => (
+                                    <tr key={ticket.id} className="border-b border-gray-700 hover:bg-[#1E293B] transition-colors">
+                                        <td className="px-4 py-3 font-medium text-white">{ticket.id}</td>
+                                        <td className="px-4 py-3 text-gray-300">{ticket.subject}</td>
+                                        <td className="px-4 py-3 text-gray-300">{ticket.customer}</td>
+                                        <td className="px-4 py-3 text-gray-300">{ticket.team}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${ticket.priority === 'high' ? 'bg-red-500/20 text-red-400' :
+                                                    ticket.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                        'bg-blue-500/20 text-blue-400'
+                                                }`}>
+                                                {ticket.priority}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${ticket.status === 'solved' ? 'bg-green-500/20 text-green-400' :
+                                                    ticket.status === 'new' ? 'bg-blue-500/20 text-blue-400' :
+                                                        'bg-yellow-500/20 text-yellow-400'
+                                                }`}>
+                                                {ticket.status.replace('_', ' ')}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-300">{ticket.assigned_to || "-"}</td>
+                                        <td className="px-4 py-3">
+                                            <button className="text-blue-400 hover:text-blue-300 text-sm">View</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
-                {activeTab === 'teams' ? (
+                {currentView === "kanban" && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {teams.map(team => (
-                            <div key={team.id} className="galaxy-card p-6 border-l-4 border-purple-500">
-                                <h3 className="text-white font-bold text-lg mb-2">{team.name}</h3>
-                                <div className="flex justify-between items-center text-xs text-gray-400">
-                                    <span>Active Tickets</span>
-                                    <span className="text-purple-400 font-bold">{tickets.filter(t => t.team_id === team.id).length}</span>
+                        {['new', 'in_progress', 'solved'].map(status => (
+                            <div key={status} className="bg-[#1E293B]/50 rounded-lg p-4 border border-gray-700">
+                                <h3 className="font-semibold text-white mb-4 capitalize">{status.replace('_', ' ')}</h3>
+                                <div className="space-y-3">
+                                    {tickets.filter(t => t.status === status).map(ticket => (
+                                        <div key={ticket.id} className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-all">
+                                            <div className="flex justify-between mb-2">
+                                                <span className="font-medium text-white">{ticket.subject}</span>
+                                                <span className={`px-2 py-0.5 rounded text-xs ${ticket.priority === 'high' ? 'bg-red-500/20 text-red-400' :
+                                                        ticket.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                            'bg-blue-500/20 text-blue-400'
+                                                    }`}>{ticket.priority}</span>
+                                            </div>
+                                            <div className="text-sm text-gray-400 mb-2">{ticket.customer}</div>
+                                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                                <span>{ticket.team}</span>
+                                                <span>{new Date(ticket.created).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         ))}
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {tickets.map((t) => (
-                            <Link
-                                key={t.id}
-                                href={`/helpdesk/${t.id}`}
-                                className="block galaxy-card !p-5 group"
-                            >
-                                <div className="flex justify-between items-start mb-3">
-                                    <h3 className="font-bold text-gray-200 truncate pr-2 group-hover:text-purple-400 transition-colors">
-                                        {t.title}
-                                    </h3>
-                                    <div className={`shrink-0 w-2 h-2 rounded-full ${
-                                        t.priority === 'urgent' ? 'bg-red-500 animate-pulse' :
-                                        t.priority === 'high' ? 'bg-orange-500' : 'bg-green-500'
-                                    }`}></div>
-                                </div>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/5 text-gray-400 border border-white/5">{t.state}</span>
-                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-500/10 text-purple-400 border border-purple-500/20">{t.priority}</span>
-                                </div>
-                                <p className="text-sm text-gray-400 line-clamp-2 mb-6 h-10 leading-relaxed">{t.description}</p>
-                                <div className="flex items-center justify-between text-[10px] text-gray-500 font-bold uppercase tracking-widest border-t border-white/5 pt-4">
-                                    <div className="flex items-center gap-1">
-                                        <Clock size={12} className="text-purple-500" />
-                                        {new Date(t.created_at).toLocaleDateString()}
-                                    </div>
-                                    <div className="flex -space-x-2">
-                                        <div className="w-5 h-5 rounded-full bg-purple-600 border border-[#0F172A] flex items-center justify-center text-white text-[8px]">U</div>
-                                    </div>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
                 )}
             </div>
-
-            {/* New Ticket Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="bg-[#1E293B] rounded-lg shadow-xl w-full max-w-md border border-gray-700 p-6">
-                        <h2 className="text-lg font-semibold text-white mb-4">Create Ticket</h2>
-                        <div className="space-y-4">
-                            <input
-                                type="text"
-                                placeholder="Title"
-                                value={newTitle}
-                                onChange={(e) => setNewTitle(e.target.value)}
-                                className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-purple-500"
-                            />
-                            <textarea
-                                placeholder="Description"
-                                value={newDesc}
-                                onChange={(e) => setNewDesc(e.target.value)}
-                                rows={4}
-                                className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-purple-500"
-                            />
-                        </div>
-                        <div className="flex justify-end gap-3 mt-6">
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-4 py-2 text-gray-300 hover:text-white"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={createTicket}
-                                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
-                            >
-                                Create
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

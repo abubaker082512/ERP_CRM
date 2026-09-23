@@ -1,119 +1,134 @@
 "use client";
-import { fetchAPI } from '@/lib/api';
-import { useState, useEffect } from 'react';
-import PurchaseHeader from '@/components/purchase/PurchaseHeader';
-import { TrendingUp, ShoppingCart, Percent, ArrowUpRight } from 'lucide-react';
 
-type PurchaseOrder = {
-    id: string;
-    name: string;
-    amount_total: number;
-    state: string;
-};
+import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { ShoppingCart, TrendingUp, DollarSign, Package, AlertTriangle } from "lucide-react";
+
+const MENU_ITEMS = [
+    { name: "RFQs", href: "/purchase" },
+    { name: "Purchase Orders", href: "/purchase/orders" },
+    { name: "Vendors", href: "/purchase/vendors" },
+    { name: "Reporting", href: "/purchase/reporting" },
+    { name: "Configuration", href: "/purchase/configuration" },
+];
 
 export default function PurchaseReportingPage() {
-    const [orders, setOrders] = useState<PurchaseOrder[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchOrders();
-    }, []);
-
-    const fetchOrders = async () => {
-        try {
-            const res = await fetchAPI("/purchase");
-            if (res.ok) setOrders(await res.json());
-        } catch (error) {
-            console.error("Failed to fetch purchase orders", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const getCurrencySymbol = () => {
-        if (typeof window !== "undefined") {
-            const cur = localStorage.getItem("settings_currency") || "USD";
-            const symbols: Record<string, string> = {
-                USD: "$", EUR: "€", GBP: "£", AUD: "$", CAD: "$", JPY: "¥", PKR: "₨", INR: "₹"
-            };
-            return symbols[cur] || "$";
-        }
-        return "$";
-    };
-
-    const currencySymbol = getCurrencySymbol();
-
-    const confirmedOrders = orders.filter(o => o.state === 'purchase' || o.state === 'done');
-    const totalProcurementSpent = confirmedOrders.reduce((sum, o) => sum + (o.amount_total || 0), 0);
-    const avgOrderCost = confirmedOrders.length > 0 ? totalProcurementSpent / confirmedOrders.length : 0;
-    const rfqCount = orders.filter(o => o.state === 'draft' || o.state === 'sent').length;
-
     return (
-        <div className="flex flex-col h-screen bg-[#0B101E] text-white">
-            <PurchaseHeader />
+        <div className="flex flex-col h-screen bg-[#0F172A]">
+            <StandardModuleHeader
+                moduleName="Purchase"
+                moduleIcon={<ShoppingCart size={20} />}
+                menuItems={MENU_ITEMS}
+                searchPlaceholder="Search reports..."
+            />
 
             <div className="flex-1 overflow-auto p-6">
                 <div className="mb-6">
-                    <h2 className="text-xl font-bold text-gray-200">Purchase Reporting & Analytics</h2>
-                    <p className="text-xs text-gray-400 mt-1">Analyze supplier expenditure, procurement cost metrics, and outstanding quotations.</p>
+                    <h2 className="text-2xl font-semibold text-gray-200">Purchase Reporting</h2>
+                    <p className="text-sm text-gray-400 mt-1">Analytics and insights for procurement</p>
                 </div>
 
-                {loading ? (
-                    <div className="text-center text-gray-500 py-12">Calculating analytics...</div>
-                ) : (
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="bg-purple-900/10 border border-purple-500/15 rounded-2xl p-5">
-                                <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Total Procurement Expenditure</p>
-                                <p className="text-2xl font-bold text-white mt-1.5">{currencySymbol}{totalProcurementSpent.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                <span className="text-[10px] text-purple-400 font-bold flex items-center gap-1 mt-1">
-                                    All validated purchase orders
-                                </span>
+                {/* Key Metrics */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="bg-blue-500/20 p-3 rounded-lg">
+                                <DollarSign size={24} className="text-blue-400" />
                             </div>
-                            <div className="bg-[#1E293B] border border-gray-800 rounded-2xl p-5">
-                                <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Average Procurement Cost</p>
-                                <p className="text-2xl font-bold text-white mt-1.5">{currencySymbol}{avgOrderCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
-                                <span className="text-[10px] text-gray-500 flex items-center gap-1 mt-1">
-                                    Average per supplier invoice
-                                </span>
-                            </div>
-                            <div className="bg-[#1E293B] border border-gray-800 rounded-2xl p-5">
-                                <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Outstanding RFQs / Drafts</p>
-                                <p className="text-2xl font-bold text-white mt-1.5">{rfqCount} items</p>
-                                <span className="text-[10px] text-yellow-400 font-bold flex items-center gap-1 mt-1">
-                                    Pending validation
-                                </span>
-                            </div>
+                            <TrendingUp size={20} className="text-green-400" />
                         </div>
+                        <div className="text-3xl font-bold text-white mb-1">$450K</div>
+                        <div className="text-sm text-gray-400">Total Spend</div>
+                        <div className="text-xs text-green-400 mt-2">+12% from last month</div>
+                    </div>
 
-                        <div className="bg-[#0F172A] border border-gray-800 rounded-2xl p-6">
-                            <h4 className="text-sm font-bold text-gray-300 mb-6">Recent Spendings per Purchase Order</h4>
-                            <div className="space-y-4">
-                                {confirmedOrders.length === 0 ? (
-                                    <p className="text-xs text-gray-500 text-center py-6">No validated purchase orders found to analyze.</p>
-                                ) : (
-                                    confirmedOrders.slice(0, 5).map((o, index) => {
-                                        const pct = Math.min(100, (o.amount_total / (totalProcurementSpent || 1)) * 100);
-                                        return (
-                                            <div key={index} className="space-y-2">
-                                                <div className="flex justify-between text-xs font-semibold text-gray-300">
-                                                    <span>{o.name}</span>
-                                                    <span>{currencySymbol}{o.amount_total.toFixed(2)}</span>
-                                                </div>
-                                                <div className="w-full bg-[#1E293B] h-2.5 rounded-full overflow-hidden">
-                                                    <div 
-                                                        className="bg-purple-600 h-full rounded-full transition-all duration-500" 
-                                                        style={{ width: `${Math.max(5, pct)}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
+                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
+                        <div className="bg-purple-500/20 p-3 rounded-lg w-fit mb-4">
+                            <ShoppingCart size={24} className="text-purple-400" />
+                        </div>
+                        <div className="text-3xl font-bold text-white mb-1">128</div>
+                        <div className="text-sm text-gray-400">Purchase Orders</div>
+                        <div className="text-xs text-green-400 mt-2">+5% from last month</div>
+                    </div>
+
+                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
+                        <div className="bg-green-500/20 p-3 rounded-lg w-fit mb-4">
+                            <Package size={24} className="text-green-400" />
+                        </div>
+                        <div className="text-3xl font-bold text-white mb-1">98%</div>
+                        <div className="text-sm text-gray-400">On-Time Delivery</div>
+                        <div className="text-xs text-green-400 mt-2">+2% improvement</div>
+                    </div>
+
+                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
+                        <div className="bg-yellow-500/20 p-3 rounded-lg w-fit mb-4">
+                            <AlertTriangle size={24} className="text-yellow-400" />
+                        </div>
+                        <div className="text-3xl font-bold text-white mb-1">12</div>
+                        <div className="text-sm text-gray-400">Late Deliveries</div>
+                        <div className="text-xs text-red-400 mt-2">-3 from last month</div>
+                    </div>
+                </div>
+
+                {/* Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
+                        <h3 className="text-lg font-semibold text-white mb-4">Spend by Category</h3>
+                        <div className="h-64 flex items-center justify-center text-gray-500">
+                            <div className="text-center">
+                                <TrendingUp size={48} className="mx-auto mb-2 opacity-50" />
+                                <p>Chart visualization coming soon</p>
                             </div>
                         </div>
                     </div>
-                )}
+
+                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
+                        <h3 className="text-lg font-semibold text-white mb-4">Vendor Performance</h3>
+                        <div className="h-64 flex items-center justify-center text-gray-500">
+                            <div className="text-center">
+                                <ShoppingCart size={48} className="mx-auto mb-2 opacity-50" />
+                                <p>Chart visualization coming soon</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
+                        <h3 className="text-lg font-semibold text-white mb-4">Top Vendors by Spend</h3>
+                        <div className="space-y-3">
+                            {[
+                                { name: "Supplier A", spend: "$150,000", orders: 45 },
+                                { name: "Supplier B", spend: "$98,000", orders: 32 },
+                                { name: "Supplier C", spend: "$87,000", orders: 28 },
+                            ].map((vendor, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-3 bg-[#0F172A] rounded">
+                                    <div>
+                                        <div className="font-medium text-white">{vendor.name}</div>
+                                        <div className="text-sm text-gray-400">{vendor.orders} orders</div>
+                                    </div>
+                                    <div className="text-green-400 font-semibold">{vendor.spend}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
+                        <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
+                        <div className="space-y-3">
+                            {[
+                                { action: "PO Created", detail: "PO001 for Supplier A", time: "2 hours ago" },
+                                { action: "Goods Received", detail: "PO002 from Supplier B", time: "5 hours ago" },
+                                { action: "RFQ Sent", detail: "RFQ003 to Supplier C", time: "1 day ago" },
+                            ].map((activity, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-3 bg-[#0F172A] rounded">
+                                    <div>
+                                        <div className="font-medium text-white">{activity.action}</div>
+                                        <div className="text-sm text-gray-400">{activity.detail}</div>
+                                    </div>
+                                    <div className="text-xs text-gray-500">{activity.time}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

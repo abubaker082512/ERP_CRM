@@ -1,0 +1,159 @@
+/* Calendar Dark Theme Customization */
+.rbc-calendar {
+  color: #e2e8f0;
+}
+
+.rbc-header {
+  background-color: #1e293b;
+  border-color: #374151;
+  color: #f3f4f6;
+  padding: 12px 8px;
+  font-weight: 600;
+}
+
+.rbc-month-view {
+  background-color: #0f172a;
+  border-color: #374151;
+}
+
+.rbc-day-bg {
+  background-color: #1e293b;
+  border-color: #374151;
+}
+
+.rbc-off-range-bg {
+  background-color: #0f172a;
+}
+
+.rbc-today {
+  background-color: #1e40af !important;
+}
+
+.rbc-event {
+  background-color: #3b82f6;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.rbc-event:hover {
+  background-color: #2563eb;
+}
+
+.rbc-selected {
+  background-color: #1d4ed8;
+}
+
+.rbc-date-cell {
+  padding: 4px;
+  color: #d1d5db;
+}
+
+.rbc-off-range {
+  color: #6b7280;
+}
+
+.rbc-current {
+  color: #60a5fa;
+  font-weight: 700;
+}
+
+.rbc-toolbar {
+  background-color: #1e293b;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #374151;
+}
+
+.rbc-toolbar button {
+  background-color: #374151;
+  color: #f3f4f6;
+  border: 1px solid #4b5563;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.rbc-toolbar button:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
+.rbc-toolbar button:active,
+.rbc-toolbar button.rbc-active {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.rbc-toolbar-label {
+  color: #f3f4f6;
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.rbc-time-view {
+  background-color: #0f172a;
+  border-color: #374151;
+}
+
+.rbc-time-header {
+  background-color: #1e293b;
+}
+
+.rbc-time-content {
+  border-color: #374151;
+}
+
+.rbc-time-slot {
+  border-color: #374151;
+  color: #9ca3af;
+}
+
+.rbc-current-time-indicator {
+  background-color: #ef4444;
+  height: 2px;
+}
+
+.rbc-agenda-view {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+
+.rbc-agenda-table {
+  border-color: #374151;
+}
+
+.rbc-agenda-date-cell,
+.rbc-agenda-time-cell {
+  color: #9ca3af;
+}
+
+.rbc-agenda-event-cell {
+  color: #e2e8f0;
+}
+
+.rbc-show-more {
+  background-color: #3b82f6;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.rbc-overlay {
+  background-color: #1e293b;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.rbc-overlay-header {
+  background-color: #374151;
+  color: #f3f4f6;
+  padding: 8px 12px;
+  border-bottom: 1px solid #4b5563;
+  font-weight: 600;
+}

@@ -1,97 +1,120 @@
 "use client";
 import { fetchAPI } from '@/lib/api';
 
-import { useState, useEffect } from 'react';
-import PurchaseHeader from '@/components/purchase/PurchaseHeader';
-import { Clock } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
+import { useState } from "react";
+import { ShoppingCart, FileText, DollarSign, Calendar } from "lucide-react";
 
-type PurchaseOrder = {
+const MENU_ITEMS = [
+    { name: "RFQs", href: "/purchase" },
+    { name: "Purchase Orders", href: "/purchase/orders" },
+    { name: "Vendors", href: "/purchase/vendors" },
+    { name: "Reporting", href: "/purchase/reporting" },
+    { name: "Configuration", href: "/purchase/configuration" },
+];
+
+type RFQ = {
     id: string;
-    name: string;
-    partner_id: string; // Ideally fetch name
-    date_order: string;
-    amount_total: number;
-    state: string;
+    vendor: string;
+    total: number;
+    status: string;
+    date: string;
 };
 
+const mockRFQs: RFQ[] = [
+    { id: "RFQ001", vendor: "Supplier A", total: 15000, status: "draft", date: "2025-12-01" },
+    { id: "RFQ002", vendor: "Supplier B", total: 28000, status: "sent", date: "2025-12-02" },
+    { id: "RFQ003", vendor: "Supplier C", total: 42000, status: "confirmed", date: "2025-12-03" },
+];
+
 export default function PurchasePage() {
-    const router = useRouter();
-    const [orders, setOrders] = useState<PurchaseOrder[]>([]);
-
-    useEffect(() => {
-        fetchOrders();
-    }, []);
-
-    const fetchOrders = async () => {
-        try {
-            const res = await fetchAPI("/purchase");
-            if (res.ok) setOrders(await res.json());
-        } catch (error) {
-            console.error("Failed to fetch purchase orders", error);
-        }
-    };
+    const [rfqs] = useState<RFQ[]>(mockRFQs);
+    const [currentView, setCurrentView] = useState<ViewType>("list");
 
     return (
-        <div className="flex flex-col h-screen">
-            <PurchaseHeader />
+        <div className="flex flex-col h-screen bg-[#0F172A]">
+            <StandardModuleHeader
+                moduleName="Purchase"
+                moduleIcon={<ShoppingCart size={20} />}
+                menuItems={MENU_ITEMS}
+                searchPlaceholder="Search RFQs..."
+            />
 
-            <div className="flex-1 overflow-auto p-4">
-                {/* Toolbar */}
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => router.push('/purchase/rfq/new')}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm font-medium"
-                        >
-                            New
-                        </button>
+            <div className="flex-1 overflow-auto p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                        <div>
+                            <h2 className="text-2xl font-semibold text-gray-200">Requests for Quotation</h2>
+                            <p className="text-sm text-gray-400 mt-1">{rfqs.length} RFQs • ${rfqs.reduce((sum, r) => sum + r.total, 0).toLocaleString()} total value</p>
+                        </div>
+                        <ViewSwitcher
+                            currentView={currentView}
+                            availableViews={["list", "kanban"]}
+                            onViewChange={setCurrentView}
+                        />
                     </div>
                 </div>
 
-                {/* List View */}
-                <div className="bg-[#1E293B] rounded border border-gray-700 overflow-hidden">
-                    <table className="w-full text-sm text-left text-gray-400">
-                        <thead className="text-xs text-gray-200 uppercase bg-[#0F172A] border-b border-gray-700">
-                            <tr>
-                                <th className="px-6 py-3">Reference</th>
-                                <th className="px-6 py-3">Vendor</th>
-                                <th className="px-6 py-3">Order Date</th>
-                                <th className="px-6 py-3">Activities</th>
-                                <th className="px-6 py-3 text-right">Total</th>
-                                <th className="px-6 py-3 text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orders.map((o) => (
-                                <tr key={o.id} onClick={() => router.push(`/purchase/${o.id}`)} className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer">
-                                    <td className="px-6 py-4 font-medium text-purple-400 hover:underline">{o.name}</td>
-                                    <td className="px-6 py-4 font-mono text-xs text-gray-400">{o.partner_id}</td>
-                                    <td className="px-6 py-4">{new Date(o.date_order).toLocaleDateString()}</td>
-                                    <td className="px-6 py-4">
-                                        <Clock size={16} className="text-gray-500" />
-                                    </td>
-                                    <td className="px-6 py-4 text-right font-medium text-white">${o.amount_total.toLocaleString()}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${o.state === 'purchase' ? 'bg-green-500/20 text-green-400' :
-                                                o.state === 'sent' ? 'bg-purple-500/20 text-purple-400' :
-                                                    'bg-gray-500/20 text-gray-400'
-                                            }`}>
-                                            {o.state}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
-                            {orders.length === 0 && (
+                {currentView === "list" && (
+                    <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
+                        <table className="w-full">
+                            <thead className="bg-[#0F172A] border-b border-gray-700">
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                                        No purchase orders found. Create one to get started!
-                                    </td>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">RFQ #</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Vendor</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Total</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Status</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Date</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Actions</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {rfqs.map(rfq => (
+                                    <tr key={rfq.id} className="border-b border-gray-700 hover:bg-[#1E293B] transition-colors">
+                                        <td className="px-4 py-3 font-medium text-white">{rfq.id}</td>
+                                        <td className="px-4 py-3 text-gray-300">{rfq.vendor}</td>
+                                        <td className="px-4 py-3 text-green-400 font-semibold">${rfq.total.toLocaleString()}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${rfq.status === 'confirmed' ? 'bg-green-500/20 text-green-400' :
+                                                    rfq.status === 'sent' ? 'bg-blue-500/20 text-blue-400' :
+                                                        'bg-gray-500/20 text-gray-400'
+                                                }`}>
+                                                {rfq.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-400">{new Date(rfq.date).toLocaleDateString()}</td>
+                                        <td className="px-4 py-3">
+                                            <button className="text-blue-400 hover:text-blue-300 text-sm">View</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {currentView === "kanban" && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {['draft', 'sent', 'confirmed'].map(status => (
+                            <div key={status} className="bg-[#1E293B]/50 rounded-lg p-4 border border-gray-700">
+                                <h3 className="font-semibold text-white mb-4 capitalize">{status}</h3>
+                                <div className="space-y-3">
+                                    {rfqs.filter(r => r.status === status).map(rfq => (
+                                        <div key={rfq.id} className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-all">
+                                            <div className="font-medium text-white mb-2">{rfq.id}</div>
+                                            <div className="text-sm text-gray-400 mb-2">{rfq.vendor}</div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-green-400 font-semibold">${rfq.total.toLocaleString()}</span>
+                                                <span className="text-xs text-gray-500">{new Date(rfq.date).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

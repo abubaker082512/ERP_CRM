@@ -1,104 +1,163 @@
 "use client";
 import { fetchAPI } from '@/lib/api';
 
-import { useState, useEffect } from 'react';
-import SalesHeader from '@/components/sales/SalesHeader';
-import { Clock } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
+import { useEffect, useState } from "react";
+import { Plus, FileText, DollarSign, Calendar, User, BarChart3 } from "lucide-react";
 
-type SalesOrder = {
+const MENU_ITEMS = [
+    { name: "Quotations", href: "/sales" },
+    { name: "Orders", href: "/sales/orders" },
+    { name: "Customers", href: "/sales/customers" },
+    { name: "Products", href: "/sales/products" },
+    { name: "Reporting", href: "/sales/reporting" },
+    { name: "Configuration", href: "/sales/configuration" },
+];
+
+type Quotation = {
     id: string;
-    name: string;
-    customer_name: string;
-    date_order: string;
-    amount_total: number;
-    state: string;
+    customer: string;
+    total: number;
+    status: string;
+    created_at: string;
 };
 
 export default function SalesPage() {
-    const router = useRouter();
-    const [orders, setOrders] = useState<SalesOrder[]>([]);
+    const [quotations, setQuotations] = useState<Quotation[]>([]);
+    const [currentView, setCurrentView] = useState<ViewType>("list");
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        fetchOrders();
+        fetchQuotations();
     }, []);
 
-    const fetchOrders = async () => {
+    const fetchQuotations = async () => {
         try {
-            const res = await fetchAPI("/sales");
+            const res = await fetch("http://localhost:8000/api/v1/sales/quotations");
             if (res.ok) {
                 const data = await res.json();
-                setOrders(Array.isArray(data) ? data : []);
-            } else {
-                setOrders([]);
+                setQuotations(data);
             }
         } catch (error) {
-            console.error("Failed to fetch orders", error);
-            setOrders([]);
+            console.error("Error fetching quotations:", error);
         }
     };
 
     return (
-        <div className="space-y-6">
+        <div className="flex flex-col h-screen bg-[#0F172A]">
+            <StandardModuleHeader
+                moduleName="Sales"
+                moduleIcon={<BarChart3 size={20} />}
+                menuItems={MENU_ITEMS}
+                searchPlaceholder="Search quotations, orders..."
+            />
 
-            <div className="flex-1 overflow-auto p-4">
-                {/* Toolbar */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-xl font-bold text-white">Sales Orders</h2>
-                        <p className="text-gray-500 text-sm">Manage quotations and confirmed orders</p>
+            <div className="flex-1 overflow-auto p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                        <div>
+                            <h2 className="text-2xl font-semibold text-gray-200">Quotations</h2>
+                            <p className="text-sm text-gray-400 mt-1">
+                                {quotations.length} quotations • ${quotations.reduce((sum, q) => sum + q.total, 0).toLocaleString()} total value
+                            </p>
+                        </div>
+                        <ViewSwitcher
+                            currentView={currentView}
+                            availableViews={["list", "kanban"]}
+                            onViewChange={setCurrentView}
+                        />
                     </div>
                     <button
-                        onClick={() => router.push('/sales/quotations/new')}
-                        className="galaxy-btn-primary"
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
                     >
-                        Create New Order
+                        <Plus size={18} /> New Quotation
                     </button>
                 </div>
 
-                {/* List View */}
-                <div className="galaxy-card overflow-hidden">
-                    <table className="w-full text-sm text-left text-gray-400">
-                        <thead className="text-xs text-gray-200 uppercase bg-[#0F172A] border-b border-gray-700">
-                            <tr>
-                                <th className="px-6 py-3">Number</th>
-                                <th className="px-6 py-3">Creation Date</th>
-                                <th className="px-6 py-3">Customer</th>
-                                <th className="px-6 py-3">Salesperson</th>
-                                <th className="px-6 py-3">Activities</th>
-                                <th className="px-6 py-3 text-right">Total</th>
-                                <th className="px-6 py-3 text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orders.map((q) => (
-                                <tr key={q.id} className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer" onClick={() => router.push(`/sales/${q.id}`)}>
-                                    <td className="px-6 py-4 font-medium text-white text-purple-400 hover:underline">{q.name}</td>
-                                    <td className="px-6 py-4">{new Date(q.date_order).toLocaleDateString()}</td>
-                                    <td className="px-6 py-4">{q.customer_name}</td>
-                                    <td className="px-6 py-4 flex items-center gap-2">
-                                        <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center text-[10px] text-white font-bold">A</div>
-                                        <span>Admin</span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <Clock size={16} className="text-gray-500" />
-                                    </td>
-                                    <td className="px-6 py-4 text-right font-medium text-white">${q.amount_total.toLocaleString()}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                            q.state === 'sale' ? 'bg-green-500/20 text-green-400' :
-                                            q.state === 'sent' ? 'bg-purple-500/20 text-purple-400' :
-                                            'bg-gray-500/20 text-gray-400'
-                                        }`}>
-                                            {q.state}
-                                        </span>
-                                    </td>
+                {currentView === "list" && (
+                    <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
+                        <table className="w-full">
+                            <thead className="bg-[#0F172A] border-b border-gray-700">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">
+                                        <input type="checkbox" className="w-4 h-4 mr-2" />
+                                        Quotation
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Customer</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Total</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Status</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Created</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {quotations.map(quotation => (
+                                    <tr key={quotation.id} className="border-b border-gray-700 hover:bg-[#1E293B] transition-colors">
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <input type="checkbox" className="w-4 h-4" />
+                                                <div className="flex items-center gap-2">
+                                                    <FileText size={16} className="text-blue-400" />
+                                                    <span className="font-medium text-white">{quotation.id}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-300">{quotation.customer}</td>
+                                        <td className="px-4 py-3 text-green-400 font-semibold">${quotation.total.toLocaleString()}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${quotation.status === 'confirmed' ? 'bg-green-500/20 text-green-400' :
+                                                    quotation.status === 'sent' ? 'bg-blue-500/20 text-blue-400' :
+                                                        'bg-gray-500/20 text-gray-400'
+                                                }`}>
+                                                {quotation.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-400 text-sm">
+                                            {new Date(quotation.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <button className="text-blue-400 hover:text-blue-300 text-sm">View</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {quotations.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                                            No quotations found. Create your first quotation to get started.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {currentView === "kanban" && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {['draft', 'sent', 'confirmed'].map(status => (
+                            <div key={status} className="bg-[#1E293B]/50 rounded-lg p-4 border border-gray-700">
+                                <h3 className="font-semibold text-white mb-4 capitalize">{status}</h3>
+                                <div className="space-y-3">
+                                    {quotations.filter(q => q.status === status).map(quotation => (
+                                        <div key={quotation.id} className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-all">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <FileText size={16} className="text-blue-400" />
+                                                <span className="font-medium text-white">{quotation.id}</span>
+                                            </div>
+                                            <div className="text-sm text-gray-400 mb-2">{quotation.customer}</div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-green-400 font-semibold">${quotation.total.toLocaleString()}</span>
+                                                <span className="text-xs text-gray-500">{new Date(quotation.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -46,49 +46,12 @@ def read_lead(lead_id: str, client: Client = Depends(get_supabase_client)):
     response = client.table("crm_lead").select("*").eq("id", lead_id).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Lead not found")
-    return _map_crm_lead(response.data[0])
+    return response.data[0]
 
 @router.put("/{lead_id}", response_model=Lead)
-def update_lead(lead_id: str, lead: LeadUpdate, client: Client = Depends(get_supabase_client)):
-    update_data = {
-        "name": lead.name,
-        "email_from": lead.email,
-        "phone": lead.phone,
-        "stage_id": lead.status,
-        "probability": lead.probability,
-        "expected_revenue": getattr(lead, 'expected_revenue', None),
-        "priority": getattr(lead, 'priority', None),
-    }
-    update_data = {k: v for k, v in update_data.items() if v is not None}
-    response = client.table("crm_lead").update(update_data).eq("id", lead_id).execute()
+def update_lead(lead_id: str, lead: LeadUpdate):
+    data = lead.dict(exclude_unset=True)
+    response = supabase.table("leads").update(data).eq("id", lead_id).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Lead not found")
-    return _map_crm_lead(response.data[0])
-
-@router.delete("/{lead_id}")
-def delete_lead(lead_id: str, client: Client = Depends(get_supabase_client)):
-    client.table("crm_lead").delete().eq("id", lead_id).execute()
-    return {"message": "Lead deleted"}
-
-def _map_crm_lead(row: dict) -> dict:
-    """Map crm_lead DB columns to Lead schema fields."""
-    return {
-        "id": row.get("id"),
-        "name": row.get("name"),
-        "email": row.get("email_from"),
-        "phone": row.get("phone"),
-        "status": row.get("stage_id", "new"),
-        "probability": row.get("probability", 0.0),
-        "sentiment_score": row.get("sentiment_score", 0.0),
-        "company_name": row.get("company_name"),
-        "type": row.get("type", "lead"),
-        "expected_revenue": row.get("expected_revenue", 0.0),
-        "prorated_revenue": row.get("prorated_revenue", 0.0),
-        "priority": row.get("priority", 0),
-        "date_deadline": row.get("date_deadline"),
-        "lost_reason": row.get("lost_reason"),
-        "source": row.get("source"),
-        "notes": row.get("notes"),
-        "created_at": row.get("created_at"),
-    }
-
+    return response.data[0]

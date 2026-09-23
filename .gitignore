@@ -16,3 +16,8 @@ build/
 # IDE
 .vscode/
 .idea/
+
+# Large Files & Media
+*.mp4
+Videos Demonstration of Odoo(Competitor)/
+

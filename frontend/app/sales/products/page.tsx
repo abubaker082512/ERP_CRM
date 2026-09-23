@@ -1,179 +1,152 @@
 "use client";
 import { fetchAPI } from '@/lib/api';
 
-import { useState, useEffect } from 'react';
-import SalesHeader from '@/components/sales/SalesHeader';
-import { Plus, Search, Filter, LayoutGrid, List } from 'lucide-react';
+import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
+import { useState } from "react";
+import { BarChart3, Package, DollarSign, Tag } from "lucide-react";
+
+const MENU_ITEMS = [
+    { name: "Quotations", href: "/sales" },
+    { name: "Orders", href: "/sales/orders" },
+    { name: "Customers", href: "/sales/customers" },
+    { name: "Products", href: "/sales/products" },
+    { name: "Reporting", href: "/sales/reporting" },
+    { name: "Configuration", href: "/sales/configuration" },
+];
 
 type Product = {
     id: string;
     name: string;
-    list_price: number;
-    cost_price: number;
-    quantity_on_hand: number;
-    image_url?: string;
+    sku: string;
+    category: string;
+    price: number;
+    cost: number;
+    stock: number;
 };
 
-export default function ProductsPage() {
-    const [products, setProducts] = useState<Product[]>([]);
-    const [isNewModalOpen, setIsNewModalOpen] = useState(false);
-    const [newProductName, setNewProductName] = useState('');
-    const [newProductPrice, setNewProductPrice] = useState('');
-    const [newProductCost, setNewProductCost] = useState('');
+const mockProducts: Product[] = [
+    { id: "1", name: "Product A", sku: "PRD-001", category: "Electronics", price: 299.99, cost: 150.00, stock: 45 },
+    { id: "2", name: "Product B", sku: "PRD-002", category: "Accessories", price: 49.99, cost: 25.00, stock: 120 },
+    { id: "3", name: "Product C", sku: "PRD-003", category: "Software", price: 199.99, cost: 50.00, stock: 0 },
+];
 
-    useEffect(() => {
-        fetchProducts();
-    }, []);
-
-    const fetchProducts = async () => {
-        try {
-            const res = await fetchAPI("/products");
-            if (res.ok) {
-                const data = await res.json();
-                setProducts(data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch products", error);
-        }
-    };
-
-    const handleCreateProduct = async () => {
-        if (!newProductName.trim()) return;
-
-        try {
-            const res = await fetchAPI("/products", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: newProductName,
-                    list_price: parseFloat(newProductPrice) || 0,
-                    cost_price: parseFloat(newProductCost) || 0,
-                    quantity_on_hand: 0
-                })
-            });
-
-            if (res.ok) {
-                const newProduct = await res.json();
-                setProducts([...products, newProduct]);
-                setNewProductName('');
-                setNewProductPrice('');
-                setNewProductCost('');
-                setIsNewModalOpen(false);
-            }
-        } catch (error) {
-            console.error("Failed to create product", error);
-        }
-    };
+export default function SalesProductsPage() {
+    const [products] = useState<Product[]>(mockProducts);
+    const [currentView, setCurrentView] = useState<ViewType>("list");
 
     return (
-        <div className="flex flex-col h-screen">
-            <SalesHeader />
+        <div className="flex flex-col h-screen bg-[#0F172A]">
+            <StandardModuleHeader
+                moduleName="Sales"
+                moduleIcon={<BarChart3 size={20} />}
+                menuItems={MENU_ITEMS}
+                searchPlaceholder="Search products..."
+            />
 
-            <div className="flex-1 overflow-auto p-4">
-                {/* Toolbar */}
+            <div className="flex-1 overflow-auto p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => setIsNewModalOpen(true)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm font-medium"
-                        >
-                            New
-                        </button>
-                        <span className="text-xl font-semibold text-gray-200">Products</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 bg-[#1E293B] rounded border border-gray-700 p-1">
-                        <button className="p-1.5 bg-gray-700 rounded text-white"><LayoutGrid size={18} /></button>
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-gray-400"><List size={18} /></button>
+                        <div>
+                            <h2 className="text-2xl font-semibold text-gray-200">Products</h2>
+                            <p className="text-sm text-gray-400 mt-1">{products.length} products available</p>
+                        </div>
+                        <ViewSwitcher
+                            currentView={currentView}
+                            availableViews={["list", "kanban"]}
+                            onViewChange={setCurrentView}
+                        />
                     </div>
                 </div>
 
-                {/* New Product Modal */}
-                {isNewModalOpen && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                        <div className="bg-[#1E293B] rounded-lg shadow-xl w-full max-w-md border border-gray-700 p-6">
-                            <h2 className="text-lg font-semibold text-white mb-4">Create Product</h2>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Product Name</label>
-                                    <input
-                                        type="text"
-                                        value={newProductName}
-                                        onChange={(e) => setNewProductName(e.target.value)}
-                                        className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-purple-500 outline-none"
-                                        placeholder="e.g. Office Chair"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-400 mb-1">Sales Price</label>
-                                        <input
-                                            type="number"
-                                            value={newProductPrice}
-                                            onChange={(e) => setNewProductPrice(e.target.value)}
-                                            className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-purple-500 outline-none"
-                                            placeholder="0.00"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-400 mb-1">Cost</label>
-                                        <input
-                                            type="number"
-                                            value={newProductCost}
-                                            onChange={(e) => setNewProductCost(e.target.value)}
-                                            className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-purple-500 outline-none"
-                                            placeholder="0.00"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    onClick={() => setIsNewModalOpen(false)}
-                                    className="px-4 py-2 text-gray-300 hover:text-white"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleCreateProduct}
-                                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-medium"
-                                >
-                                    Save
-                                </button>
-                            </div>
-                        </div>
+                {currentView === "list" && (
+                    <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
+                        <table className="w-full">
+                            <thead className="bg-[#0F172A] border-b border-gray-700">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Product</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">SKU</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Category</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Price</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Cost</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Margin</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {products.map(product => {
+                                    const margin = ((product.price - product.cost) / product.price * 100).toFixed(1);
+                                    return (
+                                        <tr key={product.id} className="border-b border-gray-700 hover:bg-[#1E293B] transition-colors">
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-2">
+                                                    <Package size={16} className="text-blue-400" />
+                                                    <span className="font-medium text-white">{product.name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-300">{product.sku}</td>
+                                            <td className="px-4 py-3">
+                                                <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs">
+                                                    {product.category}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-green-400 font-semibold">${product.price.toFixed(2)}</td>
+                                            <td className="px-4 py-3 text-gray-300">${product.cost.toFixed(2)}</td>
+                                            <td className="px-4 py-3 text-blue-400">{margin}%</td>
+                                            <td className="px-4 py-3">
+                                                <span className={product.stock === 0 ? 'text-red-400' : product.stock < 50 ? 'text-yellow-400' : 'text-gray-300'}>
+                                                    {product.stock}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
                 )}
 
-                {/* Products Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {products.map((product) => (
-                        <div key={product.id} className="bg-[#1E293B] border border-gray-700 rounded-lg overflow-hidden hover:border-purple-500 transition-colors group cursor-pointer">
-                            <div className="h-32 bg-gray-800 flex items-center justify-center relative">
-                                {product.image_url ? (
-                                    <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
-                                ) : (
-                                    <span className="text-4xl">📦</span>
-                                )}
-                            </div>
-                            <div className="p-4">
-                                <h3 className="font-semibold text-gray-200 mb-1 group-hover:text-purple-400">{product.name}</h3>
-                                <div className="flex justify-between items-end">
-                                    <div>
-                                        <p className="text-xs text-gray-500">Price</p>
-                                        <p className="font-medium text-white">${product.list_price.toFixed(2)}</p>
+                {currentView === "kanban" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {products.map(product => {
+                            const margin = ((product.price - product.cost) / product.price * 100).toFixed(1);
+                            return (
+                                <div key={product.id} className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Package size={20} className="text-blue-400" />
+                                        <h3 className="font-semibold text-white">{product.name}</h3>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-xs text-gray-500">On Hand</p>
-                                        <p className="font-medium text-purple-400">{product.quantity_on_hand} Units</p>
+                                    <div className="space-y-2 text-sm mb-4">
+                                        <div className="flex justify-between text-gray-400">
+                                            <span>SKU:</span>
+                                            <span className="text-gray-300">{product.sku}</span>
+                                        </div>
+                                        <div className="flex justify-between text-gray-400">
+                                            <span>Category:</span>
+                                            <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded text-xs">
+                                                {product.category}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between text-gray-400">
+                                            <span>Price:</span>
+                                            <span className="text-green-400 font-semibold">${product.price.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-gray-400">
+                                            <span>Margin:</span>
+                                            <span className="text-blue-400">{margin}%</span>
+                                        </div>
+                                        <div className="flex justify-between text-gray-400">
+                                            <span>Stock:</span>
+                                            <span className={product.stock === 0 ? 'text-red-400 font-semibold' : product.stock < 50 ? 'text-yellow-400' : 'text-gray-300'}>
+                                                {product.stock}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );

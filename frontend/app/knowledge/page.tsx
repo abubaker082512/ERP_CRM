@@ -1,128 +1,101 @@
 "use client";
 import { fetchAPI } from '@/lib/api';
 
-import KnowledgeHeader from "@/components/knowledge/KnowledgeHeader";
-import { useEffect, useState } from "react";
-import { Plus, BookOpen, FileText } from "lucide-react";
+import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { BookOpen, Search, Star, Folder, FileText, ChevronRight } from "lucide-react";
 
-type Article = {
+const MENU_ITEMS = [
+    { name: "Dashboard", href: "/knowledge" },
+    { name: "Articles", href: "/knowledge/articles" },
+    { name: "Favorites", href: "/knowledge/favorites" },
+    { name: "Configuration", href: "/knowledge/configuration" },
+];
+
+type Category = {
     id: string;
-    title: string;
-    category: string;
-    created_at: string;
+    name: string;
+    articles: number;
+    icon: any;
+    color: string;
 };
 
+const categories: Category[] = [
+    { id: "CAT/001", name: "Internal Procedures", articles: 12, icon: FileText, color: "text-blue-400" },
+    { id: "CAT/002", name: "Sales Playbook", articles: 8, icon: Folder, color: "text-green-400" },
+    { id: "CAT/003", name: "HR Policies", articles: 15, icon: BookOpen, color: "text-purple-400" },
+    { id: "CAT/004", name: "IT Support", articles: 24, icon: FileText, color: "text-red-400" },
+];
+
 export default function KnowledgePage() {
-    const [articles, setArticles] = useState<Article[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newTitle, setNewTitle] = useState("");
-    const [newCategory, setNewCategory] = useState("General");
-
-    useEffect(() => {
-        fetchAPI("/knowledge/articles")
-            .then((r) => r.ok ? r.json() : [])
-            .then((data) => {
-                setArticles(Array.isArray(data) ? data : []);
-            })
-            .catch((err) => {
-                console.error(err);
-                setArticles([]);
-            });
-    }, []);
-
-    const createArticle = async () => {
-        if (!newTitle.trim()) return;
-        const res = await fetchAPI("/knowledge/articles", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: newTitle, category: newCategory }),
-        });
-        if (res.ok) {
-            const article = await res.json();
-            setArticles([...articles, article]);
-            setNewTitle("");
-            setIsModalOpen(false);
-        }
-    };
-
     return (
-        <div className="space-y-6">
-            <div className="flex-1 overflow-auto p-0">
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-gray-200">Knowledge Base</h2>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-1.5 rounded flex items-center gap-1"
-                    >
-                        <Plus size={16} /> New Article
-                    </button>
-                </div>
+        <div className="flex flex-col h-screen bg-[#0F172A]">
+            <StandardModuleHeader
+                moduleName="Knowledge"
+                moduleIcon={<BookOpen size={20} />}
+                menuItems={MENU_ITEMS}
+                searchPlaceholder="Search knowledge base..."
+            />
 
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {articles.map((article) => (
-                        <div
-                            key={article.id}
-                            className="galaxy-card p-6"
-                        >
-                            <div className="flex items-start gap-3 mb-4">
-                                <div className="bg-teal-500/20 p-2 rounded text-teal-500">
-                                    <FileText size={20} />
+            <div className="flex-1 overflow-auto p-6">
+                <div className="max-w-4xl mx-auto">
+                    <div className="text-center mb-12">
+                        <h1 className="text-3xl font-bold text-white mb-4">How can we help you?</h1>
+                        <div className="relative max-w-xl mx-auto">
+                            <input
+                                type="text"
+                                placeholder="Search for articles, guides, and docs..."
+                                className="w-full bg-[#1E293B] border border-gray-700 text-white rounded-lg pl-12 pr-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
+                            />
+                            <Search className="absolute left-4 top-3.5 text-gray-400" size={20} />
+                        </div>
+                    </div>
+
+                    <div className="mb-8">
+                        <h2 className="text-xl font-semibold text-gray-200 mb-4">Browse by Category</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {categories.map(cat => (
+                                <div key={cat.id} className="bg-[#1E293B] border border-gray-700 rounded-lg p-6 hover:border-blue-500 transition-all cursor-pointer group">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-lg bg-gray-800 ${cat.color}`}>
+                                                <cat.icon size={24} />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-white text-lg group-hover:text-blue-400 transition-colors">{cat.name}</h3>
+                                                <p className="text-sm text-gray-400">{cat.articles} articles</p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight className="text-gray-500 group-hover:text-white transition-colors" />
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="font-medium text-white line-clamp-2">{article.title}</h3>
-                                    <p className="text-xs text-gray-400 mt-1">{article.category}</p>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 className="text-xl font-semibold text-gray-200 mb-4">Popular Articles</h2>
+                        <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
+                            {[
+                                { title: "How to create a new Sales Order", views: 1245, category: "Sales Playbook" },
+                                { title: "Employee Onboarding Checklist", views: 980, category: "HR Policies" },
+                                { title: "Setting up VPN Access", views: 850, category: "IT Support" },
+                                { title: "Expense Reimbursement Policy", views: 720, category: "Internal Procedures" },
+                            ].map((article, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-4 border-b border-gray-700 last:border-0 hover:bg-[#2D3748] transition-colors cursor-pointer">
+                                    <div className="flex items-center gap-3">
+                                        <FileText size={18} className="text-gray-400" />
+                                        <span className="text-gray-200 hover:text-blue-400 font-medium">{article.title}</span>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                                        <span>{article.category}</span>
+                                        <span>{article.views} views</span>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="text-xs text-gray-500">
-                                Created: {new Date(article.created_at).toLocaleDateString()}
-                            </div>
-                        </div>
-                    ))}
-
-                    {articles.length === 0 && (
-                        <div className="col-span-full text-center py-12 text-gray-500">
-                            No articles found. Create one to share knowledge.
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="galaxy-card p-6 w-full max-w-md border border-gray-700">
-                        <h3 className="text-lg font-semibold text-white mb-4">Create Article</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Title</label>
-                                <input
-                                    type="text"
-                                    value={newTitle}
-                                    onChange={(e) => setNewTitle(e.target.value)}
-                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-teal-500"
-                                    placeholder="e.g. How to configure VPN"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Category</label>
-                                <select
-                                    value={newCategory}
-                                    onChange={(e) => setNewCategory(e.target.value)}
-                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-teal-500"
-                                >
-                                    <option value="General">General</option>
-                                    <option value="Technical">Technical</option>
-                                    <option value="HR">HR</option>
-                                    <option value="Sales">Sales</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div className="flex justify-end gap-3 mt-6">
-                            <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-300 hover:text-white">Cancel</button>
-                            <button onClick={createArticle} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded">Create</button>
+                            ))}
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
         </div>
     );
 }
