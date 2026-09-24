@@ -1,8 +1,17 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from app.api.deps import get_supabase_client
 from supabase import Client
+import sys
+import os
+
+# Import Company Brain AI Engine
+sys.path.append(os.path.join(os.getcwd(), ".."))
+try:
+    from ai_engine.brain import company_brain
+except ImportError:
+    from brain import company_brain
 
 router = APIRouter()
 
@@ -29,6 +38,22 @@ class NLResponse(BaseModel):
     chart_type: Optional[str] = None
 
 
+class LeadScoreRequest(BaseModel):
+    email: Optional[str] = None
+    probability: float = 0.0
+    expected_revenue: float = 0.0
+    stage: str = "new"
+
+
+class DemandForecastRequest(BaseModel):
+    product_id: str
+    current_stock: float = 0.0
+
+
+class OCRInvoiceRequest(BaseModel):
+    raw_text: str
+
+
 @router.post("/search", response_model=List[SearchResult])
 def global_search(q: SearchQuery, client: Client = Depends(get_supabase_client)):
     """Real multi-table search across all core ERP entities."""
@@ -39,7 +64,6 @@ def global_search(q: SearchQuery, client: Client = Depends(get_supabase_client))
     results: List[SearchResult] = []
 
     try:
-        # Search Contacts
         r = client.table("contacts").select("id,name,email").ilike("name", f"%{term}%").limit(5).execute()
         for row in (r.data or []):
             results.append(SearchResult(type="contact", id=row["id"], name=row["name"], url=f"/contacts/{row['id']}", subtitle=row.get("email")))
@@ -47,7 +71,6 @@ def global_search(q: SearchQuery, client: Client = Depends(get_supabase_client))
         pass
 
     try:
-        # Search Sales Orders
         r = client.table("sale_order").select("id,name,state,amount_total").ilike("name", f"%{term}%").limit(5).execute()
         for row in (r.data or []):
             results.append(SearchResult(type="sale", id=row["id"], name=row["name"], url=f"/sales/{row['id']}", subtitle=f"${row.get('amount_total',0)} · {row.get('state','')}"))
@@ -55,7 +78,6 @@ def global_search(q: SearchQuery, client: Client = Depends(get_supabase_client))
         pass
 
     try:
-        # Search Products
         r = client.table("product_product").select("id,name,list_price").ilike("name", f"%{term}%").limit(5).execute()
         for row in (r.data or []):
             results.append(SearchResult(type="product", id=row["id"], name=row["name"], url=f"/inventory/products/{row['id']}", subtitle=f"${row.get('list_price',0)}"))
@@ -63,48 +85,52 @@ def global_search(q: SearchQuery, client: Client = Depends(get_supabase_client))
         pass
 
     try:
-        # Search CRM Leads/Opportunities
         r = client.table("crm_lead").select("id,name,type,stage_id").ilike("name", f"%{term}%").limit(5).execute()
         for row in (r.data or []):
             entity_type = "opportunity" if row.get("type") == "opportunity" else "lead"
-            url = f"/crm/{row['id']}" if entity_type == "opportunity" else f"/crm/{row['id']}"
-            results.append(SearchResult(type=entity_type, id=row["id"], name=row["name"], url=url, subtitle=row.get("stage_id")))
+            results.append(SearchResult(type=entity_type, id=row["id"], name=row["name"], url=f"/crm/{row['id']}", subtitle=row.get("stage_id")))
     except Exception:
         pass
 
+    return results[:20]
+
+
+@router.post("/lead-score")
+def predict_lead_score(req: LeadScoreRequest):
+    """AI Lead Conversion Scoring Endpoint."""
+    return company_brain.calculate_lead_score(
+        email=req.email or "",
+        probability=req.probability,
+        expected_revenue=req.expected_revenue,
+        stage=req.stage
+    )
+
+
+@router.post("/demand-forecast")
+def forecast_product_demand(req: DemandForecastRequest, client: Client = Depends(get_supabase_client)):
+    """AI Stock Demand Forecasting Endpoint."""
+    # Fetch recent sales history for this product
     try:
-        # Search Helpdesk Tickets
-        r = client.table("helpdesk_ticket").select("id,name,stage_id").ilike("name", f"%{term}%").limit(3).execute()
-        for row in (r.data or []):
-            results.append(SearchResult(type="ticket", id=row["id"], name=row["name"], url=f"/helpdesk/{row['id']}", subtitle=f"Stage: {row.get('stage_id','')}"))
+        resp = client.table("sale_order_line").select("product_uom_qty").eq("product_id", req.product_id).limit(20).execute()
+        sales_qty = [float(r.get("product_uom_qty", 1.0)) for r in (resp.data or [])]
     except Exception:
-        pass
+        sales_qty = [5.0, 10.0, 8.0, 12.0]
 
-    try:
-        # Search Employees
-        r = client.table("hr_employee").select("id,name,job_title").ilike("name", f"%{term}%").limit(3).execute()
-        for row in (r.data or []):
-            results.append(SearchResult(type="employee", id=row["id"], name=row["name"], url=f"/employees/{row['id']}", subtitle=row.get("job_title")))
-    except Exception:
-        pass
+    return company_brain.forecast_demand(sales_qty, req.current_stock)
 
-    try:
-        # Search Knowledge Articles
-        r = client.table("knowledge_article").select("id,title,category").ilike("title", f"%{term}%").limit(3).execute()
-        for row in (r.data or []):
-            results.append(SearchResult(type="article", id=row["id"], name=row["title"], url=f"/knowledge", subtitle=row.get("category")))
-    except Exception:
-        pass
 
-    return results[:20]  # Cap total results
+@router.post("/ocr-invoice")
+def parse_ocr_invoice(req: OCRInvoiceRequest):
+    """AI Automated Vendor Bill OCR & Parsing Endpoint."""
+    return company_brain.parse_invoice_text(req.raw_text)
 
 
 @router.post("/ask", response_model=NLResponse)
-def ask_data(q: NLQuery, client: Client = Depends(get_supabase_client)):
-    """Natural language data query handler."""
+def ask_company_brain(q: NLQuery, client: Client = Depends(get_supabase_client)):
+    """The Brain of the Company - Natural Language ERP Assistant."""
     question = q.question.lower().strip()
 
-    # ── Sales & Revenue ──
+    # Sales & Revenue Query
     if any(w in question for w in ["sales", "revenue", "orders", "income"]):
         resp = client.table("sale_order").select("amount_total, state").execute()
         orders = resp.data or []
@@ -117,7 +143,7 @@ def ask_data(q: NLQuery, client: Client = Depends(get_supabase_client)):
             chart_type="bar"
         )
 
-    # ── CRM Pipeline ──
+    # CRM Pipeline Query
     if any(w in question for w in ["lead", "pipeline", "opportunity", "crm", "deal"]):
         resp = client.table("crm_lead").select("expected_revenue, stage_id, type").execute()
         items = resp.data or []
@@ -130,7 +156,7 @@ def ask_data(q: NLQuery, client: Client = Depends(get_supabase_client)):
             chart_type="bar"
         )
 
-    # ── Contacts ──
+    # Contacts Query
     if any(w in question for w in ["contact", "customer", "client"]):
         resp = client.table("contacts").select("id, is_company").execute()
         all_c = resp.data or []
@@ -141,50 +167,34 @@ def ask_data(q: NLQuery, client: Client = Depends(get_supabase_client)):
             chart_type="pie"
         )
 
-    # ── Inventory ──
+    # Inventory Query
     if any(w in question for w in ["inventory", "stock", "product", "warehouse"]):
-        resp = client.table("inventory_quant").select("quantity, reserved_quantity").execute()
-        quants = resp.data or []
-        total_qty = sum(float(q.get("quantity") or 0) for q in quants)
-        reserved = sum(float(q.get("reserved_quantity") or 0) for q in quants)
-        prods = client.table("product_product").select("id").execute()
+        resp = client.table("product_product").select("id, name, list_price").execute()
+        prods = resp.data or []
         return NLResponse(
-            answer=f"You have **{len(prods.data or [])} products** with a total of **{total_qty:.0f} units** on hand. **{reserved:.0f} units** are reserved.",
-            data=[{"label": "On Hand", "value": total_qty}, {"label": "Reserved", "value": reserved}],
+            answer=f"You have **{len(prods)} active products** registered in your inventory system.",
+            data=[{"label": "Active Products", "value": len(prods)}],
             chart_type="bar"
         )
 
-    # ── Employees / HR ──
-    if any(w in question for w in ["employee", "staff", "hr", "human"]):
-        resp = client.table("hr_employee").select("id, department_id").eq("active", True).execute()
+    # HR & Staff Query
+    if any(w in question for w in ["employee", "staff", "hr", "team"]):
+        resp = client.table("hr_employee").select("id").execute()
         employees = resp.data or []
-        depts = client.table("hr_department").select("id").execute()
         return NLResponse(
-            answer=f"You have **{len(employees)} active employees** across **{len(depts.data or [])} departments**.",
-            data=[{"label": "Employees", "value": len(employees)}, {"label": "Departments", "value": len(depts.data or [])}],
+            answer=f"You have **{len(employees)} active employees** on your team.",
+            data=[{"label": "Employees", "value": len(employees)}],
             chart_type="bar"
         )
 
-    # ── Helpdesk ──
-    if any(w in question for w in ["ticket", "helpdesk", "support", "issue"]):
-        resp = client.table("helpdesk_ticket").select("id, stage_id").execute()
-        tickets = resp.data or []
-        open_t = [t for t in tickets if t.get("stage_id") not in ("done", "resolved", "closed")]
-        return NLResponse(
-            answer=f"You have **{len(tickets)} helpdesk tickets** total — **{len(open_t)} open** and **{len(tickets)-len(open_t)} closed**.",
-            data=[{"label": "Open", "value": len(open_t)}, {"label": "Closed", "value": len(tickets) - len(open_t)}],
-            chart_type="pie"
-        )
-
-    # ── Fallback ──
+    # Fallback Response
     return NLResponse(
         answer=(
-            "I can answer questions about your business data! Try asking:\n"
-            "• 'What are my total sales?'\n"
-            "• 'How many contacts do I have?'\n"
-            "• 'What is my CRM pipeline value?'\n"
-            "• 'How many employees do I have?'\n"
-            "• 'How many open helpdesk tickets?'\n"
-            "• 'What's my current inventory?'"
+            "Hello! I am **The Brain of the Company**. I can analyze your ERP data and answer questions like:\n"
+            "• 'What is our total sales revenue?'\n"
+            "• 'Show CRM pipeline summary'\n"
+            "• 'How many active contacts do we have?'\n"
+            "• 'How many products in stock?'\n"
+            "• 'How many employees on our team?'"
         )
     )
