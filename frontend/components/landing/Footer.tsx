@@ -8,7 +8,7 @@ export default function Footer() {
                     {/* Column 1: Brand Info */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2">
-                            <img src="/logo2.png" alt="Beraxis Logo" className="h-8 w-auto" />
+                            <img src="/logo2.png" onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png'; }} alt="Beraxis Logo" className="h-8 w-auto object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]" />
                             <span className="text-xl font-bold tracking-tighter text-white">BERAXIS<span className="text-purple-500">.</span></span>
                         </div>
                         <p className="text-xs text-gray-500 font-medium leading-relaxed">

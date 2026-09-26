@@ -10,8 +10,8 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-20">
                     {/* Logo */}
-                    <Link href="/" className="flex-shrink-0 flex items-center gap-2 hover:opacity-90 transition-opacity">
-                        <img src="/logo2.png" alt="Beraxis Logo" className="h-10 w-auto" />
+                    <Link href="/" className="flex-shrink-0 flex items-center gap-3 hover:opacity-90 transition-opacity">
+                        <img src="/logo2.png" onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png'; }} alt="Beraxis Logo" className="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]" />
                         <span className="text-2xl font-bold tracking-tighter text-white">BERAXIS<span className="text-purple-500">.</span></span>
                     </Link>
  
