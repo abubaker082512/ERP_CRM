@@ -5,6 +5,8 @@ import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
 import { useEffect, useState } from "react";
 import { Plus, Package, TrendingUp, AlertCircle } from "lucide-react";
 
+import { fetchAPI } from "@/lib/api";
+
 const MENU_ITEMS = [
     { name: "Products", href: "/inventory" },
     { name: "Operations", href: "/inventory/operations" },
@@ -33,7 +35,7 @@ export default function InventoryPage() {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch("http://localhost:8000/api/v1/products/");
+            const res = await fetchAPI("/products");
             if (res.ok) {
                 const data = await res.json();
                 setProducts(data);

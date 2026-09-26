@@ -34,7 +34,7 @@ export default function SalesPage() {
 
     const fetchQuotations = async () => {
         try {
-            const res = await fetch("http://localhost:8000/api/v1/sales/quotations");
+            const res = await fetchAPI("/sales/quotations");
             if (res.ok) {
                 const data = await res.json();
                 setQuotations(data);

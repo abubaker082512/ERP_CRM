@@ -23,7 +23,12 @@ export default function LoginPage() {
                 body: JSON.stringify({ email, password })
             });
 
-            const data = await resp.json();
+            let data;
+            try {
+                data = await resp.json();
+            } catch (jsonErr) {
+                data = { detail: resp.status === 404 ? 'API endpoint not found or backend starting up.' : `Server returned error (${resp.status})` };
+            }
 
             if (resp.ok && data.access_token) {
                 localStorage.setItem('token', data.access_token);
