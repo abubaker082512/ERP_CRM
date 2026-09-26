@@ -7,6 +7,14 @@ backend_dir = os.path.join(root_dir, "backend")
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
+try:
+    from dotenv import load_dotenv
+    env_file = os.path.join(backend_dir, ".env")
+    if os.path.exists(env_file):
+        load_dotenv(env_file)
+except Exception as e:
+    pass
+
 from app.main import app
 
 # Export app for Vercel ASGI serverless runner
