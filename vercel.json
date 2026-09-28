@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/v1/(.*)",
-      "destination": "https://erp-crm-pvlx.onrender.com/api/v1/$1"
+      "destination": "https://galaxy-erp-backend.onrender.com/api/v1/$1"
     }
   ]
 }

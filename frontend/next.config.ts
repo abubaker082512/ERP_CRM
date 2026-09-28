@@ -8,12 +8,12 @@ const nextConfig = {
         ignoreBuildErrors: true,
     },
     // Proxy all /api/v1/* requests through Next.js to avoid browser CORS issues.
-    // On Vercel, set BACKEND_INTERNAL_URL=https://erp-crm-pvlx.onrender.com
+    // On Vercel, set BACKEND_INTERNAL_URL=https://galaxy-erp-backend.onrender.com
     async rewrites() {
         const backendUrl =
             process.env.BACKEND_INTERNAL_URL ||
             process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') ||
-            'https://erp-crm-pvlx.onrender.com';
+            'https://galaxy-erp-backend.onrender.com';
         return [
             {
                 source: '/api/v1/:path*',
