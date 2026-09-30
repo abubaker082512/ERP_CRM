@@ -35,7 +35,7 @@ export function useAntigravityVoice(): UseAntigravityVoiceReturn {
         setStatus('connecting');
         
         // Resolve backend URL
-        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://galaxy-erp-backend.onrender.com/api/v1';
         const wsUrl = apiBase.replace('http://', 'ws://').replace('https://', 'wss://') + '/antigravity/ws';
 
         // Retrieve auth token
@@ -224,7 +224,7 @@ export function useAntigravityVoice(): UseAntigravityVoiceReturn {
         setStatus('processing');
         setError(null);
 
-        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://galaxy-erp-backend.onrender.com/api/v1';
         let token = localStorage.getItem('token') || '';
         
         try {

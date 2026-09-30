@@ -1,0 +1,417 @@
+{
+  "routes": [
+    {
+      "route": "/",
+      "status": 200,
+      "latency_ms": 284.11,
+      "title": "Beraxis AI ERP",
+      "content_len": 6994,
+      "error": null
+    },
+    {
+      "route": "/about",
+      "status": 200,
+      "latency_ms": 271.04,
+      "title": "Beraxis AI ERP",
+      "content_len": 7341,
+      "error": null
+    },
+    {
+      "route": "/accounting",
+      "status": 200,
+      "latency_ms": 241.5,
+      "title": "Beraxis AI ERP",
+      "content_len": 7674,
+      "error": null
+    },
+    {
+      "route": "/appointments",
+      "status": 200,
+      "latency_ms": 316.84,
+      "title": "Beraxis AI ERP",
+      "content_len": 7688,
+      "error": null
+    },
+    {
+      "route": "/apps",
+      "status": 200,
+      "latency_ms": 251.74,
+      "title": "Beraxis AI ERP",
+      "content_len": 7156,
+      "error": null
+    },
+    {
+      "route": "/attendances",
+      "status": 200,
+      "latency_ms": 275.89,
+      "title": "Beraxis AI ERP",
+      "content_len": 7681,
+      "error": null
+    },
+    {
+      "route": "/barcode",
+      "status": 200,
+      "latency_ms": 260.07,
+      "title": "Beraxis AI ERP",
+      "content_len": 7653,
+      "error": null
+    },
+    {
+      "route": "/billing",
+      "status": 200,
+      "latency_ms": 273.0,
+      "title": "Beraxis AI ERP",
+      "content_len": 7221,
+      "error": null
+    },
+    {
+      "route": "/calendar",
+      "status": 200,
+      "latency_ms": 277.32,
+      "title": "Beraxis AI ERP",
+      "content_len": 7660,
+      "error": null
+    },
+    {
+      "route": "/checkout",
+      "status": 200,
+      "latency_ms": 273.08,
+      "title": "Beraxis AI ERP",
+      "content_len": 7226,
+      "error": null
+    },
+    {
+      "route": "/contact",
+      "status": 200,
+      "latency_ms": 238.99,
+      "title": "Beraxis AI ERP",
+      "content_len": 7350,
+      "error": null
+    },
+    {
+      "route": "/contacts",
+      "status": 200,
+      "latency_ms": 222.95,
+      "title": "Beraxis AI ERP",
+      "content_len": 7660,
+      "error": null
+    },
+    {
+      "route": "/crm",
+      "status": 200,
+      "latency_ms": 238.67,
+      "title": "Beraxis AI ERP",
+      "content_len": 7625,
+      "error": null
+    },
+    {
+      "route": "/dashboard",
+      "status": 200,
+      "latency_ms": 234.76,
+      "title": "Beraxis AI ERP",
+      "content_len": 7361,
+      "error": null
+    },
+    {
+      "route": "/discuss",
+      "status": 200,
+      "latency_ms": 235.58,
+      "title": "Beraxis AI ERP",
+      "content_len": 7652,
+      "error": null
+    },
+    {
+      "route": "/documents",
+      "status": 200,
+      "latency_ms": 223.41,
+      "title": "Beraxis AI ERP",
+      "content_len": 7667,
+      "error": null
+    },
+    {
+      "route": "/employees",
+      "status": 200,
+      "latency_ms": 258.03,
+      "title": "Beraxis AI ERP",
+      "content_len": 7667,
+      "error": null
+    },
+    {
+      "route": "/helpdesk",
+      "status": 200,
+      "latency_ms": 222.46,
+      "title": "Beraxis AI ERP",
+      "content_len": 7660,
+      "error": null
+    },
+    {
+      "route": "/inventory",
+      "status": 200,
+      "latency_ms": 231.8,
+      "title": "Beraxis AI ERP",
+      "content_len": 7666,
+      "error": null
+    },
+    {
+      "route": "/knowledge",
+      "status": 200,
+      "latency_ms": 233.99,
+      "title": "Beraxis AI ERP",
+      "content_len": 7667,
+      "error": null
+    },
+    {
+      "route": "/login",
+      "status": 200,
+      "latency_ms": 236.13,
+      "title": "Beraxis AI ERP",
+      "content_len": 7161,
+      "error": null
+    },
+    {
+      "route": "/manufacturing",
+      "status": 200,
+      "latency_ms": 223.9,
+      "title": "Beraxis AI ERP",
+      "content_len": 7695,
+      "error": null
+    },
+    {
+      "route": "/payroll",
+      "status": 200,
+      "latency_ms": 228.41,
+      "title": "Beraxis AI ERP",
+      "content_len": 7651,
+      "error": null
+    },
+    {
+      "route": "/planning",
+      "status": 200,
+      "latency_ms": 253.72,
+      "title": "Beraxis AI ERP",
+      "content_len": 7658,
+      "error": null
+    },
+    {
+      "route": "/pos",
+      "status": 200,
+      "latency_ms": 268.28,
+      "title": "Beraxis AI ERP",
+      "content_len": 7622,
+      "error": null
+    },
+    {
+      "route": "/pricing",
+      "status": 200,
+      "latency_ms": 374.1,
+      "title": "Beraxis AI ERP",
+      "content_len": 7351,
+      "error": null
+    },
+    {
+      "route": "/project",
+      "status": 200,
+      "latency_ms": 335.23,
+      "title": "Beraxis AI ERP",
+      "content_len": 7220,
+      "error": null
+    },
+    {
+      "route": "/purchase",
+      "status": 200,
+      "latency_ms": 300.81,
+      "title": "Beraxis AI ERP",
+      "content_len": 7660,
+      "error": null
+    },
+    {
+      "route": "/recruitment",
+      "status": 200,
+      "latency_ms": 241.32,
+      "title": "Beraxis AI ERP",
+      "content_len": 7681,
+      "error": null
+    },
+    {
+      "route": "/reports",
+      "status": 200,
+      "latency_ms": 239.52,
+      "title": "Beraxis AI ERP",
+      "content_len": 7221,
+      "error": null
+    },
+    {
+      "route": "/sales",
+      "status": 200,
+      "latency_ms": 254.82,
+      "title": "Beraxis AI ERP",
+      "content_len": 7639,
+      "error": null
+    },
+    {
+      "route": "/settings",
+      "status": 200,
+      "latency_ms": 370.31,
+      "title": "Beraxis AI ERP",
+      "content_len": 7660,
+      "error": null
+    },
+    {
+      "route": "/shop",
+      "status": 200,
+      "latency_ms": 331.55,
+      "title": "Beraxis AI ERP",
+      "content_len": 7336,
+      "error": null
+    },
+    {
+      "route": "/sign",
+      "status": 200,
+      "latency_ms": 306.09,
+      "title": "Beraxis AI ERP",
+      "content_len": 7632,
+      "error": null
+    },
+    {
+      "route": "/signup",
+      "status": 200,
+      "latency_ms": 304.51,
+      "title": "Beraxis AI ERP",
+      "content_len": 7165,
+      "error": null
+    },
+    {
+      "route": "/super-admin",
+      "status": 200,
+      "latency_ms": 314.25,
+      "title": "Beraxis AI ERP",
+      "content_len": 7188,
+      "error": null
+    },
+    {
+      "route": "/surveys",
+      "status": 200,
+      "latency_ms": 290.81,
+      "title": "Beraxis AI ERP",
+      "content_len": 7653,
+      "error": null
+    },
+    {
+      "route": "/team",
+      "status": 200,
+      "latency_ms": 230.05,
+      "title": "Beraxis AI ERP",
+      "content_len": 7156,
+      "error": null
+    },
+    {
+      "route": "/timesheets",
+      "status": 200,
+      "latency_ms": 219.48,
+      "title": "Beraxis AI ERP",
+      "content_len": 7236,
+      "error": null
+    },
+    {
+      "route": "/todo",
+      "status": 200,
+      "latency_ms": 234.18,
+      "title": "Beraxis AI ERP",
+      "content_len": 7631,
+      "error": null
+    }
+  ],
+  "database": [
+    {
+      "table": "contacts",
+      "status": 401,
+      "latency_ms": 485.02,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "crm_lead",
+      "status": 401,
+      "latency_ms": 1613.84,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "sale_order",
+      "status": 401,
+      "latency_ms": 153.95,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "product_product",
+      "status": 401,
+      "latency_ms": 1140.38,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "inventory_warehouse",
+      "status": 401,
+      "latency_ms": 1305.07,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "hr_employee",
+      "status": 401,
+      "latency_ms": 1619.17,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "knowledge_article",
+      "status": 401,
+      "latency_ms": 1273.91,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "todo_task",
+      "status": 401,
+      "latency_ms": 697.52,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "project_project",
+      "status": 401,
+      "latency_ms": 803.84,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "helpdesk_ticket",
+      "status": 401,
+      "latency_ms": 546.13,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "documents_document",
+      "status": 401,
+      "latency_ms": 190.34,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "mail_channel",
+      "status": 401,
+      "latency_ms": 147.11,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    },
+    {
+      "table": "mail_message",
+      "status": 401,
+      "latency_ms": 504.47,
+      "row_count": 0,
+      "error": "HTTP Error 401: Unauthorized"
+    }
+  ]
+}
