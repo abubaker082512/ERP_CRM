@@ -19,8 +19,8 @@ export default function ShopHeader({ cartCount, onCartClick }: { cartCount: numb
                     
                     <nav className="hidden md:flex items-center gap-6 ml-4">
                         <Link href="/shop" className="text-sm font-medium text-purple-400">Products</Link>
-                        <Link href="#" className="text-sm font-medium text-gray-400 hover:text-white transition">Categories</Link>
-                        <Link href="#" className="text-sm font-medium text-gray-400 hover:text-white transition">About Us</Link>
+                        <Link href="/shop" className="text-sm font-medium text-gray-400 hover:text-white transition">Categories</Link>
+                        <Link href="/pricing" className="text-sm font-medium text-gray-400 hover:text-white transition">About Us</Link>
                         <Link href="/" className="text-sm font-medium text-gray-400 hover:text-white transition">Employee Portal</Link>
                     </nav>
                 </div>

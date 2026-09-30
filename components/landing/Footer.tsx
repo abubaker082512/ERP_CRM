@@ -41,8 +41,8 @@ export default function Footer() {
                             <li><Link href="/about" className="hover:text-white transition-colors">About Our Vision</Link></li>
                             <li><Link href="/contact" className="hover:text-white transition-colors">Get in Touch</Link></li>
                             <li><Link href="/billing" className="hover:text-white transition-colors">Upgrade & Billing</Link></li>
-                            <li><a href="#" className="hover:text-white transition-colors">Partner Network</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">Platform Status</a></li>
+                            <li><Link href="/team" className="hover:text-white transition-colors">Partner Network</Link></li>
+                            <li><Link href="/settings" className="hover:text-white transition-colors">Platform Status</Link></li>
                         </ul>
                     </div>
 
@@ -67,9 +67,9 @@ export default function Footer() {
                 <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-600">
                     <p>© {new Date().getFullYear()} Beraxis. All rights reserved.</p>
                     <div className="flex gap-6">
-                        <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-                        <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-                        <a href="#" className="hover:text-white transition-colors">SLA Agreement</a>
+                        <Link href="/contact" className="hover:text-white transition-colors">Privacy Policy</Link>
+                        <Link href="/pricing" className="hover:text-white transition-colors">Terms of Service</Link>
+                        <Link href="/billing" className="hover:text-white transition-colors">SLA Agreement</Link>
                     </div>
                 </div>
             </div>
