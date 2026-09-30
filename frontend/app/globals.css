@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  background-color: #020205 !important;
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply text-white overflow-x-hidden;
+  font-family: 'Inter', sans-serif;
+  background-color: transparent !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.min-h-screen {
+  background-color: transparent !important;
+}
+
+/* Galaxy Background Utilities */
+.galaxy-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+  overflow: hidden;
+}
+
+/* Glassmorphism Components - GPU accelerated to prevent scroll jank */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transform: translateZ(0);
+}
+
+.glass-card {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  transition: all 0.3s ease;
+  transform: translateZ(0);
+}
+
+.glass-card:hover {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 0 10px 40px -10px rgba(124, 58, 237, 0.2);
+}
+
+/* Cosmic Accents */
+.text-cosmic-glow {
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 20px rgba(168, 85, 247, 0.4);
+}
+
+/* Premium Galaxy Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #8B5CF6, #EC4899);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #A78BFA, #F472B6);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+/* Custom scrollbar for specific elements */
+.custom-scrollbar {
+  scrollbar-gutter: stable;
+}
+
+/* Galaxy Component Tokens */
+.galaxy-card {
+  @apply bg-[#1E293B]/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl transition-all duration-300;
+  transform: translateZ(0);
+}
+.galaxy-card:hover {
+  @apply border-white/10 bg-[#1E293B]/60 -translate-y-1 shadow-[0_20px_50px_-12px_rgba(139,92,246,0.25)];
+}
+
+.galaxy-btn-primary {
+  @apply bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-2 px-6 rounded-lg 
+         hover:from-purple-500 hover:to-pink-500 shadow-[0_0_15px_rgba(139,92,246,0.3)] 
+         hover:shadow-[0_0_25px_rgba(139,92,246,0.5)] transition-all active:scale-95;
+}
+
+.galaxy-nav-item {
+  @apply flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-400 hover:text-white 
+         hover:bg-white/5 transition-all duration-200 relative overflow-hidden;
+}
+.galaxy-nav-item.active {
+  @apply text-white bg-gradient-to-r from-purple-500/20 to-pink-500/10 border-l-2 border-purple-500;
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1) translateZ(0); }
+  50% { opacity: 0.8; transform: scale(1.05) translateZ(0); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s infinite ease-in-out;
+}
+
+@keyframes star-float {
+  0% { transform: translateY(0) translateX(0) translateZ(0); }
+  50% { transform: translateY(-20px) translateX(10px) translateZ(0); }
+  100% { transform: translateY(0) translateX(0) translateZ(0); }
+}
+
+.nebula-glow {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: -1;
+  opacity: 0.15;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.nebula-purple { background: #8B5CF6; }
+.nebula-pink { background: #EC4899; }
+.nebula-blue { background: #3B82F6; }
+
+@keyframes aurora {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.9; }
+}
+
+.aurora-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+              radial-gradient(circle at 30% 30%, rgba(236, 72, 153, 0.03) 0%, transparent 40%),
+              radial-gradient(circle at 70% 70%, rgba(59, 130, 246, 0.03) 0%, transparent 40%);
+  animation: aurora 12s ease-in-out infinite;
+  z-index: -2;
+  will-change: opacity;
+  transform: translateZ(0);
+}
+
