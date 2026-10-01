@@ -61,23 +61,47 @@ def list_all_workspaces(client: Client = Depends(get_supabase_client)):
     """SUPER ADMIN: List all workspaces across the entire SaaS platform."""
     verify_super_admin(client)
 
-    # Use service_client to bypass RLS — see ALL workspaces
-    ws_resp = service_client.table("workspaces").select("*, user_workspaces(user_id)").execute()
-    workspaces = ws_resp.data or []
+    workspaces = []
+    try:
+        ws_resp = service_client.table("workspaces").select("*, user_workspaces(user_id)").execute()
+        workspaces = ws_resp.data or []
+    except Exception as e:
+        print(f"[SuperAdmin] Error querying workspaces table: {e}")
 
-    # Get tenant/owner emails for all owners
-    tenant_resp = service_client.table("tenants").select("id, email").execute()
-    tenant_map = {t['id']: t['email'] for t in tenant_resp.data} if tenant_resp.data else {}
+    tenant_map = {}
+    try:
+        tenant_resp = service_client.table("tenants").select("id, email").execute()
+        tenant_map = {t['id']: t['email'] for t in tenant_resp.data} if tenant_resp.data else {}
+    except Exception as e:
+        print(f"[SuperAdmin] Error querying tenants table in list_all_workspaces: {e}")
 
     results = []
     for ws in workspaces:
         results.append(WorkspaceSummary(
-            id=ws['id'],
-            name=ws['name'] or "Unnamed Workspace",
-            owner_email=tenant_map.get(ws['owner_id'], "Unknown"),
-            member_count=len(ws.get('user_workspaces', [])),
-            created_at=ws['created_at']
+            id=str(ws.get('id', '')),
+            name=ws.get('name') or "Unnamed Workspace",
+            owner_email=tenant_map.get(ws.get('owner_id'), "Unknown"),
+            member_count=len(ws.get('user_workspaces', []) or []),
+            created_at=str(ws.get('created_at', ''))
         ))
+
+    # If workspaces was empty or table doesn't exist, build fallback from Supabase Auth users
+    if not results:
+        try:
+            service_key = settings.SUPABASE_SERVICE_ROLE_KEY
+            if service_key:
+                admin_client = create_client(settings.SUPABASE_URL, service_key)
+                auth_users = admin_client.auth.admin.list_users()
+                for u in auth_users:
+                    results.append(WorkspaceSummary(
+                        id=str(u.id),
+                        name=f"{u.email.split('@')[0] if u.email else 'User'}'s Workspace",
+                        owner_email=u.email or "Unknown",
+                        member_count=1,
+                        created_at=u.created_at.isoformat() if u.created_at else ""
+                    ))
+        except Exception as e:
+            print(f"[SuperAdmin] Fallback auth users for workspaces failed: {e}")
 
     return results
 
@@ -87,21 +111,54 @@ def get_global_stats(client: Client = Depends(get_supabase_client)):
     """Global SaaS metrics for the Super Admin."""
     verify_super_admin(client)
 
-    ws_count = service_client.table("workspaces").select("id", count="exact").execute().count or 0
-    user_count = service_client.table("tenants").select("id", count="exact").execute().count or 0
+    ws_count = 0
+    try:
+        ws_count = service_client.table("workspaces").select("id", count="exact").execute().count or 0
+    except Exception as e:
+        print(f"[SuperAdmin] Stats workspaces query failed: {e}")
 
-    # Total revenue from ERP sales orders
-    sales_resp = service_client.table("sale_order").select("amount_total").execute()
-    total_revenue = sum(float(s['amount_total'] or 0) for s in sales_resp.data) if sales_resp.data else 0
+    user_count = 0
+    try:
+        user_count = service_client.table("tenants").select("id", count="exact").execute().count or 0
+    except Exception as e:
+        print(f"[SuperAdmin] Stats tenants query failed: {e}")
 
-    # Count of trialing users
-    trials_resp = service_client.table("tenants").select("id").eq("subscription_status", "trialing").execute()
-    trials_count = len(trials_resp.data) if trials_resp.data else 0
+    total_revenue = 0.0
+    try:
+        sales_resp = service_client.table("sale_order").select("amount_total").execute()
+        total_revenue = sum(float(s['amount_total'] or 0) for s in sales_resp.data) if sales_resp.data else 0.0
+    except Exception as e:
+        print(f"[SuperAdmin] Stats sale_order query failed: {e}")
 
-    # Count of paid (active) subscribers
-    active_tenants_resp = service_client.table("tenants").select("stripe_customer_id").eq("subscription_status", "active").execute()
-    active_tenants = active_tenants_resp.data or []
-    
+    trials_count = 0
+    try:
+        trials_resp = service_client.table("tenants").select("id").eq("subscription_status", "trialing").execute()
+        trials_count = len(trials_resp.data) if trials_resp.data else 0
+    except Exception as e:
+        print(f"[SuperAdmin] Stats trialing query failed: {e}")
+
+    active_tenants = []
+    try:
+        active_tenants_resp = service_client.table("tenants").select("stripe_customer_id").eq("subscription_status", "active").execute()
+        active_tenants = active_tenants_resp.data or []
+    except Exception as e:
+        print(f"[SuperAdmin] Stats active tenants query failed: {e}")
+
+    # Fallback for user count & workspace count if database tables empty / missing: query Auth Admin API
+    if user_count == 0 or ws_count == 0:
+        try:
+            service_key = settings.SUPABASE_SERVICE_ROLE_KEY
+            if service_key:
+                admin_client = create_client(settings.SUPABASE_URL, service_key)
+                auth_users = admin_client.auth.admin.list_users()
+                if auth_users:
+                    if user_count == 0:
+                        user_count = len(auth_users)
+                    if ws_count == 0:
+                        ws_count = len(auth_users)
+        except Exception as e:
+            print(f"[SuperAdmin] Stats auth fallback failed: {e}")
+
     crypto_revenue = 0.0
     cc_revenue = 0.0
     for t in active_tenants:
@@ -117,10 +174,8 @@ def get_global_stats(client: Client = Depends(get_supabase_client)):
                 elif gateway == "freemius":
                     cc_revenue += amount
             except Exception:
-                # Fallback to default plisio price if parsing fails
                 crypto_revenue += 199.0
         else:
-            # Fallback to default plisio price if no metadata
             crypto_revenue += 199.0
             
     total_saas_revenue = crypto_revenue + cc_revenue
@@ -143,17 +198,19 @@ def list_all_payments(client: Client = Depends(get_supabase_client)):
     """SUPER ADMIN: List all Plisio crypto payment records (from tenants table)."""
     verify_super_admin(client)
 
-    # Fetch all tenants with subscription data
-    tenants_resp = service_client.table("tenants").select(
-        "id, email, subscription_status, trial_ends_at, created_at, stripe_customer_id"
-    ).order("created_at", desc=True).execute()
-    tenants = tenants_resp.data or []
+    tenants = []
+    try:
+        tenants_resp = service_client.table("tenants").select(
+            "id, email, subscription_status, trial_ends_at, created_at, stripe_customer_id"
+        ).order("created_at", desc=True).execute()
+        tenants = tenants_resp.data or []
+    except Exception as e:
+        print(f"[SuperAdmin] Payments query failed: {e}")
 
     results = []
     for t in tenants:
         status = t.get("subscription_status", "trialing")
         
-        # Parse metadata from stripe_customer_id if available
         gateway = "Crypto (Plisio)"
         plan = "Pro Enterprise" if status == "active" else "Trial / Unpaid"
         amount = 199.00 if status == "active" else 0.00
@@ -195,21 +252,24 @@ def list_all_users(client: Client = Depends(get_supabase_client)):
     """SUPER ADMIN: List ALL users across the entire SaaS platform (bypasses RLS)."""
     verify_super_admin(client)
 
-    # Fetch all tenants using service_client (bypasses RLS)
-    tenants_resp = service_client.table("tenants").select("id, email, created_at, subscription_status").order("created_at", desc=True).execute()
-    tenants = tenants_resp.data or []
+    tenants = []
+    try:
+        tenants_resp = service_client.table("tenants").select("id, email, created_at, subscription_status").order("created_at", desc=True).execute()
+        tenants = tenants_resp.data or []
+    except Exception as e:
+        print(f"[SuperAdmin] Tenants query in list_all_users failed: {e}")
 
-    # Also fetch workspace names for each user
-    ws_resp = service_client.table("workspaces").select("owner_id, name").execute()
-    ws_by_owner = {ws['owner_id']: ws['name'] for ws in ws_resp.data} if ws_resp.data else {}
+    ws_by_owner = {}
+    try:
+        ws_resp = service_client.table("workspaces").select("owner_id, name").execute()
+        ws_by_owner = {ws['owner_id']: ws['name'] for ws in ws_resp.data} if ws_resp.data else {}
+    except Exception as e:
+        print(f"[SuperAdmin] Workspaces query in list_all_users failed: {e}")
 
-    # Also try to get users via Supabase Auth Admin API using service_role key
-    # This lets us see users who signed up but may not have a tenant row yet
     auth_users_map = {}
     try:
         service_key = settings.SUPABASE_SERVICE_ROLE_KEY
         if service_key:
-            # Use a direct service-role Supabase client for admin auth
             admin_client = create_client(settings.SUPABASE_URL, service_key)
             auth_resp = admin_client.auth.admin.list_users()
             if auth_resp:
@@ -221,7 +281,6 @@ def list_all_users(client: Client = Depends(get_supabase_client)):
     except Exception as e:
         print(f"[SuperAdmin] Could not fetch auth users: {e}")
 
-    # Merge: start with tenants table, supplement with auth users
     seen_ids = set()
     results = []
 
@@ -236,7 +295,6 @@ def list_all_users(client: Client = Depends(get_supabase_client)):
             workspace_name=ws_by_owner.get(uid)
         ))
 
-    # Add any auth users not yet in tenants table
     for uid, udata in auth_users_map.items():
         if uid not in seen_ids:
             results.append(UserSummary(
@@ -255,13 +313,17 @@ def list_all_sales(client: Client = Depends(get_supabase_client)):
     """SUPER ADMIN: List all sales orders across the entire platform."""
     verify_super_admin(client)
 
-    resp = service_client.table("sale_order").select("*").order("created_at", desc=True).execute()
-    data = resp.data or []
+    data = []
+    try:
+        resp = service_client.table("sale_order").select("*").order("created_at", desc=True).execute()
+        data = resp.data or []
+    except Exception as e:
+        print(f"[SuperAdmin] Sales query failed: {e}")
 
     results = []
     for r in data:
         results.append(SuperAdminSalesOrder(
-            id=r.get("id"),
+            id=str(r.get("id", "")),
             name=r.get("name") or "Draft",
             customer_name=r.get("customer_name") or "Unknown",
             amount_total=float(r.get("amount_total") or 0.0),
@@ -276,18 +338,41 @@ def list_all_tenants(client: Client = Depends(get_supabase_client)):
     """SUPER ADMIN: List all tenant accounts, subscription statuses, and trials."""
     verify_super_admin(client)
 
-    resp = service_client.table("tenants").select("*").order("created_at", desc=True).execute()
-    data = resp.data or []
+    data = []
+    try:
+        resp = service_client.table("tenants").select("*").order("created_at", desc=True).execute()
+        data = resp.data or []
+    except Exception as e:
+        print(f"[SuperAdmin] Tenants query in list_all_tenants failed: {e}")
 
     results = []
     for r in data:
         results.append(TenantSummary(
-            id=r.get("id"),
+            id=str(r.get("id", "")),
             email=r.get("email") or "Unknown",
             subscription_status=r.get("subscription_status") or "trialing",
             trial_ends_at=r.get("trial_ends_at") or "",
             created_at=r.get("created_at") or ""
         ))
+
+    # If tenants table query fails or is empty, fallback to auth users
+    if not results:
+        try:
+            service_key = settings.SUPABASE_SERVICE_ROLE_KEY
+            if service_key:
+                admin_client = create_client(settings.SUPABASE_URL, service_key)
+                auth_users = admin_client.auth.admin.list_users()
+                for u in auth_users:
+                    results.append(TenantSummary(
+                        id=str(u.id),
+                        email=u.email or "Unknown",
+                        subscription_status="active" if u.email in SUPER_ADMIN_EMAILS else "trialing",
+                        trial_ends_at="",
+                        created_at=u.created_at.isoformat() if u.created_at else ""
+                    ))
+        except Exception as e:
+            print(f"[SuperAdmin] Fallback auth users for tenants failed: {e}")
+
     return results
 
 
@@ -295,9 +380,12 @@ def list_all_tenants(client: Client = Depends(get_supabase_client)):
 def activate_tenant(tenant_id: str, client: Client = Depends(get_supabase_client)):
     """SUPER ADMIN: Manually set a tenant's subscription status to active."""
     verify_super_admin(client)
-    resp = service_client.table("tenants").update({"subscription_status": "active"}).eq("id", tenant_id).execute()
-    if not resp.data:
-        raise HTTPException(status_code=400, detail="Could not activate tenant.")
+    try:
+        resp = service_client.table("tenants").update({"subscription_status": "active"}).eq("id", tenant_id).execute()
+        if not resp.data:
+            raise HTTPException(status_code=400, detail="Could not activate tenant.")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Activation error: {e}")
     return {"status": "success", "message": "Tenant subscription set to active."}
 
 
@@ -305,9 +393,12 @@ def activate_tenant(tenant_id: str, client: Client = Depends(get_supabase_client
 def deactivate_tenant(tenant_id: str, client: Client = Depends(get_supabase_client)):
     """SUPER ADMIN: Manually set a tenant's subscription status to past_due (blocking mutations)."""
     verify_super_admin(client)
-    resp = service_client.table("tenants").update({"subscription_status": "past_due"}).eq("id", tenant_id).execute()
-    if not resp.data:
-        raise HTTPException(status_code=400, detail="Could not deactivate tenant.")
+    try:
+        resp = service_client.table("tenants").update({"subscription_status": "past_due"}).eq("id", tenant_id).execute()
+        if not resp.data:
+            raise HTTPException(status_code=400, detail="Could not deactivate tenant.")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Deactivation error: {e}")
     return {"status": "success", "message": "Tenant subscription set to past_due."}
 
 
@@ -316,12 +407,15 @@ def extend_tenant_trial(tenant_id: str, client: Client = Depends(get_supabase_cl
     """SUPER ADMIN: Manually extend a tenant's trial by 14 days from now."""
     verify_super_admin(client)
     new_trial_end = (datetime.now(timezone.utc) + timedelta(days=14)).isoformat()
-    resp = service_client.table("tenants").update({
-        "subscription_status": "trialing",
-        "trial_ends_at": new_trial_end
-    }).eq("id", tenant_id).execute()
-    if not resp.data:
-        raise HTTPException(status_code=400, detail="Could not extend trial.")
+    try:
+        resp = service_client.table("tenants").update({
+            "subscription_status": "trialing",
+            "trial_ends_at": new_trial_end
+        }).eq("id", tenant_id).execute()
+        if not resp.data:
+            raise HTTPException(status_code=400, detail="Could not extend trial.")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Extend trial error: {e}")
     return {"status": "success", "message": "Extended trial by 14 days.", "trial_ends_at": new_trial_end}
 
 
@@ -335,7 +429,10 @@ def delete_user(user_id: str, client: Client = Depends(get_supabase_client)):
             admin_client = create_client(settings.SUPABASE_URL, service_key)
             admin_client.auth.admin.delete_user(user_id)
         # Also clean up tenants table
-        service_client.table("tenants").delete().eq("id", user_id).execute()
+        try:
+            service_client.table("tenants").delete().eq("id", user_id).execute()
+        except Exception:
+            pass
         return {"status": "success", "message": "User deleted."}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Could not delete user: {e}")
