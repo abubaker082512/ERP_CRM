@@ -3,16 +3,15 @@ import { ArrowRight, PlayCircle, ShieldCheck, Zap, Globe, Sparkles, CheckCircle,
 
 export default function Hero() {
     return (
-        <div className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden">
-            {/* Immersive Background Glowing Orbs */}
-            <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[140px] pointer-events-none animate-pulse-glow" />
-            <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-pink-600/20 rounded-full blur-[140px] pointer-events-none animate-pulse-glow" style={{ animationDelay: '1.5s' }} />
-            <div className="absolute top-1/3 right-1/3 w-[400px] h-[400px] bg-cyan-600/15 rounded-full blur-[160px] pointer-events-none" />
+        <div className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden transform-gpu">
+            {/* Lightweight Background Radial Orbs (No high-cost blur filters) */}
+            <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-pink-600/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 
                 {/* SEO & High-Converting Badge */}
-                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 border border-purple-500/30 mb-8 backdrop-blur-xl shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 mb-8 backdrop-blur-sm shadow-md">
                     <span className="flex h-2.5 w-2.5 relative">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
@@ -24,34 +23,33 @@ export default function Hero() {
 
                 {/* Main Headline */}
                 <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.08]">
-                    Manage Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-amber-400 animate-gradient-x">Universe</span><br />
+                    Manage Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-amber-400">Universe</span><br />
                     With AI & Voice Pilot
                 </h1>
 
-                {/* Subheadline with key SEO keywords (Odoo, ERP, CRM, AI Voice Pilot) */}
+                {/* Subheadline with key SEO keywords */}
                 <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-12 font-light leading-relaxed">
                     Beraxis ERP unifies CRM, Sales, Inventory, Accounting, HRMS, and POS under one context-aware AI framework with hands-free duplex Voice Pilot. The modern open-source alternative to Odoo built for speed and seamless growth.
                 </p>
 
                 {/* Call To Actions */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <Link href="/signup" className="galaxy-btn-primary !px-9 !py-4 text-lg w-full sm:w-auto flex items-center justify-center gap-3 group shadow-[0_0_35px_rgba(168,85,247,0.4)]">
+                    <Link href="/signup" className="galaxy-btn-primary !px-9 !py-4 text-lg w-full sm:w-auto flex items-center justify-center gap-3 group shadow-lg shadow-purple-500/20">
                         Launch Your Free Workspace <ArrowRight className="group-hover:translate-x-1.5 transition-transform" size={22} />
                     </Link>
                     
-                    <a href="#odoo-comparison" className="px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-md hover:border-purple-400/40">
+                    <a href="#odoo-comparison" className="px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-purple-400/40">
                         <Layers size={20} className="text-purple-400" /> Compare vs Odoo
                     </a>
 
-                    <Link href="/contact" className="px-7 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white font-medium transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-md">
+                    <Link href="/contact" className="px-7 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white font-medium transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-sm">
                         <PlayCircle size={20} className="text-pink-400" /> Book Demo
                     </Link>
                 </div>
 
-                {/* Live ERP Interactive Preview Mock Container */}
-                <div className="mt-16 max-w-5xl mx-auto relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                    <div className="relative bg-[#090D1A]/90 border border-white/15 rounded-2xl p-6 sm:p-8 backdrop-blur-2xl shadow-2xl overflow-hidden text-left">
+                {/* Fast ERP Showcase Preview Container */}
+                <div className="mt-16 max-w-5xl mx-auto relative">
+                    <div className="relative bg-[#090D1A]/95 border border-white/15 rounded-2xl p-6 sm:p-8 shadow-2xl overflow-hidden text-left transform-gpu">
                         {/* Header bar */}
                         <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
                             <div className="flex items-center gap-3">
@@ -63,7 +61,7 @@ export default function Hero() {
                                 <span className="text-xs font-mono text-gray-400 border-l border-white/10 pl-3">beraxis.online/dashboard</span>
                             </div>
                             <div className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 px-3 py-1 rounded-full text-xs text-purple-300 font-medium">
-                                <Mic size={14} className="animate-pulse text-purple-400" /> AI Voice Assistant Listening...
+                                <Mic size={14} className="animate-pulse text-purple-400" /> AI Voice Assistant Active
                             </div>
                         </div>
 
@@ -83,7 +81,7 @@ export default function Hero() {
                             </div>
 
                             {/* Card 2: Voice Command Demo */}
-                            <div className="bg-gradient-to-br from-purple-900/40 to-blue-900/40 rounded-xl p-5 border border-purple-500/30">
+                            <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 rounded-xl p-5 border border-purple-500/30">
                                 <div className="flex justify-between items-center mb-3">
                                     <span className="text-xs font-semibold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
                                         <Cpu size={14} /> Voice Command
@@ -92,7 +90,7 @@ export default function Hero() {
                                 </div>
                                 <p className="text-sm font-medium text-white italic">"Create invoice for Acme Corp and update inventory status."</p>
                                 <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400 font-semibold">
-                                    <CheckCircle size={14} /> Executed in 120ms
+                                    <CheckCircle size={14} /> Executed in 45ms
                                 </div>
                             </div>
 
