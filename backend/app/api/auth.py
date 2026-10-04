@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.schemas.auth import UserSignup, UserLogin
-from app.core.supabase_client import supabase
+from app.core.supabase_client import supabase, get_service_role_client
 
 router = APIRouter()
 security = HTTPBearer()
@@ -26,14 +26,14 @@ def signup(user: UserSignup):
         new_user_id = str(res.user.id)
 
         # Use service role client for all DB writes — bypasses RLS
-        from app.core.supabase_client import get_service_role_client
         svc = get_service_role_client()
 
-        # Explicitly ensure the user exists in the tenants table
+        # Explicitly ensure the user exists in the tenants table with active trialing status
         try:
             svc.table("tenants").insert({
                 "id": new_user_id,
-                "email": user.email
+                "email": user.email,
+                "subscription_status": "trialing"
             }).execute()
         except Exception as e:
             print(f"[Signup] Tenant insertion warning: {e}")
@@ -56,18 +56,21 @@ def signup(user: UserSignup):
         else:
             # Create a new workspace for the user since it's a fresh signup
             ws_name = user.company_name if user.account_type == "company" else f"{user.name or 'My'} Workspace"
-            ws_resp = svc.table("workspaces").insert({
-                "name": ws_name,
-                "owner_id": new_user_id
-            }).execute()
-            
-            if ws_resp.data:
-                new_ws_id = ws_resp.data[0]['id']
-                svc.table("user_workspaces").insert({
-                    "user_id": new_user_id,
-                    "workspace_id": new_ws_id,
-                    "role": "owner"
+            try:
+                ws_resp = svc.table("workspaces").insert({
+                    "name": ws_name,
+                    "owner_id": new_user_id
                 }).execute()
+                
+                if ws_resp.data:
+                    new_ws_id = ws_resp.data[0]['id']
+                    svc.table("user_workspaces").insert({
+                        "user_id": new_user_id,
+                        "workspace_id": new_ws_id,
+                        "role": "owner"
+                    }).execute()
+            except Exception as ws_err:
+                print(f"[Signup] Workspace creation warning: {ws_err}")
 
         return {"message": "User created successfully", "user": res.user}
     except HTTPException:
@@ -84,6 +87,20 @@ def login(user: UserLogin):
         })
         if not res.session:
             raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        # Automatically ensure tenant record exists upon login
+        try:
+            svc = get_service_role_client()
+            t_resp = svc.table("tenants").select("id").eq("id", str(res.user.id)).execute()
+            if not t_resp.data:
+                svc.table("tenants").insert({
+                    "id": str(res.user.id),
+                    "email": res.user.email,
+                    "subscription_status": "trialing"
+                }).execute()
+        except Exception as t_err:
+            print(f"[Login] Tenant sync warning: {t_err}")
+
         return {
             "access_token": res.session.access_token,
             "refresh_token": res.session.refresh_token,
@@ -104,23 +121,55 @@ def login(user: UserLogin):
 
 @router.get("/me")
 def get_me(credentials: HTTPAuthorizationCredentials = Security(security)):
-    """Verify token and return current user info."""
+    """Verify token and return current user info without crashing on tenant lookups."""
+    token = credentials.credentials
+    
+    # 1. Verify user JWT token with Supabase Auth
     try:
-        token = credentials.credentials
         user_resp = supabase.auth.get_user(token)
-        if not user_resp.user:
+        if not user_resp or not user_resp.user:
             raise HTTPException(status_code=401, detail="Invalid or expired token")
-        # Fetch tenant info
-        tenant_resp = supabase.table("tenants").select("*").eq("id", str(user_resp.user.id)).execute()
-        tenant_info = tenant_resp.data[0] if tenant_resp.data else None
-
-        return {
-            "id": str(user_resp.user.id),
-            "email": user_resp.user.email,
-            "metadata": user_resp.user.user_metadata,
-            "tenant": tenant_info
-        }
+        user = user_resp.user
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Token verification failed: {e}")
+
+    # 2. Fetch tenant info safely using Service Role Client (bypasses RLS)
+    tenant_info = None
+    try:
+        svc = get_service_role_client()
+        tenant_resp = svc.table("tenants").select("*").eq("id", str(user.id)).execute()
+        if tenant_resp.data:
+            tenant_info = tenant_resp.data[0]
+        else:
+            # Auto-provision tenant record if missing for a valid auth user
+            try:
+                new_tenant = {
+                    "id": str(user.id),
+                    "email": user.email,
+                    "subscription_status": "trialing"
+                }
+                svc.table("tenants").insert(new_tenant).execute()
+                tenant_info = new_tenant
+            except Exception as insert_err:
+                print(f"[get_me] Auto tenant insertion warning: {insert_err}")
+                tenant_info = {
+                    "id": str(user.id),
+                    "email": user.email,
+                    "subscription_status": "trialing"
+                }
+    except Exception as e:
+        print(f"[get_me] Tenant fetch warning (graceful fallback): {e}")
+        tenant_info = {
+            "id": str(user.id),
+            "email": user.email,
+            "subscription_status": "trialing"
+        }
+
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "metadata": user.user_metadata,
+        "tenant": tenant_info
+    }
