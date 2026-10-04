@@ -2,9 +2,17 @@ from fastapi import Depends, HTTPException, Security, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import create_client, Client
 from app.core.config import settings
+from app.core.supabase_client import get_service_role_client
 from datetime import datetime, timezone
 
 security = HTTPBearer()
+
+SUPER_ADMIN_EMAILS = [
+    "admin@beraxis.online",
+    "admin2@erp-crm.com",
+    "abubaker@galaxy.com",
+    "admin@galaxy.com"
+]
 
 def get_supabase_client(request: Request, credentials: HTTPAuthorizationCredentials = Security(security)) -> Client:
     """
@@ -29,17 +37,12 @@ def get_supabase_client(request: Request, credentials: HTTPAuthorizationCredenti
     if not hasattr(user_resp, 'user') or not user_resp.user:
         raise HTTPException(status_code=401, detail="Invalid token: could not identify user")
     
-    uid = user_resp.user.id
-    user_email = user_resp.user.email
+    uid = str(user_resp.user.id)
+    user_email = user_resp.user.email or ""
     
-    # Identify Super Admin (e.g. any @galaxy.com or @erp-crm.com email or specific admin emails)
+    # Identify Super Admin (admin@beraxis.online, @erp-crm.com, @galaxy.com, etc.)
     is_super_admin = False
-    if user_email and (
-        user_email.endswith('@galaxy.com') or 
-        user_email.endswith('@erp-crm.com') or
-        user_email == 'abubaker@galaxy.com' or 
-        user_email == 'admin@galaxy.com'
-    ):
+    if user_email in SUPER_ADMIN_EMAILS or user_email.endswith('@galaxy.com') or user_email.endswith('@erp-crm.com'):
         is_super_admin = True
     
     # Enforce Subscription / Trial status ONLY for mutating endpoints (POST, PUT, DELETE)
@@ -49,31 +52,37 @@ def get_supabase_client(request: Request, credentials: HTTPAuthorizationCredenti
 
     if is_mutation and not is_billing and not is_super_admin:
         try:
-            # Use service-level client (anon key) to query tenants table for this uid
-            tenant_res = client.table("tenants").select("subscription_status, trial_ends_at").eq("id", str(uid)).execute()
+            # Use service-level client (bypasses RLS) to query tenants table safely
+            svc = get_service_role_client()
+            tenant_res = svc.table("tenants").select("subscription_status, trial_ends_at").eq("id", uid).execute()
             
             if tenant_res.data:
                 tenant = tenant_res.data[0]
-                status = tenant.get("subscription_status")
+                status = tenant.get("subscription_status", "trialing")
                 trial_ends_str = tenant.get("trial_ends_at")
                 
-                if status == 'trialing' and trial_ends_str:
-                    trial_ends = datetime.fromisoformat(trial_ends_str.replace('Z', '+00:00'))
-                    if datetime.now(timezone.utc) > trial_ends:
-                        raise HTTPException(
-                            status_code=402, 
-                            detail="Payment Required: Your 7-day free trial has expired. Please subscribe to continue."
-                        )
+                # Active paid accounts (or One App Free) are always allowed
+                if status == 'active':
+                    pass
+                elif status == 'trialing' and trial_ends_str:
+                    try:
+                        trial_ends = datetime.fromisoformat(trial_ends_str.replace('Z', '+00:00'))
+                        if datetime.now(timezone.utc) > trial_ends:
+                            raise HTTPException(
+                                status_code=402, 
+                                detail="Payment Required: Your free trial has expired. Please subscribe to continue."
+                            )
+                    except ValueError:
+                        pass
                 elif status in ['past_due', 'canceled']:
                     raise HTTPException(
                         status_code=402, 
                         detail="Payment Required: Subscription is inactive. Please update your billing."
                     )
-            # If no tenant record found, allow access (first login before trigger fires, etc.)
         except HTTPException:
             raise
         except Exception as e:
-            # Don't block users if tenant lookup fails (e.g. table not ready) — log and continue
+            # Don't block users if tenant lookup fails — log and continue
             print(f"[WARN] Tenant subscription check failed for uid={uid}: {e}")
     
     return client
@@ -81,7 +90,6 @@ def get_supabase_client(request: Request, credentials: HTTPAuthorizationCredenti
 def adjust_stock(client: Client, product_id: str, location_id: str, qty_change: float):
     """Adjusts the inventory quant table for a specific product and location by qty_change."""
     try:
-        # Check if a quant exists for this product and location
         res = client.table("inventory_quant").select("*").eq("product_id", product_id).eq("location_id", location_id).execute()
         if res.data:
             quant_id = res.data[0]["id"]
