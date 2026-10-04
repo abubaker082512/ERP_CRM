@@ -10,9 +10,8 @@ export default function AttendanceHeader() {
     const navItems = [
         { name: "Check In / Out", href: "/attendances" },
         { name: "Kiosk Mode", href: "/attendances/kiosk" },
-        { name: "Attendances", href: "/attendances/list" },
-        { name: "Reporting", href: "/attendances/reporting" },
-        { name: "Configuration", href: "/attendances/configuration" },
+        { name: "Reporting", href: "/employees/reporting" },
+        { name: "Configuration", href: "/employees/configuration" },
     ];
 
     return (
@@ -62,7 +61,7 @@ export default function AttendanceHeader() {
                     </button>
                     <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
                         <span className="text-xs text-gray-300 hidden md:inline">ABT IT Innovation PVT LTD.</span>
-                        <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-xs font-bold">A</div>
+                        <div className="w-6 h-6 bg-orange-400 rounded flex items-center justify-center text-xs font-bold">A</div>
                     </div>
                 </div>
             </div>

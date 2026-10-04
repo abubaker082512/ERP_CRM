@@ -9,7 +9,7 @@ import { CheckSquare, Clock, Star, Plus, Calendar } from "lucide-react";
 const MENU_ITEMS = [
     { name: "My Tasks", href: "/todo" },
     { name: "History", href: "/todo/history" },
-    { name: "Configuration", href: "/todo/configuration" },
+    { name: "Settings", href: "/settings" },
 ];
 
 type Todo = {

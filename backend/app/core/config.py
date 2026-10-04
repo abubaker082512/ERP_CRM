@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY") or DEFAULT_SUPABASE_KEY
     SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or DEFAULT_SUPABASE_SERVICE_ROLE_KEY
     CORS_ORIGINS: list = ["*"]
+    FREEMIUS_SECRET_KEY: str = os.getenv("FREEMIUS_SECRET_KEY", "")
+    PLISIO_SECRET_KEY: str = os.getenv("PLISIO_SECRET_KEY", "")
 
     class Config:
         env_file = ".env"

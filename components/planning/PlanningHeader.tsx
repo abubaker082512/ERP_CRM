@@ -9,9 +9,9 @@ export default function PlanningHeader() {
 
     const navItems = [
         { name: "Schedule", href: "/planning" },
-        { name: "My Planning", href: "/planning/my" },
-        { name: "Reporting", href: "/planning/reporting" },
-        { name: "Configuration", href: "/planning/configuration" },
+        { name: "Calendar View", href: "/calendar" },
+        { name: "Reports", href: "/reports" },
+        { name: "Settings", href: "/settings" },
     ];
 
     return (
@@ -61,7 +61,7 @@ export default function PlanningHeader() {
                     </button>
                     <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
                         <span className="text-xs text-gray-300 hidden md:inline">ABT IT Innovation PVT LTD.</span>
-                        <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-xs font-bold">A</div>
+                        <div className="w-6 h-6 bg-cyan-600 rounded flex items-center justify-center text-xs font-bold">A</div>
                     </div>
                 </div>
             </div>

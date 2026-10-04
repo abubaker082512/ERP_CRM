@@ -1,7 +1,10 @@
 "use client";
 
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
-import { DollarSign, TrendingUp, TrendingDown, FileText, CreditCard } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, FileText, CreditCard, Plus, MoreHorizontal } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { fetchAPI } from "@/lib/api";
 
 const MENU_ITEMS = [
     { name: "Dashboard", href: "/accounting" },
@@ -12,7 +15,57 @@ const MENU_ITEMS = [
     { name: "Configuration", href: "/accounting/configuration" },
 ];
 
+const TYPE_COLORS: Record<string, string> = {
+    sale: "text-blue-400",
+    purchase: "text-red-400",
+    cash: "text-green-400",
+    bank: "text-purple-400",
+    general: "text-amber-400"
+};
+
 export default function AccountingPage() {
+    const [journals, setJournals] = useState<any[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+
+    useEffect(() => {
+        fetchJournals();
+    }, []);
+
+    const fetchJournals = async () => {
+        setLoading(true);
+        try {
+            const res = await fetchAPI("/accounting/journals");
+            if (res.ok) {
+                const data = await res.json();
+                setJournals(data || []);
+            }
+        } catch (error) {
+            console.error("Error fetching journals:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const initializeJournals = async () => {
+        try {
+            const defaultJournals = [
+                { name: "Customer Invoices", code: "INV", type: "sale" },
+                { name: "Vendor Bills", code: "BILL", type: "purchase" },
+                { name: "Bank", code: "BNK", type: "bank" },
+                { name: "Cash", code: "CSH", type: "cash" }
+            ];
+            for (const j of defaultJournals) {
+                await fetchAPI("/accounting/journals", {
+                    method: "POST",
+                    body: JSON.stringify(j)
+                });
+            }
+            fetchJournals();
+        } catch (error) {
+            console.error("Error initializing journals:", error);
+        }
+    };
+
     return (
         <div className="flex flex-col h-screen bg-[#0F172A]">
             <StandardModuleHeader
@@ -71,11 +124,11 @@ export default function AccountingPage() {
                 </div>
 
                 {/* Journals */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
                         <div className="p-4 border-b border-gray-700 flex justify-between items-center">
                             <h3 className="font-semibold text-white">Customer Invoices</h3>
-                            <button className="text-sm text-blue-400 hover:text-blue-300">View All</button>
+                            <Link href="/accounting/customers" className="text-sm text-blue-400 hover:text-blue-300">View All</Link>
                         </div>
                         <div className="p-4">
                             <div className="flex justify-between items-center mb-4">
@@ -86,16 +139,16 @@ export default function AccountingPage() {
                                 <div className="text-sm text-gray-400">Unpaid</div>
                                 <div className="text-white font-medium">12 invoices ($45,200)</div>
                             </div>
-                            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm">
-                                New Invoice
-                            </button>
+                            <Link href="/accounting/journal" className="block text-center w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm">
+                                View Invoices
+                            </Link>
                         </div>
                     </div>
 
                     <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
                         <div className="p-4 border-b border-gray-700 flex justify-between items-center">
                             <h3 className="font-semibold text-white">Vendor Bills</h3>
-                            <button className="text-sm text-blue-400 hover:text-blue-300">View All</button>
+                            <Link href="/accounting/vendors" className="text-sm text-blue-400 hover:text-blue-300">View All</Link>
                         </div>
                         <div className="p-4">
                             <div className="flex justify-between items-center mb-4">
@@ -106,60 +159,19 @@ export default function AccountingPage() {
                                 <div className="text-sm text-gray-400">Late</div>
                                 <div className="text-red-400 font-medium">1 bill ($2,100)</div>
                             </div>
-                            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm">
-                                Upload Bill
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
-                        <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-                            <h3 className="font-semibold text-white">Bank</h3>
-                            <button className="text-sm text-blue-400 hover:text-blue-300">View All</button>
-                        </div>
-                        <div className="p-4">
-                            <div className="flex justify-between items-center mb-4">
-                                <div className="text-sm text-gray-400">Balance in GL</div>
-                                <div className="text-white font-medium">$124,500</div>
-                            </div>
-                            <div className="flex justify-between items-center mb-4">
-                                <div className="text-sm text-gray-400">Outstanding Payments</div>
-                                <div className="text-white font-medium">$5,200</div>
-                            </div>
-                            <div className="flex gap-2">
-                                <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm">
-                                    Create Payment
-                                </button>
-                                <button className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded text-sm">
-                                    Reconcile
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
-                        <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-                            <h3 className="font-semibold text-white">Cash</h3>
-                            <button className="text-sm text-blue-400 hover:text-blue-300">View All</button>
-                        </div>
-                        <div className="p-4">
-                            <div className="flex justify-between items-center mb-4">
-                                <div className="text-sm text-gray-400">Balance in GL</div>
-                                <div className="text-white font-medium">$2,850</div>
-                            </div>
-                            <div className="flex justify-between items-center mb-4">
-                                <div className="text-sm text-gray-400">Outstanding Receipts</div>
-                                <div className="text-white font-medium">$0</div>
-                            </div>
-                            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm">
-                                New Transaction
-                            </button>
+                            <Link href="/accounting/vendors" className="block text-center w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm">
+                                View Bills
+                            </Link>
                         </div>
                     </div>
                 </div>
 
+                <div className="mb-4">
+                    <h3 className="text-xl font-semibold text-white">Accounting Journals</h3>
+                </div>
+
                 {loading ? (
-                    <div className="text-gray-400">Loading journals...</div>
+                    <div className="text-gray-400 py-6">Loading journals...</div>
                 ) : journals.length === 0 ? (
                     <div className="bg-[#1E293B] border border-gray-700 rounded-lg p-10 text-center">
                         <h3 className="text-lg font-medium text-white mb-2">No Accounting Journals Found</h3>
@@ -190,9 +202,8 @@ export default function AccountingPage() {
                                         <Plus size={16} /> New Entry
                                     </Link>
                                     <div className="text-right">
-                                        {/* Placeholder for real balance calculation */}
-                                        <p className="text-xs text-gray-400 mb-1">Items to Process</p>
-                                        <span className="bg-gray-800 text-gray-300 px-2 py-0.5 rounded text-sm font-semibold">0</span>
+                                        <p className="text-xs text-gray-400 mb-1">Type</p>
+                                        <span className="bg-gray-800 text-gray-300 px-2 py-0.5 rounded text-sm font-semibold uppercase">{journal.type || 'general'}</span>
                                     </div>
                                 </div>
                             </div>

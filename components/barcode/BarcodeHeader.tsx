@@ -9,7 +9,7 @@ export default function BarcodeHeader() {
 
     const navItems = [
         { name: "Operations", href: "/barcode" },
-        { name: "Inventory", href: "/barcode/inventory" },
+        { name: "Inventory", href: "/inventory" },
     ];
 
     return (
@@ -59,7 +59,7 @@ export default function BarcodeHeader() {
                     </button>
                     <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
                         <span className="text-xs text-gray-300 hidden md:inline">ABT IT Innovation PVT LTD.</span>
-                        <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-xs font-bold">A</div>
+                        <div className="w-6 h-6 bg-pink-600 rounded flex items-center justify-center text-xs font-bold">A</div>
                     </div>
                 </div>
             </div>

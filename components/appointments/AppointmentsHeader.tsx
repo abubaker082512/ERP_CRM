@@ -9,8 +9,8 @@ export default function AppointmentsHeader() {
 
     const navItems = [
         { name: "Calendar", href: "/appointments" },
-        { name: "Reporting", href: "/appointments/reporting" },
-        { name: "Configuration", href: "/appointments/configuration" },
+        { name: "Reporting", href: "/calendar/reporting" },
+        { name: "Configuration", href: "/calendar/configuration" },
     ];
 
     return (
@@ -60,7 +60,7 @@ export default function AppointmentsHeader() {
                     </button>
                     <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
                         <span className="text-xs text-gray-300 hidden md:inline">ABT IT Innovation PVT LTD.</span>
-                        <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-xs font-bold">A</div>
+                        <div className="w-6 h-6 bg-purple-600 rounded flex items-center justify-center text-xs font-bold">A</div>
                     </div>
                 </div>
             </div>

@@ -7,11 +7,19 @@ import sys
 import os
 
 # Import Company Brain AI Engine
-sys.path.append(os.path.join(os.getcwd(), ".."))
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+root_dir = os.path.dirname(backend_dir)
+for p in [root_dir, backend_dir, os.getcwd()]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
 try:
     from ai_engine.brain import company_brain
-except ImportError:
-    from brain import company_brain
+except Exception:
+    try:
+        from brain import company_brain
+    except Exception:
+        company_brain = None
 
 router = APIRouter()
 
