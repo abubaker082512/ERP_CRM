@@ -28,20 +28,41 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [mounted, setMounted] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [planLabel, setPlanLabel] = useState("FREE TIER");
+    const [planTitle, setPlanTitle] = useState("Free Starter Plan");
+    const [planSubtitle, setPlanSubtitle] = useState("1 Module Active");
     const [isAntigravityOpen, setIsAntigravityOpen] = useState(false);
     const [backendStatus, setBackendStatus] = useState<'unknown' | 'waking' | 'ready'>('unknown');
     const warmupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         setMounted(true);
-        // Check for Super Admin privileges
+        // Check for Super Admin and Subscription privileges
         const userStr = localStorage.getItem("user");
         if (userStr) {
             try {
                 const user = JSON.parse(userStr);
                 const SUPER_ADMIN_EMAILS = ['admin@beraxis.online', 'admin2@erp-crm.com'];
-                if (SUPER_ADMIN_EMAILS.includes(user.email)) {
+                const isUserAdmin = SUPER_ADMIN_EMAILS.includes(user.email);
+                if (isUserAdmin) {
                     setIsAdmin(true);
+                    setPlanLabel("ENTERPRISE");
+                    setPlanTitle("Beraxis Elite Plan");
+                    setPlanSubtitle("Unlimited Workspaces");
+                } else if (user.tenant?.subscription_status === "active") {
+                    setPlanLabel("PRO PLAN");
+                    setPlanTitle("Beraxis Pro Plan");
+                    setPlanSubtitle("All Modules Active");
+                } else if (user.tenant?.trial_ends_at) {
+                    const diffDays = Math.ceil((new Date(user.tenant.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                    setPlanLabel("TRIAL");
+                    setPlanTitle("Free Trial");
+                    setPlanSubtitle(`${Math.max(0, diffDays)} Days Remaining`);
+                } else {
+                    const mod = localStorage.getItem("selectedModule") || "CRM";
+                    setPlanLabel("FREE TIER");
+                    setPlanTitle("Free Starter Plan");
+                    setPlanSubtitle(`${mod} Module Active`);
                 }
             } catch (e) {}
         }
@@ -84,9 +105,9 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
     if (!mounted) return null;
 
-    // Don't show shell on landing, login, signup, shop, checkout, billing, apps dashboard, or forgotten password page
+    // Don't show shell on landing, login, signup, shop, checkout, billing, apps dashboard, main dashboard, or forgotten password page
     const isLandingPage = pathname === '/about' || pathname === '/contact' || pathname === '/' || pathname === '/pricing';
-    const isExcludedPage = pathname === '/apps' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || pathname.startsWith('/shop/') || isLandingPage;
+    const isExcludedPage = pathname === '/apps' || pathname === '/dashboard' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || pathname.startsWith('/shop/') || isLandingPage;
     
     if (isExcludedPage) return <>{children}</>;
 
@@ -163,10 +184,10 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                         </div>
                         <div className="flex items-center gap-2 mb-2">
                             <ShieldCheck size={14} className="text-purple-400" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Premium</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">{planLabel}</span>
                         </div>
-                        <p className="text-xs text-gray-300 font-medium">Beraxis Elite Plan</p>
-                        <p className="text-[10px] text-gray-500 mt-1">Unlimited Workspaces</p>
+                        <p className="text-xs text-gray-300 font-medium">{planTitle}</p>
+                        <p className="text-[10px] text-gray-500 mt-1">{planSubtitle}</p>
                     </div>
                 </div>
 
