@@ -34,6 +34,7 @@ import {
     Globe
 } from "lucide-react";
 import { fetchAPI } from "@/lib/api";
+import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
 
 const apps = [
     { name: "Discuss", icon: LayoutDashboard, color: "bg-orange-500", href: "/discuss" },
@@ -319,19 +320,8 @@ export default function AppsDashboardPage() {
                 </div>
             )}
 
-            {/* Persistent Floating WhatsApp Support Widget for logged-in users */}
-            <a 
-                href="https://wa.me/19707807993" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="fixed bottom-8 right-8 z-50 bg-[#25D366] hover:bg-[#20BA56] text-white p-4 rounded-full shadow-[0_4px_20px_rgba(37,211,102,0.4)] transition-all duration-300 hover:scale-110 flex items-center justify-center group active:scale-95 border border-white/10"
-                title="Chat with Beraxis Live Support"
-            >
-                <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 ease-out whitespace-nowrap font-bold text-xs pl-0 group-hover:pl-2 group-hover:pr-2">
-                    Live Chat Support
-                </span>
-                <MessageSquare className="w-5 h-5" />
-            </a>
+            {/* Persistent Support Widgets: WhatsApp on the Left, AI Support on the Right */}
+            <BeraxisSupportWidgets />
         </div>
     );
 }

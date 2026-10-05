@@ -10,6 +10,7 @@ import {
 import { useState, useEffect, useRef } from 'react';
 import GalaxyTopBar from './GalaxyTopBar';
 import CommandOverlay from '../antigravity/CommandOverlay';
+import BeraxisSupportWidgets from '../support/BeraxisSupportWidgets';
 
 const navItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -216,14 +217,8 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                 </div>
             </main>
 
-            {/* Floating Antigravity Pilot Trigger */}
-            <button
-                onClick={() => setIsAntigravityOpen(true)}
-                className="fixed bottom-6 right-6 z-40 p-4 bg-gradient-to-tr from-sky-500 via-purple-500 to-pink-500 hover:opacity-90 rounded-full text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105 transition-all duration-300 flex items-center justify-center"
-                title="Open Antigravity Co-Pilot"
-            >
-                <Sparkles className="w-6 h-6 animate-pulse" />
-            </button>
+            {/* Persistent Support Widgets: WhatsApp on Left, AI Support on Right */}
+            <BeraxisSupportWidgets />
 
             {/* Antigravity Cockpit Overlay */}
             <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />
