@@ -1,85 +1,114 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Search, Settings, MessageSquare, Bot, LayoutGrid, List, Calendar, Clock, Filter, ChevronDown, ShoppingCart } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
+import { ShoppingCart, Bot, MessageSquare, Plus, Settings } from 'lucide-react';
+import UniversalModuleSearch from '@/components/shared/UniversalModuleSearch';
 
-export default function SalesHeader({ onNewClick }: { onNewClick?: () => void }) {
+interface SalesHeaderProps {
+    onNewClick?: () => void;
+    searchTerm?: string;
+    onSearchChange?: (val: string) => void;
+}
+
+export default function SalesHeader({ onNewClick, searchTerm = '', onSearchChange }: SalesHeaderProps) {
     const pathname = usePathname();
+    const router = useRouter();
 
     const navItems = [
-        { name: 'Orders', href: '/sales' },
-        { name: 'To Invoice', href: '/sales/to-invoice' },
+        { name: 'Quotations', href: '/sales' },
+        { name: 'Orders', href: '/sales/orders' },
+        { name: 'Customers', href: '/sales/customers' },
         { name: 'Products', href: '/sales/products' },
         { name: 'Reporting', href: '/sales/reporting' },
         { name: 'Configuration', href: '/sales/configuration' },
     ];
 
     return (
-        <header className="bg-[#1E293B] border-b border-gray-700 text-white">
-            <div className="flex items-center justify-between px-4 py-2">
+        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50">
+            <div className="flex items-center justify-between px-4 py-2.5">
                 <div className="flex items-center gap-4">
-                    <Link href="/" className="flex items-center gap-2 text-xl font-semibold text-gray-200 hover:text-white">
-                        <div className="bg-orange-600 w-7 h-7 flex items-center justify-center rounded text-sm font-bold text-white">
-                            <ShoppingCart size={16} />
+                    <Link href="/" title="Dashboard" className="flex items-center gap-2 text-xl font-bold text-gray-200 hover:text-white transition-colors">
+                        <div className="bg-orange-600/30 text-orange-400 border border-orange-500/30 w-8 h-8 flex items-center justify-center rounded-lg shadow-sm">
+                            <ShoppingCart size={18} />
                         </div>
                         Sales
                     </Link>
 
-                    <nav className="flex items-center gap-6 ml-4">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`text-sm font-medium transition-colors ${pathname === item.href || (item.href !== '/sales' && pathname.startsWith(item.href)) ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+                    {onNewClick && (
+                        <button
+                            onClick={onNewClick}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-purple-900/30 transition-all active:scale-95 cursor-pointer ml-2"
+                        >
+                            <Plus size={16} /> New Quotation
+                        </button>
+                    )}
+
+                    <nav className="flex items-center gap-2 ml-3 overflow-x-auto">
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.href || (item.href !== '/sales' && pathname.startsWith(item.href));
+                            return (
+                                <Link
+                                    key={item.name}
+                                    href={item.href}
+                                    className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+                                        isActive
+                                            ? 'text-white bg-white/10 border border-white/10'
+                                            : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                                     }`}
-                            >
-                                {item.name}
-                            </Link>
-                        ))}
+                                >
+                                    {item.name}
+                                </Link>
+                            );
+                        })}
                     </nav>
                 </div>
 
-                <div className="flex-1 max-w-xl mx-8">
-                    <div className="relative flex items-center">
-                        <Search className="absolute left-3 text-gray-400" size={16} />
-                        <div className="absolute left-9 bg-purple-600/20 text-purple-300 px-2 py-0.5 rounded text-xs flex items-center gap-1 border border-purple-600/30">
-                            <Filter size={10} />
-                            My Quotations
-                            <button className="hover:text-white"><span className="sr-only">Remove</span>×</button>
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            className="w-full bg-[#0F172A] border border-gray-600 rounded px-10 py-1.5 pl-32 text-sm text-gray-200 focus:outline-none focus:border-purple-500"
-                        />
-                        <button className="absolute right-2 text-gray-400 hover:text-white">
-                            <ChevronDown size={14} />
-                        </button>
-                    </div>
-                </div>
+                {/* Universal Search Bar */}
+                <UniversalModuleSearch
+                    placeholder="Search sales quotations, orders, customers (Enter to jump)..."
+                    value={searchTerm}
+                    onChange={onSearchChange}
+                    className="mx-6"
+                />
 
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center bg-[#0F172A] rounded border border-gray-600 p-0.5 mr-4">
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-gray-400"><List size={16} /></button>
-                        <button className="p-1.5 bg-gray-700 rounded text-white"><LayoutGrid size={16} /></button>
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-gray-400"><Calendar size={16} /></button>
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-gray-400"><Clock size={16} /></button>
-                    </div>
-
-                    <button className="text-gray-400 hover:text-white flex items-center gap-1">
-                        <Bot size={18} className="text-purple-400" />
+                {/* Actions */}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => router.push("/ai")}
+                        title="AI Search & Assistant"
+                        className="text-gray-400 hover:text-purple-400 p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                        <Bot size={18} />
                     </button>
-                    <button className="text-gray-400 hover:text-white relative">
+
+                    <button
+                        onClick={() => router.push("/discuss")}
+                        title="Discuss"
+                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 relative transition-colors cursor-pointer"
+                    >
                         <MessageSquare size={18} />
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-[8px] flex items-center justify-center">5</span>
+                        <span className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
                     </button>
-                    <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
-                        <span className="text-xs text-gray-300 hidden md:inline">ABT IT Innovation PVT LTD.</span>
-                        <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-xs font-bold">
+
+                    <button
+                        onClick={() => router.push("/settings")}
+                        title="Settings"
+                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                        <Settings size={18} />
+                    </button>
+
+                    <Link
+                        href="/settings"
+                        title="Company Settings"
+                        className="flex items-center gap-2 border-l border-gray-700 pl-3 hover:opacity-90 transition-opacity"
+                    >
+                        <span className="text-xs text-gray-300 font-medium hidden xl:inline">ABT IT Innovation</span>
+                        <div className="w-7 h-7 bg-orange-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm">
                             A
                         </div>
-                    </div>
+                    </Link>
                 </div>
             </div>
         </header>

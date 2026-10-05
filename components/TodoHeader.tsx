@@ -1,71 +1,74 @@
 "use client";
 
-import Link from 'next/link';
-import { Search, Settings, MessageSquare, Bot, LayoutGrid, List, Calendar, Clock, Filter, ChevronDown, Plus } from 'lucide-react';
+import Link from "next/link";
+import { CheckSquare, Bot, MessageSquare, Settings as SettingsIcon } from "lucide-react";
+import UniversalModuleSearch from "./shared/UniversalModuleSearch";
 
-export default function TodoHeader({ onNewClick }: { onNewClick: () => void }) {
+interface TodoHeaderProps {
+    onNewClick?: () => void;
+    searchTerm?: string;
+    onSearchChange?: (val: string) => void;
+}
+
+export default function TodoHeader({
+    onNewClick,
+    searchTerm = "",
+    onSearchChange,
+}: TodoHeaderProps) {
     return (
         <header className="bg-[#1E293B] border-b border-gray-700 text-white">
-            <div className="flex items-center justify-between px-4 py-2">
-                <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between px-4 py-2 gap-4">
+                <div className="flex items-center gap-4 shrink-0">
                     <Link href="/" className="flex items-center gap-2 text-xl font-semibold text-gray-200 hover:text-white">
-                        <div className="bg-blue-500 w-7 h-7 flex items-center justify-center rounded text-sm font-bold text-white">
-                            <span className="transform -rotate-12">✓</span>
+                        <div className="bg-blue-600 w-7 h-7 flex items-center justify-center rounded text-sm font-bold text-white shadow-sm">
+                            <CheckSquare size={16} />
                         </div>
-                        To do
+                        To-Do
                     </Link>
-
-                    <div className="flex items-center gap-2 ml-4">
+                    {onNewClick && (
                         <button
                             onClick={onNewClick}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm font-medium transition-colors"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition shadow-sm ml-1"
                         >
-                            New
+                            + New
                         </button>
-                        <span className="text-lg font-semibold text-gray-200 ml-2">To-dos</span>
-                        <button className="text-gray-400 hover:text-white">
-                            <Settings size={16} />
-                        </button>
-                    </div>
+                    )}
                 </div>
 
-                <div className="flex-1 max-w-2xl mx-8">
-                    <div className="relative flex items-center">
-                        <Search className="absolute left-3 text-gray-400" size={16} />
-                        <div className="absolute left-9 bg-purple-600/20 text-purple-300 px-2 py-0.5 rounded text-xs flex items-center gap-1 border border-purple-600/30">
-                            <Filter size={10} />
-                            Open
-                            <button className="hover:text-white"><span className="sr-only">Remove</span>×</button>
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            className="w-full bg-[#0F172A] border border-gray-600 rounded px-10 py-1.5 pl-28 text-sm text-gray-200 focus:outline-none focus:border-purple-500"
-                        />
-                        <button className="absolute right-2 text-gray-400 hover:text-white">
-                            <ChevronDown size={14} />
-                        </button>
-                    </div>
+                <div className="flex-1 max-w-xl mx-2">
+                    <UniversalModuleSearch
+                        moduleName="To-Do"
+                        placeholder="Search tasks, todo lists, or jump to module..."
+                        value={searchTerm}
+                        onChange={onSearchChange}
+                    />
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center bg-[#0F172A] rounded border border-gray-600 p-0.5 mr-4">
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-gray-400"><List size={16} /></button>
-                        <button className="p-1.5 bg-gray-700 rounded text-white"><LayoutGrid size={16} /></button>
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-gray-400"><Calendar size={16} /></button>
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-gray-400"><Clock size={16} /></button>
-                    </div>
-
-                    <button className="text-gray-400 hover:text-white flex items-center gap-1">
-                        <Bot size={18} className="text-purple-400" />
-                    </button>
-                    <button className="text-gray-400 hover:text-white relative">
+                <div className="flex items-center gap-3 shrink-0">
+                    <Link
+                        href="/ai"
+                        title="AI Assistant"
+                        className="p-1.5 text-purple-400 hover:text-purple-300 hover:bg-gray-800 rounded transition"
+                    >
+                        <Bot size={18} />
+                    </Link>
+                    <Link
+                        href="/discuss"
+                        title="Discuss"
+                        className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition relative"
+                    >
                         <MessageSquare size={18} />
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-[8px] flex items-center justify-center">3</span>
-                    </button>
-                    <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
-                        <span className="text-xs text-gray-300 hidden md:inline">ABT IT Innovation PVT LTD.</span>
-                        <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-xs font-bold">
+                    </Link>
+                    <Link
+                        href="/settings"
+                        title="Settings"
+                        className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition"
+                    >
+                        <SettingsIcon size={18} />
+                    </Link>
+                    <div className="flex items-center gap-2 border-l border-gray-700 pl-3">
+                        <span className="text-xs text-gray-300 hidden xl:inline font-medium">ABT IT Innovation PVT LTD.</span>
+                        <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-xs font-bold text-white shadow-inner">
                             A
                         </div>
                     </div>

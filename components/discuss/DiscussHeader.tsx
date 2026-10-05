@@ -1,67 +1,102 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Search, LayoutGrid, List, MessageCircle, Plus, Hash } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { MessageCircle, Bot, Plus, Settings } from "lucide-react";
+import UniversalModuleSearch from "@/components/shared/UniversalModuleSearch";
 
-export default function DiscussHeader() {
+interface DiscussHeaderProps {
+    onNewClick?: () => void;
+    searchTerm?: string;
+    onSearchChange?: (val: string) => void;
+}
+
+export default function DiscussHeader({ onNewClick, searchTerm = '', onSearchChange }: DiscussHeaderProps) {
     const pathname = usePathname();
+    const router = useRouter();
 
     const navItems = [
         { name: "Inbox", href: "/discuss" },
-        { name: "Starred", href: "/discuss/starred" },
-        { name: "History", href: "/discuss/history" },
+        { name: "Channels", href: "/discuss/channels" },
+        { name: "Configuration", href: "/discuss/configuration" },
     ];
 
     return (
-        <header className="bg-[#1E293B] border-b border-gray-700 text-white">
-            <div className="flex items-center justify-between px-4 py-2">
+        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50">
+            <div className="flex items-center justify-between px-4 py-2.5">
                 <div className="flex items-center gap-4">
-                    <Link href="/" className="flex items-center gap-2 text-xl font-semibold text-gray-200 hover:text-white">
-                        <div className="bg-pink-600 w-7 h-7 flex items-center justify-center rounded text-sm font-bold text-white">
-                            <MessageCircle size={16} />
+                    <Link href="/" title="Dashboard" className="flex items-center gap-2 text-xl font-bold text-gray-200 hover:text-white transition-colors">
+                        <div className="bg-pink-600/30 text-pink-400 border border-pink-500/30 w-8 h-8 flex items-center justify-center rounded-lg shadow-sm">
+                            <MessageCircle size={18} />
                         </div>
                         Discuss
                     </Link>
-                    <nav className="flex items-center gap-6 ml-4">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`text-sm font-medium transition-colors ${pathname === item.href || (item.href !== "/discuss" && pathname.startsWith(item.href))
-                                        ? "text-white"
-                                        : "text-gray-400 hover:text-gray-200"
+
+                    {onNewClick && (
+                        <button
+                            onClick={onNewClick}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-purple-900/30 transition-all active:scale-95 cursor-pointer ml-2"
+                        >
+                            <Plus size={16} /> New Message
+                        </button>
+                    )}
+
+                    <nav className="flex items-center gap-2 ml-3 overflow-x-auto">
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.href || (item.href !== "/discuss" && pathname.startsWith(item.href));
+                            return (
+                                <Link
+                                    key={item.name}
+                                    href={item.href}
+                                    className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+                                        isActive
+                                            ? "text-white bg-white/10 border border-white/10"
+                                            : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
                                     }`}
-                            >
-                                {item.name}
-                            </Link>
-                        ))}
+                                >
+                                    {item.name}
+                                </Link>
+                            );
+                        })}
                     </nav>
                 </div>
 
-                <div className="flex-1 max-w-xl mx-8">
-                    <div className="relative flex items-center">
-                        <Search className="absolute left-3 text-gray-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Search messages..."
-                            className="w-full bg-[#0F172A] border border-gray-600 rounded px-10 py-1.5 text-sm text-gray-200 focus:outline-none focus:border-purple-500"
-                        />
-                    </div>
-                </div>
+                {/* Universal Search Bar */}
+                <UniversalModuleSearch
+                    placeholder="Search messages, channels, members (Enter to jump)..."
+                    value={searchTerm}
+                    onChange={onSearchChange}
+                    className="mx-6"
+                />
 
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center bg-[#0F172A] rounded border border-gray-600 p-0.5 mr-4">
-                        <button className="p-1.5 bg-gray-700 rounded text-white"><LayoutGrid size={16} /></button>
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-gray-400"><List size={16} /></button>
-                    </div>
-                    <button className="text-gray-400 hover:text-white flex items-center gap-1">
-                        <Plus size={18} className="text-purple-400" />
+                {/* Actions */}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => router.push("/ai")}
+                        title="AI Search & Assistant"
+                        className="text-gray-400 hover:text-purple-400 p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                        <Bot size={18} />
                     </button>
-                    <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
-                        <span className="text-xs text-gray-300 hidden md:inline">ABT IT Innovation PVT LTD.</span>
-                        <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-xs font-bold">A</div>
-                    </div>
+
+                    <button
+                        onClick={() => router.push("/settings")}
+                        title="Settings"
+                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                        <Settings size={18} />
+                    </button>
+
+                    <Link
+                        href="/settings"
+                        title="Company Settings"
+                        className="flex items-center gap-2 border-l border-gray-700 pl-3 hover:opacity-90 transition-opacity"
+                    >
+                        <span className="text-xs text-gray-300 font-medium hidden xl:inline">ABT IT Innovation</span>
+                        <div className="w-7 h-7 bg-pink-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm">
+                            A
+                        </div>
+                    </Link>
                 </div>
             </div>
         </header>

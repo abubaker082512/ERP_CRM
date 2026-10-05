@@ -1,0 +1,1863 @@
+{
+  "account_move_line": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "move_id": {
+        "description": "Note:\nThis is a Foreign Key to `account_move.id`.<fk table='account_move' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "account_id": {
+        "description": "Note:\nThis is a Foreign Key to `account_account.id`.<fk table='account_account' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "debit": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "credit": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "pos_payment": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "order_id": {
+        "description": "Note:\nThis is a Foreign Key to `pos_order.id`.<fk table='pos_order' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "amount": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "payment_method": {
+        "default": "cash",
+        "format": "text",
+        "type": "string"
+      },
+      "payment_date": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "sale_order": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "partner_id": {
+        "description": "Note:\nThis is a Foreign Key to `contacts.id`.<fk table='contacts' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "date_order": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "state": {
+        "default": "draft",
+        "format": "text",
+        "type": "string"
+      },
+      "amount_total": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "contacts": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "email": {
+        "format": "text",
+        "type": "string"
+      },
+      "phone": {
+        "format": "text",
+        "type": "string"
+      },
+      "is_company": {
+        "default": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "company_name": {
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "helpdesk_ticket": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "description": {
+        "format": "text",
+        "type": "string"
+      },
+      "partner_id": {
+        "description": "Note:\nThis is a Foreign Key to `contacts.id`.<fk table='contacts' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "stage_id": {
+        "default": "new",
+        "format": "text",
+        "type": "string"
+      },
+      "priority": {
+        "default": "0",
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "inventory_move": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `product_product.id`.<fk table='product_product' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "location_id": {
+        "description": "Note:\nThis is a Foreign Key to `inventory_location.id`.<fk table='inventory_location' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "location_dest_id": {
+        "description": "Note:\nThis is a Foreign Key to `inventory_location.id`.<fk table='inventory_location' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_uom_qty": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "state": {
+        "default": "draft",
+        "format": "text",
+        "type": "string"
+      },
+      "date": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "hr_attendance": {
+    "required": [
+      "id",
+      "employee_id",
+      "check_in"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "employee_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_employee.id`.<fk table='hr_employee' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "check_in": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "check_out": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "worked_hours": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "pos_session": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "config_id": {
+        "description": "Note:\nThis is a Foreign Key to `pos_config.id`.<fk table='pos_config' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "user_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_employee.id`.<fk table='hr_employee' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "start_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "stop_at": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "state": {
+        "default": "opening_control",
+        "format": "text",
+        "type": "string"
+      },
+      "start_cash": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "stop_cash": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "survey_question": {
+    "required": [
+      "id",
+      "question"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "survey_id": {
+        "description": "Note:\nThis is a Foreign Key to `survey_survey.id`.<fk table='survey_survey' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "question": {
+        "format": "text",
+        "type": "string"
+      },
+      "type": {
+        "default": "text",
+        "format": "text",
+        "type": "string"
+      },
+      "sequence": {
+        "default": 0,
+        "format": "integer",
+        "type": "integer"
+      }
+    },
+    "type": "object"
+  },
+  "inventory_warehouse": {
+    "required": [
+      "id",
+      "name",
+      "code"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "code": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "crm_lead": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "email_from": {
+        "format": "text",
+        "type": "string"
+      },
+      "phone": {
+        "format": "text",
+        "type": "string"
+      },
+      "probability": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "stage_id": {
+        "default": "new",
+        "format": "text",
+        "type": "string"
+      },
+      "type": {
+        "default": "lead",
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "account_journal": {
+    "required": [
+      "id",
+      "name",
+      "type",
+      "code"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "type": {
+        "format": "text",
+        "type": "string"
+      },
+      "code": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "account_move": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "date": {
+        "default": "CURRENT_DATE",
+        "format": "date",
+        "type": "string"
+      },
+      "journal_id": {
+        "description": "Note:\nThis is a Foreign Key to `account_journal.id`.<fk table='account_journal' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "state": {
+        "default": "draft",
+        "format": "text",
+        "type": "string"
+      },
+      "move_type": {
+        "default": "entry",
+        "format": "text",
+        "type": "string"
+      },
+      "partner_id": {
+        "description": "Note:\nThis is a Foreign Key to `contacts.id`.<fk table='contacts' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "amount_total": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "inventory_quant": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `product_product.id`.<fk table='product_product' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "location_id": {
+        "description": "Note:\nThis is a Foreign Key to `inventory_location.id`.<fk table='inventory_location' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "quantity": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "reserved_quantity": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "mrp_production": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `product_product.id`.<fk table='product_product' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_qty": {
+        "default": 1.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "state": {
+        "default": "draft",
+        "format": "text",
+        "type": "string"
+      },
+      "bom_id": {
+        "description": "Note:\nThis is a Foreign Key to `mrp_bom.id`.<fk table='mrp_bom' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "knowledge_article": {
+    "required": [
+      "id",
+      "title"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": {
+        "format": "text",
+        "type": "string"
+      },
+      "body": {
+        "format": "text",
+        "type": "string"
+      },
+      "category": {
+        "default": "general",
+        "format": "text",
+        "type": "string"
+      },
+      "author_id": {
+        "description": "Note:\nThis is a Foreign Key to `contacts.id`.<fk table='contacts' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "mail_message": {
+    "required": [
+      "id",
+      "body"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "channel_id": {
+        "description": "Note:\nThis is a Foreign Key to `mail_channel.id`.<fk table='mail_channel' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "body": {
+        "format": "text",
+        "type": "string"
+      },
+      "author_id": {
+        "description": "Note:\nThis is a Foreign Key to `contacts.id`.<fk table='contacts' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "purchase_order_line": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "order_id": {
+        "description": "Note:\nThis is a Foreign Key to `purchase_order.id`.<fk table='purchase_order' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `product_product.id`.<fk table='product_product' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_qty": {
+        "default": 1.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "price_unit": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "price_subtotal": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "payroll_salary_structure": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "basic_wage": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "inventory_location": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "usage": {
+        "default": "internal",
+        "format": "text",
+        "type": "string"
+      },
+      "warehouse_id": {
+        "description": "Note:\nThis is a Foreign Key to `inventory_warehouse.id`.<fk table='inventory_warehouse' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "calendar_appointment_type": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "duration": {
+        "default": 1.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "location": {
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "hr_applicant": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "job_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_job.id`.<fk table='hr_job' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "department_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_department.id`.<fk table='hr_department' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "email_from": {
+        "format": "text",
+        "type": "string"
+      },
+      "phone": {
+        "format": "text",
+        "type": "string"
+      },
+      "stage_id": {
+        "default": "new",
+        "format": "text",
+        "type": "string"
+      },
+      "salary_expected": {
+        "format": "numeric",
+        "type": "number"
+      },
+      "salary_proposed": {
+        "format": "numeric",
+        "type": "number"
+      },
+      "availability": {
+        "format": "date",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "purchase_order": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "partner_id": {
+        "description": "Note:\nThis is a Foreign Key to `contacts.id`.<fk table='contacts' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "date_order": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "state": {
+        "default": "draft",
+        "format": "text",
+        "type": "string"
+      },
+      "amount_total": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "hr_department": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "sign_request": {
+    "required": [
+      "id",
+      "title"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": {
+        "format": "text",
+        "type": "string"
+      },
+      "file_url": {
+        "format": "text",
+        "type": "string"
+      },
+      "state": {
+        "default": "sent",
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "stock_barcode_log": {
+    "required": [
+      "id",
+      "barcode"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "barcode": {
+        "format": "text",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `product_product.id`.<fk table='product_product' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "scanned_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "user_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_employee.id`.<fk table='hr_employee' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "project_task": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "project_id": {
+        "description": "Note:\nThis is a Foreign Key to `project_project.id`.<fk table='project_project' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "stage_id": {
+        "default": "todo",
+        "format": "text",
+        "type": "string"
+      },
+      "kanban_state": {
+        "default": "normal",
+        "format": "text",
+        "type": "string"
+      },
+      "user_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_employee.id`.<fk table='hr_employee' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "date_deadline": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "mrp_bom": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `product_product.id`.<fk table='product_product' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "code": {
+        "format": "text",
+        "type": "string"
+      },
+      "product_qty": {
+        "default": 1.0,
+        "format": "numeric",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "calendar_appointment": {
+    "required": [
+      "id",
+      "name",
+      "start_time",
+      "end_time"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "email": {
+        "format": "text",
+        "type": "string"
+      },
+      "phone": {
+        "format": "text",
+        "type": "string"
+      },
+      "appointment_type_id": {
+        "description": "Note:\nThis is a Foreign Key to `calendar_appointment_type.id`.<fk table='calendar_appointment_type' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "start_time": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "end_time": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "state": {
+        "default": "scheduled",
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "pos_order_line": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "order_id": {
+        "description": "Note:\nThis is a Foreign Key to `pos_order.id`.<fk table='pos_order' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `product_product.id`.<fk table='product_product' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "qty": {
+        "default": 1.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "price_unit": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "price_subtotal": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "price_subtotal_incl": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "discount": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "hr_job": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "department_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_department.id`.<fk table='hr_department' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "no_of_recruitment": {
+        "default": 1,
+        "format": "integer",
+        "type": "integer"
+      },
+      "state": {
+        "default": "recruit",
+        "format": "text",
+        "type": "string"
+      },
+      "description": {
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "documents_document": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "type": {
+        "default": "file",
+        "format": "text",
+        "type": "string"
+      },
+      "folder_id": {
+        "description": "Note:\nThis is a Foreign Key to `documents_document.id`.<fk table='documents_document' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "file_url": {
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "todo_task": {
+    "required": [
+      "id",
+      "title"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": {
+        "format": "text",
+        "type": "string"
+      },
+      "description": {
+        "format": "text",
+        "type": "string"
+      },
+      "is_completed": {
+        "default": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "user_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_employee.id`.<fk table='hr_employee' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "due_date": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "survey_survey": {
+    "required": [
+      "id",
+      "title"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": {
+        "format": "text",
+        "type": "string"
+      },
+      "description": {
+        "format": "text",
+        "type": "string"
+      },
+      "state": {
+        "default": "draft",
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "website_order": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "partner_id": {
+        "description": "Note:\nThis is a Foreign Key to `contacts.id`.<fk table='contacts' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "amount_total": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "state": {
+        "default": "cart",
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "account_account": {
+    "required": [
+      "id",
+      "code",
+      "name",
+      "type"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "code": {
+        "format": "text",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "type": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "sale_order_line": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "order_id": {
+        "description": "Note:\nThis is a Foreign Key to `sale_order.id`.<fk table='sale_order' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `product_product.id`.<fk table='product_product' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_uom_qty": {
+        "default": 1.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "price_unit": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "price_subtotal": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      }
+    },
+    "type": "object"
+  },
+  "pos_config": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "active": {
+        "default": true,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "currency_id": {
+        "default": "USD",
+        "format": "text",
+        "type": "string"
+      },
+      "receipt_header": {
+        "format": "text",
+        "type": "string"
+      },
+      "receipt_footer": {
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "website_product": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `product_product.id`.<fk table='product_product' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "website_published": {
+        "default": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "website_description": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "project_project": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "partner_id": {
+        "description": "Note:\nThis is a Foreign Key to `contacts.id`.<fk table='contacts' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "user_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_employee.id`.<fk table='hr_employee' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "color": {
+        "default": 0,
+        "format": "integer",
+        "type": "integer"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "product_category": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "parent_id": {
+        "description": "Note:\nThis is a Foreign Key to `product_category.id`.<fk table='product_category' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "hr_employee": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "department_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_department.id`.<fk table='hr_department' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "job_title": {
+        "format": "text",
+        "type": "string"
+      },
+      "work_email": {
+        "format": "text",
+        "type": "string"
+      },
+      "mobile_phone": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "payroll_payslip": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "employee_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_employee.id`.<fk table='hr_employee' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "date_from": {
+        "format": "date",
+        "type": "string"
+      },
+      "date_to": {
+        "format": "date",
+        "type": "string"
+      },
+      "struct_id": {
+        "description": "Note:\nThis is a Foreign Key to `payroll_salary_structure.id`.<fk table='payroll_salary_structure' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "net_wage": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "state": {
+        "default": "draft",
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "planning_slot": {
+    "required": [
+      "id",
+      "start_datetime",
+      "end_datetime"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "employee_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_employee.id`.<fk table='hr_employee' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "role_id": {
+        "description": "Note:\nThis is a Foreign Key to `hr_job.id`.<fk table='hr_job' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "start_datetime": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "end_datetime": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "is_published": {
+        "default": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "helpdesk_message": {
+    "required": [
+      "id",
+      "body"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "ticket_id": {
+        "description": "Note:\nThis is a Foreign Key to `helpdesk_ticket.id`.<fk table='helpdesk_ticket' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "body": {
+        "format": "text",
+        "type": "string"
+      },
+      "author_id": {
+        "description": "Note:\nThis is a Foreign Key to `contacts.id`.<fk table='contacts' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "product_product": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "type": {
+        "default": "consu",
+        "format": "text",
+        "type": "string"
+      },
+      "default_code": {
+        "format": "text",
+        "type": "string"
+      },
+      "list_price": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "standard_price": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "categ_id": {
+        "description": "Note:\nThis is a Foreign Key to `product_category.id`.<fk table='product_category' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "mail_channel": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "description": {
+        "format": "text",
+        "type": "string"
+      },
+      "channel_type": {
+        "default": "channel",
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "pos_order": {
+    "required": [
+      "id",
+      "name"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "session_id": {
+        "description": "Note:\nThis is a Foreign Key to `pos_session.id`.<fk table='pos_session' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "date_order": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "partner_id": {
+        "description": "Note:\nThis is a Foreign Key to `contacts.id`.<fk table='contacts' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "amount_total": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "amount_tax": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "amount_paid": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "amount_return": {
+        "default": 0.0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "state": {
+        "default": "draft",
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "sign_signer": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "request_id": {
+        "description": "Note:\nThis is a Foreign Key to `sign_request.id`.<fk table='sign_request' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "partner_id": {
+        "description": "Note:\nThis is a Foreign Key to `contacts.id`.<fk table='contacts' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "role": {
+        "default": "signer",
+        "format": "text",
+        "type": "string"
+      },
+      "state": {
+        "default": "sent",
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  }
+}
