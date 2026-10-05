@@ -4,7 +4,7 @@ from uuid import UUID
 from datetime import datetime, date
 
 class OpportunityBase(BaseModel):
-    name: str
+    name: Optional[str] = "Opportunity"
     expected_revenue: Optional[float] = 0.0
     stage: Optional[str] = "New"
     close_date: Optional[date] = None
@@ -12,16 +12,37 @@ class OpportunityBase(BaseModel):
     notes: Optional[str] = None
     priority: Optional[int] = 0
 
-class OpportunityCreate(OpportunityBase):
-    pass
+class OpportunityCreate(BaseModel):
+    name: str
+    expected_revenue: Optional[float] = 0.0
+    stage: Optional[str] = "New"
+    close_date: Optional[date] = None
+    lead_id: Optional[UUID] = None
+    notes: Optional[str] = None
+    priority: Optional[int] = 0
+    win_probability: Optional[float] = 0.0
 
-class OpportunityUpdate(OpportunityBase):
+class OpportunityUpdate(BaseModel):
+    name: Optional[str] = None
+    expected_revenue: Optional[float] = None
+    stage: Optional[str] = None
+    close_date: Optional[date] = None
+    lead_id: Optional[UUID] = None
+    notes: Optional[str] = None
+    priority: Optional[int] = None
     win_probability: Optional[float] = None
 
-class Opportunity(OpportunityBase):
+class Opportunity(BaseModel):
     id: UUID
-    created_at: datetime
+    name: str
+    expected_revenue: Optional[float] = 0.0
+    stage: Optional[str] = "New"
+    close_date: Optional[date] = None
+    lead_id: Optional[UUID] = None
+    notes: Optional[str] = None
+    priority: Optional[int] = 0
     win_probability: Optional[float] = 0.0
+    created_at: datetime
 
     class Config:
         from_attributes = True

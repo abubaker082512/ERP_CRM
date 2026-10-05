@@ -129,39 +129,54 @@ def read_opportunity(opp_id: str, client: Client = Depends(get_supabase_client))
 
 @router.put("/{opp_id}", response_model=Opportunity)
 def update_opportunity(opp_id: str, opportunity: OpportunityUpdate, client: Client = Depends(get_supabase_client)):
+    existing = {}
+    try:
+        r = client.table("crm_lead").select("*").eq("id", opp_id).execute()
+        if r.data:
+            existing = r.data[0]
+    except Exception:
+        try:
+            svc = get_service_role_client()
+            r = svc.table("crm_lead").select("*").eq("id", opp_id).execute()
+            if r.data:
+                existing = r.data[0]
+        except Exception:
+            pass
+
     update_data = {}
     if opportunity.name is not None: update_data["name"] = opportunity.name
     if opportunity.stage is not None: update_data["stage_id"] = opportunity.stage
     if opportunity.win_probability is not None: update_data["probability"] = opportunity.win_probability
 
-    try:
-        response = client.table("crm_lead").update(update_data).eq("id", opp_id).execute()
-        if response.data:
-            row = response.data[0]
-            row["expected_revenue"] = opportunity.expected_revenue
-            return _map_opportunity(row)
-    except Exception:
-        pass
+    row = dict(existing)
+    if update_data:
+        try:
+            response = client.table("crm_lead").update(update_data).eq("id", opp_id).execute()
+            if response.data:
+                row.update(response.data[0])
+        except Exception:
+            try:
+                svc = get_service_role_client()
+                response = svc.table("crm_lead").update(update_data).eq("id", opp_id).execute()
+                if response.data:
+                    row.update(response.data[0])
+            except Exception:
+                row.update(update_data)
 
-    try:
-        svc = get_service_role_client()
-        response = svc.table("crm_lead").update(update_data).eq("id", opp_id).execute()
-        if response.data:
-            row = response.data[0]
-            row["expected_revenue"] = opportunity.expected_revenue
-            return _map_opportunity(row)
-    except Exception:
-        pass
+    if opportunity.expected_revenue is not None:
+        row["expected_revenue"] = opportunity.expected_revenue
+    if opportunity.priority is not None:
+        row["priority"] = opportunity.priority
+    if opportunity.notes is not None:
+        row["notes"] = opportunity.notes
+    if opportunity.close_date is not None:
+        row["close_date"] = opportunity.close_date
 
-    fallback_row = {
-        "id": opp_id,
-        "name": opportunity.name or "Opportunity",
-        "stage_id": opportunity.stage or "New",
-        "expected_revenue": opportunity.expected_revenue or 0.0,
-        "type": "opportunity",
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    return _map_opportunity(fallback_row)
+    if not row.get("id"):
+        row["id"] = opp_id
+        row["created_at"] = datetime.now(timezone.utc).isoformat()
+
+    return _map_opportunity(row)
 
 @router.delete("/{opp_id}")
 def delete_opportunity(opp_id: str, client: Client = Depends(get_supabase_client)):
@@ -177,13 +192,11 @@ def delete_opportunity(opp_id: str, client: Client = Depends(get_supabase_client
 
 @router.post("/{opp_id}/convert-to-sale")
 def convert_to_sale(opp_id: str, client: Client = Depends(get_supabase_client)):
-    # 1. Fetch opportunity
     opp_resp = client.table("crm_lead").select("*").eq("id", opp_id).execute()
     if not opp_resp.data:
         raise HTTPException(status_code=404, detail="Opportunity not found")
     opp = opp_resp.data[0]
     
-    # 2. Create sales order (Draft)
     sale_name = f"SO/CRM/{opp['name'][:10].upper()}/{datetime.now().strftime('%Y%m%d%H%M%S')}"
     sale_data = {
         "name": sale_name,
@@ -196,7 +209,6 @@ def convert_to_sale(opp_id: str, client: Client = Depends(get_supabase_client)):
     if not sale_resp.data:
         raise HTTPException(status_code=400, detail="Could not create sales order from opportunity")
         
-    # 3. Update opportunity stage to Won
     client.table("crm_lead").update({
         "stage_id": "Won",
         "probability": 100.0
