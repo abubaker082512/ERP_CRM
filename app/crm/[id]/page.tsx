@@ -8,6 +8,8 @@ import {
   DollarSign, Calendar, TrendingUp, FileText, User
 } from "lucide-react";
 
+import ActivityHistory from "@/components/shared/ActivityHistory";
+
 const STAGES = ["New", "Qualified", "Proposition", "Won", "Lost"];
 
 export default function OpportunityDetailPage({ params }: { params: { id: string } }) {
@@ -17,6 +19,7 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
+  const [activityRefresh, setActivityRefresh] = useState(0);
 
   useEffect(() => {
     fetchOpp();
@@ -55,6 +58,7 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
         setOpp(updated);
         setForm(updated);
         setEditing(false);
+        setActivityRefresh((prev) => prev + 1);
       }
     } catch (e) {
       console.error("Failed to save opportunity", e);
@@ -85,6 +89,7 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
         const updated = await res.json();
         setOpp(updated);
         setForm(updated);
+        setActivityRefresh((prev) => prev + 1);
       }
     } catch (e) {
       console.error("Failed to update stage", e);
@@ -110,6 +115,7 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
           const updated = await res.json();
           setOpp(updated);
           setForm(updated);
+          setActivityRefresh((prev) => prev + 1);
         }
       } catch (e) {
         console.error("Failed to update priority", e);
@@ -134,9 +140,9 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
   const probColor = probability >= 70 ? "text-green-400" : probability >= 30 ? "text-yellow-400" : "text-red-400";
 
   return (
-    <div className="min-h-screen p-6 max-w-4xl mx-auto">
+    <div className="min-h-screen p-6 max-w-4xl mx-auto space-y-6">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-6 text-sm text-gray-400">
+      <div className="flex items-center gap-2 text-sm text-gray-400">
         <Link href="/crm" className="flex items-center gap-1 hover:text-purple-400 transition-colors">
           <ArrowLeft size={16} /> CRM
         </Link>
@@ -145,7 +151,7 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
       </div>
 
       {/* Header Card */}
-      <div className="galaxy-card p-6 mb-6">
+      <div className="galaxy-card p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             {editing ? (
@@ -165,22 +171,22 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
             {editing ? (
               <>
                 <button onClick={handleSave} disabled={saving}
-                  className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                  className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
                   <Save size={14} /> {saving ? "Saving..." : "Save"}
                 </button>
                 <button onClick={() => { setEditing(false); setForm(opp); }}
-                  className="flex items-center gap-1 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                  className="flex items-center gap-1 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
                   <X size={14} /> Cancel
                 </button>
               </>
             ) : (
               <>
                 <button onClick={() => setEditing(true)}
-                  className="flex items-center gap-1 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                  className="flex items-center gap-1 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
                   <Edit2 size={14} /> Edit
                 </button>
                 <button onClick={handleDelete}
-                  className="flex items-center gap-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                  className="flex items-center gap-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
                   <Trash2 size={14} /> Delete
                 </button>
               </>
@@ -248,7 +254,7 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
       </div>
 
       {/* Details Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Expected Revenue */}
         <div className="galaxy-card p-5">
           <label className="text-xs text-gray-400 font-medium flex items-center gap-1 mb-2">
@@ -339,7 +345,7 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
         {editing ? (
           <textarea value={form.notes || ""}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            rows={5}
+            rows={4}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-purple-500 resize-none transition-colors"
             placeholder="Add notes about this opportunity..."
           />
@@ -347,6 +353,17 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
           <p className="text-gray-300 whitespace-pre-wrap">{opp.notes || "No notes yet."}</p>
         )}
       </div>
+
+      {/* Audit History & Activity Stream */}
+      <ActivityHistory
+        entityId={params.id}
+        module="crm"
+        entityType="opportunity"
+        entityName={opp.name}
+        title="Opportunity Activity & Audit Trail"
+        allowAddNote={true}
+        refreshKey={activityRefresh}
+      />
     </div>
   );
 }

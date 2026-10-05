@@ -1,10 +1,10 @@
 "use client";
 import { fetchAPI } from '@/lib/api';
-
 import { useState, useEffect } from 'react';
 import CRMHeader from '@/components/crm/CRMHeader';
-import { Plus, Settings, Star, Clock } from 'lucide-react';
+import { Plus, Settings, Star, Clock, Trophy, XCircle, Activity, Filter, Layers, ListFilter } from 'lucide-react';
 import Link from 'next/link';
+import ActivityHistory from '@/components/shared/ActivityHistory';
 
 type Lead = {
     id: string;
@@ -19,15 +19,17 @@ type Lead = {
 };
 
 const initialStages = [
-    { name: 'New', id: 'New' },
-    { name: 'Qualified', id: 'Qualified' },
-    { name: 'Proposition', id: 'Proposition' },
-    { name: 'Won', id: 'Won' },
+    { name: 'New', id: 'New', color: 'border-blue-500/50 text-blue-400', barBg: 'bg-blue-500' },
+    { name: 'Qualified', id: 'Qualified', color: 'border-purple-500/50 text-purple-400', barBg: 'bg-purple-500' },
+    { name: 'Proposition', id: 'Proposition', color: 'border-amber-500/50 text-amber-400', barBg: 'bg-amber-500' },
+    { name: 'Won', id: 'Won', color: 'border-emerald-500/50 text-emerald-400', barBg: 'bg-emerald-500' },
+    { name: 'Lost', id: 'Lost', color: 'border-rose-500/50 text-rose-400', barBg: 'bg-rose-500' },
 ];
 
 export default function CRMPage() {
     const [leads, setLeads] = useState<Lead[]>([]);
-    const [activeView, setActiveView] = useState<'leads' | 'pipeline'>('pipeline');
+    const [activeView, setActiveView] = useState<'pipeline' | 'leads' | 'activity'>('pipeline');
+    const [tableFilter, setTableFilter] = useState<'all' | 'lead' | 'opportunity' | 'won' | 'lost'>('all');
     const [isNewModalOpen, setIsNewModalOpen] = useState(false);
     const [newOppName, setNewOppName] = useState('');
     const [newOppRevenue, setNewOppRevenue] = useState('');
@@ -68,7 +70,7 @@ export default function CRMPage() {
 
             if (res.ok) {
                 const newLead = await res.json();
-                setLeads([...leads, newLead]);
+                setLeads([newLead, ...leads]);
                 setNewOppName('');
                 setNewOppRevenue('');
                 setIsNewModalOpen(false);
@@ -80,7 +82,7 @@ export default function CRMPage() {
 
     const getStageTotal = (stageId: string) => {
         return leads
-            .filter(o => o.status === stageId && o.type === 'opportunity')
+            .filter(o => o.status?.toLowerCase() === stageId.toLowerCase() && o.type === 'opportunity')
             .reduce((sum, o) => sum + (o.expected_revenue || 0), 0);
     };
 
@@ -122,190 +124,330 @@ export default function CRMPage() {
         e.preventDefault();
     };
 
+    const filteredTableLeads = leads.filter(item => {
+        if (tableFilter === 'lead') return item.type === 'lead';
+        if (tableFilter === 'opportunity') return item.type === 'opportunity';
+        if (tableFilter === 'won') return item.status?.toLowerCase() === 'won';
+        if (tableFilter === 'lost') return item.status?.toLowerCase() === 'lost';
+        return true;
+    });
+
+    const getStatusBadge = (status: string) => {
+        const s = (status || '').toLowerCase();
+        if (s === 'won') return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+        if (s === 'lost') return 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+        if (s === 'proposition') return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+        if (s === 'qualified') return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+        return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+    };
+
     return (
         <div className="flex flex-col h-[calc(100vh-120px)]">
+            {/* View Switcher and Action Toolbar */}
             <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-[#1E293B]">
-                <div className="flex gap-4">
-                    <button onClick={() => setActiveView('pipeline')} className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-widest transition-all ${activeView === 'pipeline' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20' : 'text-gray-400 hover:text-white'}`}>
-                        Pipeline
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => setActiveView('pipeline')} 
+                        className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                            activeView === 'pipeline' 
+                                ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/30' 
+                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                        }`}
+                    >
+                        <Layers size={16} /> Pipeline
                     </button>
-                    <button onClick={() => setActiveView('leads')} className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-widest transition-all ${activeView === 'leads' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20' : 'text-gray-400 hover:text-white'}`}>
-                        Leads
+                    <button 
+                        onClick={() => setActiveView('leads')} 
+                        className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                            activeView === 'leads' 
+                                ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/30' 
+                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                        }`}
+                    >
+                        <ListFilter size={16} /> Leads & Records
+                    </button>
+                    <button 
+                        onClick={() => setActiveView('activity')} 
+                        className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                            activeView === 'activity' 
+                                ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/30' 
+                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                        }`}
+                    >
+                        <Activity size={16} /> Audit History
                     </button>
                 </div>
-                <button onClick={() => setIsNewModalOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-purple-900/20 transition-all">
+                <button 
+                    onClick={() => setIsNewModalOpen(true)} 
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-purple-900/20 transition-all cursor-pointer"
+                >
                     <Plus size={18} /> New {activeView === 'leads' ? 'Lead' : 'Opportunity'}
                 </button>
             </div>
 
-            <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
-                {activeView === 'pipeline' ? (
-                    <div className="flex h-full gap-4 min-w-max">
-                    {initialStages.map((stage) => {
-                        const stageOpps = leads.filter(o => o.status === stage.id && o.type === 'opportunity');
-                        return (
-                             <div 
-                                key={stage.id} 
-                                className="w-80 flex flex-col h-full group galaxy-card !bg-white/5 p-3"
-                                onDrop={(e) => handleDrop(e, stage.id)}
-                                onDragOver={handleDragOver}
-                            >
-                                {/* Column Header */}
-                                <div className="flex items-center justify-between mb-2 px-1">
-                                    <div className="flex items-center gap-2 font-semibold text-gray-200">
-                                        <h3>{stage.name}</h3>
-                                        <span className="text-gray-500 text-sm">{stageOpps.length}</span>
+            <div className="flex-1 overflow-x-auto overflow-y-auto p-4">
+                {activeView === 'pipeline' && (
+                    <div className="flex h-full gap-4 min-w-max pb-2">
+                        {initialStages.map((stage) => {
+                            const stageOpps = leads.filter(
+                                o => o.status?.toLowerCase() === stage.id.toLowerCase() && o.type === 'opportunity'
+                            );
+                            return (
+                                <div 
+                                    key={stage.id} 
+                                    className="w-80 flex flex-col h-full group galaxy-card !bg-white/5 p-3 rounded-xl border border-white/5"
+                                    onDrop={(e) => handleDrop(e, stage.id)}
+                                    onDragOver={handleDragOver}
+                                >
+                                    {/* Column Header */}
+                                    <div className="flex items-center justify-between mb-2 px-1">
+                                        <div className="flex items-center gap-2 font-semibold text-gray-200">
+                                            <h3>{stage.name}</h3>
+                                            <span className="text-gray-500 text-xs px-2 py-0.5 rounded-full bg-white/5">
+                                                {stageOpps.length}
+                                            </span>
+                                        </div>
+                                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
+                                            <button
+                                                onClick={() => {
+                                                    if (stage.id === 'New') setIsNewModalOpen(true);
+                                                }}
+                                                className="text-gray-400 hover:text-white p-1"
+                                                title="Add to column"
+                                            >
+                                                <Plus size={16} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
-                                        <button
-                                            onClick={() => {
-                                                if (stage.id === 'New') setIsNewModalOpen(true);
-                                            }}
-                                            className="text-gray-400 hover:text-white p-1"
-                                        >
-                                            <Plus size={16} />
-                                        </button>
-                                        <button className="text-gray-400 hover:text-white p-1">
-                                            <Settings size={14} />
-                                        </button>
-                                    </div>
-                                </div>
 
-                                {/* Progress Bar / Total */}
-                                <div className="mb-4 px-1">
-                                    <div className="h-1 bg-gray-700 rounded-full mb-1 overflow-hidden">
-                                        <div className="h-full bg-purple-500 w-full"></div>
+                                    {/* Progress Bar / Total */}
+                                    <div className="mb-4 px-1">
+                                        <div className="h-1 bg-gray-700 rounded-full mb-1 overflow-hidden">
+                                            <div className={`h-full ${stage.barBg} w-full`}></div>
+                                        </div>
+                                        <div className="flex justify-between text-xs font-medium">
+                                            <span className="text-gray-400">Total</span>
+                                            <span className="text-gray-200">${getStageTotal(stage.id).toLocaleString()}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between text-xs font-medium">
-                                        <span className="text-gray-400">Total</span>
-                                        <span className="text-gray-200">${getStageTotal(stage.id).toLocaleString()}</span>
-                                    </div>
-                                </div>
 
-                                {/* Opportunities Container */}
-                                <div className="flex-1 overflow-y-auto space-y-3 px-1 pb-2">
-                                    {/* New Opportunity Form (Inline) */}
-                                    {stage.id === 'New' && isNewModalOpen && (
-                                        <div className="bg-[#1E293B] rounded border border-purple-500/50 p-3 shadow-lg animate-in fade-in slide-in-from-top-2">
-                                            <div className="mb-3">
-                                                <label className="text-xs text-purple-400 font-medium mb-1 block">Organization / Contact <span className="text-purple-400">*</span></label>
-                                                <input
-                                                    type="text"
-                                                    value={newOppName}
-                                                    onChange={(e) => setNewOppName(e.target.value)}
-                                                    placeholder="e.g. Acme Corp"
-                                                    className="w-full bg-transparent border-b border-purple-500/50 focus:border-purple-500 outline-none text-sm py-1 text-white placeholder-gray-500"
-                                                    autoFocus
-                                                />
-                                            </div>
-                                            <div className="mb-4">
-                                                <label className="text-xs text-gray-400 font-medium mb-1 block">Expected Revenue</label>
-                                                <div className="relative">
-                                                    <span className="absolute left-0 top-1 text-gray-500 text-sm">$</span>
+                                    {/* Opportunities Container */}
+                                    <div className="flex-1 overflow-y-auto space-y-3 px-1 pb-2">
+                                        {/* New Opportunity Form (Inline) */}
+                                        {stage.id === 'New' && isNewModalOpen && (
+                                            <div className="bg-[#1E293B] rounded-xl border border-purple-500/50 p-4 shadow-xl animate-in fade-in slide-in-from-top-2">
+                                                <div className="mb-3">
+                                                    <label className="text-xs text-purple-400 font-medium mb-1 block">Organization / Lead Name <span className="text-purple-400">*</span></label>
                                                     <input
-                                                        type="number"
-                                                        value={newOppRevenue}
-                                                        onChange={(e) => setNewOppRevenue(e.target.value)}
-                                                        className="w-full bg-transparent border-b border-gray-600 focus:border-purple-500 outline-none text-sm py-1 pl-4 text-white"
+                                                        type="text"
+                                                        value={newOppName}
+                                                        onChange={(e) => setNewOppName(e.target.value)}
+                                                        placeholder="e.g. Acme Corp Enterprise Deal"
+                                                        className="w-full bg-transparent border-b border-purple-500/50 focus:border-purple-500 outline-none text-sm py-1 text-white placeholder-gray-500"
+                                                        autoFocus
                                                     />
                                                 </div>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={handleAddOpportunity}
-                                                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-medium uppercase"
-                                                    >
-                                                        Add
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setIsNewModalOpen(false)}
-                                                        className="bg-transparent border border-gray-600 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded text-xs font-medium uppercase"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                </div>
-                                                <button
-                                                    onClick={() => setIsNewModalOpen(false)}
-                                                    className="text-gray-500 hover:text-red-400"
-                                                >
-                                                    <Settings size={16} /> {/* Using Settings as trash placeholder for now or import Trash2 */}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Opportunity Cards */}
-                                    {stageOpps.map((opp) => (
-                                         <div 
-                                            key={opp.id} 
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, opp.id)}
-                                            className="block galaxy-card !p-3 !rounded-lg !bg-white/10 hover:!bg-white/20 cursor-grab active:cursor-grabbing group relative shadow-sm transition-all border-none"
-                                        >
-                                            <Link href={`/crm/${opp.id}`} className="block">
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <h4 className="text-sm font-medium text-gray-200 truncate pr-2 group-hover:text-purple-400 transition-colors">{opp.name}</h4>
-                                                    <div className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${opp.priority > 1 ? 'bg-orange-500 animate-pulse' : 'bg-green-500'}`}></div>
-                                                </div>
-
-                                                <div className="text-sm text-gray-300 font-medium mb-2">
-                                                    ${opp.expected_revenue?.toLocaleString()}
-                                                </div>
-
-                                                <div className="flex items-center justify-between mt-2">
-                                                    <div className="flex gap-0.5">
-                                                        {[1, 2, 3].map(i => (
-                                                            <Star key={i} size={12} className={i <= (opp.priority || 0) ? "text-yellow-500 fill-yellow-500" : "text-gray-600"} />
-                                                        ))}
+                                                <div className="mb-4">
+                                                    <label className="text-xs text-gray-400 font-medium mb-1 block">Expected Revenue ($)</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-0 top-1 text-gray-500 text-sm">$</span>
+                                                        <input
+                                                            type="number"
+                                                            value={newOppRevenue}
+                                                            onChange={(e) => setNewOppRevenue(e.target.value)}
+                                                            placeholder="10000"
+                                                            className="w-full bg-transparent border-b border-gray-600 focus:border-purple-500 outline-none text-sm py-1 pl-4 text-white"
+                                                        />
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <Clock size={14} className="text-gray-500" />
-                                                        <div className="w-5 h-5 bg-gray-700 rounded-full flex items-center justify-center text-[10px] text-gray-300">
-                                                            A
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={handleAddOpportunity}
+                                                            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all"
+                                                        >
+                                                            Add
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setIsNewModalOpen(false)}
+                                                            className="bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded-lg text-xs font-medium uppercase"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Opportunity Cards */}
+                                        {stageOpps.map((opp) => (
+                                            <div 
+                                                key={opp.id} 
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, opp.id)}
+                                                className="block galaxy-card !p-3.5 !rounded-xl !bg-white/[0.07] hover:!bg-white/[0.12] cursor-grab active:cursor-grabbing group relative shadow-md transition-all border border-white/5 hover:border-purple-500/40"
+                                            >
+                                                <Link href={`/crm/${opp.id}`} className="block">
+                                                    <div className="flex justify-between items-start mb-1.5">
+                                                        <h4 className="text-sm font-semibold text-gray-100 truncate pr-2 group-hover:text-purple-400 transition-colors">
+                                                            {opp.name}
+                                                        </h4>
+                                                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${
+                                                            opp.status?.toLowerCase() === 'won' ? 'bg-emerald-400' :
+                                                            opp.status?.toLowerCase() === 'lost' ? 'bg-rose-500' :
+                                                            opp.priority > 1 ? 'bg-amber-400 animate-pulse' : 'bg-blue-400'
+                                                        }`}></div>
+                                                    </div>
+
+                                                    <div className="text-sm text-gray-200 font-bold mb-2">
+                                                        ${(opp.expected_revenue || 0).toLocaleString()}
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
+                                                        <div className="flex gap-0.5">
+                                                            {[1, 2, 3].map(i => (
+                                                                <Star key={i} size={12} className={i <= (opp.priority || 0) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"} />
+                                                            ))}
                                                         </div>
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${getStatusBadge(opp.status)}`}>
+                                                            {opp.status}
+                                                        </span>
                                                     </div>
-                                                </div>
-                                            </Link>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-                ) : (
-                    <div className="galaxy-card overflow-hidden">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-[#1E293B] text-[10px] uppercase tracking-widest text-gray-500 border-b border-gray-800">
-                                <tr>
-                                    <th className="px-6 py-4">Lead Name</th>
-                                    <th className="px-6 py-4">Company</th>
-                                    <th className="px-6 py-4">Email</th>
-                                    <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4">Probability</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-800">
-                                {leads.filter(l => l.type === 'lead').map(lead => (
-                                    <tr key={lead.id} className="hover:bg-white/5 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <Link href={`/crm/${lead.id}`} className="text-purple-400 hover:underline font-medium">{lead.name}</Link>
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-400">{lead.company_name || '—'}</td>
-                                        <td className="px-6 py-4 text-gray-500 font-mono text-xs">{lead.email || '—'}</td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-2 py-0.5 rounded-full bg-gray-700 text-[10px] font-bold uppercase text-gray-300">{lead.status}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                                                <div className="bg-purple-500 h-full" style={{ width: `${lead.probability}%` }}></div>
+                                                </Link>
                                             </div>
-                                        </td>
-                                    </tr>
+                                        ))}
+
+                                        {stageOpps.length === 0 && !isNewModalOpen && (
+                                            <div className="py-8 text-center border border-dashed border-white/5 rounded-xl text-xs text-gray-500">
+                                                No opportunities
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {activeView === 'leads' && (
+                    <div className="space-y-4">
+                        {/* Table Filters */}
+                        <div className="flex items-center justify-between bg-[#1E293B] p-3 rounded-xl border border-gray-800">
+                            <div className="flex items-center gap-2">
+                                <Filter size={16} className="text-purple-400 ml-2" />
+                                <span className="text-xs uppercase font-bold text-gray-400 mr-2">Filter:</span>
+                                {(
+                                    [
+                                        { id: 'all', label: 'All Records' },
+                                        { id: 'lead', label: 'Leads' },
+                                        { id: 'opportunity', label: 'Opportunities' },
+                                        { id: 'won', label: '🏆 Won' },
+                                        { id: 'lost', label: '❌ Lost' },
+                                    ] as const
+                                ).map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setTableFilter(tab.id)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                            tableFilter === tab.id
+                                                ? 'bg-purple-600 text-white shadow'
+                                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
                                 ))}
-                            </tbody>
-                        </table>
+                            </div>
+                            <span className="text-xs text-gray-400 mr-2 font-mono">
+                                Showing {filteredTableLeads.length} record{filteredTableLeads.length === 1 ? '' : 's'}
+                            </span>
+                        </div>
+
+                        {/* Leads & Opportunities Table */}
+                        <div className="galaxy-card overflow-hidden rounded-xl border border-white/10">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-[#1E293B] text-[10px] uppercase tracking-widest text-gray-400 border-b border-gray-800">
+                                    <tr>
+                                        <th className="px-6 py-4">Name</th>
+                                        <th className="px-6 py-4">Type</th>
+                                        <th className="px-6 py-4">Expected Revenue</th>
+                                        <th className="px-6 py-4">Status / Stage</th>
+                                        <th className="px-6 py-4">Win Probability</th>
+                                        <th className="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-800">
+                                    {filteredTableLeads.map((item) => (
+                                        <tr key={item.id} className="hover:bg-white/5 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <Link 
+                                                    href={`/crm/${item.id}`} 
+                                                    className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-2"
+                                                >
+                                                    {item.name}
+                                                </Link>
+                                                {item.company_name && (
+                                                    <span className="text-xs text-gray-400 block mt-0.5">{item.company_name}</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-xs uppercase font-mono text-gray-400">
+                                                    {item.type}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 font-bold text-gray-200">
+                                                ${(item.expected_revenue || 0).toLocaleString()}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase border ${getStatusBadge(item.status)}`}>
+                                                    {item.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-24 bg-gray-800 h-2 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className={`h-full ${
+                                                                (item.probability || 0) >= 70 ? 'bg-emerald-500' :
+                                                                (item.probability || 0) >= 30 ? 'bg-amber-500' : 'bg-rose-500'
+                                                            }`} 
+                                                            style={{ width: `${item.probability || 0}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-xs font-mono text-gray-400">{item.probability || 0}%</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <Link 
+                                                    href={`/crm/${item.id}`}
+                                                    className="inline-block text-xs bg-white/5 hover:bg-purple-600 text-gray-300 hover:text-white px-3 py-1 rounded-lg transition-all"
+                                                >
+                                                    View Details & History →
+                                                </Link>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filteredTableLeads.length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                                                No records found matching filter.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {activeView === 'activity' && (
+                    <div className="max-w-4xl mx-auto">
+                        <ActivityHistory
+                            module="crm"
+                            entityType="opportunity"
+                            title="Live CRM Activity & Database Audit History"
+                            allowAddNote={true}
+                        />
                     </div>
                 )}
             </div>

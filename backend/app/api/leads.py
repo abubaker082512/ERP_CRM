@@ -4,6 +4,7 @@ from supabase import Client
 from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.lead import Lead, LeadCreate, LeadUpdate
 from app.services.lead_scoring import lead_scoring_service
+from app.services.audit_service import audit_service
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
@@ -69,6 +70,8 @@ def create_lead(lead: LeadCreate, client: Client = Depends(get_supabase_client))
     }
     lead_data = {k: v for k, v in lead_data.items() if v is not None}
 
+    created_row = None
+
     # 1. Try insert with user client
     try:
         response = client.table("crm_lead").insert(lead_data).execute()
@@ -77,37 +80,55 @@ def create_lead(lead: LeadCreate, client: Client = Depends(get_supabase_client))
             row["expected_revenue"] = lead.expected_revenue
             row["priority"] = lead.priority
             row["company_name"] = lead.company_name
-            return _map_crm_lead(row)
+            created_row = row
     except Exception as e:
         print(f"[CRM] User client insert warning: {e}. Retrying with service role...")
 
     # 2. Try insert with service role client (bypasses RLS)
-    try:
-        svc = get_service_role_client()
-        response = svc.table("crm_lead").insert(lead_data).execute()
-        if response.data:
-            row = response.data[0]
-            row["expected_revenue"] = lead.expected_revenue
-            row["priority"] = lead.priority
-            row["company_name"] = lead.company_name
-            return _map_crm_lead(row)
-    except Exception as svc_err:
-        print(f"[CRM] Service role insert error: {svc_err}")
+    if not created_row:
+        try:
+            svc = get_service_role_client()
+            response = svc.table("crm_lead").insert(lead_data).execute()
+            if response.data:
+                row = response.data[0]
+                row["expected_revenue"] = lead.expected_revenue
+                row["priority"] = lead.priority
+                row["company_name"] = lead.company_name
+                created_row = row
+        except Exception as svc_err:
+            print(f"[CRM] Service role insert error: {svc_err}")
 
     # 3. Fallback response so user UI never breaks
-    fallback_row = {
-        "id": str(uuid.uuid4()),
-        "name": lead.name,
-        "email_from": lead.email,
-        "phone": lead.phone,
-        "stage_id": lead.status or "New",
-        "type": lead.type or "lead",
-        "expected_revenue": lead.expected_revenue,
-        "priority": lead.priority,
-        "probability": probability,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    return _map_crm_lead(fallback_row)
+    if not created_row:
+        created_row = {
+            "id": str(uuid.uuid4()),
+            "name": lead.name,
+            "email_from": lead.email,
+            "phone": lead.phone,
+            "stage_id": lead.status or "New",
+            "type": lead.type or "lead",
+            "expected_revenue": lead.expected_revenue,
+            "priority": lead.priority,
+            "probability": probability,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+
+    res_obj = _map_crm_lead(created_row)
+
+    try:
+        audit_service.log_activity(
+            module="crm",
+            entity_type="lead" if lead.type == "lead" else "opportunity",
+            entity_id=str(res_obj["id"]),
+            entity_name=res_obj["name"],
+            action="create",
+            description=f"Created {res_obj['type']} '{res_obj['name']}'",
+            metadata={"status": res_obj["status"], "email": res_obj.get("email")}
+        )
+    except Exception as e:
+        print(f"[CRM] Audit log error: {e}")
+
+    return res_obj
 
 @router.get("", response_model=List[Lead])
 def read_leads(
@@ -157,6 +178,16 @@ def read_lead(lead_id: str, client: Client = Depends(get_supabase_client)):
 
 @router.put("/{lead_id}", response_model=Lead)
 def update_lead(lead_id: str, lead: LeadUpdate, client: Client = Depends(get_supabase_client)):
+    existing = {}
+    try:
+        r = client.table("crm_lead").select("*").eq("id", lead_id).execute()
+        if r.data:
+            existing = r.data[0]
+    except Exception:
+        pass
+
+    old_status = existing.get("stage_id") or "New"
+
     update_data = {}
     if lead.name is not None: update_data["name"] = lead.name
     if lead.email is not None: update_data["email_from"] = lead.email
@@ -165,29 +196,54 @@ def update_lead(lead_id: str, lead: LeadUpdate, client: Client = Depends(get_sup
     if lead.type is not None: update_data["type"] = lead.type
     if lead.probability is not None: update_data["probability"] = lead.probability
 
+    row = dict(existing)
     try:
         response = client.table("crm_lead").update(update_data).eq("id", lead_id).execute()
         if response.data:
-            return _map_crm_lead(response.data[0])
+            row.update(response.data[0])
     except Exception:
-        pass
+        try:
+            svc = get_service_role_client()
+            response = svc.table("crm_lead").update(update_data).eq("id", lead_id).execute()
+            if response.data:
+                row.update(response.data[0])
+        except Exception:
+            row.update(update_data)
+
+    if not row.get("id"):
+        row["id"] = lead_id
+        row["name"] = lead.name or "Lead"
+        row["stage_id"] = lead.status or "New"
+        row["type"] = lead.type or "lead"
+        row["created_at"] = datetime.now(timezone.utc).isoformat()
+
+    res_obj = _map_crm_lead(row)
 
     try:
-        svc = get_service_role_client()
-        response = svc.table("crm_lead").update(update_data).eq("id", lead_id).execute()
-        if response.data:
-            return _map_crm_lead(response.data[0])
-    except Exception:
-        pass
+        if lead.status is not None and lead.status != old_status:
+            action = "mark_lost" if lead.status.lower() == "lost" else ("mark_won" if lead.status.lower() == "won" else "status_change")
+            audit_service.log_activity(
+                module="crm",
+                entity_type=res_obj["type"],
+                entity_id=str(lead_id),
+                entity_name=res_obj["name"],
+                action=action,
+                description=f"Status changed from '{old_status}' to '{lead.status}' for {res_obj['type']} '{res_obj['name']}'",
+                metadata={"old_status": old_status, "new_status": lead.status}
+            )
+        else:
+            audit_service.log_activity(
+                module="crm",
+                entity_type=res_obj["type"],
+                entity_id=str(lead_id),
+                entity_name=res_obj["name"],
+                action="update",
+                description=f"Updated details for {res_obj['type']} '{res_obj['name']}'"
+            )
+    except Exception as e:
+        print(f"[CRM] Lead audit update error: {e}")
 
-    fallback_row = {
-        "id": lead_id,
-        "name": lead.name or "Lead",
-        "stage_id": lead.status or "New",
-        "type": lead.type or "lead",
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    return _map_crm_lead(fallback_row)
+    return res_obj
 
 @router.delete("/{lead_id}")
 def delete_lead(lead_id: str, client: Client = Depends(get_supabase_client)):
@@ -199,4 +255,17 @@ def delete_lead(lead_id: str, client: Client = Depends(get_supabase_client)):
             svc.table("crm_lead").delete().eq("id", lead_id).execute()
         except Exception:
             pass
+
+    try:
+        audit_service.log_activity(
+            module="crm",
+            entity_type="lead",
+            entity_id=str(lead_id),
+            entity_name=f"Lead #{lead_id[:8]}",
+            action="delete",
+            description=f"Deleted lead #{lead_id[:8]}"
+        )
+    except Exception as e:
+        print(f"[CRM] Lead audit delete error: {e}")
+
     return {"message": "Lead deleted successfully"}

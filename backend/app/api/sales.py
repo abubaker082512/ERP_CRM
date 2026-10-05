@@ -3,6 +3,7 @@ from app.core.supabase_client import get_service_role_client
 from supabase import Client
 from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.sales import SalesOrder, SalesOrderCreate, SalesOrderUpdate
+from app.services.audit_service import audit_service
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
@@ -151,7 +152,22 @@ def create_sales_order(order: SalesOrderCreate, client: Client = Depends(get_sup
                 inserted_lines = lines_data
 
     created_order["sale_order_line"] = inserted_lines
-    return _map_sale_order(created_order, client)
+    res_obj = _map_sale_order(created_order, client)
+
+    try:
+        audit_service.log_activity(
+            module="sales",
+            entity_type="sale_order",
+            entity_id=str(res_obj["id"]),
+            entity_name=res_obj["name"],
+            action="create",
+            description=f"Created Quotation '{res_obj['name']}' for ${res_obj['amount_total']:,.2f}",
+            metadata={"amount_total": res_obj["amount_total"], "state": res_obj["state"]}
+        )
+    except Exception as e:
+        print(f"[SALES] Audit create log error: {e}")
+
+    return res_obj
 
 @router.get("", response_model=List[SalesOrder])
 def read_sales_orders(skip: int = 0, limit: int = 100, client: Client = Depends(get_supabase_client)):
@@ -229,7 +245,22 @@ def update_sales_order(order_id: str, order: SalesOrderUpdate, client: Client = 
             except Exception:
                 row.update(update_data)
 
-    return _map_sale_order(row, client)
+    res_obj = _map_sale_order(row, client)
+
+    try:
+        audit_service.log_activity(
+            module="sales",
+            entity_type="sale_order",
+            entity_id=str(order_id),
+            entity_name=res_obj["name"],
+            action="update",
+            description=f"Updated Sales Order/Quotation '{res_obj['name']}'",
+            metadata={"updated_fields": list(update_data.keys())}
+        )
+    except Exception as e:
+        print(f"[SALES] Audit update error: {e}")
+
+    return res_obj
 
 @router.post("/{order_id}/confirm", response_model=SalesOrder)
 def confirm_sales_order(order_id: str, client: Client = Depends(get_supabase_client)):
@@ -276,6 +307,15 @@ def confirm_sales_order(order_id: str, client: Client = Depends(get_supabase_cli
             "state": "posted"
         }
         client.table("account_move").insert(move_data).execute()
+        audit_service.log_activity(
+            module="accounting",
+            entity_type="invoice",
+            entity_id=str(uuid.uuid4()),
+            entity_name=move_data["name"],
+            action="create",
+            description=f"Generated Customer Invoice '{move_data['name']}' for ${move_data['amount_total']:,.2f}",
+            metadata={"sale_order": order_data.get("name")}
+        )
     except Exception as e:
         print(f"[SALES-ACCOUNTING LINK WARN]: {e}")
 
@@ -290,10 +330,34 @@ def confirm_sales_order(order_id: str, client: Client = Depends(get_supabase_cli
                     "product_uom_qty": float(line.get("product_uom_qty") or 1.0),
                     "state": "done"
                 }).execute()
+                audit_service.log_activity(
+                    module="inventory",
+                    entity_type="inventory_move",
+                    entity_id=str(uuid.uuid4()),
+                    entity_name=f"OUT/{order_data.get('name', 'SO')}",
+                    action="create",
+                    description=f"Created outgoing delivery move for product #{str(line['product_id'])[:8]} (Qty: {line.get('product_uom_qty')})",
+                    metadata={"sale_order": order_data.get("name")}
+                )
             except Exception as inv_err:
                 print(f"[SALES-INVENTORY LINK WARN]: {inv_err}")
 
-    return _map_sale_order(order_data, client)
+    res_obj = _map_sale_order(order_data, client)
+
+    try:
+        audit_service.log_activity(
+            module="sales",
+            entity_type="sale_order",
+            entity_id=str(order_id),
+            entity_name=res_obj["name"],
+            action="confirm",
+            description=f"Confirmed Sales Order '{res_obj['name']}' (State: Sale/Confirmed)",
+            metadata={"amount_total": res_obj["amount_total"]}
+        )
+    except Exception as e:
+        print(f"[SALES] Confirm audit error: {e}")
+
+    return res_obj
 
 @router.delete("/{order_id}")
 def delete_sales_order(order_id: str, client: Client = Depends(get_supabase_client)):
@@ -307,4 +371,18 @@ def delete_sales_order(order_id: str, client: Client = Depends(get_supabase_clie
             svc.table("sale_order").delete().eq("id", order_id).execute()
         except Exception:
             pass
+
+    try:
+        audit_service.log_activity(
+            module="sales",
+            entity_type="sale_order",
+            entity_id=str(order_id),
+            entity_name=f"SO #{order_id[:8]}",
+            action="delete",
+            description=f"Deleted Sales Order #{order_id[:8]}"
+        )
+    except Exception as e:
+        print(f"[SALES] Delete audit error: {e}")
+
     return {"message": "Sales order deleted"}
+

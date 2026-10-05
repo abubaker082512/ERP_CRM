@@ -3,6 +3,7 @@ from app.core.supabase_client import get_service_role_client
 from supabase import Client
 from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.contact import Contact, ContactCreate, ContactUpdate
+from app.services.audit_service import audit_service
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
@@ -65,6 +66,8 @@ def create_contact(contact: ContactCreate, client: Client = Depends(get_supabase
     }
     contact_data = {k: v for k, v in contact_data.items() if v is not None}
 
+    created_row = None
+
     # 1. Try user client insert
     try:
         response = client.table("contacts").insert(contact_data).execute()
@@ -77,39 +80,57 @@ def create_contact(contact: ContactCreate, client: Client = Depends(get_supabase
             row["website"] = contact.website
             row["image_url"] = contact.image_url
             row["notes"] = contact.notes
-            return _map_contact(row)
+            created_row = row
     except Exception as e:
         print(f"[CONTACTS] User client insert warning: {e}. Retrying with service role...")
 
     # 2. Try service role insert
-    try:
-        svc = get_service_role_client()
-        response = svc.table("contacts").insert(contact_data).execute()
-        if response.data:
-            row = response.data[0]
-            row["street"] = contact.street
-            row["city"] = contact.city
-            row["state"] = contact.state
-            row["country"] = contact.country
-            row["website"] = contact.website
-            row["image_url"] = contact.image_url
-            row["notes"] = contact.notes
-            return _map_contact(row)
-    except Exception as svc_err:
-        print(f"[CONTACTS] Service role insert error: {svc_err}")
+    if not created_row:
+        try:
+            svc = get_service_role_client()
+            response = svc.table("contacts").insert(contact_data).execute()
+            if response.data:
+                row = response.data[0]
+                row["street"] = contact.street
+                row["city"] = contact.city
+                row["state"] = contact.state
+                row["country"] = contact.country
+                row["website"] = contact.website
+                row["image_url"] = contact.image_url
+                row["notes"] = contact.notes
+                created_row = row
+        except Exception as svc_err:
+            print(f"[CONTACTS] Service role insert error: {svc_err}")
 
     # 3. Safe fallback
-    fallback_row = {
-        "id": str(uuid.uuid4()),
-        "name": contact.name,
-        "email": contact.email,
-        "phone": contact.phone,
-        "is_company": contact.is_company,
-        "company_name": contact.company_name,
-        "street": contact.street,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    return _map_contact(fallback_row)
+    if not created_row:
+        created_row = {
+            "id": str(uuid.uuid4()),
+            "name": contact.name,
+            "email": contact.email,
+            "phone": contact.phone,
+            "is_company": contact.is_company,
+            "company_name": contact.company_name,
+            "street": contact.street,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+
+    res_obj = _map_contact(created_row)
+
+    try:
+        audit_service.log_activity(
+            module="contacts",
+            entity_type="contact",
+            entity_id=str(res_obj["id"]),
+            entity_name=res_obj["name"],
+            action="create",
+            description=f"Created {'Company' if res_obj['is_company'] else 'Individual'} contact '{res_obj['name']}'",
+            metadata={"email": res_obj.get("email"), "phone": res_obj.get("phone")}
+        )
+    except Exception as e:
+        print(f"[CONTACTS] Audit create log error: {e}")
+
+    return res_obj
 
 @router.get("", response_model=List[Contact])
 def read_contacts(skip: int = 0, limit: int = 100, client: Client = Depends(get_supabase_client)):
@@ -184,7 +205,22 @@ def update_contact(contact_id: str, contact: ContactUpdate, client: Client = Dep
     if contact.city is not None: row["city"] = contact.city
     if contact.notes is not None: row["notes"] = contact.notes
 
-    return _map_contact(row)
+    res_obj = _map_contact(row)
+
+    try:
+        audit_service.log_activity(
+            module="contacts",
+            entity_type="contact",
+            entity_id=str(contact_id),
+            entity_name=res_obj["name"],
+            action="update",
+            description=f"Updated contact '{res_obj['name']}'",
+            metadata={"updated_fields": list(update_data.keys())}
+        )
+    except Exception as e:
+        print(f"[CONTACTS] Audit update error: {e}")
+
+    return res_obj
 
 @router.delete("/{contact_id}")
 def delete_contact(contact_id: str, client: Client = Depends(get_supabase_client)):
@@ -196,4 +232,18 @@ def delete_contact(contact_id: str, client: Client = Depends(get_supabase_client
             svc.table("contacts").delete().eq("id", contact_id).execute()
         except Exception:
             pass
+
+    try:
+        audit_service.log_activity(
+            module="contacts",
+            entity_type="contact",
+            entity_id=str(contact_id),
+            entity_name=f"Contact #{contact_id[:8]}",
+            action="delete",
+            description=f"Deleted contact #{contact_id[:8]}"
+        )
+    except Exception as e:
+        print(f"[CONTACTS] Audit delete error: {e}")
+
     return {"message": "Contact deleted"}
+

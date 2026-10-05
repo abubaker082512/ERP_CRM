@@ -1,0 +1,14 @@
+[
+  {
+    "id": "22d30168-1d32-40b5-b9c2-d0945933ec22",
+    "module": "crm",
+    "entity_type": "opportunity",
+    "entity_id": "123",
+    "entity_name": "Test Opp",
+    "action": "mark_lost",
+    "description": "Marked opportunity Test Opp as Lost",
+    "user_email": "admin@galaxy.erp",
+    "metadata": {},
+    "created_at": "2026-10-05T06:24:00.936990+00:00"
+  }
+]

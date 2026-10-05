@@ -3,6 +3,7 @@ from app.core.supabase_client import get_service_role_client
 from supabase import Client
 from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.opportunity import Opportunity, OpportunityCreate, OpportunityUpdate
+from app.services.audit_service import audit_service
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
@@ -52,6 +53,8 @@ def create_opportunity(opportunity: OpportunityCreate, client: Client = Depends(
     }
     opp_data = {k: v for k, v in opp_data.items() if v is not None}
 
+    created_row = None
+
     # 1. Try insert with user client
     try:
         response = client.table("crm_lead").insert(opp_data).execute()
@@ -61,37 +64,56 @@ def create_opportunity(opportunity: OpportunityCreate, client: Client = Depends(
             row["priority"] = opportunity.priority
             row["notes"] = opportunity.notes
             row["close_date"] = opportunity.close_date
-            return _map_opportunity(row)
+            created_row = row
     except Exception as e:
         print(f"[CRM-OPP] User client insert warning: {e}. Retrying with service role...")
 
     # 2. Try insert with service role client
-    try:
-        svc = get_service_role_client()
-        response = svc.table("crm_lead").insert(opp_data).execute()
-        if response.data:
-            row = response.data[0]
-            row["expected_revenue"] = opportunity.expected_revenue
-            row["priority"] = opportunity.priority
-            row["notes"] = opportunity.notes
-            row["close_date"] = opportunity.close_date
-            return _map_opportunity(row)
-    except Exception as svc_err:
-        print(f"[CRM-OPP] Service role insert error: {svc_err}")
+    if not created_row:
+        try:
+            svc = get_service_role_client()
+            response = svc.table("crm_lead").insert(opp_data).execute()
+            if response.data:
+                row = response.data[0]
+                row["expected_revenue"] = opportunity.expected_revenue
+                row["priority"] = opportunity.priority
+                row["notes"] = opportunity.notes
+                row["close_date"] = opportunity.close_date
+                created_row = row
+        except Exception as svc_err:
+            print(f"[CRM-OPP] Service role insert error: {svc_err}")
 
     # 3. Safe fallback
-    fallback_row = {
-        "id": str(uuid.uuid4()),
-        "name": opportunity.name,
-        "stage_id": opportunity.stage or "New",
-        "type": "opportunity",
-        "expected_revenue": opportunity.expected_revenue,
-        "priority": opportunity.priority,
-        "notes": opportunity.notes,
-        "probability": opportunity.win_probability or 0.0,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    return _map_opportunity(fallback_row)
+    if not created_row:
+        created_row = {
+            "id": str(uuid.uuid4()),
+            "name": opportunity.name,
+            "stage_id": opportunity.stage or "New",
+            "type": "opportunity",
+            "expected_revenue": opportunity.expected_revenue,
+            "priority": opportunity.priority,
+            "notes": opportunity.notes,
+            "probability": opportunity.win_probability or 0.0,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+
+    res_obj = _map_opportunity(created_row)
+    
+    # Audit log creation
+    try:
+        audit_service.log_activity(
+            module="crm",
+            entity_type="opportunity",
+            entity_id=str(res_obj["id"]),
+            entity_name=res_obj["name"],
+            action="create",
+            description=f"Created opportunity '{res_obj['name']}' with expected revenue ${res_obj['expected_revenue']:,.2f}",
+            metadata={"stage": res_obj["stage"], "revenue": res_obj["expected_revenue"]}
+        )
+    except Exception as e:
+        print(f"[CRM-OPP] Audit log error: {e}")
+
+    return res_obj
 
 @router.get("", response_model=List[Opportunity])
 def read_opportunities(skip: int = 0, limit: int = 100, client: Client = Depends(get_supabase_client)):
@@ -143,6 +165,9 @@ def update_opportunity(opp_id: str, opportunity: OpportunityUpdate, client: Clie
         except Exception:
             pass
 
+    old_stage = existing.get("stage_id") or "New"
+    old_name = existing.get("name") or "Opportunity"
+
     update_data = {}
     if opportunity.name is not None: update_data["name"] = opportunity.name
     if opportunity.stage is not None: update_data["stage_id"] = opportunity.stage
@@ -176,7 +201,55 @@ def update_opportunity(opp_id: str, opportunity: OpportunityUpdate, client: Clie
         row["id"] = opp_id
         row["created_at"] = datetime.now(timezone.utc).isoformat()
 
-    return _map_opportunity(row)
+    res_obj = _map_opportunity(row)
+
+    # Activity Audit Tracking
+    try:
+        if opportunity.stage is not None and opportunity.stage != old_stage:
+            if opportunity.stage.lower() == "lost":
+                audit_service.log_activity(
+                    module="crm",
+                    entity_type="opportunity",
+                    entity_id=str(opp_id),
+                    entity_name=res_obj["name"],
+                    action="mark_lost",
+                    description=f"Marked opportunity '{res_obj['name']}' as Lost (Previous Stage: {old_stage})",
+                    metadata={"old_stage": old_stage, "new_stage": "Lost"}
+                )
+            elif opportunity.stage.lower() == "won":
+                audit_service.log_activity(
+                    module="crm",
+                    entity_type="opportunity",
+                    entity_id=str(opp_id),
+                    entity_name=res_obj["name"],
+                    action="mark_won",
+                    description=f"Marked opportunity '{res_obj['name']}' as Won! 🎉",
+                    metadata={"old_stage": old_stage, "new_stage": "Won"}
+                )
+            else:
+                audit_service.log_activity(
+                    module="crm",
+                    entity_type="opportunity",
+                    entity_id=str(opp_id),
+                    entity_name=res_obj["name"],
+                    action="stage_change",
+                    description=f"Stage changed from '{old_stage}' to '{opportunity.stage}'",
+                    metadata={"old_stage": old_stage, "new_stage": opportunity.stage}
+                )
+        else:
+            audit_service.log_activity(
+                module="crm",
+                entity_type="opportunity",
+                entity_id=str(opp_id),
+                entity_name=res_obj["name"],
+                action="update",
+                description=f"Updated opportunity details for '{res_obj['name']}'",
+                metadata={"updated_fields": list(update_data.keys())}
+            )
+    except Exception as e:
+        print(f"[CRM-OPP] Audit update log error: {e}")
+
+    return res_obj
 
 @router.delete("/{opp_id}")
 def delete_opportunity(opp_id: str, client: Client = Depends(get_supabase_client)):
@@ -188,6 +261,19 @@ def delete_opportunity(opp_id: str, client: Client = Depends(get_supabase_client
             svc.table("crm_lead").delete().eq("id", opp_id).execute()
         except Exception:
             pass
+
+    try:
+        audit_service.log_activity(
+            module="crm",
+            entity_type="opportunity",
+            entity_id=str(opp_id),
+            entity_name=f"Opportunity #{opp_id[:8]}",
+            action="delete",
+            description=f"Deleted opportunity #{opp_id[:8]}"
+        )
+    except Exception as e:
+        print(f"[CRM-OPP] Audit delete log error: {e}")
+
     return {"message": "Opportunity deleted successfully"}
 
 @router.post("/{opp_id}/convert-to-sale")
@@ -213,5 +299,28 @@ def convert_to_sale(opp_id: str, client: Client = Depends(get_supabase_client)):
         "stage_id": "Won",
         "probability": 100.0
     }).eq("id", opp_id).execute()
+
+    try:
+        audit_service.log_activity(
+            module="crm",
+            entity_type="opportunity",
+            entity_id=str(opp_id),
+            entity_name=opp.get("name") or "Opportunity",
+            action="convert_sale",
+            description=f"Converted opportunity '{opp.get('name')}' to Sales Order '{sale_name}'",
+            metadata={"sale_order_name": sale_name, "amount_total": sale_data["amount_total"]}
+        )
+        audit_service.log_activity(
+            module="sales",
+            entity_type="sale_order",
+            entity_id=str(sale_resp.data[0].get("id")),
+            entity_name=sale_name,
+            action="create",
+            description=f"Generated Quotation '{sale_name}' from CRM Opportunity '{opp.get('name')}'",
+            metadata={"crm_opp_id": opp_id, "amount_total": sale_data["amount_total"]}
+        )
+    except Exception as e:
+        print(f"[CRM-OPP] Conversion audit error: {e}")
     
     return {"message": "Opportunity converted to sales order", "sale_order": sale_resp.data[0]}
+
