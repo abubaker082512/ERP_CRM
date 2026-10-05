@@ -159,9 +159,9 @@ export default function NewQuotationPage() {
                                 onChange={(e) => setSelectedContact(e.target.value)}
                                 className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-purple-500 outline-none"
                             >
-                                <option value="">Select Customer...</option>
+                                <option value="" className="bg-[#1E293B] text-gray-400">Select Customer...</option>
                                 {contacts.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                    <option key={c.id} value={c.id} className="bg-[#1E293B] text-white">{c.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -194,48 +194,53 @@ export default function NewQuotationPage() {
                                 </thead>
                                 <tbody>
                                     {lines.map((line, index) => (
-                                        <tr key={index} className="border-b border-gray-700 bg-[#1E293B]">
+                                        <tr key={index} className="border-b border-gray-700 bg-[#1E293B]/80 hover:bg-[#1E293B]">
                                             <td className="px-4 py-2">
                                                 <select
                                                     value={line.product_id}
                                                     onChange={(e) => updateLine(index, 'product_id', e.target.value)}
-                                                    className="w-full bg-transparent border-none focus:ring-0 text-white p-0"
+                                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-2.5 py-1.5 text-sm text-white focus:border-purple-500 outline-none cursor-pointer"
                                                 >
-                                                    <option value="">Select Product...</option>
+                                                    <option value="" className="bg-[#1E293B] text-gray-400">Select Product...</option>
                                                     {products.map(p => (
-                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                        <option key={p.id} value={p.id} className="bg-[#1E293B] text-white">
+                                                            {p.name} {p.list_price !== undefined ? `($${Number(p.list_price).toFixed(2)})` : ''}
+                                                        </option>
                                                     ))}
                                                 </select>
                                             </td>
                                             <td className="px-4 py-2">
                                                 <input
                                                     type="text"
+                                                    placeholder="Description..."
                                                     value={line.name}
                                                     onChange={(e) => updateLine(index, 'name', e.target.value)}
-                                                    className="w-full bg-transparent border-none focus:ring-0 text-white p-0"
+                                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-2.5 py-1.5 text-sm text-white focus:border-purple-500 outline-none"
                                                 />
                                             </td>
                                             <td className="px-4 py-2">
                                                 <input
                                                     type="number"
+                                                    min="1"
                                                     value={line.product_uom_qty}
                                                     onChange={(e) => updateLine(index, 'product_uom_qty', e.target.value)}
-                                                    className="w-full bg-transparent border-none focus:ring-0 text-white p-0"
+                                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-2.5 py-1.5 text-sm text-white focus:border-purple-500 outline-none text-center"
                                                 />
                                             </td>
                                             <td className="px-4 py-2">
                                                 <input
                                                     type="number"
+                                                    step="0.01"
                                                     value={line.price_unit}
                                                     onChange={(e) => updateLine(index, 'price_unit', e.target.value)}
-                                                    className="w-full bg-transparent border-none focus:ring-0 text-white p-0"
+                                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-2.5 py-1.5 text-sm text-white focus:border-purple-500 outline-none text-right"
                                                 />
                                             </td>
-                                            <td className="px-4 py-2 text-right text-white">
+                                            <td className="px-4 py-2 text-right font-medium text-white">
                                                 ${line.price_subtotal.toFixed(2)}
                                             </td>
                                             <td className="px-4 py-2 text-center">
-                                                <button onClick={() => removeLine(index)} className="text-gray-500 hover:text-red-400">
+                                                <button onClick={() => removeLine(index)} className="p-1 text-gray-400 hover:text-red-400 transition">
                                                     <Trash2 size={16} />
                                                 </button>
                                             </td>

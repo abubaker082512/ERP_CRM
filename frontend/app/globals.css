@@ -5,6 +5,7 @@
 html {
   background-color: #020205 !important;
   scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
@@ -14,6 +15,16 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+}
+
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #1E293B !important;
+  color: #F8FAFC !important;
 }
 
 .min-h-screen {

@@ -3,14 +3,14 @@ import { fetchAPI } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import PurchaseHeader from '@/components/purchase/PurchaseHeader';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Search, Filter, LayoutGrid, List, X, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 type Product = {
     id: string;
     name: string;
-    list_price: number;
-    cost_price: number;
+    standard_price: number;
+    list_price?: number;
 };
 
 type Contact = {
@@ -70,8 +70,8 @@ export default function NewRFQPage() {
             if (product) {
                 line.product_id = product.id;
                 line.name = product.name;
-                line.price_unit = product.cost_price; // Use cost price for purchase
-                line.price_subtotal = line.product_qty * product.cost_price;
+                line.price_unit = product.standard_price || product.list_price || 0;
+                line.price_subtotal = line.product_qty * line.price_unit;
             }
         } else if (field === 'product_qty' || field === 'price_unit') {
             // @ts-ignore
@@ -105,8 +105,9 @@ export default function NewRFQPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    name: "New", // Backend or DB should generate sequence
+                    name: "New",
                     partner_id: selectedVendor,
+                    partner_name: contacts.find(c => c.id === selectedVendor)?.name,
                     amount_total: calculateTotal(),
                     lines: lines
                 })
@@ -159,9 +160,9 @@ export default function NewRFQPage() {
                                 onChange={(e) => setSelectedVendor(e.target.value)}
                                 className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-purple-500 outline-none"
                             >
-                                <option value="">Select Vendor...</option>
+                                <option value="" className="bg-[#1E293B] text-gray-400">Select Vendor...</option>
                                 {contacts.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                    <option key={c.id} value={c.id} className="bg-[#1E293B] text-white">{c.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -194,48 +195,53 @@ export default function NewRFQPage() {
                                 </thead>
                                 <tbody>
                                     {lines.map((line, index) => (
-                                        <tr key={index} className="border-b border-gray-700 bg-[#1E293B]">
+                                        <tr key={index} className="border-b border-gray-700 bg-[#1E293B]/80 hover:bg-[#1E293B]">
                                             <td className="px-4 py-2">
                                                 <select
                                                     value={line.product_id}
                                                     onChange={(e) => updateLine(index, 'product_id', e.target.value)}
-                                                    className="w-full bg-transparent border-none focus:ring-0 text-white p-0"
+                                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-2.5 py-1.5 text-sm text-white focus:border-purple-500 outline-none cursor-pointer"
                                                 >
-                                                    <option value="">Select Product...</option>
+                                                    <option value="" className="bg-[#1E293B] text-gray-400">Select Product...</option>
                                                     {products.map(p => (
-                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                        <option key={p.id} value={p.id} className="bg-[#1E293B] text-white">
+                                                            {p.name} {p.list_price !== undefined ? `($${Number(p.list_price).toFixed(2)})` : ''}
+                                                        </option>
                                                     ))}
                                                 </select>
                                             </td>
                                             <td className="px-4 py-2">
                                                 <input
                                                     type="text"
+                                                    placeholder="Description..."
                                                     value={line.name}
                                                     onChange={(e) => updateLine(index, 'name', e.target.value)}
-                                                    className="w-full bg-transparent border-none focus:ring-0 text-white p-0"
+                                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-2.5 py-1.5 text-sm text-white focus:border-purple-500 outline-none"
                                                 />
                                             </td>
                                             <td className="px-4 py-2">
                                                 <input
                                                     type="number"
+                                                    min="1"
                                                     value={line.product_qty}
                                                     onChange={(e) => updateLine(index, 'product_qty', e.target.value)}
-                                                    className="w-full bg-transparent border-none focus:ring-0 text-white p-0"
+                                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-2.5 py-1.5 text-sm text-white focus:border-purple-500 outline-none text-center"
                                                 />
                                             </td>
                                             <td className="px-4 py-2">
                                                 <input
                                                     type="number"
+                                                    step="0.01"
                                                     value={line.price_unit}
                                                     onChange={(e) => updateLine(index, 'price_unit', e.target.value)}
-                                                    className="w-full bg-transparent border-none focus:ring-0 text-white p-0"
+                                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-2.5 py-1.5 text-sm text-white focus:border-purple-500 outline-none text-right"
                                                 />
                                             </td>
-                                            <td className="px-4 py-2 text-right text-white">
+                                            <td className="px-4 py-2 text-right font-medium text-white">
                                                 ${line.price_subtotal.toFixed(2)}
                                             </td>
                                             <td className="px-4 py-2 text-center">
-                                                <button onClick={() => removeLine(index)} className="text-gray-500 hover:text-red-400">
+                                                <button onClick={() => removeLine(index)} className="p-1 text-gray-400 hover:text-red-400 transition">
                                                     <Trash2 size={16} />
                                                 </button>
                                             </td>
