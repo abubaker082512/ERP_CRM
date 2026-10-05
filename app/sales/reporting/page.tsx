@@ -1,7 +1,8 @@
 "use client";
-
+import { fetchAPI } from '@/lib/api';
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
-import { BarChart3, TrendingUp, DollarSign, Users, Award } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BarChart3, TrendingUp, DollarSign, Users, Award, ShoppingBag } from "lucide-react";
 
 const MENU_ITEMS = [
     { name: "Quotations", href: "/sales" },
@@ -13,6 +14,33 @@ const MENU_ITEMS = [
 ];
 
 export default function SalesReportingPage() {
+    const [sales, setSales] = useState<any[]>([]);
+    const [contacts, setContacts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadMetrics();
+    }, []);
+
+    const loadMetrics = async () => {
+        try {
+            const [sRes, cRes] = await Promise.all([
+                fetchAPI("/sales"),
+                fetchAPI("/contacts")
+            ]);
+            if (sRes.ok) setSales(await sRes.json());
+            if (cRes.ok) setContacts(await cRes.json());
+        } catch (e) {
+            console.error("Failed to load metrics", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const confirmed = sales.filter(s => s.state === 'sale');
+    const totalRevenue = confirmed.reduce((sum, s) => sum + (s.amount_total || 0), 0);
+    const avgOrderValue = confirmed.length > 0 ? (totalRevenue / confirmed.length) : 0;
+
     return (
         <div className="flex flex-col h-screen bg-[#0F172A]">
             <StandardModuleHeader
@@ -24,8 +52,8 @@ export default function SalesReportingPage() {
 
             <div className="flex-1 overflow-auto p-6">
                 <div className="mb-6">
-                    <h2 className="text-2xl font-semibold text-gray-200">Sales Reporting</h2>
-                    <p className="text-sm text-gray-400 mt-1">Analytics and insights for sales performance</p>
+                    <h2 className="text-2xl font-semibold text-gray-200">Sales Reporting & Analytics</h2>
+                    <p className="text-sm text-gray-400 mt-1">Live synchronized performance across orders, revenue, and customer accounts</p>
                 </div>
 
                 {/* Key Metrics */}
@@ -37,99 +65,79 @@ export default function SalesReportingPage() {
                             </div>
                             <TrendingUp size={20} className="text-green-400" />
                         </div>
-                        <div className="text-3xl font-bold text-white mb-1">$2.8M</div>
-                        <div className="text-sm text-gray-400">Total Revenue</div>
-                        <div className="text-xs text-green-400 mt-2">+15% from last month</div>
+                        <div className="text-3xl font-bold text-white mb-1">
+                            ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                        <div className="text-sm text-gray-400">Total Confirmed Revenue</div>
                     </div>
 
                     <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
                         <div className="bg-blue-500/20 p-3 rounded-lg w-fit mb-4">
-                            <BarChart3 size={24} className="text-blue-400" />
+                            <ShoppingBag size={24} className="text-blue-400" />
                         </div>
-                        <div className="text-3xl font-bold text-white mb-1">342</div>
-                        <div className="text-sm text-gray-400">Orders This Month</div>
-                        <div className="text-xs text-green-400 mt-2">+22% from last month</div>
+                        <div className="text-3xl font-bold text-white mb-1">{sales.length}</div>
+                        <div className="text-sm text-gray-400">Total Quotations & Orders ({confirmed.length} confirmed)</div>
                     </div>
 
                     <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
                         <div className="bg-purple-500/20 p-3 rounded-lg w-fit mb-4">
                             <Users size={24} className="text-purple-400" />
                         </div>
-                        <div className="text-3xl font-bold text-white mb-1">128</div>
-                        <div className="text-sm text-gray-400">Active Customers</div>
-                        <div className="text-xs text-green-400 mt-2">+8% from last month</div>
+                        <div className="text-3xl font-bold text-white mb-1">{contacts.length}</div>
+                        <div className="text-sm text-gray-400">Total Active Customers</div>
                     </div>
 
                     <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
                         <div className="bg-yellow-500/20 p-3 rounded-lg w-fit mb-4">
                             <Award size={24} className="text-yellow-400" />
                         </div>
-                        <div className="text-3xl font-bold text-white mb-1">$8,200</div>
+                        <div className="text-3xl font-bold text-white mb-1">
+                            ${avgOrderValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
                         <div className="text-sm text-gray-400">Average Order Value</div>
-                        <div className="text-xs text-green-400 mt-2">+5% from last month</div>
                     </div>
                 </div>
 
-                {/* Charts */}
+                {/* Orders Breakdown */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
-                        <h3 className="text-lg font-semibold text-white mb-4">Revenue Trend</h3>
-                        <div className="h-64 flex items-center justify-center text-gray-500">
-                            <div className="text-center">
-                                <TrendingUp size={48} className="mx-auto mb-2 opacity-50" />
-                                <p>Chart visualization coming soon</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
-                        <h3 className="text-lg font-semibold text-white mb-4">Sales by Product</h3>
-                        <div className="h-64 flex items-center justify-center text-gray-500">
-                            <div className="text-center">
-                                <BarChart3 size={48} className="mx-auto mb-2 opacity-50" />
-                                <p>Chart visualization coming soon</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
-                        <h3 className="text-lg font-semibold text-white mb-4">Top Customers</h3>
+                        <h3 className="text-lg font-semibold text-white mb-4">Recent Sales Pipeline</h3>
                         <div className="space-y-3">
-                            {[
-                                { name: "Acme Corp", revenue: "$125,000", orders: 45 },
-                                { name: "Tech Solutions", revenue: "$98,000", orders: 38 },
-                                { name: "Global Industries", revenue: "$87,000", orders: 32 },
-                            ].map((customer, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-3 bg-[#0F172A] rounded">
+                            {sales.slice(0, 5).map((order) => (
+                                <div key={order.id} className="flex items-center justify-between p-3 bg-[#0F172A] rounded border border-gray-800">
                                     <div>
-                                        <div className="font-medium text-white">{customer.name}</div>
-                                        <div className="text-sm text-gray-400">{customer.orders} orders</div>
+                                        <div className="font-semibold text-white">{order.name}</div>
+                                        <div className="text-xs text-gray-400">{order.customer_name || "Customer"}</div>
                                     </div>
-                                    <div className="text-green-400 font-semibold">{customer.revenue}</div>
+                                    <div className="text-right">
+                                        <div className="text-green-400 font-bold">${(order.amount_total || 0).toLocaleString()}</div>
+                                        <div className="text-[10px] uppercase font-semibold text-gray-400">{order.state}</div>
+                                    </div>
                                 </div>
                             ))}
+                            {sales.length === 0 && (
+                                <p className="text-sm text-gray-500 text-center py-4">No sales records available</p>
+                            )}
                         </div>
                     </div>
 
                     <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
-                        <h3 className="text-lg font-semibold text-white mb-4">Sales Team Performance</h3>
+                        <h3 className="text-lg font-semibold text-white mb-4">Top Customers Overview</h3>
                         <div className="space-y-3">
-                            {[
-                                { name: "John Smith", revenue: "$450K", deals: 52 },
-                                { name: "Sarah Davis", revenue: "$380K", deals: 48 },
-                                { name: "Mike Johnson", revenue: "$320K", deals: 42 },
-                            ].map((rep, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-3 bg-[#0F172A] rounded">
+                            {contacts.slice(0, 5).map((contact) => (
+                                <div key={contact.id} className="flex items-center justify-between p-3 bg-[#0F172A] rounded border border-gray-800">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                                            {rep.name.split(' ').map(n => n[0]).join('')}
+                                        <div className="w-8 h-8 bg-purple-600/30 rounded-full flex items-center justify-center text-xs font-bold text-purple-300">
+                                            {contact.name.slice(0, 2).toUpperCase()}
                                         </div>
                                         <div>
-                                            <div className="font-medium text-white">{rep.name}</div>
-                                            <div className="text-sm text-gray-400">{rep.deals} deals</div>
+                                            <div className="font-semibold text-white">{contact.name}</div>
+                                            <div className="text-xs text-gray-400">{contact.email || contact.phone || "No contact info"}</div>
                                         </div>
                                     </div>
-                                    <div className="text-green-400 font-semibold">{rep.revenue}</div>
+                                    <span className="text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-medium">
+                                        {contact.is_company ? "Company" : "Individual"}
+                                    </span>
                                 </div>
                             ))}
                         </div>
