@@ -43,7 +43,10 @@ import {
     ShieldCheck,
     Building2,
     Layers,
-    Target
+    Target,
+    Crown,
+    ExternalLink,
+    Lock
 } from 'lucide-react';
 
 type DashboardSummary = {
@@ -82,9 +85,10 @@ const STAGE_COLORS: Record<string, string> = {
 };
 
 function fmt(n: number) {
+    if (!n || isNaN(n)) return '$0';
     if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
     if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
-    return `$${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    return `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 export default function DashboardPage() {
@@ -151,7 +155,7 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
         setSyncing(true);
         try {
-            // First fetch me to sync latest tenant info
+            // Fetch auth/me to sync latest tenant & role info
             const meRes = await fetchAPI('/auth/me');
             if (meRes.ok) {
                 const meData = await meRes.json();
@@ -180,85 +184,67 @@ export default function DashboardPage() {
                 } catch {}
             }
 
-            // Fetch dashboard summary
+            // Fetch tenant's isolated dashboard summary
             const res = await fetchAPI('/dashboard/summary');
             if (res.ok) {
                 const data = await res.json();
-                // Enrich data with defaults if empty
-                const enriched = enrichDashboardData(data);
-                setSummary(enriched);
+                setSummary(data);
             } else {
-                // Generate resilient fallback from local environment
-                setSummary(generateFallbackDashboard());
+                // Return clean zero-state for new tenant
+                setSummary({
+                    kpis: {
+                        quotations: 0,
+                        orders: 0,
+                        revenue: 0,
+                        avg_order: 0,
+                        pipeline_value: 0,
+                        won_deals: 0,
+                        pending_moves: 0,
+                        total_contacts: 0,
+                        invoices_count: 0,
+                    },
+                    chart_data: [],
+                    pipeline_stages: [
+                        { stage: 'New Leads', count: 0, value: 0 },
+                        { stage: 'Qualified', count: 0, value: 0 },
+                        { stage: 'Proposition', count: 0, value: 0 },
+                        { stage: 'Won Deals', count: 0, value: 0 },
+                    ],
+                    recent_orders: [],
+                    recent_leads: [],
+                    recent_activities: [],
+                });
             }
         } catch (err) {
-            console.warn('Backend sync notice: using resilient dashboard engine', err);
-            setSummary(generateFallbackDashboard());
+            console.warn('Backend sync notice: using tenant zero-state', err);
+            setSummary({
+                kpis: {
+                    quotations: 0,
+                    orders: 0,
+                    revenue: 0,
+                    avg_order: 0,
+                    pipeline_value: 0,
+                    won_deals: 0,
+                    pending_moves: 0,
+                    total_contacts: 0,
+                    invoices_count: 0,
+                },
+                chart_data: [],
+                pipeline_stages: [
+                    { stage: 'New Leads', count: 0, value: 0 },
+                    { stage: 'Qualified', count: 0, value: 0 },
+                    { stage: 'Proposition', count: 0, value: 0 },
+                    { stage: 'Won Deals', count: 0, value: 0 },
+                ],
+                recent_orders: [],
+                recent_leads: [],
+                recent_activities: [],
+            });
         } finally {
             setLoading(false);
             setSyncing(false);
         }
     };
-
-    function enrichDashboardData(data: any): DashboardSummary {
-        // Prepare default monthly chart data if empty
-        const defaultChart = [
-            { month: 'Nov', value: 12400 },
-            { month: 'Dec', value: 18900 },
-            { month: 'Jan', value: 24200 },
-            { month: 'Feb', value: 31500 },
-            { month: 'Mar', value: 28900 },
-            { month: 'Apr', value: 42100 },
-        ];
-
-        const pipelineStages = [
-            { stage: 'New Leads', count: 12, value: 45000 },
-            { stage: 'Qualified', count: 8, value: 68000 },
-            { stage: 'Proposition', count: 5, value: 92000 },
-            { stage: 'Won Deals', count: Math.max(1, data?.kpis?.won_deals || 4), value: data?.kpis?.revenue || 125000 },
-        ];
-
-        const recentActivities = [
-            { id: '1', text: 'Quotation #SO-1004 created for Enterprise client', time: '10 mins ago', type: 'sales' },
-            { id: '2', text: 'Lead "Cloud Migration Strategy" moved to Proposition stage', time: '45 mins ago', type: 'crm' },
-            { id: '3', text: 'Stock replenishment confirmed for 50 SKUs', time: '2 hours ago', type: 'inventory' },
-            { id: '4', text: 'Invoice payment of $4,850 marked as Received', time: '5 hours ago', type: 'accounting' },
-            { id: '5', text: 'New business contact registered in CRM directory', time: 'Yesterday', type: 'contacts' },
-        ];
-
-        return {
-            kpis: {
-                quotations: data?.kpis?.quotations || 6,
-                orders: data?.kpis?.orders || 14,
-                revenue: data?.kpis?.revenue || 128450,
-                avg_order: data?.kpis?.avg_order || 9175,
-                pipeline_value: data?.kpis?.pipeline_value || 329000,
-                won_deals: data?.kpis?.won_deals || 8,
-                pending_moves: data?.kpis?.pending_moves || 3,
-                total_contacts: 42,
-                invoices_count: 18,
-            },
-            chart_data: data?.chart_data && data.chart_data.length > 0 ? data.chart_data : defaultChart,
-            pipeline_stages: pipelineStages,
-            recent_orders: data?.recent_orders && data.recent_orders.length > 0 ? data.recent_orders : [
-                { id: '1', name: 'SO-1004', customer: 'Apex Global Corp', amount: 14500, state: 'sale', date: 'Today' },
-                { id: '2', name: 'SO-1003', customer: 'Quantum Tech Inc', amount: 8200, state: 'sent', date: 'Yesterday' },
-                { id: '3', name: 'SO-1002', customer: 'BlueStar Logistics', amount: 24000, state: 'done', date: 'Oct 02' },
-                { id: '4', name: 'SO-1001', customer: 'Horizon Media', amount: 5600, state: 'draft', date: 'Sep 29' },
-            ],
-            recent_leads: data?.recent_leads && data.recent_leads.length > 0 ? data.recent_leads : [
-                { id: '1', name: 'Cloud Infrastructure Upgrade', customer: 'Apex Global', stage: 'Proposition', revenue: 45000 },
-                { id: '2', name: 'AI Voice Pilot Rollout', customer: 'Vertex Media', stage: 'Qualified', revenue: 32000 },
-                { id: '3', name: 'ERP Custom Integration', customer: 'Nordic Retail Group', stage: 'New', revenue: 78000 },
-                { id: '4', name: 'Annual Software License', customer: 'Starlight Tech', stage: 'Won', revenue: 24500 },
-            ],
-            recent_activities: recentActivities,
-        };
-    }
-
-    function generateFallbackDashboard(): DashboardSummary {
-        return enrichDashboardData({});
-    }
 
     const handleAiSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -267,13 +253,14 @@ export default function DashboardPage() {
     };
 
     const kpis = summary?.kpis;
+    const companyName = userData?.tenant?.name || userData?.email?.split('@')[1]?.split('.')[0]?.toUpperCase() || 'My Workspace';
     const planBadge = isAdmin
-        ? 'Enterprise Admin'
+        ? 'Super Admin'
         : isPaidUser
         ? 'Pro Unlimited'
         : trialDays !== null
         ? `Trial (${trialDays}d)`
-        : `Free Plan (${selectedModule})`;
+        : `Free (${selectedModule})`;
 
     return (
         <div className="min-h-screen bg-transparent text-white flex flex-col">
@@ -287,8 +274,40 @@ export default function DashboardPage() {
             />
 
             <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full space-y-8">
-                {/* ── Dynamic Plan & Role Banner ── */}
-                {isFreePlan && (
+                {/* ── SUPER ADMIN MASTER BANNER (Only visible to Platform Super Admin) ── */}
+                {isAdmin && (
+                    <div className="bg-gradient-to-r from-purple-900/50 via-indigo-950/80 to-purple-900/50 border border-purple-400/40 rounded-3xl p-5 md:p-6 shadow-2xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300 shrink-0">
+                                <Crown size={24} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="bg-purple-500/30 border border-purple-400/40 text-purple-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                                        Platform Master Super Admin
+                                    </span>
+                                    <span className="text-gray-400 text-xs">• Full System Authority</span>
+                                </div>
+                                <h2 className="text-lg md:text-xl font-bold text-white mt-1">
+                                    Global SaaS Management & Tenant Supervision
+                                </h2>
+                                <p className="text-gray-300 text-xs md:text-sm mt-0.5">
+                                    You have master authority to oversee all registered companies, manage subscriptions, view global SaaS revenues, and maintain platform health.
+                                </p>
+                            </div>
+                        </div>
+
+                        <Link
+                            href="/super-admin"
+                            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs md:text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-purple-500/30 transition-all flex items-center gap-2 active:scale-95"
+                        >
+                            <ShieldCheck size={16} /> Open Super Admin Dashboard
+                        </Link>
+                    </div>
+                )}
+
+                {/* ── TENANT BANNER: Free Tier / Single Module Mode ── */}
+                {isFreePlan && !isAdmin && (
                     <div className="bg-gradient-to-r from-purple-900/40 via-purple-950/60 to-pink-900/40 border border-purple-500/30 rounded-3xl p-5 md:p-6 shadow-2xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
@@ -297,15 +316,15 @@ export default function DashboardPage() {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="bg-purple-500/20 border border-purple-400/30 text-purple-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                                        Free Tier Active
+                                        Free Plan Active
                                     </span>
-                                    <span className="text-gray-400 text-xs">• 1 App Included</span>
+                                    <span className="text-gray-400 text-xs">• {companyName}</span>
                                 </div>
                                 <h2 className="text-lg md:text-xl font-bold text-white mt-1">
                                     Active Workspace Module: <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{selectedModule}</span>
                                 </h2>
                                 <p className="text-gray-400 text-xs md:text-sm mt-0.5">
-                                    You have full unlimited operations for <span className="text-gray-200 font-medium">{selectedModule}</span>. Upgrade anytime to connect all 28 business modules.
+                                    Your data is strictly isolated to <span className="text-gray-200 font-medium">{companyName}</span>. Upgrade to unlock all 28 business modules.
                                 </p>
                             </div>
                         </div>
@@ -321,6 +340,7 @@ export default function DashboardPage() {
                     </div>
                 )}
 
+                {/* ── TENANT BANNER: Free Trial Mode ── */}
                 {trialDays !== null && !isAdmin && !isPaidUser && !isFreePlan && (
                     <div className="bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-500/30 rounded-3xl p-5 md:p-6 shadow-2xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
                         <div className="flex items-center gap-4">
@@ -329,13 +349,13 @@ export default function DashboardPage() {
                             </div>
                             <div>
                                 <span className="bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                                    Trial Mode
+                                    Trial Mode • {companyName}
                                 </span>
                                 <h2 className="text-lg md:text-xl font-bold text-white mt-1">
                                     {trialDays} Days Remaining in Free Trial
                                 </h2>
                                 <p className="text-gray-400 text-xs md:text-sm mt-0.5">
-                                    All 28 enterprise modules and AI features are currently unlocked for testing.
+                                    All 28 enterprise modules and AI features are currently unlocked for your company.
                                 </p>
                             </div>
                         </div>
@@ -348,7 +368,8 @@ export default function DashboardPage() {
                     </div>
                 )}
 
-                {(isAdmin || isPaidUser) && (
+                {/* ── TENANT BANNER: Paid Company Owner ── */}
+                {isPaidUser && !isAdmin && (
                     <div className="bg-[#0F172A]/70 border border-purple-500/20 rounded-3xl p-5 md:p-6 shadow-2xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-purple-500/20 border border-white/10 shrink-0">
@@ -357,15 +378,15 @@ export default function DashboardPage() {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                                        Executive Suite Active
+                                        Company Executive Suite
                                     </span>
-                                    <span className="text-gray-400 text-xs">• Company Owner & Admin Access</span>
+                                    <span className="text-gray-400 text-xs">• Dedicated Company Workspace</span>
                                 </div>
                                 <h2 className="text-lg md:text-xl font-bold text-white mt-1">
-                                    {userData?.tenant?.name || 'Beraxis Enterprise Workspace'}
+                                    {companyName} Command Center
                                 </h2>
                                 <p className="text-gray-400 text-xs md:text-sm mt-0.5">
-                                    Unified command center: Sales, CRM, Inventory, Accounting & HRMS synced in real time.
+                                    Unified workspace metrics for your organization. Only users authorized in your company can access this data.
                                 </p>
                             </div>
                         </div>
@@ -374,13 +395,13 @@ export default function DashboardPage() {
                                 href="/apps"
                                 className="bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs font-semibold px-4 py-2 rounded-xl transition-all flex items-center gap-2"
                             >
-                                <Layers size={14} /> Open App Grid
+                                <Layers size={14} /> Open App Launcher
                             </Link>
                             <Link
                                 href="/settings"
                                 className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-semibold px-4 py-2 rounded-xl transition-all flex items-center gap-2"
                             >
-                                Workspace Settings
+                                Company Settings
                             </Link>
                         </div>
                     </div>
@@ -449,28 +470,28 @@ export default function DashboardPage() {
                     </Link>
                 </div>
 
-                {/* ── Executive KPI Metric Cards (8 Core Business Indicators) ── */}
+                {/* ── Executive KPI Metric Cards (Real Tenant Scoped Metrics) ── */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <KpiCard
-                        label="Total Gross Revenue"
+                        label="Total Company Revenue"
                         value={loading ? '...' : fmt(kpis?.revenue ?? 0)}
-                        subtext="+18.4% vs last month"
+                        subtext={kpis?.revenue ? 'Confirmed sales income' : 'No confirmed sales yet'}
                         icon={<DollarSign size={20} />}
                         color="text-emerald-400"
                         bg="bg-emerald-500/10 border-emerald-500/20"
-                        href="/accounting"
+                        href="/sales"
                     />
                     <KpiCard
-                        label="Active CRM Pipeline"
+                        label="CRM Pipeline Value"
                         value={loading ? '...' : fmt(kpis?.pipeline_value ?? 0)}
-                        subtext="Weighted deal value"
+                        subtext={kpis?.pipeline_value ? 'Active opportunity value' : 'No active deals yet'}
                         icon={<TrendingUp size={20} />}
                         color="text-cyan-400"
                         bg="bg-cyan-500/10 border-cyan-500/20"
                         href="/crm"
                     />
                     <KpiCard
-                        label="Confirmed Sales Orders"
+                        label="Sales Orders"
                         value={loading ? '...' : String(kpis?.orders ?? 0)}
                         subtext={`${kpis?.quotations || 0} active quotations`}
                         icon={<ShoppingCart size={20} />}
@@ -479,9 +500,9 @@ export default function DashboardPage() {
                         href="/sales"
                     />
                     <KpiCard
-                        label="Closed Won Deals"
+                        label="Won Deals"
                         value={loading ? '...' : String(kpis?.won_deals ?? 0)}
-                        subtext="High-value conversions"
+                        subtext={kpis?.won_deals ? 'Closed deals in pipeline' : 'No won deals recorded'}
                         icon={<CheckCircle2 size={20} />}
                         color="text-purple-400"
                         bg="bg-purple-500/10 border-purple-500/20"
@@ -490,34 +511,34 @@ export default function DashboardPage() {
                     <KpiCard
                         label="Avg. Order Value"
                         value={loading ? '...' : fmt(kpis?.avg_order ?? 0)}
-                        subtext="Per confirmed sale"
+                        subtext="Per confirmed transaction"
                         icon={<Activity size={20} />}
                         color="text-pink-400"
                         bg="bg-pink-500/10 border-pink-500/20"
                         href="/sales"
                     />
                     <KpiCard
-                        label="Pending Shipments"
+                        label="Pending Deliveries"
                         value={loading ? '...' : String(kpis?.pending_moves ?? 0)}
-                        subtext="Operations in progress"
+                        subtext="Stock operations in progress"
                         icon={<Package size={20} />}
                         color="text-amber-400"
                         bg="bg-amber-500/10 border-amber-500/20"
                         href="/inventory"
                     />
                     <KpiCard
-                        label="Client Base & Contacts"
-                        value={loading ? '...' : String(kpis?.total_contacts ?? 42)}
-                        subtext="Verified business accounts"
+                        label="Contacts & Accounts"
+                        value={loading ? '...' : String(kpis?.total_contacts ?? 0)}
+                        subtext="In your company directory"
                         icon={<Users size={20} />}
                         color="text-blue-400"
                         bg="bg-blue-500/10 border-blue-500/20"
                         href="/contacts"
                     />
                     <KpiCard
-                        label="System Sync Health"
-                        value="99.9%"
-                        subtext="Real-time multi-tenant sync"
+                        label="Data Isolation & Sync"
+                        value="100% Isolated"
+                        subtext={`Scoped to ${companyName}`}
                         icon={<ShieldCheck size={20} />}
                         color="text-teal-400"
                         bg="bg-teal-500/10 border-teal-500/20"
@@ -529,49 +550,65 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Revenue Over Time Area Chart */}
                     <div className="lg:col-span-2 bg-[#0F172A]/70 border border-white/5 rounded-3xl p-6 shadow-2xl backdrop-blur-xl flex flex-col justify-between">
-                        <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                     Revenue Growth Trend <Sparkles size={16} className="text-purple-400" />
                                 </h3>
-                                <p className="text-xs text-gray-400 mt-0.5">Historical and projected business income</p>
+                                <p className="text-xs text-gray-400 mt-0.5">Actual sales income for {companyName}</p>
                             </div>
                             <span className="text-xs font-semibold px-3 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded-full">
-                                Real-Time Billing
+                                Real-Time Financials
                             </span>
                         </div>
 
-                        <div className="h-[280px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={summary?.chart_data || []}>
-                                    <defs>
-                                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.4} />
-                                            <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
-                                    <XAxis dataKey="month" stroke="#64748B" tick={{ fontSize: 12, fill: '#94A3B8' }} />
-                                    <YAxis
-                                        stroke="#64748B"
-                                        tick={{ fontSize: 12, fill: '#94A3B8' }}
-                                        tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`}
-                                    />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}
-                                        labelStyle={{ color: '#F8FAFC', fontWeight: 600 }}
-                                        formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Gross Revenue']}
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="value"
-                                        stroke="#A855F7"
-                                        strokeWidth={3}
-                                        fillOpacity={1}
-                                        fill="url(#colorRev)"
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                        <div className="h-[260px] w-full flex items-center justify-center">
+                            {(summary?.chart_data?.length ?? 0) > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={summary?.chart_data || []}>
+                                        <defs>
+                                            <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.4} />
+                                                <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
+                                        <XAxis dataKey="month" stroke="#64748B" tick={{ fontSize: 12, fill: '#94A3B8' }} />
+                                        <YAxis
+                                            stroke="#64748B"
+                                            tick={{ fontSize: 12, fill: '#94A3B8' }}
+                                            tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}
+                                            labelStyle={{ color: '#F8FAFC', fontWeight: 600 }}
+                                            formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Gross Revenue']}
+                                        />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="value"
+                                            stroke="#A855F7"
+                                            strokeWidth={3}
+                                            fillOpacity={1}
+                                            fill="url(#colorRev)"
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="text-center p-6 flex flex-col items-center justify-center gap-2 text-gray-400">
+                                    <BarChart2 size={36} className="text-gray-600 mb-1" />
+                                    <p className="text-sm font-medium text-gray-300">No revenue data yet for {companyName}</p>
+                                    <p className="text-xs text-gray-500 max-w-sm">
+                                        When you confirm a Sales Order or mark an invoice as paid, your revenue chart will render here automatically.
+                                    </p>
+                                    <Link
+                                        href="/sales"
+                                        className="mt-2 text-xs text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1"
+                                    >
+                                        + Create First Quotation <ArrowUpRight size={12} />
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -580,34 +617,49 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="text-lg font-bold text-white">Sales Pipeline Funnel</h3>
-                                <p className="text-xs text-gray-400 mt-0.5">Opportunity progression</p>
+                                <p className="text-xs text-gray-400 mt-0.5">Opportunity stages for {companyName}</p>
                             </div>
                             <Link href="/crm" className="text-xs text-cyan-400 hover:underline">CRM Board →</Link>
                         </div>
 
-                        <div className="h-[220px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={summary?.pipeline_stages || []} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" horizontal={false} />
-                                    <XAxis type="number" stroke="#64748B" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} tick={{ fontSize: 11, fill: '#94A3B8' }} />
-                                    <YAxis dataKey="stage" type="category" stroke="#64748B" tick={{ fontSize: 11, fill: '#E2E8F0' }} width={80} />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: 12 }}
-                                        formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Pipeline Value']}
-                                    />
-                                    <Bar dataKey="value" radius={[0, 8, 8, 0]}>
-                                        {summary?.pipeline_stages?.map((entry, index) => {
-                                            const colors = ['#06B6D4', '#3B82F6', '#F59E0B', '#10B981'];
-                                            return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
-                                        })}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <div className="h-[220px] w-full flex items-center justify-center">
+                            {(summary?.pipeline_stages?.some(s => s.count > 0 || s.value > 0)) ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={summary?.pipeline_stages || []} layout="vertical">
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" horizontal={false} />
+                                        <XAxis type="number" stroke="#64748B" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} tick={{ fontSize: 11, fill: '#94A3B8' }} />
+                                        <YAxis dataKey="stage" type="category" stroke="#64748B" tick={{ fontSize: 11, fill: '#E2E8F0' }} width={80} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: 12 }}
+                                            formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Pipeline Value']}
+                                        />
+                                        <Bar dataKey="value" radius={[0, 8, 8, 0]}>
+                                            {summary?.pipeline_stages?.map((entry, index) => {
+                                                const colors = ['#06B6D4', '#3B82F6', '#F59E0B', '#10B981'];
+                                                return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                                            })}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="text-center p-4 flex flex-col items-center justify-center gap-1.5 text-gray-400">
+                                    <Target size={32} className="text-gray-600 mb-1" />
+                                    <p className="text-xs font-semibold text-gray-300">No deals in pipeline</p>
+                                    <p className="text-[11px] text-gray-500">
+                                        Add leads in CRM to visualize your deal progression funnel.
+                                    </p>
+                                    <Link href="/crm" className="text-xs text-cyan-400 font-bold mt-1">
+                                        + Add First Deal →
+                                    </Link>
+                                </div>
+                            )}
                         </div>
 
                         <div className="pt-3 border-t border-gray-800 flex justify-between text-xs text-gray-400">
-                            <span>Win Conversion Rate:</span>
-                            <span className="font-bold text-emerald-400">68.2%</span>
+                            <span>Won Conversion Rate:</span>
+                            <span className="font-bold text-emerald-400">
+                                {(kpis?.won_deals && kpis?.orders) ? `${Math.round((kpis.won_deals / Math.max(1, (summary?.recent_leads?.length || 1))) * 100)}%` : '0%'}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -618,8 +670,8 @@ export default function DashboardPage() {
                     <div className="bg-[#0F172A]/70 border border-white/5 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h3 className="font-bold text-white text-base">Recent Sales Orders & Quotations</h3>
-                                <p className="text-xs text-gray-400">Latest active sales transactions</p>
+                                <h3 className="font-bold text-white text-base">Sales Orders & Quotations</h3>
+                                <p className="text-xs text-gray-400">{companyName}'s transactions</p>
                             </div>
                             <Link href="/sales" className="text-xs font-semibold text-purple-400 hover:text-purple-300">
                                 View All Orders →
@@ -627,42 +679,55 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="text-xs text-gray-500 uppercase border-b border-gray-800 text-left">
-                                        <th className="pb-3">Reference</th>
-                                        <th className="pb-3">Customer</th>
-                                        <th className="pb-3 text-right">Amount</th>
-                                        <th className="pb-3 text-center">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {summary?.recent_orders?.map((order) => (
-                                        <tr key={order.id} className="border-b border-gray-800/40 hover:bg-white/5 transition-colors">
-                                            <td className="py-3.5">
-                                                <Link
-                                                    href={`/sales/${order.id}`}
-                                                    className="text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1"
-                                                >
-                                                    {order.name || 'Draft'}
-                                                    <ArrowUpRight size={12} className="opacity-60" />
-                                                </Link>
-                                            </td>
-                                            <td className="py-3.5 text-gray-300 font-medium truncate max-w-[140px]">
-                                                {order.customer || 'Customer'}
-                                            </td>
-                                            <td className="py-3.5 text-right font-bold text-white">
-                                                {fmt(order.amount || 0)}
-                                            </td>
-                                            <td className="py-3.5 text-center">
-                                                <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider ${STATE_COLORS[order.state] || STATE_COLORS.draft}`}>
-                                                    {order.state}
-                                                </span>
-                                            </td>
+                            {(summary?.recent_orders?.length ?? 0) > 0 ? (
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="text-xs text-gray-500 uppercase border-b border-gray-800 text-left">
+                                            <th className="pb-3">Reference</th>
+                                            <th className="pb-3">Customer</th>
+                                            <th className="pb-3 text-right">Amount</th>
+                                            <th className="pb-3 text-center">Status</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {summary?.recent_orders?.map((order) => (
+                                            <tr key={order.id} className="border-b border-gray-800/40 hover:bg-white/5 transition-colors">
+                                                <td className="py-3.5">
+                                                    <Link
+                                                        href={`/sales/${order.id}`}
+                                                        className="text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1"
+                                                    >
+                                                        {order.name || 'Draft'}
+                                                        <ArrowUpRight size={12} className="opacity-60" />
+                                                    </Link>
+                                                </td>
+                                                <td className="py-3.5 text-gray-300 font-medium truncate max-w-[140px]">
+                                                    {order.customer || 'Customer'}
+                                                </td>
+                                                <td className="py-3.5 text-right font-bold text-white">
+                                                    {fmt(order.amount || 0)}
+                                                </td>
+                                                <td className="py-3.5 text-center">
+                                                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider ${STATE_COLORS[order.state] || STATE_COLORS.draft}`}>
+                                                        {order.state}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-center py-8 text-gray-400 flex flex-col items-center justify-center gap-2">
+                                    <ShoppingCart size={28} className="text-gray-600" />
+                                    <p className="text-xs font-semibold text-gray-300">No sales orders or quotations created yet</p>
+                                    <Link
+                                        href="/sales"
+                                        className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md mt-1"
+                                    >
+                                        + Create First Quotation
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -671,7 +736,7 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="font-bold text-white text-base">Key CRM Pipeline Deals</h3>
-                                <p className="text-xs text-gray-400">High-priority revenue opportunities</p>
+                                <p className="text-xs text-gray-400">{companyName}'s active opportunities</p>
                             </div>
                             <Link href="/crm" className="text-xs font-semibold text-cyan-400 hover:text-cyan-300">
                                 Open Pipeline →
@@ -679,42 +744,55 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="text-xs text-gray-500 uppercase border-b border-gray-800 text-left">
-                                        <th className="pb-3">Deal / Opportunity</th>
-                                        <th className="pb-3">Customer</th>
-                                        <th className="pb-3 text-right">Expected</th>
-                                        <th className="pb-3 text-center">Stage</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {summary?.recent_leads?.map((lead) => (
-                                        <tr key={lead.id} className="border-b border-gray-800/40 hover:bg-white/5 transition-colors">
-                                            <td className="py-3.5">
-                                                <Link
-                                                    href={`/crm/${lead.id}`}
-                                                    className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 truncate max-w-[160px]"
-                                                >
-                                                    {lead.name}
-                                                    <ArrowUpRight size={12} className="opacity-60" />
-                                                </Link>
-                                            </td>
-                                            <td className="py-3.5 text-gray-300 font-medium truncate max-w-[120px]">
-                                                {lead.customer || 'Key Account'}
-                                            </td>
-                                            <td className="py-3.5 text-right font-bold text-emerald-400">
-                                                {fmt(lead.revenue || 0)}
-                                            </td>
-                                            <td className="py-3.5 text-center">
-                                                <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider ${STAGE_COLORS[lead.stage] || STAGE_COLORS.New}`}>
-                                                    {lead.stage}
-                                                </span>
-                                            </td>
+                            {(summary?.recent_leads?.length ?? 0) > 0 ? (
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="text-xs text-gray-500 uppercase border-b border-gray-800 text-left">
+                                            <th className="pb-3">Deal / Opportunity</th>
+                                            <th className="pb-3">Customer</th>
+                                            <th className="pb-3 text-right">Expected</th>
+                                            <th className="pb-3 text-center">Stage</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {summary?.recent_leads?.map((lead) => (
+                                            <tr key={lead.id} className="border-b border-gray-800/40 hover:bg-white/5 transition-colors">
+                                                <td className="py-3.5">
+                                                    <Link
+                                                        href={`/crm/${lead.id}`}
+                                                        className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 truncate max-w-[160px]"
+                                                    >
+                                                        {lead.name}
+                                                        <ArrowUpRight size={12} className="opacity-60" />
+                                                    </Link>
+                                                </td>
+                                                <td className="py-3.5 text-gray-300 font-medium truncate max-w-[120px]">
+                                                    {lead.customer || 'Key Account'}
+                                                </td>
+                                                <td className="py-3.5 text-right font-bold text-emerald-400">
+                                                    {fmt(lead.revenue || 0)}
+                                                </td>
+                                                <td className="py-3.5 text-center">
+                                                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider ${STAGE_COLORS[lead.stage] || STAGE_COLORS.New}`}>
+                                                        {lead.stage}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-center py-8 text-gray-400 flex flex-col items-center justify-center gap-2">
+                                    <Target size={28} className="text-gray-600" />
+                                    <p className="text-xs font-semibold text-gray-300">No leads or pipeline deals recorded yet</p>
+                                    <Link
+                                        href="/crm"
+                                        className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md mt-1"
+                                    >
+                                        + Add First Deal
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -724,26 +802,32 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h3 className="font-bold text-white text-base flex items-center gap-2">
-                                <Activity size={18} className="text-purple-400" /> Live Audit & Activity Stream
+                                <Activity size={18} className="text-purple-400" /> Company Audit & Activity History
                             </h3>
-                            <p className="text-xs text-gray-400">Real-time record of team actions across modules</p>
+                            <p className="text-xs text-gray-400">Chronological activity record for {companyName}</p>
                         </div>
-                        <span className="text-xs text-gray-500 font-mono">Sync: Connected</span>
+                        <span className="text-xs text-gray-500 font-mono">Workspace: {companyName}</span>
                     </div>
 
                     <div className="space-y-3">
-                        {summary?.recent_activities?.map((act) => (
-                            <div
-                                key={act.id}
-                                className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-purple-500/20 transition-all text-xs"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></div>
-                                    <span className="text-gray-200 font-medium">{act.text}</span>
+                        {(summary?.recent_activities?.length ?? 0) > 0 ? (
+                            summary?.recent_activities?.map((act) => (
+                                <div
+                                    key={act.id}
+                                    className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-purple-500/20 transition-all text-xs"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></div>
+                                        <span className="text-gray-200 font-medium">{act.text}</span>
+                                    </div>
+                                    <span className="text-gray-500 text-[11px] whitespace-nowrap ml-4">{act.time}</span>
                                 </div>
-                                <span className="text-gray-500 text-[11px] whitespace-nowrap ml-4">{act.time}</span>
+                            ))
+                        ) : (
+                            <div className="text-center py-6 text-gray-500 text-xs">
+                                No activity recorded yet for this workspace. As your team creates quotations, manages leads, or updates records, the audit log will populate here.
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
 
@@ -753,7 +837,7 @@ export default function DashboardPage() {
                         <Bot className="text-purple-400" size={20} />
                         <h3 className="text-base font-bold text-white">Ask Galaxy AI Copilot</h3>
                         <span className="text-[10px] bg-purple-500/20 text-purple-300 font-bold uppercase px-2 py-0.5 rounded-md border border-purple-400/30">
-                            Smart Assistant
+                            Workspace Intelligence
                         </span>
                     </div>
                     <form onSubmit={handleAiSubmit} className="flex gap-2">
@@ -761,7 +845,7 @@ export default function DashboardPage() {
                             type="text"
                             value={aiQuery}
                             onChange={(e) => setAiQuery(e.target.value)}
-                            placeholder="Ask anything: 'What is my total sales revenue this month?' or 'Show me top pending deals'..."
+                            placeholder={`Ask anything about ${companyName}'s sales revenue, leads, or inventory status...`}
                             className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
                         />
                         <button
