@@ -3,58 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Next-Gen AI ERP & CRM - Client Presentation</title>
+    <title>Beraxis AI ERP & CRM - Client Executive Presentation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0b0f19; color: #f8fafc; overflow-x: hidden; }
-        .slide { display: none; min-height: 100vh; padding: 4rem 3rem; }
+        .slide { display: none; min-height: 100vh; padding: 5rem 3rem 4rem 3rem; }
         .slide.active { display: flex; flex-direction: column; justify-content: center; }
         .glass-panel { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .glow-cyan { box-shadow: 0 0 35px rgba(14, 165, 233, 0.2); }
-        .glow-purple { box-shadow: 0 0 35px rgba(168, 85, 247, 0.2); }
-        .gradient-text-cyan { background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .gradient-text-gold { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glow-cyan { box-shadow: 0 0 35px rgba(14, 165, 233, 0.18); }
+        .glow-purple { box-shadow: 0 0 35px rgba(168, 85, 247, 0.22); }
+        .gradient-text-beraxis { background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body class="relative bg-[#0b0f19] text-slate-100 selection:bg-cyan-500 selection:text-white">
 
     <!-- Ambient Glowing Background Mesh -->
-    <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none"></div>
-    <div class="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[160px] pointer-events-none"></div>
+    <div class="fixed top-[-10%] left-[-10%] w-[550px] h-[550px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[650px] h-[650px] bg-purple-600/15 rounded-full blur-[160px] pointer-events-none"></div>
 
     <!-- Top Navigation Bar -->
-    <div class="fixed top-0 left-0 right-0 h-16 glass-panel z-50 flex items-center justify-between px-8 border-b border-slate-800/80">
+    <header class="fixed top-0 left-0 right-0 h-16 glass-panel z-50 flex items-center justify-between px-6 md:px-12 border-b border-slate-800/80">
+        <a href="https://www.beraxis.online" class="flex items-center gap-3 group">
+            <img src="/logo2.png" alt="Beraxis Logo" class="h-8 w-auto object-contain transition group-hover:scale-105" onerror="this.src='logo2.png'" />
+            <span class="text-xl font-extrabold tracking-tight text-white flex items-center">
+                BERAXIS<span class="text-purple-500">.</span>
+            </span>
+            <span class="hidden sm:inline-block text-[10px] bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30 font-semibold uppercase tracking-wider ml-1">
+                AI ERP & CRM
+            </span>
+        </a>
+
         <div class="flex items-center gap-3">
-            <span class="text-xl font-extrabold tracking-tight gradient-text-cyan">NextGen AI ERP</span>
-            <span class="text-xs bg-cyan-500/10 text-cyan-400 px-2.5 py-0.5 rounded-full border border-cyan-500/20 font-medium">Enterprise Pitch</span>
-        </div>
-        <div class="flex items-center gap-4">
             <span id="slideIndicator" class="text-xs font-semibold text-slate-400 tracking-wider">SLIDE 1 / 8</span>
-            <button onclick="prevSlide()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm transition">◀ Prev</button>
-            <button onclick="nextSlide()" class="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm transition shadow-lg shadow-cyan-600/20">Next ▶</button>
-            <a href="Client_Executive_Pitch_and_Demo_Deck.pdf" download class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 flex items-center gap-1.5 text-cyan-400">
+            <button onclick="prevSlide()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition">◀ Prev</button>
+            <button onclick="nextSlide()" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-sky-600/20">Next ▶</button>
+            <a href="/Client_Executive_Pitch_and_Demo_Deck.pdf" download class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 flex items-center gap-1.5 text-sky-400 transition">
                 📥 PDF
             </a>
         </div>
-    </div>
+    </header>
 
     <!-- SLIDE 1: Cover -->
     <section class="slide active" id="slide-1">
         <div class="max-w-5xl mx-auto text-center space-y-6">
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-semibold text-xs tracking-wide">
-                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span> THE AUTONOMOUS ENTERPRISE PLATFORM
+            <div class="flex justify-center mb-2">
+                <div class="p-3 glass-panel rounded-2xl border-purple-500/30 glow-purple">
+                    <img src="/logo2.png" alt="Beraxis" class="h-16 w-auto object-contain mx-auto" onerror="this.src='logo2.png'" />
+                </div>
             </div>
-            <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight">
-                Run Your Entire Business Smarter, Faster & <br/><span class="gradient-text-cyan">On Autopilot</span>
+            
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 font-semibold text-xs tracking-wide">
+                <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span> BERAXIS AUTONOMOUS ENTERPRISE SYSTEM
+            </div>
+            
+            <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
+                Run Your Entire Business Smarter, Faster & <br/><span class="gradient-text-beraxis">On Autopilot</span>
             </h1>
-            <p class="text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
+            
+            <p class="text-base md:text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
                 Replacing 6-month legacy ERP headaches with 15-minute setup, 3-second OCR invoice ingestion, predictive sales scoring, and native outbound revenue engines.
             </p>
             
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 max-w-4xl mx-auto text-left">
-                <div class="glass-panel p-4 rounded-xl border-cyan-500/30 glow-cyan">
-                    <div class="text-2xl font-extrabold text-cyan-400">15 Mins</div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 max-w-4xl mx-auto text-left">
+                <div class="glass-panel p-4 rounded-xl border-sky-500/30 glow-cyan">
+                    <div class="text-2xl font-extrabold text-sky-400">15 Mins</div>
                     <div class="text-xs text-slate-400 mt-0.5">Time to Go-Live</div>
                 </div>
                 <div class="glass-panel p-4 rounded-xl border-emerald-500/30">
@@ -66,15 +79,18 @@
                     <div class="text-xs text-slate-400 mt-0.5">AI Lead Scoring</div>
                 </div>
                 <div class="glass-panel p-4 rounded-xl border-amber-500/30">
-                    <div class="text-2xl font-extrabold text-amber-400">$42,300+</div>
+                    <div class="text-2xl font-extrabold text-amber-400">+$42,300+</div>
                     <div class="text-xs text-slate-400 mt-0.5">Avg Annual Client ROI</div>
                 </div>
             </div>
 
-            <div class="pt-6">
-                <button onclick="nextSlide()" class="px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 font-bold text-white hover:opacity-95 shadow-xl shadow-cyan-500/20 transition">
-                    Explore Client Presentation →
+            <div class="pt-4 flex justify-center gap-4">
+                <button onclick="nextSlide()" class="px-8 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 font-bold text-white hover:opacity-95 shadow-xl shadow-purple-500/20 transition text-sm">
+                    Explore Platform Deck →
                 </button>
+                <a href="https://www.beraxis.online" class="px-6 py-3.5 rounded-xl glass-panel hover:bg-slate-800 text-slate-200 font-bold text-sm transition border border-slate-700">
+                    Visit beraxis.online ↗
+                </a>
             </div>
         </div>
     </section>
@@ -84,16 +100,16 @@
         <div class="max-w-6xl mx-auto w-full space-y-6">
             <div class="text-center space-y-1">
                 <h2 class="text-3xl font-extrabold">The Reality: Why Traditional Business Software is Failing You</h2>
-                <p class="text-slate-400 text-sm">Industry benchmarks show why modern companies are abandoning legacy ERPs & spreadsheets</p>
+                <p class="text-slate-400 text-sm">Industry benchmarks show why modern companies are migrating to Beraxis AI</p>
             </div>
 
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="glass-panel p-6 rounded-2xl border-red-500/30 bg-red-950/10 space-y-4">
-                    <h3 class="text-lg font-bold text-red-400 flex items-center gap-2">
+                    <h3 class="text-base font-bold text-red-400 flex items-center gap-2">
                         <span>❌ The Legacy Trap (Odoo / SAP / Excel Sprawl)</span>
                     </h3>
                     <ul class="space-y-3 text-xs text-slate-300">
-                        <li>• <b class="text-white">73% of Implementations Fail:</b> Complex consulting projects taking 3-6 months and thousands in fees.</li>
+                        <li>• <b class="text-white">73% of Implementations Fail:</b> Complex consulting projects taking 3-6 months and thousands in fees (Gartner).</li>
                         <li>• <b class="text-white">15.2 Hours Wasted Weekly:</b> Employees manually typing supplier invoices and copying numbers to Excel.</li>
                         <li>• <b class="text-white">Siloed Subscriptions:</b> Paying separately for HubSpot ($300), QuickBooks ($90), Katana ($350).</li>
                         <li>• <b class="text-white">Delayed Decision Making:</b> Waiting weeks for accountants to compile outdated financial reports.</li>
@@ -101,8 +117,8 @@
                 </div>
 
                 <div class="glass-panel p-6 rounded-2xl border-emerald-500/30 bg-emerald-950/10 space-y-4">
-                    <h3 class="text-lg font-bold text-emerald-400 flex items-center gap-2">
-                        <span>✅ The Next-Gen AI Operating System</span>
+                    <h3 class="text-base font-bold text-emerald-400 flex items-center gap-2">
+                        <span>✅ The Beraxis AI Operating System</span>
                     </h3>
                     <ul class="space-y-3 text-xs text-slate-300">
                         <li>• <b class="text-white">Live in 15 Minutes:</b> Zero-friction activation with 1-click import and free data migration.</li>
@@ -123,13 +139,13 @@
                     <h2 class="text-3xl font-extrabold">Live Product Interface: Built for Speed</h2>
                     <p class="text-slate-400 text-sm">Ultra-responsive Next.js 14 command center uniting every department</p>
                 </div>
-                <span class="text-xs bg-slate-800 text-cyan-400 px-3 py-1 rounded-full border border-slate-700">Real Dashboard Capture</span>
+                <span class="text-xs bg-purple-900/40 text-purple-300 px-3 py-1 rounded-full border border-purple-500/30">Beraxis Live Build</span>
             </div>
 
             <div class="grid md:grid-cols-12 gap-6 items-center">
                 <div class="md:col-span-4 space-y-3">
-                    <div class="glass-panel p-4 rounded-xl border-cyan-500/30">
-                        <h4 class="font-bold text-cyan-400 text-sm">⚡ Zero Learning Curve</h4>
+                    <div class="glass-panel p-4 rounded-xl border-sky-500/30">
+                        <h4 class="font-bold text-sky-400 text-sm">⚡ Zero Learning Curve</h4>
                         <p class="text-xs text-slate-300 mt-1">Clutter-free UI that any employee can master on Day 1.</p>
                     </div>
                     <div class="glass-panel p-4 rounded-xl border-purple-500/30">
@@ -144,7 +160,7 @@
 
                 <div class="md:col-span-8">
                     <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl glow-cyan">
-                        <img src="./scratch/deck_assets/dashboard_hero.jpg" alt="Live Dashboard" class="w-full h-auto rounded-xl object-cover hover:scale-[1.02] transition duration-500">
+                        <img src="/deck_assets/dashboard_hero.jpg" alt="Live Dashboard" class="w-full h-auto rounded-xl object-cover hover:scale-[1.02] transition duration-500" onerror="this.src='deck_assets/dashboard_hero.jpg'">
                     </div>
                 </div>
             </div>
@@ -161,8 +177,8 @@
 
             <div class="grid md:grid-cols-12 gap-6 items-center">
                 <div class="md:col-span-4 space-y-4 text-xs text-slate-300">
-                    <div class="glass-panel p-4 rounded-xl border-cyan-500/30 space-y-2">
-                        <h4 class="font-bold text-cyan-400 text-sm">💼 Intelligent CRM</h4>
+                    <div class="glass-panel p-4 rounded-xl border-sky-500/30 space-y-2">
+                        <h4 class="font-bold text-sky-400 text-sm">💼 Intelligent CRM</h4>
                         <p>• <b>AI Lead Scoring:</b> 94.2% accuracy predicting deal closure.</p>
                         <p>• <b>Email Sentiment Alerts:</b> Flag frustrated accounts early.</p>
                         <p>• <b>1-Click Quotes to Orders:</b> Accelerate deal closure.</p>
@@ -178,7 +194,7 @@
 
                 <div class="md:col-span-8">
                     <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
-                        <img src="./scratch/deck_assets/crm_accounting_view.jpg" alt="CRM & Accounting" class="w-full h-auto rounded-xl object-cover hover:scale-[1.02] transition duration-500">
+                        <img src="/deck_assets/crm_accounting_view.jpg" alt="CRM & Accounting" class="w-full h-auto rounded-xl object-cover hover:scale-[1.02] transition duration-500" onerror="this.src='deck_assets/crm_accounting_view.jpg'">
                     </div>
                 </div>
             </div>
@@ -202,8 +218,8 @@
                         <p>• <b>Bill of Materials (BOM):</b> Automated raw material consumption.</p>
                     </div>
 
-                    <div class="glass-panel p-4 rounded-xl border-cyan-500/30 space-y-2">
-                        <h4 class="font-bold text-cyan-400 text-sm">👥 HRMS & Payroll</h4>
+                    <div class="glass-panel p-4 rounded-xl border-sky-500/30 space-y-2">
+                        <h4 class="font-bold text-sky-400 text-sm">👥 HRMS & Payroll</h4>
                         <p>• <b>Centralized Directory:</b> Staff records & contracts.</p>
                         <p>• <b>Leave Requests:</b> Self-service approval flows.</p>
                         <p>• <b>1-Click Payroll:</b> Salary slips & tax calculations.</p>
@@ -212,7 +228,7 @@
 
                 <div class="md:col-span-8">
                     <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
-                        <img src="./scratch/deck_assets/inventory_ops_view.jpg" alt="Inventory & HRMS" class="w-full h-auto rounded-xl object-cover hover:scale-[1.02] transition duration-500">
+                        <img src="/deck_assets/inventory_ops_view.jpg" alt="Inventory & HRMS" class="w-full h-auto rounded-xl object-cover hover:scale-[1.02] transition duration-500" onerror="this.src='deck_assets/inventory_ops_view.jpg'">
                     </div>
                 </div>
             </div>
@@ -229,11 +245,11 @@
             </div>
 
             <div class="grid md:grid-cols-3 gap-6">
-                <div class="glass-panel p-6 rounded-2xl space-y-3 border-cyan-500/30 glow-cyan">
+                <div class="glass-panel p-6 rounded-2xl space-y-3 border-sky-500/30 glow-cyan">
                     <div class="text-2xl">📊</div>
-                    <h3 class="font-bold text-cyan-400 text-lg">1. Marketing Suite</h3>
+                    <h3 class="font-bold text-sky-400 text-lg">1. Marketing Suite</h3>
                     <p class="text-xs text-slate-300 leading-relaxed">Centralized campaign tracking, landing page builder, and multi-channel attribution. Leads flow directly into CRM stages.</p>
-                    <div class="text-[11px] text-cyan-300 bg-cyan-950/40 p-2.5 rounded-lg border border-cyan-500/20">Replaces HubSpot Marketing ($800/mo)</div>
+                    <div class="text-[11px] text-sky-300 bg-sky-950/40 p-2.5 rounded-lg border border-sky-500/20">Replaces HubSpot Marketing ($800/mo)</div>
                 </div>
 
                 <div class="glass-panel p-6 rounded-2xl space-y-3 border-purple-500/30 glow-purple">
@@ -257,18 +273,18 @@
     <section class="slide" id="slide-7">
         <div class="max-w-5xl mx-auto w-full space-y-6">
             <div class="text-center space-y-1">
-                <h2 class="text-3xl font-extrabold">Measurable ROI: Why This Platform Pays for Itself</h2>
+                <h2 class="text-3xl font-extrabold">Measurable ROI: Why Beraxis Pays for Itself</h2>
                 <p class="text-slate-400 text-sm">Hard-dollar annual savings for a typical 25-person growing company</p>
             </div>
 
             <div class="glass-panel rounded-2xl overflow-hidden border border-slate-800">
                 <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-900/80 text-slate-300 border-b border-slate-800">
+                    <thead class="bg-slate-900 text-slate-300 border-b border-slate-800">
                         <tr>
                             <th class="p-4">Expense Category</th>
                             <th class="p-4 text-red-400">Old Fragmented Approach</th>
-                            <th class="p-4 text-emerald-400">With Next-Gen AI ERP</th>
-                            <th class="p-4 text-cyan-400">Your Net Annual Return</th>
+                            <th class="p-4 text-emerald-400">With Beraxis AI ERP</th>
+                            <th class="p-4 text-sky-400">Your Net Annual Return</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800 text-slate-300">
@@ -294,7 +310,7 @@
                 </table>
             </div>
 
-            <div class="p-4 glass-panel rounded-xl border-emerald-500/40 bg-emerald-950/20 text-center">
+            <div class="p-4 glass-panel rounded-xl border border-emerald-500/40 bg-emerald-950/20 text-center">
                 <span class="text-xl font-extrabold text-emerald-400">TOTAL ESTIMATED CLIENT VALUE: +$42,324 / YEAR IN MEASURABLE ROI</span>
                 <p class="text-xs text-slate-400 mt-0.5">The platform pays for itself within the first 30 days of active deployment.</p>
             </div>
@@ -310,8 +326,8 @@
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
-                <div class="glass-panel p-4 rounded-xl border-cyan-500/30">
-                    <span class="text-xs text-cyan-400 font-bold">1. 14-DAY TRIAL</span>
+                <div class="glass-panel p-4 rounded-xl border-sky-500/30">
+                    <span class="text-xs text-sky-400 font-bold">1. 14-DAY TRIAL</span>
                     <h4 class="font-bold text-white text-sm mt-1">Full Access</h4>
                     <p class="text-[11px] text-slate-400 mt-1">No credit card required to start.</p>
                 </div>
@@ -332,16 +348,19 @@
                 </div>
             </div>
 
-            <div class="p-8 glass-panel rounded-2xl border border-cyan-500/40 glow-cyan space-y-4">
-                <h3 class="text-2xl font-bold">Ready to Experience the Autonomous AI ERP?</h3>
+            <div class="p-8 glass-panel rounded-2xl border border-purple-500/40 glow-purple space-y-4">
+                <h3 class="text-2xl font-bold">Ready to Upgrade to the Future of Business Management?</h3>
                 <p class="text-slate-300 text-sm">Launch your private workspace today or schedule a personalized team demo.</p>
-                <div class="flex justify-center gap-4 pt-2">
-                    <a href="http://localhost:3000" target="_blank" class="px-6 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 font-bold text-white transition shadow-lg shadow-cyan-600/30">
-                        🚀 Launch Live Workspace
+                <div class="flex flex-wrap justify-center gap-4 pt-2">
+                    <a href="https://www.beraxis.online" target="_blank" class="px-7 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:opacity-95 font-bold text-white transition shadow-lg shadow-purple-600/30 text-sm">
+                        🚀 Launch Beraxis Live Workspace
                     </a>
-                    <a href="Client_Executive_Pitch_and_Demo_Deck.pdf" download class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-white transition border border-slate-700">
-                        📥 Download Executive PDF Deck
+                    <a href="/Client_Executive_Pitch_and_Demo_Deck.pdf" download class="px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-white transition border border-slate-700 text-sm">
+                        📥 Download PDF Deck
                     </a>
+                </div>
+                <div class="pt-2 text-xs text-slate-400">
+                    Priority Support: <a href="mailto:admin@beraxis.online" class="text-sky-400 hover:underline">admin@beraxis.online</a> &nbsp;|&nbsp; Web: <a href="https://www.beraxis.online" class="text-purple-400 hover:underline">www.beraxis.online</a>
                 </div>
             </div>
         </div>

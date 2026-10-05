@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function PresentationPage() {
   const [currentSlide, setCurrentSlide] = useState(1);
@@ -31,19 +30,21 @@ export default function PresentationPage() {
   return (
     <div className="min-h-screen bg-[#0b0f19] text-slate-100 font-sans relative overflow-x-hidden select-none">
       {/* Ambient background glows */}
-      <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[160px] pointer-events-none" />
+      <div className="fixed top-[-10%] left-[-10%] w-[550px] h-[550px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[650px] h-[650px] bg-purple-600/15 rounded-full blur-[160px] pointer-events-none" />
 
       {/* Top Navigation Bar */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-between px-6 md:px-10 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
-            NextGen AI ERP
-          </Link>
-          <span className="text-xs bg-sky-500/10 text-sky-400 px-2.5 py-0.5 rounded-full border border-sky-500/20 font-medium">
-            Client Executive Deck
+      <header className="fixed top-0 left-0 right-0 h-16 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-between px-6 md:px-12 border-b border-slate-800">
+        <Link href="/" className="flex items-center gap-3 group">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo2.png" alt="Beraxis Logo" className="h-8 w-auto object-contain transition group-hover:scale-105" />
+          <span className="text-xl font-extrabold tracking-tight text-white flex items-center">
+            BERAXIS<span className="text-purple-500">.</span>
           </span>
-        </div>
+          <span className="hidden sm:inline-block text-[10px] bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30 font-semibold uppercase tracking-wider ml-1">
+            AI ERP & CRM
+          </span>
+        </Link>
         <div className="flex items-center gap-3">
           <span className="text-xs font-semibold text-slate-400 tracking-wider">
             SLIDE {currentSlide} / {totalSlides}
@@ -58,7 +59,7 @@ export default function PresentationPage() {
           <button
             onClick={nextSlide}
             disabled={currentSlide === totalSlides}
-            className="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white font-bold text-xs transition shadow-lg shadow-sky-600/20"
+            className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 disabled:opacity-40 text-white font-bold text-xs transition shadow-lg shadow-sky-600/20"
           >
             Next ▶
           </button>
@@ -76,21 +77,30 @@ export default function PresentationPage() {
       <main className="pt-20 min-h-screen flex items-center justify-center p-6 md:p-12">
         {/* SLIDE 1: Cover */}
         {currentSlide === 1 && (
-          <div className="max-w-5xl mx-auto text-center space-y-6 animate-fadeIn">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 font-semibold text-xs tracking-wide">
-              <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" /> THE AUTONOMOUS ENTERPRISE OPERATING SYSTEM
+          <div className="max-w-5xl mx-auto text-center space-y-6">
+            <div className="flex justify-center mb-2">
+              <div className="p-3 bg-slate-900/80 backdrop-blur rounded-2xl border border-purple-500/30 shadow-lg shadow-purple-500/20">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo2.png" alt="Beraxis" className="h-16 w-auto object-contain mx-auto" />
+              </div>
             </div>
+
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 font-semibold text-xs tracking-wide">
+              <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" /> BERAXIS AUTONOMOUS ENTERPRISE SYSTEM
+            </div>
+            
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
               Run Your Entire Business Smarter, Faster & <br />
               <span className="bg-gradient-to-r from-sky-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
                 On Autopilot
               </span>
             </h1>
+            
             <p className="text-base md:text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
               Replacing 6-month legacy ERP headaches with 15-minute setup, 3-second OCR invoice ingestion, predictive sales scoring, and native outbound revenue engines.
             </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 max-w-4xl mx-auto text-left">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 max-w-4xl mx-auto text-left">
               <div className="bg-slate-900/70 backdrop-blur p-4 rounded-xl border border-sky-500/30 shadow-lg shadow-sky-500/10">
                 <div className="text-2xl font-extrabold text-sky-400">15 Mins</div>
                 <div className="text-xs text-slate-400 mt-0.5">Time to Go-Live</div>
@@ -109,23 +119,29 @@ export default function PresentationPage() {
               </div>
             </div>
 
-            <div className="pt-6">
+            <div className="pt-4 flex justify-center gap-4">
               <button
                 onClick={nextSlide}
-                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 font-bold text-white hover:opacity-95 shadow-xl shadow-sky-500/25 transition text-sm"
+                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 font-bold text-white hover:opacity-95 shadow-xl shadow-purple-500/25 transition text-sm"
               >
                 Explore Presentation Deck →
               </button>
+              <Link
+                href="/"
+                className="px-6 py-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 font-bold text-sm transition border border-slate-700"
+              >
+                Launch Beraxis App ↗
+              </Link>
             </div>
           </div>
         )}
 
         {/* SLIDE 2: Hard Facts */}
         {currentSlide === 2 && (
-          <div className="max-w-6xl mx-auto w-full space-y-6 animate-fadeIn">
+          <div className="max-w-6xl mx-auto w-full space-y-6">
             <div className="text-center space-y-1">
               <h2 className="text-3xl font-extrabold">The Reality: Why Traditional Business Software is Failing You</h2>
-              <p className="text-slate-400 text-sm">Industry benchmarks show why modern companies are abandoning legacy ERPs & spreadsheets</p>
+              <p className="text-slate-400 text-sm">Industry benchmarks show why modern companies are migrating to Beraxis AI</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
@@ -137,13 +153,13 @@ export default function PresentationPage() {
                   <li>• <b className="text-white">73% of Implementations Fail:</b> Complex consulting projects taking 3-6 months and thousands in fees (Gartner).</li>
                   <li>• <b className="text-white">15.2 Hours Wasted Weekly:</b> Employees manually typing supplier invoices and copying numbers to Excel.</li>
                   <li>• <b className="text-white">Siloed Subscriptions:</b> Paying separately for HubSpot ($300), QuickBooks ($90), Katana ($350).</li>
-                  <li>• <b className="text-white">Delayed Decision Making:</b> Waiting weeks for accountants to compile outdated reports.</li>
+                  <li>• <b className="text-white">Delayed Decision Making:</b> Waiting weeks for accountants to compile outdated financial reports.</li>
                 </ul>
               </div>
 
               <div className="bg-emerald-950/20 backdrop-blur p-6 rounded-2xl border border-emerald-500/30 space-y-4">
                 <h3 className="text-base font-bold text-emerald-400 flex items-center gap-2">
-                  <span>✅ The Next-Gen AI Operating System</span>
+                  <span>✅ The Beraxis AI Operating System</span>
                 </h3>
                 <ul className="space-y-3 text-xs text-slate-300">
                   <li>• <b className="text-white">Live in 15 Minutes:</b> Zero-friction activation with 1-click import and free white-glove data migration.</li>
@@ -158,13 +174,13 @@ export default function PresentationPage() {
 
         {/* SLIDE 3: Dashboard Showcase */}
         {currentSlide === 3 && (
-          <div className="max-w-6xl mx-auto w-full space-y-4 animate-fadeIn">
+          <div className="max-w-6xl mx-auto w-full space-y-4">
             <div className="flex justify-between items-end">
               <div>
                 <h2 className="text-3xl font-extrabold">Live Product Interface: Built for Speed</h2>
                 <p className="text-slate-400 text-sm">Ultra-responsive Next.js 14 command center uniting every department</p>
               </div>
-              <span className="text-xs bg-slate-800 text-sky-400 px-3 py-1 rounded-full border border-slate-700">Real Dashboard Capture</span>
+              <span className="text-xs bg-purple-900/40 text-purple-300 px-3 py-1 rounded-full border border-purple-500/30">Beraxis Live Build</span>
             </div>
 
             <div className="grid md:grid-cols-12 gap-6 items-center">
@@ -199,7 +215,7 @@ export default function PresentationPage() {
 
         {/* SLIDE 4: CRM & Accounting */}
         {currentSlide === 4 && (
-          <div className="max-w-6xl mx-auto w-full space-y-4 animate-fadeIn">
+          <div className="max-w-6xl mx-auto w-full space-y-4">
             <div>
               <h2 className="text-3xl font-extrabold">Intelligent CRM & Automated Accounting</h2>
               <p className="text-slate-400 text-sm">AI OCR Scanning and Predictive Deal Scoring</p>
@@ -238,7 +254,7 @@ export default function PresentationPage() {
 
         {/* SLIDE 5: Inventory & HRMS */}
         {currentSlide === 5 && (
-          <div className="max-w-6xl mx-auto w-full space-y-4 animate-fadeIn">
+          <div className="max-w-6xl mx-auto w-full space-y-4">
             <div>
               <h2 className="text-3xl font-extrabold">Smart Inventory, Manufacturing & HRMS</h2>
               <p className="text-slate-400 text-sm">Complete logistics and employee operations under one roof</p>
@@ -277,7 +293,7 @@ export default function PresentationPage() {
 
         {/* SLIDE 6: Autonomous Growth Engine */}
         {currentSlide === 6 && (
-          <div className="max-w-6xl mx-auto w-full space-y-6 animate-fadeIn">
+          <div className="max-w-6xl mx-auto w-full space-y-6">
             <div className="text-center space-y-1">
               <span className="text-xs bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full border border-purple-500/30 font-semibold">
                 Autonomous Revenue Engine
@@ -325,9 +341,9 @@ export default function PresentationPage() {
 
         {/* SLIDE 7: Financial ROI */}
         {currentSlide === 7 && (
-          <div className="max-w-5xl mx-auto w-full space-y-6 animate-fadeIn">
+          <div className="max-w-5xl mx-auto w-full space-y-6">
             <div className="text-center space-y-1">
-              <h2 className="text-3xl font-extrabold">Measurable ROI: Why This Platform Pays for Itself</h2>
+              <h2 className="text-3xl font-extrabold">Measurable ROI: Why Beraxis Pays for Itself</h2>
               <p className="text-slate-400 text-sm">Hard-dollar annual savings for a typical 25-person growing company</p>
             </div>
 
@@ -337,7 +353,7 @@ export default function PresentationPage() {
                   <tr>
                     <th className="p-4">Expense Category</th>
                     <th className="p-4 text-red-400">Old Fragmented Approach</th>
-                    <th className="p-4 text-emerald-400">With Next-Gen AI ERP</th>
+                    <th className="p-4 text-emerald-400">With Beraxis AI ERP</th>
                     <th className="p-4 text-sky-400">Your Net Annual Return</th>
                   </tr>
                 </thead>
@@ -373,7 +389,7 @@ export default function PresentationPage() {
 
         {/* SLIDE 8: Onboarding & Close */}
         {currentSlide === 8 && (
-          <div className="max-w-4xl mx-auto text-center space-y-8 animate-fadeIn">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
             <div>
               <h2 className="text-4xl font-extrabold">100% Zero-Risk Onboarding Guarantee</h2>
               <p className="text-slate-400 text-sm mt-1">We handle the entire transition so you experience zero business downtime</p>
@@ -402,23 +418,26 @@ export default function PresentationPage() {
               </div>
             </div>
 
-            <div className="p-8 bg-slate-900/90 rounded-2xl border border-sky-500/40 space-y-4 shadow-2xl">
-              <h3 className="text-2xl font-bold">Ready to Upgrade to Next-Gen Business Management?</h3>
+            <div className="p-8 bg-slate-900/90 rounded-2xl border border-purple-500/40 space-y-4 shadow-2xl">
+              <h3 className="text-2xl font-bold">Ready to Upgrade to Beraxis AI ERP?</h3>
               <p className="text-slate-300 text-sm">Launch your private workspace today or schedule a personalized team demo.</p>
-              <div className="flex justify-center gap-4 pt-2">
+              <div className="flex flex-wrap justify-center gap-4 pt-2">
                 <Link
                   href="/"
-                  className="px-6 py-3 rounded-xl bg-sky-600 hover:bg-sky-500 font-bold text-white transition shadow-lg shadow-sky-600/30 text-sm"
+                  className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:opacity-95 font-bold text-white transition shadow-lg shadow-purple-600/30 text-sm"
                 >
-                  🚀 Launch Live Workspace
+                  🚀 Launch Beraxis Live Workspace
                 </Link>
                 <a
                   href="/Client_Executive_Pitch_and_Demo_Deck.pdf"
                   download
-                  className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-white transition border border-slate-700 text-sm"
+                  className="px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-white transition border border-slate-700 text-sm"
                 >
                   📥 Download Executive PDF Deck
                 </a>
+              </div>
+              <div className="pt-2 text-xs text-slate-400">
+                Priority Support: <a href="mailto:admin@beraxis.online" className="text-sky-400 hover:underline">admin@beraxis.online</a> &nbsp;|&nbsp; Web: <a href="https://www.beraxis.online" className="text-purple-400 hover:underline">www.beraxis.online</a>
               </div>
             </div>
           </div>
