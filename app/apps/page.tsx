@@ -82,7 +82,6 @@ export default function AppsDashboardPage() {
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isPaidUser, setIsPaidUser] = useState(false);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         setMounted(true);
@@ -94,6 +93,18 @@ export default function AppsDashboardPage() {
 
         const mod = localStorage.getItem("selectedModule") || "";
         setSelectedModule(mod);
+
+        const cachedUserStr = localStorage.getItem("user");
+        if (cachedUserStr) {
+            try {
+                const cached = JSON.parse(cachedUserStr);
+                setUserData(cached);
+                const SUPER_ADMIN_EMAILS = ['admin@beraxis.online', 'admin2@erp-crm.com'];
+                setIsAdmin(SUPER_ADMIN_EMAILS.includes(cached.email));
+            } catch {}
+        }
+
+        // Silent background fetch to update fresh subscription and user details
         fetchUserData();
     }, [router]);
 
@@ -126,39 +137,29 @@ export default function AppsDashboardPage() {
                         }
                     }
                 } catch {}
-            } else {
+            } else if (res.status === 401) {
                 router.replace("/login");
             }
         } catch (err) {
             console.error(err);
-        } finally {
-            setLoading(false);
         }
     };
 
-    if (!mounted || loading) {
-        return (
-            <div className="min-h-screen bg-[#020205] flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-        );
+    if (!mounted) {
+        return null;
     }
 
     return (
-        <div className="min-h-screen bg-[#020205] text-white p-4 md:p-8 relative">
-            {/* Ambient Background */}
-            <div className="galaxy-bg" />
-            <div className="aurora-bg" />
-
+        <div className="min-h-screen bg-transparent text-white p-4 md:p-8 relative">
             {/* Top Command Banner */}
             <div className="max-w-7xl mx-auto mb-8 flex flex-wrap justify-between items-center bg-[#0F172A]/60 backdrop-blur-xl p-5 md:p-6 rounded-3xl border border-white/10 shadow-2xl gap-4">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-purple-500/20 border border-white/10 shrink-0">
-                        {userData?.metadata?.name?.charAt(0) || "U"}
+                        {userData?.metadata?.name?.charAt(0) || userData?.email?.charAt(0)?.toUpperCase() || "U"}
                     </div>
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">
-                            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{userData?.metadata?.name || "User"}</span>!
+                            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{userData?.metadata?.name || userData?.email?.split('@')[0] || "User"}</span>!
                         </h1>
                         <p className="text-gray-400 text-xs md:text-sm font-medium flex items-center gap-2 mt-0.5">
                             <Database size={12} className="text-purple-400" /> {userData?.tenant?.name || "Beraxis Workspace"}
@@ -243,7 +244,7 @@ export default function AppsDashboardPage() {
             )}
 
             {/* App Grid */}
-            <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+            <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 {apps.map((app) => {
                     const isLocked = isFreePlan && !matchesModule(app.name, selectedModule);
                     return (
@@ -253,24 +254,24 @@ export default function AppsDashboardPage() {
                                 if (isLocked) { setShowUpgradeModal(true); return; }
                                 router.push(app.href);
                             }}
-                            className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all group relative cursor-pointer ${
+                            className={`flex flex-col items-center gap-3 p-4 rounded-lg transition-all group relative cursor-pointer ${
                                 isLocked
                                     ? "opacity-40 grayscale hover:opacity-55"
-                                    : "hover:bg-white/5 border border-transparent hover:border-white/10"
+                                    : "hover:bg-surface/50"
                             }`}
                         >
                             {/* Lock overlay */}
                             {isLocked && (
-                                <div className="absolute top-2 right-2 w-5 h-5 bg-gray-800/90 border border-white/10 rounded-full flex items-center justify-center z-10">
+                                <div className="absolute top-1 right-1 w-5 h-5 bg-gray-800/90 border border-white/10 rounded-full flex items-center justify-center z-10">
                                     <Lock size={9} className="text-gray-400" />
                                 </div>
                             )}
                             <div className={`${app.color} p-4 rounded-2xl shadow-lg transition-transform ${
-                                isLocked ? "" : "group-hover:scale-110 shadow-purple-500/10"
+                                isLocked ? "" : "group-hover:scale-110"
                             }`}>
                                 <app.icon className="w-8 h-8 text-white" />
                             </div>
-                            <span className={`text-sm font-medium transition-colors ${
+                            <span className={`text-sm transition-colors ${
                                 isLocked ? "text-gray-500" : "text-gray-300 group-hover:text-white"
                             }`}>
                                 {app.name}
@@ -291,7 +292,7 @@ export default function AppsDashboardPage() {
                         className="max-w-sm w-full bg-[#0F172A] border border-purple-500/25 rounded-3xl p-8 text-center shadow-2xl shadow-purple-500/15 relative"
                         onClick={e => e.stopPropagation()}
                     >
-                        <button onClick={() => setShowUpgradeModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white p-1">
+                        <button onClick={() => setShowUpgradeModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white p-1 cursor-pointer">
                             <X size={16} />
                         </button>
                         <div className="w-16 h-16 bg-purple-500/15 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-purple-500/20">
@@ -318,7 +319,7 @@ export default function AppsDashboardPage() {
                 </div>
             )}
 
-            {/* Floating Live Chat Support Widget */}
+            {/* Persistent Floating WhatsApp Support Widget for logged-in users */}
             <a 
                 href="https://wa.me/19707807993" 
                 target="_blank" 
