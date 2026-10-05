@@ -84,11 +84,11 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
     if (!mounted) return null;
 
-    // Don't show shell on landing, login, signup, shop, checkout, billing, or forgotten password page
+    // Don't show shell on landing, login, signup, shop, checkout, billing, apps dashboard, or forgotten password page
     const isLandingPage = pathname === '/about' || pathname === '/contact' || pathname === '/' || pathname === '/pricing';
-    const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || pathname.startsWith('/shop/') || isLandingPage;
+    const isExcludedPage = pathname === '/apps' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || pathname.startsWith('/shop/') || isLandingPage;
     
-    if (isAuthPage) return <>{children}</>;
+    if (isExcludedPage) return <>{children}</>;
 
     return (
         <div className="flex h-screen overflow-hidden bg-[#020205] flex-col">

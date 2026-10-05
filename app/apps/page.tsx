@@ -31,7 +31,6 @@ import {
     Zap,
     X,
     PieChart,
-    ArrowLeft,
     Globe
 } from "lucide-react";
 import { fetchAPI } from "@/lib/api";
@@ -154,16 +153,6 @@ export default function AppsDashboardPage() {
             {/* Top Command Banner */}
             <div className="max-w-7xl mx-auto mb-8 flex flex-wrap justify-between items-center bg-[#0F172A]/60 backdrop-blur-xl p-5 md:p-6 rounded-3xl border border-white/10 shadow-2xl gap-4">
                 <div className="flex items-center gap-4">
-                    {/* Back Button */}
-                    <button
-                        onClick={() => router.back()}
-                        title="Go back to previous screen"
-                        className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-all border border-white/5 flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
-                    >
-                        <ArrowLeft size={16} />
-                        <span className="hidden sm:inline">Back</span>
-                    </button>
-
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-purple-500/20 border border-white/10 shrink-0">
                         {userData?.metadata?.name?.charAt(0) || "U"}
                     </div>
