@@ -17,6 +17,7 @@ export default function CRMHeader({ onNewClick, searchTerm = '', onSearchChange 
 
     const navItems = [
         { name: 'Pipeline', href: '/crm' },
+        { name: 'Lead Bank 🌐', href: '/crm/lead-bank' },
         { name: 'Activities & History', href: '/crm/activities' },
         { name: 'Sales', href: '/sales' },
         { name: 'Reporting', href: '/crm/reporting' },

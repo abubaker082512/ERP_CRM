@@ -1,18 +1,20 @@
 "use client";
 
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
-import { Target, Phone, Mail, Calendar, CheckCircle, Clock } from "lucide-react";
+import ActivityHistory from "@/components/shared/ActivityHistory";
+import { Target, Phone, Mail, Calendar, CheckCircle, Clock, Plus, Activity as ActivityIcon } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 
 const MENU_ITEMS = [
     { name: "My Pipeline", href: "/crm" },
-    { name: "My Activities", href: "/crm/activities" },
-    { name: "Sales", href: "/crm/sales" },
+    { name: "Activities & History", href: "/crm/activities" },
+    { name: "Sales", href: "/sales" },
     { name: "Reporting", href: "/crm/reporting" },
     { name: "Configuration", href: "/crm/configuration" },
 ];
 
-type Activity = {
+type PlannedActivity = {
     id: string;
     type: "call" | "meeting" | "email" | "task";
     title: string;
@@ -21,29 +23,29 @@ type Activity = {
     status: "planned" | "done" | "overdue";
 };
 
-const mockActivities: Activity[] = [
+const defaultPlanned: PlannedActivity[] = [
     {
         id: "1",
         type: "call",
-        title: "Follow-up call with John Doe",
+        title: "Follow-up discovery call with Acme Corp",
         lead: "Acme Corp - John Doe",
-        dueDate: "2025-12-02T10:00:00",
+        dueDate: new Date().toISOString(),
         status: "planned",
     },
     {
         id: "2",
         type: "meeting",
-        title: "Product demo",
+        title: "Enterprise ERP Platform Demo",
         lead: "Tech Solutions - Jane Smith",
-        dueDate: "2025-12-02T14:00:00",
+        dueDate: new Date(Date.now() + 86400000).toISOString(),
         status: "planned",
     },
     {
         id: "3",
         type: "email",
-        title: "Send quotation",
+        title: "Send updated quotation and specs",
         lead: "Global Industries - Bob Johnson",
-        dueDate: "2025-12-01T16:00:00",
+        dueDate: new Date(Date.now() - 86400000).toISOString(),
         status: "overdue",
     },
 ];
@@ -56,142 +58,162 @@ const activityIcons = {
 };
 
 const activityColors = {
-    call: "bg-blue-500",
-    meeting: "bg-purple-500",
-    email: "bg-green-500",
-    task: "bg-yellow-500",
-};
-
-const statusColors = {
-    planned: "text-blue-400",
-    done: "text-green-400",
-    overdue: "text-red-400",
+    call: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
+    meeting: "bg-purple-500/20 text-purple-400 border border-purple-500/30",
+    email: "bg-green-500/20 text-green-400 border border-green-500/30",
+    task: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
 };
 
 export default function CRMActivitiesPage() {
-    const [activities] = useState<Activity[]>(mockActivities);
+    const [planned] = useState<PlannedActivity[]>(defaultPlanned);
+    const [activeTab, setActiveTab] = useState<"history" | "planned">("history");
 
     return (
-        <div className="flex flex-col h-screen bg-[#0F172A]">
+        <div className="flex flex-col min-h-screen bg-[#0F172A]">
             <StandardModuleHeader
                 moduleName="CRM"
                 moduleIcon={<Target size={20} />}
                 menuItems={MENU_ITEMS}
-                searchPlaceholder="Search activities..."
+                searchPlaceholder="Search activities & history..."
             />
 
-            <div className="flex-1 overflow-auto p-6">
-                <div className="mb-6">
-                    <h2 className="text-2xl font-semibold text-gray-200">My Activities</h2>
-                    <p className="text-sm text-gray-400 mt-1">
-                        {activities.length} activities scheduled
-                    </p>
+            <div className="flex-1 overflow-auto p-6 max-w-6xl mx-auto w-full space-y-6">
+                {/* Page Title & View Switcher */}
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-800 pb-4">
+                    <div>
+                        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                            <ActivityIcon className="text-purple-400" size={24} />
+                            CRM Activity & Database History
+                        </h2>
+                        <p className="text-sm text-gray-400 mt-1">
+                            Live audit trail of all actions, stage transitions (Marked Lost / Won), notes, and scheduled tasks.
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-[#1E293B] p-1 rounded-xl border border-white/10">
+                        <button
+                            onClick={() => setActiveTab("history")}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${
+                                activeTab === "history"
+                                    ? "bg-purple-600 text-white shadow-lg"
+                                    : "text-gray-400 hover:text-white"
+                            }`}
+                        >
+                            Database Audit Trail
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("planned")}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${
+                                activeTab === "planned"
+                                    ? "bg-purple-600 text-white shadow-lg"
+                                    : "text-gray-400 hover:text-white"
+                            }`}
+                        >
+                            Scheduled Tasks ({planned.length})
+                        </button>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Today */}
-                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
-                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                            <Clock size={20} className="text-blue-400" />
-                            Today
-                        </h3>
-                        <div className="space-y-3">
-                            {activities
-                                .filter(a => new Date(a.dueDate).toDateString() === new Date().toDateString())
-                                .map(activity => {
-                                    const Icon = activityIcons[activity.type];
+                {activeTab === "history" ? (
+                    <ActivityHistory
+                        module="crm"
+                        entityType="opportunity"
+                        title="Live CRM Database Audit Logs & Interaction History"
+                        allowAddNote={true}
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Today */}
+                        <div className="bg-[#1E293B] rounded-xl p-5 border border-gray-800">
+                            <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                                <Clock size={18} className="text-blue-400" />
+                                Today
+                            </h3>
+                            <div className="space-y-3">
+                                {planned.slice(0, 1).map((item) => {
+                                    const Icon = activityIcons[item.type];
                                     return (
-                                        <div
-                                            key={activity.id}
-                                            className="bg-[#0F172A] rounded-lg p-4 border border-gray-700 hover:border-blue-500 transition-colors"
-                                        >
+                                        <div key={item.id} className="bg-white/5 rounded-xl p-4 border border-white/5">
                                             <div className="flex items-start gap-3">
-                                                <div className={`${activityColors[activity.type]} p-2 rounded`}>
-                                                    <Icon size={16} className="text-white" />
+                                                <div className={`p-2 rounded-lg ${activityColors[item.type]}`}>
+                                                    <Icon size={16} />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <h4 className="font-medium text-white mb-1">{activity.title}</h4>
-                                                    <p className="text-sm text-gray-400">{activity.lead}</p>
-                                                    <div className="flex items-center gap-2 mt-2 text-xs">
-                                                        <Clock size={12} className={statusColors[activity.status]} />
-                                                        <span className={statusColors[activity.status]}>
-                                                            {new Date(activity.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
+                                                    <h4 className="font-semibold text-white text-sm mb-1">{item.title}</h4>
+                                                    <p className="text-xs text-gray-400">{item.lead}</p>
+                                                    <div className="flex items-center gap-2 mt-2 text-xs text-blue-400">
+                                                        <Clock size={12} />
+                                                        <span>Due Today</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     );
                                 })}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Upcoming */}
-                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
-                        <h3 className="text-lg font-semibold text-white mb-4">Upcoming</h3>
-                        <div className="space-y-3">
-                            {activities
-                                .filter(a => new Date(a.dueDate) > new Date())
-                                .map(activity => {
-                                    const Icon = activityIcons[activity.type];
+                        {/* Upcoming */}
+                        <div className="bg-[#1E293B] rounded-xl p-5 border border-gray-800">
+                            <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                                <Calendar size={18} className="text-purple-400" />
+                                Upcoming
+                            </h3>
+                            <div className="space-y-3">
+                                {planned.slice(1, 2).map((item) => {
+                                    const Icon = activityIcons[item.type];
                                     return (
-                                        <div
-                                            key={activity.id}
-                                            className="bg-[#0F172A] rounded-lg p-4 border border-gray-700 hover:border-blue-500 transition-colors"
-                                        >
+                                        <div key={item.id} className="bg-white/5 rounded-xl p-4 border border-white/5">
                                             <div className="flex items-start gap-3">
-                                                <div className={`${activityColors[activity.type]} p-2 rounded`}>
-                                                    <Icon size={16} className="text-white" />
+                                                <div className={`p-2 rounded-lg ${activityColors[item.type]}`}>
+                                                    <Icon size={16} />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <h4 className="font-medium text-white mb-1">{activity.title}</h4>
-                                                    <p className="text-sm text-gray-400">{activity.lead}</p>
+                                                    <h4 className="font-semibold text-white text-sm mb-1">{item.title}</h4>
+                                                    <p className="text-xs text-gray-400">{item.lead}</p>
                                                     <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
                                                         <Calendar size={12} />
-                                                        <span>{new Date(activity.dueDate).toLocaleDateString()}</span>
+                                                        <span>Tomorrow</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     );
                                 })}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Overdue */}
-                    <div className="bg-[#1E293B] rounded-lg p-6 border border-gray-700">
-                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                            <span className="text-red-400">Overdue</span>
-                        </h3>
-                        <div className="space-y-3">
-                            {activities
-                                .filter(a => a.status === 'overdue')
-                                .map(activity => {
-                                    const Icon = activityIcons[activity.type];
+                        {/* Overdue */}
+                        <div className="bg-[#1E293B] rounded-xl p-5 border border-gray-800">
+                            <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                                <CheckCircle size={18} className="text-rose-400" />
+                                Overdue
+                            </h3>
+                            <div className="space-y-3">
+                                {planned.slice(2, 3).map((item) => {
+                                    const Icon = activityIcons[item.type];
                                     return (
-                                        <div
-                                            key={activity.id}
-                                            className="bg-[#0F172A] rounded-lg p-4 border border-red-700 hover:border-red-500 transition-colors"
-                                        >
+                                        <div key={item.id} className="bg-white/5 rounded-xl p-4 border border-rose-500/20">
                                             <div className="flex items-start gap-3">
-                                                <div className={`${activityColors[activity.type]} p-2 rounded`}>
-                                                    <Icon size={16} className="text-white" />
+                                                <div className={`p-2 rounded-lg ${activityColors[item.type]}`}>
+                                                    <Icon size={16} />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <h4 className="font-medium text-white mb-1">{activity.title}</h4>
-                                                    <p className="text-sm text-gray-400">{activity.lead}</p>
-                                                    <div className="flex items-center gap-2 mt-2 text-xs text-red-400">
+                                                    <h4 className="font-semibold text-white text-sm mb-1">{item.title}</h4>
+                                                    <p className="text-xs text-gray-400">{item.lead}</p>
+                                                    <div className="flex items-center gap-2 mt-2 text-xs text-rose-400 font-semibold">
                                                         <Clock size={12} />
-                                                        <span>{new Date(activity.dueDate).toLocaleDateString()}</span>
+                                                        <span>Past Due</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     );
                                 })}
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

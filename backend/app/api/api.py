@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.api import leads, auth, opportunities, products, sales, contacts, inventory, purchase, accounting, hr, mrp, helpdesk, payroll, website, documents, discuss, ai, pos, recruitment, attendance, knowledge, todo, appointments, planning, surveys, sign, barcode, team, billing, dashboard, super_admin, expenses, maintenance, projects, timesheets, antigravity, activities, calendar as calendar_mod
+from app.api import leads, auth, opportunities, products, sales, contacts, inventory, purchase, accounting, hr, mrp, helpdesk, payroll, website, documents, discuss, ai, pos, recruitment, attendance, knowledge, todo, appointments, planning, surveys, sign, barcode, team, billing, dashboard, super_admin, expenses, maintenance, projects, timesheets, antigravity, activities, lead_bank, calendar as calendar_mod
 from app.api.billing import public_router as billing_public_router
 from app.api.deps import get_supabase_client
 
@@ -10,6 +10,7 @@ protected_deps = [Depends(get_supabase_client)]
 
 api_router.include_router(activities.router, prefix="/activities", tags=["activities"], dependencies=protected_deps)
 api_router.include_router(activities.router, prefix="/audit-logs", tags=["audit-logs"], dependencies=protected_deps)
+api_router.include_router(lead_bank.router, prefix="/lead-bank", tags=["lead-bank"], dependencies=protected_deps)
 api_router.include_router(leads.router, prefix="/leads", tags=["leads"], dependencies=protected_deps)
 api_router.include_router(opportunities.router, prefix="/opportunities", tags=["opportunities"], dependencies=protected_deps)
 api_router.include_router(products.router, prefix="/products", tags=["products"], dependencies=protected_deps)

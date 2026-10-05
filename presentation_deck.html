@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next-Gen AI ERP & CRM - Presentation Deck</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0b0f19; color: #f8fafc; overflow-x: hidden; }
+        .slide { display: none; min-height: 100vh; padding: 3rem 4rem; }
+        .slide.active { display: flex; flex-direction: column; justify-content: center; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="relative">
+
+    <!-- Top Navigation Bar -->
+    <div class="fixed top-0 left-0 right-0 h-16 glass-card z-50 flex items-center justify-between px-8">
+        <div class="flex items-center gap-3">
+            <span class="text-xl font-bold gradient-text">NextGen AI ERP</span>
+            <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30">Executive Deck</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <span id="slideIndicator" class="text-sm font-semibold text-slate-400">Slide 1 / 6</span>
+            <button onclick="prevSlide()" class="p-2 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold transition">◀</button>
+            <button onclick="nextSlide()" class="p-2 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold transition">▶</button>
+        </div>
+    </div>
+
+    <!-- SLIDE 1: Cover -->
+    <section class="slide active" id="slide-1">
+        <div class="max-w-4xl mx-auto text-center space-y-6">
+            <div class="inline-block px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 font-semibold text-sm">
+                ⚡ The Autonomous Operating System for SMBs
+            </div>
+            <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight">
+                Next-Generation <br/><span class="gradient-text">AI ERP & CRM Platform</span>
+            </h1>
+            <p class="text-xl text-slate-400 max-w-2xl mx-auto">
+                Replacing legacy ERP complexity with 15-minute setup, OCR invoice automation, predictive sales scoring, and autonomous growth engines.
+            </p>
+            <div class="pt-8 flex justify-center gap-4">
+                <button onclick="nextSlide()" class="px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 font-bold hover:opacity-90 shadow-lg shadow-blue-500/20">
+                    Explore Platform Presentation →
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: Problem vs Solution -->
+    <section class="slide" id="slide-2">
+        <div class="max-w-6xl mx-auto w-full space-y-8">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold">The Shift: Legacy ERPs vs. Next-Gen AI ERP</h2>
+                <p class="text-slate-400 mt-2">Why businesses are migrating away from Odoo, SAP, and spreadsheets</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="glass-card p-8 rounded-2xl border-red-500/20 bg-red-950/10 space-y-4">
+                    <h3 class="text-xl font-bold text-red-400 flex items-center gap-2">❌ Legacy ERPs (Odoo / SAP / Zoho)</h3>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li>• <b>3-6 Months Setup:</b> Requires expensive certified consultants.</li>
+                        <li>• <b>Manual Data Typing:</b> Staff spends hours inputting receipts and invoices.</li>
+                        <li>• <b>Clunky, Fragmented UX:</b> Complex menus that cause employee resistance.</li>
+                        <li>• <b>Disconnected Outbound:</b> No native cold email or calling engine.</li>
+                        <li>• <b>Expensive Add-Ons:</b> Surprise charges for basic connectors.</li>
+                    </ul>
+                </div>
+                <div class="glass-card p-8 rounded-2xl border-green-500/20 bg-green-950/10 space-y-4">
+                    <h3 class="text-xl font-bold text-green-400 flex items-center gap-2">✅ Next-Gen AI ERP (Our Platform)</h3>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li>• <b>15-Minute Activation:</b> 1-click data import and self-guided wizard.</li>
+                        <li>• <b>AI OCR Automation:</b> Instant receipt and bill parsing into accounting.</li>
+                        <li>• <b>Modern React/Next.js UI:</b> Blazing fast, intuitive, and mobile-ready.</li>
+                        <li>• <b>Integrated Growth Suite:</b> Native Cold Email & AI Cold Calling.</li>
+                        <li>• <b>Transparent Pricing:</b> All modules unified with generous AI credits.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: Product Screenshot Showcase -->
+    <section class="slide" id="slide-3">
+        <div class="max-w-6xl mx-auto w-full space-y-6">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h2 class="text-3xl font-bold">Real Product Interface & Live Workspace</h2>
+                    <p class="text-slate-400">Streamlined navigation across CRM, Accounting, Inventory, and HRMS</p>
+                </div>
+                <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full border border-slate-700">Live Next.js 14 Build</span>
+            </div>
+            <div class="grid md:grid-cols-12 gap-8 items-center">
+                <div class="md:col-span-4 space-y-4">
+                    <div class="glass-card p-5 rounded-xl">
+                        <h4 class="font-bold text-blue-400">📊 AI-Assisted CRM</h4>
+                        <p class="text-xs text-slate-300 mt-1">Lead win-probability scoring & deal health alerts.</p>
+                    </div>
+                    <div class="glass-card p-5 rounded-xl">
+                        <h4 class="font-bold text-indigo-400">🧾 Instant OCR Invoicing</h4>
+                        <p class="text-xs text-slate-300 mt-1">Extract line items from PDF supplier bills in 3 seconds.</p>
+                    </div>
+                    <div class="glass-card p-5 rounded-xl">
+                        <h4 class="font-bold text-purple-400">📦 Predictive Inventory</h4>
+                        <p class="text-xs text-slate-300 mt-1">Automated stock forecasting based on sales velocity.</p>
+                    </div>
+                </div>
+                <div class="md:col-span-8">
+                    <div class="glass-card p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
+                        <img src="./scratch/post_login_screenshot.png" alt="Product Screenshot" class="w-full h-auto rounded-xl object-cover hover:scale-105 transition duration-500">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: Core Module Deep Dive -->
+    <section class="slide" id="slide-4">
+        <div class="max-w-6xl mx-auto w-full space-y-6">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold">Comprehensive All-in-One Capabilities</h2>
+                <p class="text-slate-400">Everything needed to run an enterprise under one roof</p>
+            </div>
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="glass-card p-6 rounded-2xl space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-lg">💼</div>
+                    <h3 class="font-bold text-lg">Intelligent CRM</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Visual Kanban pipelines, AI deal scoring, automated email sync, and meeting booking.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-lg">📈</div>
+                    <h3 class="font-bold text-lg">Accounting & Tax</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Double-entry ledger, automated bank reconciliation, OCR bills, and one-click financial statements.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold text-lg">🏭</div>
+                    <h3 class="font-bold text-lg">Inventory & MRP</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Multi-warehouse stock, Bill of Materials (BOM), serial tracking, and automated replenishment.</p>
+                </div>
+                <div class="glass-card p-6 rounded-2xl space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-lg">👥</div>
+                    <h3 class="font-bold text-lg">HRMS & Payroll</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Employee directory, automated salary slips, leave tracking, and team attendance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: Future Marketing & Cold Outbound Engine -->
+    <section class="slide" id="slide-5">
+        <div class="max-w-6xl mx-auto w-full space-y-6">
+            <div class="text-center">
+                <span class="text-xs bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full border border-purple-500/30 font-semibold">Future Roadmap & Monetization</span>
+                <h2 class="text-3xl font-bold mt-2">Autonomous Revenue Engine: Marketing & Cold Calling</h2>
+                <p class="text-slate-400">Empowering users to generate pipeline directly inside the ERP</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="glass-card p-6 rounded-2xl space-y-4 border-blue-500/30">
+                    <h3 class="font-bold text-xl text-blue-400">1. Marketing Suite</h3>
+                    <p class="text-sm text-slate-300">Lead generation campaign tracking, landing page creation, and multi-channel marketing attribution.</p>
+                    <div class="text-xs text-blue-300 bg-blue-900/30 p-3 rounded-lg">✓ Connects directly to CRM deal pipeline</div>
+                </div>
+                <div class="glass-card p-6 rounded-2xl space-y-4 border-indigo-500/30">
+                    <h3 class="font-bold text-xl text-indigo-400">2. Cold Email Engine</h3>
+                    <p class="text-sm text-slate-300">Automated inbox warmup, AI-personalized email sequences, and high-deliverability sending pools.</p>
+                    <div class="text-xs text-indigo-300 bg-indigo-900/30 p-3 rounded-lg">✓ Replaces Lemlist / Instantly ($100+/mo savings)</div>
+                </div>
+                <div class="glass-card p-6 rounded-2xl space-y-4 border-purple-500/30">
+                    <h3 class="font-bold text-xl text-purple-400">3. AI Cold Calling & Voice</h3>
+                    <p class="text-sm text-slate-300">Autonomous AI phone agents that dial leads, qualify interest, book calendar appointments, or route to human SDRs for a minimal fee.</p>
+                    <div class="text-xs text-purple-300 bg-purple-900/30 p-3 rounded-lg">✓ Real-time transcript & sentiment logged in CRM</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: 30-Day Campaign & Call to Action -->
+    <section class="slide" id="slide-6">
+        <div class="max-w-4xl mx-auto text-center space-y-8">
+            <h2 class="text-4xl font-bold">30-Day User Acquisition & Onboarding Sprint</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
+                <div class="glass-card p-4 rounded-xl">
+                    <span class="text-xs text-blue-400 font-bold">WEEK 1</span>
+                    <h4 class="font-bold mt-1 text-sm">Direct Blitz</h4>
+                    <p class="text-xs text-slate-400 mt-1">50 Beta Accounts & Founder DMs</p>
+                </div>
+                <div class="glass-card p-4 rounded-xl">
+                    <span class="text-xs text-emerald-400 font-bold">WEEK 2</span>
+                    <h4 class="font-bold mt-1 text-sm">Migration Blitz</h4>
+                    <p class="text-xs text-slate-400 mt-1">Free Excel/Odoo Data Cleanup</p>
+                </div>
+                <div class="glass-card p-4 rounded-xl">
+                    <span class="text-xs text-amber-400 font-bold">WEEK 3</span>
+                    <h4 class="font-bold mt-1 text-sm">Partner Flywheel</h4>
+                    <p class="text-xs text-slate-400 mt-1">Accountant & Consultant Portals</p>
+                </div>
+                <div class="glass-card p-4 rounded-xl">
+                    <span class="text-xs text-purple-400 font-bold">WEEK 4</span>
+                    <h4 class="font-bold mt-1 text-sm">Founding Lock</h4>
+                    <p class="text-xs text-slate-400 mt-1">Scarcity & PQL-to-Paid Push</p>
+                </div>
+            </div>
+            <div class="p-8 glass-card rounded-2xl bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/40">
+                <h3 class="text-2xl font-bold">Ready to Equip Your Sales & Growth Team?</h3>
+                <p class="text-slate-300 text-sm mt-2">Download the comprehensive PDF Playbook and start onboarding users today.</p>
+                <div class="mt-6 flex justify-center gap-4">
+                    <a href="Sales_Campaign_and_Onboarding_Playbook.pdf" download class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white transition">
+                        📥 Download Sales Playbook (PDF)
+                    </a>
+                    <a href="NextGen_AI_ERP_Presentation.pdf" download class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-white transition border border-slate-600">
+                        📊 Download Slide Deck (PDF)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 6;
+
+        function showSlide(index) {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(`slide-${index}`);
+            if (target) {
+                target.classList.add('active');
+                currentSlide = index;
+                document.getElementById('slideIndicator').innerText = `Slide ${currentSlide} / ${totalSlides}`;
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) showSlide(currentSlide - 1);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+    </script>
+</body>
+</html>
