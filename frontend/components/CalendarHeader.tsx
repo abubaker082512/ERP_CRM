@@ -1,11 +1,19 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Settings, MessageSquare, Bot } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Calendar, Settings, MessageSquare, Bot, ArrowLeft, LayoutGrid, Globe } from 'lucide-react';
+import UniversalModuleSearch from '@/components/shared/UniversalModuleSearch';
 
-export default function CalendarHeader() {
+export default function CalendarHeader({
+    searchTerm = '',
+    onSearchChange,
+}: {
+    searchTerm?: string;
+    onSearchChange?: (val: string) => void;
+}) {
     const pathname = usePathname();
+    const router = useRouter();
 
     const navItems = [
         { name: 'Calendar', href: '/calendar' },
@@ -15,44 +23,109 @@ export default function CalendarHeader() {
     ];
 
     return (
-        <header className="bg-[#1E293B] border-b border-gray-700 text-white">
-            <div className="flex items-center justify-between px-4 py-2">
-                <div className="flex items-center gap-8">
-                    <Link href="/" className="flex items-center gap-2 text-xl font-semibold text-gray-200 hover:text-white">
-                        <div className="bg-purple-600 w-7 h-7 flex items-center justify-center rounded text-sm font-bold">31</div>
+        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50">
+            <div className="flex items-center justify-between px-4 py-2.5">
+                <div className="flex items-center gap-4">
+                    
+                    {/* Back Button */}
+                    <button
+                        onClick={() => router.back()}
+                        title="Go back"
+                        className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold cursor-pointer shrink-0"
+                    >
+                        <ArrowLeft size={16} />
+                        <span className="hidden sm:inline">Back</span>
+                    </button>
+
+                    {/* Apps Dashboard Launcher Button */}
+                    <Link
+                        href="/apps"
+                        title="Workspace Apps Dashboard"
+                        className="flex items-center gap-1 text-gray-400 hover:text-purple-300 transition-colors p-1.5 rounded-lg hover:bg-purple-600/20 shrink-0"
+                    >
+                        <LayoutGrid size={18} />
+                    </Link>
+
+                    {/* Public Website Button */}
+                    <Link
+                        href="/"
+                        title="Public Website"
+                        className="flex items-center gap-1 text-gray-400 hover:text-cyan-300 transition-colors p-1.5 rounded-lg hover:bg-cyan-600/20 shrink-0"
+                    >
+                        <Globe size={18} />
+                    </Link>
+
+                    <Link href="/calendar" title="Dashboard" className="flex items-center gap-2 text-xl font-bold text-gray-200 hover:text-white transition-colors">
+                        <div className="bg-purple-600/30 text-purple-400 border border-purple-500/30 w-8 h-8 flex items-center justify-center rounded-lg shadow-sm font-bold">
+                            31
+                        </div>
                         Calendar
                     </Link>
-                    <nav className="flex items-center gap-6">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`text-sm font-medium transition-colors ${pathname === item.href ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+
+                    <nav className="flex items-center gap-2 ml-3 overflow-x-auto">
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.href || (item.href !== '/calendar' && pathname.startsWith(item.href));
+                            return (
+                                <Link
+                                    key={item.name}
+                                    href={item.href}
+                                    className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+                                        isActive
+                                            ? 'text-white bg-white/10 border border-white/10'
+                                            : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                                     }`}
-                            >
-                                {item.name}
-                            </Link>
-                        ))}
+                                >
+                                    {item.name}
+                                </Link>
+                            );
+                        })}
                     </nav>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <button className="text-gray-400 hover:text-white flex items-center gap-1">
-                        <Bot size={18} className="text-purple-400" />
+                {/* Universal Search Bar */}
+                <UniversalModuleSearch
+                    placeholder="Search calendar events, appointments, schedules (Enter to jump)..."
+                    value={searchTerm}
+                    onChange={onSearchChange}
+                    className="mx-6"
+                />
+
+                {/* Actions */}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => router.push("/ai")}
+                        title="AI Search & Assistant"
+                        className="text-gray-400 hover:text-purple-400 p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                        <Bot size={18} />
                     </button>
-                    <button className="text-gray-400 hover:text-white relative">
+
+                    <button
+                        onClick={() => router.push("/discuss")}
+                        title="Discuss"
+                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 relative transition-colors cursor-pointer"
+                    >
                         <MessageSquare size={18} />
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-[8px] flex items-center justify-center">1</span>
                     </button>
-                    <button className="text-gray-400 hover:text-white">
+
+                    <button
+                        onClick={() => router.push("/settings")}
+                        title="Settings"
+                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                    >
                         <Settings size={18} />
                     </button>
-                    <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
-                        <span className="text-xs text-gray-300 hidden md:inline">ABT IT Innovation PVT LTD.</span>
-                        <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-xs font-bold">
+
+                    <Link
+                        href="/settings"
+                        title="Company Settings"
+                        className="flex items-center gap-2 border-l border-gray-700 pl-3 hover:opacity-90 transition-opacity"
+                    >
+                        <span className="text-xs text-gray-300 font-medium hidden xl:inline">ABT IT Innovation</span>
+                        <div className="w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm">
                             A
                         </div>
-                    </div>
+                    </Link>
                 </div>
             </div>
         </header>

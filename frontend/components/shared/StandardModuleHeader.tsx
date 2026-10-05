@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, Search, Bell, Settings, User } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ArrowLeft, LayoutGrid, Globe, Settings, Bot, MessageSquare } from "lucide-react";
+import UniversalModuleSearch from "./UniversalModuleSearch";
 
 type MenuItem = {
     name: string;
@@ -14,6 +15,9 @@ type ModuleHeaderProps = {
     moduleIcon: React.ReactNode;
     menuItems: MenuItem[];
     searchPlaceholder?: string;
+    searchValue?: string;
+    onSearchChange?: (val: string) => void;
+    onSearch?: (val: string) => void;
 };
 
 export default function StandardModuleHeader({
@@ -21,92 +25,132 @@ export default function StandardModuleHeader({
     moduleIcon,
     menuItems,
     searchPlaceholder = "Search...",
+    searchValue,
+    onSearchChange,
+    onSearch,
 }: ModuleHeaderProps) {
     const pathname = usePathname();
+    const router = useRouter();
 
     return (
         <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50">
             {/* Top Bar */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700">
-                <div className="flex items-center gap-4">
-                    {/* Home Button */}
-                    <Link
-                        href="/"
-                        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700/60 gap-4">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                    {/* Back Button */}
+                    <button
+                        onClick={() => router.back()}
+                        title="Go back"
+                        className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold cursor-pointer"
                     >
-                        <Home size={20} />
+                        <ArrowLeft size={16} />
+                        <span className="hidden sm:inline">Back</span>
+                    </button>
+
+                    {/* Apps Dashboard Launcher Button */}
+                    <Link
+                        href="/apps"
+                        title="Workspace Apps Dashboard"
+                        className="flex items-center gap-1 text-gray-400 hover:text-purple-300 transition-colors p-1.5 rounded-lg hover:bg-purple-600/20"
+                    >
+                        <LayoutGrid size={18} />
                     </Link>
 
-                    {/* Module Name */}
+                    {/* Public Website Button */}
                     <Link
-                        href={menuItems[0]?.href || "/"}
-                        className="flex items-center gap-2 text-xl font-semibold text-gray-200 hover:text-white"
+                        href="/"
+                        title="Public Website"
+                        className="flex items-center gap-1 text-gray-400 hover:text-cyan-300 transition-colors p-1.5 rounded-lg hover:bg-cyan-600/20"
                     >
-                        <div className="bg-blue-500 w-8 h-8 flex items-center justify-center rounded">
+                        <Globe size={18} />
+                    </Link>
+
+                    {/* Module Name & Icon */}
+                    <Link
+                        href={menuItems[0]?.href || "/apps"}
+                        className="flex items-center gap-2 text-base sm:text-lg font-bold text-gray-100 hover:text-white transition-colors ml-1"
+                    >
+                        <div className="bg-purple-600/30 text-purple-400 border border-purple-500/30 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg shadow-sm shrink-0">
                             {moduleIcon}
                         </div>
-                        {moduleName}
+                        <span className="truncate">{moduleName}</span>
                     </Link>
                 </div>
 
-                {/* Search Bar */}
-                <div className="flex-1 max-w-xl mx-8">
-                    <div className="relative flex items-center">
-                        <Search className="absolute left-3 text-gray-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder={searchPlaceholder}
-                            className="w-full bg-[#0F172A] border border-gray-600 rounded px-10 py-1.5 text-sm text-gray-200 focus:outline-none focus:border-blue-500"
-                        />
-                    </div>
+                {/* Universal Search Bar */}
+                <div className="flex-1 max-w-xl mx-2">
+                    <UniversalModuleSearch
+                        moduleName={moduleName}
+                        placeholder={searchPlaceholder || `Search ${moduleName}...`}
+                        value={searchValue}
+                        onChange={onSearchChange}
+                        onSearch={onSearch}
+                    />
                 </div>
 
                 {/* Right Actions */}
-                <div className="flex items-center gap-4">
-                    <button className="text-gray-400 hover:text-white relative">
-                        <Bell size={20} />
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <button
+                        onClick={() => router.push("/ai")}
+                        title="AI Assistant & Smart Search"
+                        className="text-gray-400 hover:text-purple-400 p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                        <Bot size={19} />
+                    </button>
+
+                    <button
+                        onClick={() => router.push("/discuss")}
+                        title="Discuss & Messages"
+                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 relative transition-colors cursor-pointer"
+                    >
+                        <MessageSquare size={19} />
+                        <span className="absolute top-1 right-1 bg-purple-500 text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
                             3
                         </span>
                     </button>
-                    <button className="text-gray-400 hover:text-white">
-                        <Settings size={20} />
+
+                    <button
+                        onClick={() => router.push("/settings")}
+                        title="System Settings"
+                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                        <Settings size={19} />
                     </button>
-                    <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
-                        <span className="text-xs text-gray-300 hidden md:inline">
-                            ABT IT Innovation PVT LTD.
-                        </span>
-                        <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-xs font-bold">
+
+                    <Link
+                        href="/settings"
+                        title="Company Profile"
+                        className="flex items-center gap-2 border-l border-gray-700 pl-3 hover:opacity-80 transition-opacity"
+                    >
+                        <span className="text-xs text-gray-300 font-medium hidden xl:inline">ABT IT Innovation PVT LTD.</span>
+                        <div className="w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-inner">
                             A
                         </div>
-                    </div>
+                    </Link>
                 </div>
             </div>
 
-            {/* Navigation Menu */}
-            <nav className="flex items-center gap-1 px-4">
-                {menuItems.map((item) => {
-                    const isActive =
-                        pathname === item.href ||
-                        (item.href !== menuItems[0].href && pathname.startsWith(item.href));
-
-                    return (
-                        <Link
-                            key={item.name}
-                            href={item.href}
-                            className={`px-4 py-3 text-sm font-medium transition-colors relative ${isActive
-                                    ? "text-white bg-[#0F172A]"
-                                    : "text-gray-400 hover:text-gray-200 hover:bg-[#0F172A]/50"
+            {/* Menu Navigation Items Bar */}
+            {menuItems && menuItems.length > 0 && (
+                <div className="flex items-center px-4 py-1.5 gap-6 text-sm overflow-x-auto bg-[#1E293B]/60 scrollbar-none">
+                    {menuItems.map((item) => {
+                        const isActive = pathname === item.href || (item.href !== "/" && item.href !== "/apps" && pathname.startsWith(item.href));
+                        return (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                className={`font-medium transition-colors whitespace-nowrap text-xs ${
+                                    isActive
+                                        ? "text-purple-400 border-b-2 border-purple-500 pb-0.5"
+                                        : "text-gray-400 hover:text-gray-200"
                                 }`}
-                        >
-                            {item.name}
-                            {isActive && (
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
-                            )}
-                        </Link>
-                    );
-                })}
-            </nav>
+                            >
+                                {item.name}
+                            </Link>
+                        );
+                    })}
+                </div>
+            )}
         </header>
     );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import { ShoppingCart, Search, Menu, Package } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ShoppingCart, Search, Menu, Package, ArrowLeft, LayoutGrid, Globe } from 'lucide-react';
 
 export default function ShopHeader({ cartCount, onCartClick }: { cartCount: number, onCartClick: () => void }) {
     return (
@@ -10,7 +11,36 @@ export default function ShopHeader({ cartCount, onCartClick }: { cartCount: numb
                 
                 {/* Logo Area */}
                 <div className="flex items-center gap-6">
-                    <Link href="/" className="flex items-center gap-2">
+                    
+                    {/* Back Button */}
+                    <button
+                        onClick={() => router.back()}
+                        title="Go back"
+                        className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold cursor-pointer shrink-0"
+                    >
+                        <ArrowLeft size={16} />
+                        <span className="hidden sm:inline">Back</span>
+                    </button>
+
+                    {/* Apps Dashboard Launcher Button */}
+                    <Link
+                        href="/apps"
+                        title="Workspace Apps Dashboard"
+                        className="flex items-center gap-1 text-gray-400 hover:text-purple-300 transition-colors p-1.5 rounded-lg hover:bg-purple-600/20 shrink-0"
+                    >
+                        <LayoutGrid size={18} />
+                    </Link>
+
+                    {/* Public Website Button */}
+                    <Link
+                        href="/"
+                        title="Public Website"
+                        className="flex items-center gap-1 text-gray-400 hover:text-cyan-300 transition-colors p-1.5 rounded-lg hover:bg-cyan-600/20 shrink-0"
+                    >
+                        <Globe size={18} />
+                    </Link>
+
+                    <Link href="/shop" className="flex items-center gap-2">
                         <div className="bg-purple-600 w-8 h-8 rounded flex items-center justify-center text-white">
                             <Package size={20} />
                         </div>
