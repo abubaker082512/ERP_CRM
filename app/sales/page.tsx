@@ -3,9 +3,10 @@ import { fetchAPI } from '@/lib/api';
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
 import { useEffect, useState } from "react";
-import { Plus, FileText, DollarSign, Calendar, User, BarChart3, ArrowRight } from "lucide-react";
+import { Plus, FileText, DollarSign, Calendar, User, BarChart3, ArrowRight, Download, FileSpreadsheet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { exportToCSV, exportToExcel, printQuotationPDF } from "@/lib/exportUtils";
 
 const MENU_ITEMS = [
     { name: "Quotations", href: "/sales" },
@@ -24,6 +25,8 @@ type Quotation = {
     state: string;
     date_order?: string;
     created_at: string;
+    lines?: any[];
+    sale_order_line?: any[];
 };
 
 export default function SalesPage() {
@@ -53,6 +56,68 @@ export default function SalesPage() {
 
     const totalValue = quotations.reduce((sum, q) => sum + (q.amount_total || 0), 0);
 
+    const handleExportCSV = () => {
+        const headers = ["Quotation #", "Customer", "Total Value", "Status", "Order Date", "Created Date"];
+        const rows = quotations.map(q => [
+            q.name || q.id,
+            q.customer_name || "Customer",
+            q.amount_total || 0,
+            q.state || "draft",
+            q.date_order || "",
+            q.created_at || ""
+        ]);
+        exportToCSV(`Sales_Quotations_${new Date().toISOString().slice(0, 10)}`, headers, rows);
+    };
+
+    const handleExportExcel = () => {
+        const headers = ["Quotation #", "Customer", "Total ($)", "Status", "Order Date", "Created Date"];
+        const rows = quotations.map(q => [
+            q.name || q.id,
+            q.customer_name || "Customer",
+            q.amount_total || 0,
+            q.state || "draft",
+            q.date_order ? new Date(q.date_order).toLocaleDateString() : "",
+            q.created_at ? new Date(q.created_at).toLocaleDateString() : ""
+        ]);
+        exportToExcel(`Sales_Quotations_${new Date().toISOString().slice(0, 10)}`, headers, rows, "Quotations");
+    };
+
+    const handleDownloadQuotationPDF = async (e: React.MouseEvent, q: Quotation) => {
+        e.stopPropagation();
+        
+        let linesData = q.lines || q.sale_order_line || [];
+        if (linesData.length === 0) {
+            try {
+                const res = await fetchAPI(`/sales/${q.id}`);
+                if (res.ok) {
+                    const fullData = await res.json();
+                    linesData = fullData.lines || fullData.sale_order_line || [];
+                }
+            } catch (err) {
+                console.error("Failed to load line items for PDF", err);
+            }
+        }
+
+        const formattedLines = linesData.map((line: any) => ({
+            name: line.name || line.product_name || "Product Item",
+            description: line.description || "",
+            quantity: line.product_uom_qty || line.product_qty || line.quantity || 1,
+            unitPrice: line.price_unit || line.unit_price || 0,
+            subtotal: line.price_subtotal || (line.product_uom_qty || 1) * (line.price_unit || 0)
+        }));
+
+        printQuotationPDF({
+            documentNumber: q.name || `SO-${q.id.slice(0, 8)}`,
+            documentType: q.state === "sale" ? "Sales Order" : "Quotation",
+            customerName: q.customer_name || "Valued Customer",
+            date: new Date(q.date_order || q.created_at).toLocaleDateString(),
+            status: q.state === "sale" ? "Confirmed Sale" : (q.state || "Draft").toUpperCase(),
+            lines: formattedLines,
+            amountTotal: q.amount_total || 0,
+            notes: "Thank you for partnering with ABT IT Innovation PVT LTD. Please contact sales@abt.com for any inquiries."
+        });
+    };
+
     return (
         <div className="flex flex-col h-screen bg-[#0F172A]">
             <StandardModuleHeader
@@ -63,7 +128,7 @@ export default function SalesPage() {
             />
 
             <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-4">
                         <div>
                             <h2 className="text-2xl font-semibold text-gray-200">Quotations</h2>
@@ -77,12 +142,31 @@ export default function SalesPage() {
                             onViewChange={setCurrentView}
                         />
                     </div>
-                    <Link
-                        href="/sales/quotations/new"
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-md shadow-purple-900/30 transition-all cursor-pointer"
-                    >
-                        <Plus size={18} /> New Quotation
-                    </Link>
+                    
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleExportExcel}
+                            title="Export all to Excel (.xls)"
+                            className="bg-[#1E293B] hover:bg-[#334155] border border-gray-700 text-gray-300 hover:text-white px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm font-medium transition cursor-pointer"
+                        >
+                            <FileSpreadsheet size={16} className="text-emerald-400" />
+                            <span className="hidden sm:inline">Export Excel</span>
+                        </button>
+                        <button
+                            onClick={handleExportCSV}
+                            title="Export all to CSV"
+                            className="bg-[#1E293B] hover:bg-[#334155] border border-gray-700 text-gray-300 hover:text-white px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm font-medium transition cursor-pointer"
+                        >
+                            <Download size={16} className="text-cyan-400" />
+                            <span className="hidden sm:inline">CSV</span>
+                        </button>
+                        <Link
+                            href="/sales/quotations/new"
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-md shadow-purple-900/30 transition-all cursor-pointer"
+                        >
+                            <Plus size={18} /> New Quotation
+                        </Link>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -101,7 +185,7 @@ export default function SalesPage() {
                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Total</th>
                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Status</th>
                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Date</th>
-                                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">Action</th>
+                                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -132,9 +216,19 @@ export default function SalesPage() {
                                             {new Date(q.date_order || q.created_at).toLocaleDateString()}
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                            <span className="text-purple-400 hover:text-purple-300 text-sm font-medium flex items-center justify-end gap-1">
-                                                View <ArrowRight size={14} />
-                                            </span>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={(e) => handleDownloadQuotationPDF(e, q)}
+                                                    title="Download / Print Quotation PDF"
+                                                    className="p-1.5 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded border border-purple-500/30 flex items-center gap-1 text-xs font-medium transition cursor-pointer"
+                                                >
+                                                    <Download size={13} />
+                                                    <span>PDF</span>
+                                                </button>
+                                                <span className="text-purple-400 hover:text-purple-300 text-sm font-medium flex items-center gap-1 ml-1">
+                                                    View <ArrowRight size={14} />
+                                                </span>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -166,14 +260,23 @@ export default function SalesPage() {
                                             <div
                                                 key={q.id}
                                                 onClick={() => router.push(`/sales/${q.id}`)}
-                                                className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-purple-500 transition-all cursor-pointer shadow"
+                                                className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-purple-500 transition-all cursor-pointer shadow group"
                                             >
                                                 <div className="flex items-center justify-between mb-2">
                                                     <span className="font-semibold text-white">{q.name}</span>
                                                     <span className="text-xs text-gray-500">{new Date(q.date_order || q.created_at).toLocaleDateString()}</span>
                                                 </div>
                                                 <div className="text-sm text-gray-300 mb-2">{q.customer_name || "Customer"}</div>
-                                                <div className="text-green-400 font-bold">${(q.amount_total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                                <div className="flex items-center justify-between pt-2 border-t border-gray-800">
+                                                    <span className="text-green-400 font-bold">${(q.amount_total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                    <button
+                                                        onClick={(e) => handleDownloadQuotationPDF(e, q)}
+                                                        title="Download PDF"
+                                                        className="p-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded text-xs flex items-center gap-1 border border-purple-500/30 opacity-80 group-hover:opacity-100 transition"
+                                                    >
+                                                        <Download size={12} /> PDF
+                                                    </button>
+                                                </div>
                                             </div>
                                         ))}
                                         {filtered.length === 0 && (

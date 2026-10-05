@@ -2,7 +2,8 @@
 import { fetchAPI } from "@/lib/api";
 import { useState, useEffect } from "react";
 import AppHeader from "@/components/layout/AppHeader";
-import { FileSignature, Upload, Plus, CheckCircle, Clock, XCircle, Mail } from "lucide-react";
+import { FileSignature, Upload, Plus, CheckCircle, Clock, XCircle, Mail, Download } from "lucide-react";
+import { printReportPDF, exportToCSV, exportToExcel } from "@/lib/exportUtils";
 
 export default function SignPage() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -19,6 +20,29 @@ export default function SignPage() {
       const res = await fetchAPI("/sign/requests");
       if (res.ok) setRequests(await res.json());
     } finally { setLoading(false); }
+  };
+
+  const downloadAgreementPDF = (req: any) => {
+    const signersText = (req.signers || []).map((s: any) => `${s.name} (${s.role || "Signer"})`).join(", ");
+    printReportPDF({
+      title: `eSignature Agreement Certificate: ${req.title}`,
+      subtitle: `Status: ${req.state?.toUpperCase()} • Verified on BERAXIS eSignature Engine`,
+      summaryCards: [
+        { label: "Document Status", value: (req.state || "draft").toUpperCase() },
+        { label: "Signers", value: `${(req.signers || []).length}` },
+        { label: "Timestamp", value: req.signed_at ? new Date(req.signed_at).toLocaleDateString() : "Pending" },
+      ],
+      headers: ["Agreement Title", "Document Link", "Signers", "Status", "Date Signed"],
+      rows: [
+        [
+          req.title,
+          req.document_url || "Direct Upload",
+          signersText || "Authorized Parties",
+          req.state || "draft",
+          req.signed_at ? new Date(req.signed_at).toLocaleString() : "Awaiting Signature"
+        ]
+      ]
+    });
   };
 
   const createRequest = async () => {
@@ -68,7 +92,7 @@ export default function SignPage() {
             </h1>
           </div>
           <button onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-600/20 active:scale-95">
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-600/20 active:scale-95 cursor-pointer">
             <Plus size={16} /> New Request
           </button>
         </div>
@@ -109,19 +133,27 @@ export default function SignPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-white/10 flex justify-between">
+                <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => downloadAgreementPDF(req)}
+                    title="Download Certificate / Agreement PDF"
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded transition"
+                  >
+                    <Download size={12} /> PDF
+                  </button>
+
                   {req.state === "sent" || req.state === "draft" ? (
-                    <>
+                    <div className="flex items-center gap-2">
                       <button onClick={() => actionReq(req.id, "refuse")} className="flex items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300">
                         <XCircle size={14} /> Refuse
                       </button>
                       <button onClick={() => actionReq(req.id, "sign")} className="flex items-center gap-1 text-xs font-semibold text-green-400 hover:text-green-300 bg-green-500/10 px-3 py-1.5 rounded-md">
                         <CheckCircle size={14} /> Sign Now
                       </button>
-                    </>
+                    </div>
                   ) : (
                     <p className="text-xs text-gray-500 flex items-center gap-1">
-                      <Clock size={12} /> {req.signed_at ? new Date(req.signed_at).toLocaleString() : "Completed"}
+                      <Clock size={12} /> {req.signed_at ? new Date(req.signed_at).toLocaleDateString() : "Completed"}
                     </p>
                   )}
                 </div>

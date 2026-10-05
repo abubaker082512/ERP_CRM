@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Edit2, Save, X, CheckCircle, Trash2,
-  Calendar, DollarSign, FileText, User
+  Calendar, DollarSign, FileText, User, Download, FileSpreadsheet
 } from "lucide-react";
+import { printPurchaseOrderPDF, exportToExcel, exportToCSV } from "@/lib/exportUtils";
 
 const STATE_STYLES: Record<string, string> = {
   draft: "bg-gray-500/20 text-gray-400",
@@ -75,15 +76,49 @@ export default function PurchaseOrderDetailPage({ params }: { params: { id: stri
     router.push("/purchase");
   };
 
+  const lines = order?.lines || order?.purchase_order_line || [];
+  const lineTotal = lines.reduce((sum: number, l: any) => sum + (l.price_subtotal || l.product_qty * l.price_unit || 0), 0);
+
+  const handleDownloadPDF = () => {
+    if (!order) return;
+    const formattedLines = lines.map((line: any) => ({
+      name: line.name || line.product_name || "Procurement Item",
+      description: line.description || "",
+      quantity: line.product_qty || line.product_uom_qty || 1,
+      unitPrice: line.price_unit || line.unit_price || 0,
+      subtotal: line.price_subtotal || (line.product_qty || 1) * (line.price_unit || 0)
+    }));
+
+    printPurchaseOrderPDF({
+      documentNumber: order.name || `PO-${order.id?.slice(0, 8)}`,
+      documentType: order.state === "purchase" || order.state === "done" ? "Purchase Order" : "Request for Quotation",
+      vendorName: order.partner_name || order.vendor_name || "Valued Vendor",
+      date: new Date(order.date_order || order.created_at || Date.now()).toLocaleDateString(),
+      deadline: order.date_planned ? new Date(order.date_planned).toLocaleDateString() : undefined,
+      status: order.state === "purchase" ? "Confirmed Order" : (order.state || "Draft").toUpperCase(),
+      lines: formattedLines,
+      amountTotal: order.amount_total || lineTotal || 0,
+    });
+  };
+
+  const handleExportExcel = () => {
+    if (!order) return;
+    const headers = ["Product", "Quantity", "Unit Price ($)", "Subtotal ($)"];
+    const rows = lines.map((line: any) => [
+      line.name || line.product_name || "Product",
+      line.product_qty || 1,
+      line.price_unit || 0,
+      line.price_subtotal || (line.product_qty || 1) * (line.price_unit || 0)
+    ]);
+    exportToExcel(`${order.name || 'Purchase_Order'}_Lines`, headers, rows, "PO_Lines");
+  };
+
   if (loading) return (
     <div className="flex items-center justify-center h-screen">
       <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
   if (!order) return null;
-
-  const lines = order.lines || order.purchase_order_line || [];
-  const lineTotal = lines.reduce((sum: number, l: any) => sum + (l.price_subtotal || l.product_qty * l.price_unit || 0), 0);
 
   return (
     <div className="min-h-screen p-6 max-w-5xl mx-auto">
@@ -105,7 +140,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: { id: stri
 
       {/* Header */}
       <div className="galaxy-card p-6 mb-6">
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
           <div>
             {editing ? (
               <input value={form.name || ""} onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -117,7 +152,24 @@ export default function PurchaseOrderDetailPage({ params }: { params: { id: stri
               {order.state?.toUpperCase()}
             </span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleDownloadPDF}
+              title="Download or Print PDF"
+              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-md transition cursor-pointer"
+            >
+              <Download size={15} />
+              <span>Download PDF</span>
+            </button>
+            <button
+              onClick={handleExportExcel}
+              title="Export to Excel (.xls)"
+              className="flex items-center gap-1.5 bg-[#1E293B] hover:bg-[#334155] border border-gray-700 text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer"
+            >
+              <FileSpreadsheet size={15} className="text-emerald-400" />
+              <span className="hidden sm:inline">Excel</span>
+            </button>
+
             {order.state === "draft" && !editing && (
               <button onClick={handleConfirm} disabled={confirming}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
@@ -152,12 +204,27 @@ export default function PurchaseOrderDetailPage({ params }: { params: { id: stri
           </div>
         </div>
 
-        {/* Info Row */}
+        {/* Info Row 1 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          {[
+            { icon: User, label: "Vendor", value: order.partner_name || "—" },
+            { icon: User, label: "Buyer", value: "Procurement Manager" },
+            { icon: Calendar, label: "Order Date", value: order.date_order ? new Date(order.date_order).toLocaleDateString() : "—" },
+            { icon: Calendar, label: "Expected Delivery", value: order.date_planned ? new Date(order.date_planned).toLocaleDateString() : "—" },
+          ].map(({ icon: Icon, label, value }) => (
+            <div key={label} className="bg-white/3 rounded-xl p-3 border border-white/5">
+              <div className="flex items-center gap-1 text-xs text-gray-400 mb-1"><Icon size={11} /> {label}</div>
+              <p className="text-white font-medium text-sm">{value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Info Row 2 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { icon: User, label: "Vendor", value: order.contacts?.name || "—" },
-            { icon: Calendar, label: "Order Date", value: order.date_order ? new Date(order.date_order).toLocaleDateString() : "—" },
-            { icon: DollarSign, label: "Total Amount", value: `$${(order.amount_total || lineTotal || 0).toLocaleString()}` },
+            { icon: FileText, label: "Payment Terms", value: "30 Days Net" },
+            { icon: FileText, label: "Incoterm", value: "EXW - Ex Works" },
+            { icon: DollarSign, label: "Total Amount", value: `$${(order.amount_total || lineTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
             { icon: FileText, label: "Reference", value: order.name },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="bg-white/3 rounded-xl p-3 border border-white/5">
@@ -170,9 +237,9 @@ export default function PurchaseOrderDetailPage({ params }: { params: { id: stri
 
       {/* Order Lines */}
       <div className="galaxy-card p-6 mb-6">
-        <h2 className="text-sm font-semibold text-gray-300 mb-4">Order Lines</h2>
+        <h2 className="text-sm font-semibold text-gray-300 mb-4">Products Ordered</h2>
         {lines.length === 0 ? (
-          <p className="text-gray-500 text-sm text-center py-8">No order lines. Edit the order to add products.</p>
+          <p className="text-gray-500 text-sm text-center py-8">No products listed.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -186,7 +253,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: { id: stri
             <tbody>
               {lines.map((line: any) => (
                 <tr key={line.id} className="border-b border-white/5 hover:bg-white/3">
-                  <td className="py-3 text-white">{line.name || line.product_product?.name || line.product_id || "Product"}</td>
+                  <td className="py-3 text-white">{line.name || line.product_id || "Product"}</td>
                   <td className="py-3 text-right text-gray-300">{line.product_qty || line.qty || 1}</td>
                   <td className="py-3 text-right text-gray-300">${(line.price_unit || 0).toFixed(2)}</td>
                   <td className="py-3 text-right font-medium text-white">${(line.price_subtotal || 0).toFixed(2)}</td>
@@ -197,7 +264,7 @@ export default function PurchaseOrderDetailPage({ params }: { params: { id: stri
               <tr className="border-t border-white/10">
                 <td colSpan={3} className="py-3 text-right text-gray-400 font-medium">Total</td>
                 <td className="py-3 text-right text-xl font-bold text-white">
-                  ${(order.amount_total || lineTotal || 0).toLocaleString()}
+                  ${(order.amount_total || lineTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
               </tr>
             </tfoot>

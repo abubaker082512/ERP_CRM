@@ -3,9 +3,10 @@ import { fetchAPI } from "@/lib/api";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
 import { useEffect, useState } from "react";
-import { BarChart3, CheckCircle, Package, DollarSign, ArrowRight, FileText } from "lucide-react";
+import { BarChart3, CheckCircle, Package, DollarSign, ArrowRight, FileText, Download, FileSpreadsheet, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { exportToCSV, exportToExcel, printQuotationPDF } from "@/lib/exportUtils";
 
 const MENU_ITEMS = [
     { name: "Quotations", href: "/sales" },
@@ -24,6 +25,8 @@ type Order = {
     state: string;
     date_order?: string;
     created_at: string;
+    lines?: any[];
+    sale_order_line?: any[];
 };
 
 export default function SalesOrdersPage() {
@@ -42,7 +45,6 @@ export default function SalesOrdersPage() {
             const res = await fetchAPI("/sales");
             if (res.ok) {
                 const data = await res.json();
-                // Filter for confirmed sales orders or show all
                 const all = Array.isArray(data) ? data : [];
                 setOrders(all);
             }
@@ -56,6 +58,68 @@ export default function SalesOrdersPage() {
     const confirmedOrders = orders.filter(o => o.state === 'sale');
     const totalRevenue = confirmedOrders.reduce((sum, o) => sum + (o.amount_total || 0), 0);
 
+    const handleExportCSV = () => {
+        const headers = ["Order #", "Customer", "Total Amount", "Status", "Order Date", "Created Date"];
+        const rows = orders.map(o => [
+            o.name || o.id,
+            o.customer_name || "Customer",
+            o.amount_total || 0,
+            o.state || "draft",
+            o.date_order || "",
+            o.created_at || ""
+        ]);
+        exportToCSV(`Sales_Orders_${new Date().toISOString().slice(0, 10)}`, headers, rows);
+    };
+
+    const handleExportExcel = () => {
+        const headers = ["Order #", "Customer", "Total ($)", "Status", "Order Date", "Created Date"];
+        const rows = orders.map(o => [
+            o.name || o.id,
+            o.customer_name || "Customer",
+            o.amount_total || 0,
+            o.state || "draft",
+            o.date_order ? new Date(o.date_order).toLocaleDateString() : "",
+            o.created_at ? new Date(o.created_at).toLocaleDateString() : ""
+        ]);
+        exportToExcel(`Sales_Orders_${new Date().toISOString().slice(0, 10)}`, headers, rows, "Sales_Orders");
+    };
+
+    const handleDownloadOrderPDF = async (e: React.MouseEvent, order: Order) => {
+        e.stopPropagation();
+        
+        let linesData = order.lines || order.sale_order_line || [];
+        if (linesData.length === 0) {
+            try {
+                const res = await fetchAPI(`/sales/${order.id}`);
+                if (res.ok) {
+                    const fullData = await res.json();
+                    linesData = fullData.lines || fullData.sale_order_line || [];
+                }
+            } catch (err) {
+                console.error("Failed to load line items for PDF", err);
+            }
+        }
+
+        const formattedLines = linesData.map((line: any) => ({
+            name: line.name || line.product_name || "Product Item",
+            description: line.description || "",
+            quantity: line.product_uom_qty || line.product_qty || line.quantity || 1,
+            unitPrice: line.price_unit || line.unit_price || 0,
+            subtotal: line.price_subtotal || (line.product_uom_qty || 1) * (line.price_unit || 0)
+        }));
+
+        printQuotationPDF({
+            documentNumber: order.name || `SO-${order.id.slice(0, 8)}`,
+            documentType: order.state === "sale" ? "Sales Order" : "Quotation",
+            customerName: order.customer_name || "Valued Customer",
+            date: new Date(order.date_order || order.created_at).toLocaleDateString(),
+            status: order.state === "sale" ? "Confirmed Sale" : (order.state || "Draft").toUpperCase(),
+            lines: formattedLines,
+            amountTotal: order.amount_total || 0,
+            notes: "Thank you for doing business with ABT IT Innovation PVT LTD."
+        });
+    };
+
     return (
         <div className="flex flex-col h-screen bg-[#0F172A]">
             <StandardModuleHeader
@@ -66,7 +130,7 @@ export default function SalesOrdersPage() {
             />
 
             <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-4">
                         <div>
                             <h2 className="text-2xl font-semibold text-gray-200">Sales Orders</h2>
@@ -80,12 +144,30 @@ export default function SalesOrdersPage() {
                             onViewChange={setCurrentView}
                         />
                     </div>
-                    <Link
-                        href="/sales/quotations/new"
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-md shadow-purple-900/30 transition-all cursor-pointer"
-                    >
-                        + New Order
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleExportExcel}
+                            title="Export all to Excel (.xls)"
+                            className="bg-[#1E293B] hover:bg-[#334155] border border-gray-700 text-gray-300 hover:text-white px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm font-medium transition cursor-pointer"
+                        >
+                            <FileSpreadsheet size={16} className="text-emerald-400" />
+                            <span className="hidden sm:inline">Export Excel</span>
+                        </button>
+                        <button
+                            onClick={handleExportCSV}
+                            title="Export all to CSV"
+                            className="bg-[#1E293B] hover:bg-[#334155] border border-gray-700 text-gray-300 hover:text-white px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm font-medium transition cursor-pointer"
+                        >
+                            <Download size={16} className="text-cyan-400" />
+                            <span className="hidden sm:inline">CSV</span>
+                        </button>
+                        <Link
+                            href="/sales/quotations/new"
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-md shadow-purple-900/30 transition-all cursor-pointer"
+                        >
+                            <Plus size={18} /> New Order
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Key Metrics */}
@@ -164,9 +246,19 @@ export default function SalesOrdersPage() {
                                         </td>
                                         <td className="px-4 py-3 text-gray-400">{new Date(order.date_order || order.created_at).toLocaleDateString()}</td>
                                         <td className="px-4 py-3 text-right">
-                                            <span className="text-purple-400 hover:text-purple-300 text-sm font-medium flex items-center justify-end gap-1">
-                                                View <ArrowRight size={14} />
-                                            </span>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={(e) => handleDownloadOrderPDF(e, order)}
+                                                    title="Download Order PDF"
+                                                    className="p-1.5 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded border border-purple-500/30 flex items-center gap-1 text-xs font-medium transition cursor-pointer"
+                                                >
+                                                    <Download size={13} />
+                                                    <span>PDF</span>
+                                                </button>
+                                                <span className="text-purple-400 hover:text-purple-300 text-sm font-medium flex items-center gap-1 ml-1">
+                                                    View <ArrowRight size={14} />
+                                                </span>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -194,13 +286,19 @@ export default function SalesOrdersPage() {
                                             <div
                                                 key={order.id}
                                                 onClick={() => router.push(`/sales/${order.id}`)}
-                                                className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-purple-500 transition-all cursor-pointer shadow"
+                                                className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-purple-500 transition-all cursor-pointer shadow group"
                                             >
                                                 <div className="font-semibold text-white mb-1">{order.name || order.id}</div>
                                                 <div className="text-sm text-gray-400 mb-2">{order.customer_name || "Customer"}</div>
-                                                <div className="flex items-center justify-between">
+                                                <div className="flex items-center justify-between pt-2 border-t border-gray-800">
                                                     <span className="text-green-400 font-bold">${(order.amount_total || 0).toLocaleString()}</span>
-                                                    <span className="text-xs text-gray-500">{new Date(order.date_order || order.created_at).toLocaleDateString()}</span>
+                                                    <button
+                                                        onClick={(e) => handleDownloadOrderPDF(e, order)}
+                                                        title="Download PDF"
+                                                        className="p-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded text-xs flex items-center gap-1 border border-purple-500/30 opacity-80 group-hover:opacity-100 transition"
+                                                    >
+                                                        <Download size={12} /> PDF
+                                                    </button>
                                                 </div>
                                             </div>
                                         ))}

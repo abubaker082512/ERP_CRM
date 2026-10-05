@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Plus, Trash2, Edit2, Save, X, CheckCircle,
-  FileText, DollarSign, User, Calendar
+  FileText, DollarSign, User, Calendar, Download, FileSpreadsheet, Printer
 } from "lucide-react";
+import { printQuotationPDF, exportToExcel, exportToCSV } from "@/lib/exportUtils";
 
 const STATE_STYLES: Record<string, string> = {
   draft: "bg-gray-500/20 text-gray-400",
@@ -76,15 +77,70 @@ export default function SalesOrderDetailPage({ params }: { params: { id: string 
     router.push("/sales");
   };
 
+  const lines = order?.lines || order?.sale_order_line || [];
+  const lineTotal = lines.reduce((sum: number, l: any) => sum + (l.price_subtotal || l.product_uom_qty * l.price_unit || 0), 0);
+
+  const handleDownloadPDF = () => {
+    if (!order) return;
+    const formattedLines = lines.map((line: any) => ({
+      name: line.name || line.product_name || "Product",
+      description: line.description || "",
+      quantity: line.product_uom_qty || line.product_qty || line.quantity || 1,
+      unitPrice: line.price_unit || line.unit_price || 0,
+      subtotal: line.price_subtotal || (line.product_uom_qty || 1) * (line.price_unit || 0)
+    }));
+
+    printQuotationPDF({
+      documentNumber: order.name || `SO-${order.id?.slice(0, 8)}`,
+      documentType: order.state === "sale" ? "Sales Order" : "Quotation",
+      customerName: order.customer_name || "Valued Customer",
+      customerEmail: order.partner_email || order.customer_email,
+      customerAddress: order.partner_address || order.customer_address,
+      date: new Date(order.date_order || order.created_at || Date.now()).toLocaleDateString(),
+      expirationDate: order.validity_date ? new Date(order.validity_date).toLocaleDateString() : "30 days from issue",
+      status: order.state === "sale" ? "Confirmed Sale" : (order.state || "Draft").toUpperCase(),
+      lines: formattedLines,
+      amountTotal: order.amount_total || lineTotal || 0,
+      notes: "Payment is requested per agreed invoice terms. Thank you for your continued business with ABT IT Innovation PVT LTD."
+    });
+  };
+
+  const handleExportExcel = () => {
+    if (!order) return;
+    const headers = ["Product", "Description", "Quantity", "Unit Price ($)", "Subtotal ($)"];
+    const rows = lines.map((line: any) => [
+      line.name || line.product_name || "Product",
+      line.description || "",
+      line.product_uom_qty || line.product_qty || line.quantity || 1,
+      line.price_unit || line.unit_price || 0,
+      line.price_subtotal || (line.product_uom_qty || 1) * (line.price_unit || 0)
+    ]);
+    exportToExcel(`${order.name || 'Sales_Order'}_Lines`, headers, rows, "Order_Lines");
+  };
+
+  const handleExportCSV = () => {
+    if (!order) return;
+    const headers = ["Order #", "Customer", "Product", "Quantity", "Unit Price", "Subtotal", "Order Total", "Status", "Date"];
+    const rows = lines.map((line: any) => [
+      order.name || order.id,
+      order.customer_name || "Customer",
+      line.name || line.product_name || "Product",
+      line.product_uom_qty || 1,
+      line.price_unit || 0,
+      line.price_subtotal || 0,
+      order.amount_total || lineTotal || 0,
+      order.state || "draft",
+      order.date_order || order.created_at || ""
+    ]);
+    exportToCSV(`${order.name || 'Sales_Order'}_Data`, headers, rows);
+  };
+
   if (loading) return (
     <div className="flex items-center justify-center h-screen">
       <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
   if (!order) return null;
-
-  const lines = order.lines || order.sale_order_line || [];
-  const lineTotal = lines.reduce((sum: number, l: any) => sum + (l.price_subtotal || l.product_uom_qty * l.price_unit || 0), 0);
 
   return (
     <div className="min-h-screen p-6 max-w-5xl mx-auto">
@@ -106,7 +162,7 @@ export default function SalesOrderDetailPage({ params }: { params: { id: string 
 
       {/* Header */}
       <div className="galaxy-card p-6 mb-6">
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
           <div>
             {editing ? (
               <input value={form.name || ""} onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -118,7 +174,25 @@ export default function SalesOrderDetailPage({ params }: { params: { id: string 
               {order.state?.toUpperCase()}
             </span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Download and Export Buttons */}
+            <button
+              onClick={handleDownloadPDF}
+              title="Download or Print PDF"
+              className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-md shadow-purple-900/30 transition cursor-pointer"
+            >
+              <Download size={15} />
+              <span>Download PDF</span>
+            </button>
+            <button
+              onClick={handleExportExcel}
+              title="Export to Excel (.xls)"
+              className="flex items-center gap-1.5 bg-[#1E293B] hover:bg-[#334155] border border-gray-700 text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer"
+            >
+              <FileSpreadsheet size={15} className="text-emerald-400" />
+              <span className="hidden sm:inline">Excel</span>
+            </button>
+
             {order.state === "draft" && !editing && (
               <button onClick={handleConfirm} disabled={confirming}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
@@ -173,7 +247,7 @@ export default function SalesOrderDetailPage({ params }: { params: { id: string 
           {[
             { icon: FileText, label: "Payment Terms", value: order.payment_term_id ? "Immediate Payment" : "—" },
             { icon: FileText, label: "Pricelist", value: order.pricelist_id ? "Public Pricelist" : "Standard" },
-            { icon: DollarSign, label: "Total Amount", value: `$${(order.amount_total || lineTotal || 0).toLocaleString()}` },
+            { icon: DollarSign, label: "Total Amount", value: `$${(order.amount_total || lineTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
             { icon: FileText, label: "Reference", value: order.name },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="bg-white/3 rounded-xl p-3 border border-white/5">
@@ -186,7 +260,16 @@ export default function SalesOrderDetailPage({ params }: { params: { id: string 
 
       {/* Order Lines */}
       <div className="galaxy-card p-6 mb-6">
-        <h2 className="text-sm font-semibold text-gray-300 mb-4">Order Lines</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-gray-300">Order Lines</h2>
+          <button
+            onClick={handleExportCSV}
+            title="Download Order Lines as CSV"
+            className="text-xs text-gray-400 hover:text-white flex items-center gap-1 transition"
+          >
+            <Download size={13} /> Export Lines CSV
+          </button>
+        </div>
         {lines.length === 0 ? (
           <p className="text-gray-500 text-sm text-center py-8">No order lines. Edit the order to add products.</p>
         ) : (
@@ -213,7 +296,7 @@ export default function SalesOrderDetailPage({ params }: { params: { id: string 
               <tr className="border-t border-white/10">
                 <td colSpan={3} className="py-3 text-right text-gray-400 font-medium">Total</td>
                 <td className="py-3 text-right text-xl font-bold text-white">
-                  ${(order.amount_total || lineTotal || 0).toLocaleString()}
+                  ${(order.amount_total || lineTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
               </tr>
             </tfoot>

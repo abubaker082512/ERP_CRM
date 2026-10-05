@@ -18,8 +18,11 @@ import {
   Percent,
   Search,
   RefreshCw,
-  FolderSync
+  FolderSync,
+  Download,
+  FileSpreadsheet
 } from "lucide-react";
+import { printReportPDF, exportToExcel, exportToCSV } from "@/lib/exportUtils";
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<"sales" | "inventory" | "crm" | "helpdesk">("sales");
@@ -105,6 +108,127 @@ export default function ReportsPage() {
   const resolvedTickets = tickets ? tickets.filter(t => t.stage_id === "solved" || t.stage_id === "closed").length : 0;
   const pendingTickets = totalTickets - resolvedTickets;
 
+  const handleExportPDF = () => {
+    if (activeTab === "sales") {
+      printReportPDF({
+        title: "Sales & POS Revenue Report",
+        subtitle: `Total Revenue: ${currencySymbol}${totalSalesRevenue.toFixed(2)} | Total Orders: ${totalSalesCount}`,
+        summaryCards: [
+          { label: "Total Revenue", value: `${currencySymbol}${totalSalesRevenue.toFixed(2)}` },
+          { label: "Orders Fulfilled", value: `${totalSalesCount}` },
+          { label: "Average Order Value", value: `${currencySymbol}${avgOrderValue.toFixed(2)}` },
+          { label: "Draft Quotations", value: `${draftSalesCount}` },
+        ],
+        headers: ["Order / Quotation #", "Customer", "Amount", "Status", "Date"],
+        rows: salesOrders.map(so => [
+          so.name || so.id,
+          so.customer_name || "Customer",
+          `${currencySymbol}${(so.amount_total || 0).toFixed(2)}`,
+          so.state || "draft",
+          so.date_order ? new Date(so.date_order).toLocaleDateString() : (so.created_at ? new Date(so.created_at).toLocaleDateString() : "—")
+        ])
+      });
+    } else if (activeTab === "inventory") {
+      printReportPDF({
+        title: "Inventory Stock & Valuation Report",
+        subtitle: `Total SKUs: ${totalSkuCount} | Total Stock: ${totalStockQuantity} | Inventory Value: ${currencySymbol}${totalInventoryValue.toFixed(2)}`,
+        summaryCards: [
+          { label: "Total Valuation", value: `${currencySymbol}${totalInventoryValue.toFixed(2)}` },
+          { label: "Total Stock Qty", value: `${totalStockQuantity}` },
+          { label: "Active Products", value: `${totalSkuCount}` },
+        ],
+        headers: ["Product Name", "SKU / Code", "Category", "List Price", "Total Stock"],
+        rows: products.map(p => {
+          const qty = quants.filter(q => q.product_id === p.id).reduce((s, q) => s + (q.quantity || 0), 0);
+          return [
+            p.name,
+            p.default_code || p.sku || "—",
+            p.categ_id || "General",
+            `${currencySymbol}${(p.list_price || 0).toFixed(2)}`,
+            qty
+          ];
+        })
+      });
+    } else if (activeTab === "crm") {
+      printReportPDF({
+        title: "CRM Pipeline & Conversion Report",
+        subtitle: `Pipeline Value: ${currencySymbol}${pipelineValue.toFixed(2)} | Conversion Rate: ${conversionRate.toFixed(1)}%`,
+        summaryCards: [
+          { label: "Pipeline Value", value: `${currencySymbol}${pipelineValue.toFixed(2)}` },
+          { label: "Total Leads", value: `${totalLeadsCount}` },
+          { label: "Conversion Rate", value: `${conversionRate.toFixed(1)}%` },
+        ],
+        headers: ["Opportunity / Lead", "Customer / Email", "Stage", "Expected Revenue", "Probability"],
+        rows: leads.map(l => [
+          l.name || "Lead",
+          l.contact_name || l.email_from || "—",
+          l.stage_id || "New",
+          `${currencySymbol}${parseFloat(l.planned_revenue || 0).toFixed(2)}`,
+          `${l.probability || 0}%`
+        ])
+      });
+    } else {
+      printReportPDF({
+        title: "Helpdesk Resolution Metrics Report",
+        subtitle: `Total Tickets: ${totalTickets} | Resolved: ${resolvedTickets} | Pending: ${pendingTickets}`,
+        summaryCards: [
+          { label: "Total Tickets", value: `${totalTickets}` },
+          { label: "Resolved", value: `${resolvedTickets}` },
+          { label: "Pending", value: `${pendingTickets}` },
+        ],
+        headers: ["Ticket ID", "Subject", "Stage / Status", "Priority", "Customer"],
+        rows: tickets.map(t => [
+          t.id?.slice(0, 8) || "—",
+          t.name || t.subject || "Issue",
+          t.stage_id || "New",
+          t.priority || "Normal",
+          t.partner_name || "—"
+        ])
+      });
+    }
+  };
+
+  const handleExportExcel = () => {
+    if (activeTab === "sales") {
+      const headers = ["Order #", "Customer", "Amount ($)", "Status", "Date"];
+      const rows = salesOrders.map(so => [
+        so.name || so.id,
+        so.customer_name || "Customer",
+        so.amount_total || 0,
+        so.state || "draft",
+        so.date_order ? new Date(so.date_order).toLocaleDateString() : ""
+      ]);
+      exportToExcel("Sales_Report", headers, rows, "Sales");
+    } else if (activeTab === "inventory") {
+      const headers = ["Product Name", "SKU", "Category", "Price ($)", "Stock Qty"];
+      const rows = products.map(p => {
+        const qty = quants.filter(q => q.product_id === p.id).reduce((s, q) => s + (q.quantity || 0), 0);
+        return [p.name, p.default_code || "", p.categ_id || "", p.list_price || 0, qty];
+      });
+      exportToExcel("Inventory_Report", headers, rows, "Inventory");
+    } else if (activeTab === "crm") {
+      const headers = ["Lead Name", "Contact", "Stage", "Expected Revenue ($)", "Probability (%)"];
+      const rows = leads.map(l => [
+        l.name || "",
+        l.contact_name || l.email_from || "",
+        l.stage_id || "",
+        parseFloat(l.planned_revenue || 0),
+        l.probability || 0
+      ]);
+      exportToExcel("CRM_Report", headers, rows, "CRM");
+    } else {
+      const headers = ["Ticket ID", "Subject", "Status", "Priority", "Customer"];
+      const rows = tickets.map(t => [
+        t.id || "",
+        t.name || t.subject || "",
+        t.stage_id || "",
+        t.priority || "",
+        t.partner_name || ""
+      ]);
+      exportToExcel("Helpdesk_Report", headers, rows, "Helpdesk");
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#0B101E] text-white">
       <AppHeader title="Intelligence & Reports" />
@@ -166,7 +290,7 @@ export default function ReportsPage() {
           <div className="galaxy-card p-8 border border-gray-800 h-full flex flex-col justify-between">
             <div>
               {/* Header */}
-              <div className="flex justify-between items-start mb-8 pb-6 border-b border-gray-800">
+              <div className="flex flex-wrap justify-between items-start gap-4 mb-8 pb-6 border-b border-gray-800">
                 <div>
                   <h1 className="text-2xl font-bold text-white capitalize flex items-center gap-2">
                     {activeTab === "sales" && "Sales & Point of Sale Reports"}
@@ -176,8 +300,20 @@ export default function ReportsPage() {
                   </h1>
                   <p className="text-sm text-gray-400 mt-1">Real-time business analytical charts and metrics calculated across modules.</p>
                 </div>
-                <div className="bg-[#1A2236] border border-gray-700 px-4 py-2 rounded-xl text-xs font-mono text-gray-400">
-                  Currency Mode: {currencySymbol} PKR/USD/EUR settings synced
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleExportPDF}
+                    className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow transition cursor-pointer"
+                  >
+                    <Download size={14} /> PDF Report
+                  </button>
+                  <button
+                    onClick={handleExportExcel}
+                    className="flex items-center gap-1.5 bg-[#1A2236] hover:bg-[#26334d] border border-gray-700 text-gray-300 hover:text-white px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
+                  >
+                    <FileSpreadsheet size={14} className="text-emerald-400" /> Excel
+                  </button>
                 </div>
               </div>
 
