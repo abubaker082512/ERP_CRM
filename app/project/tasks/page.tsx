@@ -25,7 +25,9 @@ import {
     Trash2,
     Copy,
     Share2,
-    FileText
+    FileText,
+    UserPlus,
+    Lock
 } from "lucide-react";
 
 const MENU_ITEMS = [
@@ -42,6 +44,16 @@ export type ChecklistItem = {
     completed: boolean;
 };
 
+export type CompanyMember = {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    department: string;
+    avatarBg: string;
+    status: "verified" | "invited";
+};
+
 export type Task = {
     id: string;
     title: string;
@@ -56,6 +68,18 @@ export type Task = {
     notes?: string;
     adminOverride?: boolean;
 };
+
+const INITIAL_COMPANY_MEMBERS: CompanyMember[] = [
+    { id: "mem_1", name: "Salim Ghauri", email: "salim.ghauri@beraxis.online", role: "Principal Architect", department: "Engineering", avatarBg: "bg-blue-600", status: "verified" },
+    { id: "mem_2", name: "Sarah Vance", email: "sarah.vance@beraxis.online", role: "Lead UI/UX Designer", department: "Design", avatarBg: "bg-purple-600", status: "verified" },
+    { id: "mem_3", name: "Bilal Mahmood", email: "bilal.mahmood@beraxis.online", role: "ERP Specialist & Controller", department: "Finance", avatarBg: "bg-emerald-600", status: "verified" },
+    { id: "mem_4", name: "Jane Smith", email: "jane.smith@beraxis.online", role: "Mobile Engineering Lead", department: "Engineering", avatarBg: "bg-pink-600", status: "verified" },
+    { id: "mem_5", name: "Marcus Jenkins", email: "marcus.j@beraxis.online", role: "DevOps & Cloud Engineer", department: "Operations", avatarBg: "bg-cyan-600", status: "verified" },
+    { id: "mem_6", name: "Bob Wilson", email: "bob.wilson@beraxis.online", role: "Supply Chain Engineer", department: "Logistics", avatarBg: "bg-amber-600", status: "verified" },
+    { id: "mem_7", name: "Elena Belmont", email: "elena.b@beraxis.online", role: "QA Automation Specialist", department: "Quality Assurance", avatarBg: "bg-rose-600", status: "verified" },
+    { id: "mem_8", name: "Hamza Javed", email: "hamza.j@beraxis.online", role: "Full-Stack Engineer", department: "Engineering", avatarBg: "bg-indigo-600", status: "verified" },
+    { id: "mem_9", name: "Zainab Siddiqui", email: "zainab.s@beraxis.online", role: "AI Prompt & ML Engineer", department: "AI Labs", avatarBg: "bg-teal-600", status: "verified" }
+];
 
 const INITIAL_TASKS: Task[] = [
     {
@@ -130,7 +154,7 @@ const INITIAL_TASKS: Task[] = [
         id: "TSK/005",
         title: "AI Speech-to-Text Meeting Summarizer",
         project: "AI Business Intelligence & Sales Copilot",
-        assignee: "Alexander Hayes",
+        assignee: "Zainab Siddiqui",
         status: "in_progress",
         priority: "urgent",
         deadline: "2026-03-25",
@@ -163,6 +187,7 @@ const INITIAL_TASKS: Task[] = [
 
 export default function ProjectTasksPage() {
     const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+    const [companyMembers, setCompanyMembers] = useState<CompanyMember[]>(INITIAL_COMPANY_MEMBERS);
     const [currentView, setCurrentView] = useState<ViewType>("kanban");
     const [isAdminMode, setIsAdminMode] = useState(true);
 
@@ -185,6 +210,13 @@ export default function ProjectTasksPage() {
     const [emailRecipient, setEmailRecipient] = useState("director@beraxis.online");
     const [emailSubject, setEmailSubject] = useState("Beraxis ERP - Executive Project & Task Progress Report");
     const [emailSuccessMsg, setEmailSuccessMsg] = useState("");
+
+    // Invite Colleague Modal
+    const [showInviteModal, setShowInviteModal] = useState(false);
+    const [inviteName, setInviteName] = useState("");
+    const [inviteEmail, setInviteEmail] = useState("");
+    const [inviteRole, setInviteRole] = useState("Software Engineer");
+    const [inviteDepartment, setInviteDepartment] = useState("Engineering");
 
     const [notification, setNotification] = useState("");
 
@@ -216,7 +248,7 @@ export default function ProjectTasksPage() {
         };
 
         setTasks([newTask, ...tasks]);
-        showToast(`🎉 Task "${newTask.title}" created successfully!`);
+        showToast(`🎉 Task "${newTask.title}" created and assigned to ${newAssignee}!`);
         setShowCreateModal(false);
         setNewTitle("");
         setNewDesc("");
@@ -240,7 +272,6 @@ export default function ProjectTasksPage() {
         }));
     };
 
-    // Checklist toggling inside Task Detail Modal
     const toggleChecklistItem = (taskId: string, checkId: string) => {
         setTasks(tasks.map(t => {
             if (t.id === taskId) {
@@ -323,6 +354,17 @@ export default function ProjectTasksPage() {
         }));
     };
 
+    const updateTaskAssignee = (taskId: string, newAssigneeName: string) => {
+        setTasks(tasks.map(t => {
+            if (t.id === taskId) {
+                const updated = { ...t, assignee: newAssigneeName, adminOverride: true };
+                setSelectedTask(updated);
+                return updated;
+            }
+            return t;
+        }));
+    };
+
     const updateTaskNotes = (taskId: string, notesText: string) => {
         setTasks(tasks.map(t => {
             if (t.id === taskId) {
@@ -332,6 +374,35 @@ export default function ProjectTasksPage() {
             }
             return t;
         }));
+    };
+
+    const handleSendInvite = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!inviteName.trim() || !inviteEmail.trim()) return;
+
+        const colors = ["bg-blue-600", "bg-purple-600", "bg-pink-600", "bg-teal-600", "bg-amber-600", "bg-indigo-600", "bg-rose-600"];
+        const randomColor = colors[companyMembers.length % colors.length];
+
+        const newMember: CompanyMember = {
+            id: `mem_${Date.now()}`,
+            name: inviteName.trim(),
+            email: inviteEmail.trim().toLowerCase(),
+            role: inviteRole.trim(),
+            department: inviteDepartment,
+            avatarBg: randomColor,
+            status: "invited"
+        };
+
+        setCompanyMembers([...companyMembers, newMember]);
+        setNewAssignee(newMember.name);
+        if (selectedTask) {
+            updateTaskAssignee(selectedTask.id, newMember.name);
+        }
+
+        setShowInviteModal(false);
+        setInviteName("");
+        setInviteEmail("");
+        showToast(`✉️ Invitation email dispatched to ${newMember.email}! Added to company directory and assigned.`);
     };
 
     // Forward Progress Report
@@ -413,6 +484,9 @@ export default function ProjectTasksPage() {
                             <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold">
                                 {tasks.length} Active Tasks
                             </span>
+                            <span className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                <Shield size={12} /> {companyMembers.length} Verified Company Staff
+                            </span>
                             {isAdminMode && (
                                 <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
                                     <Shield size={12} /> Admin Override Active
@@ -420,7 +494,7 @@ export default function ProjectTasksPage() {
                             )}
                         </div>
                         <p className="text-xs md:text-sm text-gray-400 mt-1">
-                            Assignees and Admins can manually update task checklists, progress status, and forward progress reports via email.
+                            Only verified members within your Beraxis company can be assigned. Admins can update checklists, override progress, and email executive reports.
                         </p>
                     </div>
 
@@ -439,10 +513,19 @@ export default function ProjectTasksPage() {
                             <span>{isAdminMode ? "Admin Mode" : "Assignee Mode"}</span>
                         </button>
 
+                        {/* Invite Member Quick Button */}
+                        <button
+                            onClick={() => setShowInviteModal(true)}
+                            className="bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                            <UserPlus size={14} />
+                            <span>Invite Member</span>
+                        </button>
+
                         {/* Forward Email Progress Report */}
                         <button
                             onClick={() => setShowEmailModal(true)}
-                            className="bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-cyan-600/10"
+                            className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/40 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-purple-600/10"
                         >
                             <Mail size={14} />
                             <span>Forward Progress Report</span>
@@ -618,7 +701,7 @@ export default function ProjectTasksPage() {
                                 <tr>
                                     <th className="px-4 py-3.5">Task Title</th>
                                     <th className="px-4 py-3.5">Project</th>
-                                    <th className="px-4 py-3.5">Assignee</th>
+                                    <th className="px-4 py-3.5">Assignee (Company Staff)</th>
                                     <th className="px-4 py-3.5">Deadline</th>
                                     <th className="px-4 py-3.5">Checklist</th>
                                     <th className="px-4 py-3.5">Progress</th>
@@ -745,15 +828,29 @@ export default function ProjectTasksPage() {
                         {/* Assignee, Deadline & Stage Selectors */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[#1E293B] p-4 rounded-2xl border border-gray-700/60">
                             <div>
-                                <label className="block text-[11px] text-gray-400 font-semibold mb-1">Assignee</label>
-                                <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                                    <User size={14} className="text-purple-400" />
-                                    <span>{selectedTask.assignee}</span>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="text-[11px] text-gray-400 font-semibold">Assignee (Internal)</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowInviteModal(true)}
+                                        className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold cursor-pointer"
+                                    >
+                                        + Invite
+                                    </button>
                                 </div>
+                                <select
+                                    value={selectedTask.assignee}
+                                    onChange={(e) => updateTaskAssignee(selectedTask.id, e.target.value)}
+                                    className="bg-[#0F172A] border border-gray-600 rounded-lg px-2 py-1 text-xs text-white focus:border-purple-500 outline-none w-full font-bold cursor-pointer"
+                                >
+                                    {companyMembers.map(m => (
+                                        <option key={m.id} value={m.name}>{m.name} ({m.role})</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-[11px] text-gray-400 font-semibold mb-1">Target Deadline</label>
-                                <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                                <div className="text-xs font-bold text-white flex items-center gap-1.5 pt-1">
                                     <Calendar size={14} className="text-purple-400" />
                                     <span>{new Date(selectedTask.deadline).toLocaleDateString()}</span>
                                 </div>
@@ -1004,7 +1101,7 @@ export default function ProjectTasksPage() {
             {/* ========================================================================= */}
             {showCreateModal && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between border-b border-gray-800 pb-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 bg-purple-500/20 text-purple-400 rounded-xl">
@@ -1052,18 +1149,24 @@ export default function ProjectTasksPage() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-gray-300 font-semibold mb-1">Assignee</label>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="text-gray-300 font-semibold">Assignee (Internal)</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowInviteModal(true)}
+                                            className="text-cyan-400 hover:text-cyan-300 font-bold text-[10px] cursor-pointer"
+                                        >
+                                            + Invite
+                                        </button>
+                                    </div>
                                     <select
                                         value={newAssignee}
                                         onChange={(e) => setNewAssignee(e.target.value)}
                                         className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500 cursor-pointer"
                                     >
-                                        <option value="Salim Ghauri">Salim Ghauri</option>
-                                        <option value="Sarah Vance">Sarah Vance</option>
-                                        <option value="Jane Smith">Jane Smith</option>
-                                        <option value="Bob Wilson">Bob Wilson</option>
-                                        <option value="Bilal Mahmood">Bilal Mahmood</option>
-                                        <option value="Alexander Hayes">Alexander Hayes</option>
+                                        {companyMembers.map(m => (
+                                            <option key={m.id} value={m.name}>{m.name} ({m.role})</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>
@@ -1131,6 +1234,113 @@ export default function ProjectTasksPage() {
                                     className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95"
                                 >
                                     Create Task
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* INVITE TEAM MEMBER VIA EMAIL MODAL                                        */}
+            {/* ========================================================================= */}
+            {showInviteModal && (
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-cyan-500/20 text-cyan-400 rounded-xl">
+                                    <UserPlus size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-base">Invite Team Member</h3>
+                                    <p className="text-xs text-gray-400">Add colleague to company workspace directory</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowInviteModal(false)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSendInvite} className="space-y-4 text-xs">
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Full Name *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={inviteName}
+                                    onChange={(e) => setInviteName(e.target.value)}
+                                    placeholder="e.g. Kashif Rauf"
+                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Work Email Address *</label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={inviteEmail}
+                                    onChange={(e) => setInviteEmail(e.target.value)}
+                                    placeholder="e.g. kashif@beraxis.online"
+                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Role / Job Title</label>
+                                    <input
+                                        type="text"
+                                        value={inviteRole}
+                                        onChange={(e) => setInviteRole(e.target.value)}
+                                        placeholder="e.g. QA Automation"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Department</label>
+                                    <select
+                                        value={inviteDepartment}
+                                        onChange={(e) => setInviteDepartment(e.target.value)}
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                                    >
+                                        <option value="Engineering">Engineering</option>
+                                        <option value="Design">Design</option>
+                                        <option value="Finance">Finance</option>
+                                        <option value="Operations">Operations</option>
+                                        <option value="Quality Assurance">Quality Assurance</option>
+                                        <option value="AI Labs">AI Labs</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="bg-[#1E293B] p-3 rounded-xl border border-gray-800 space-y-1">
+                                <span className="text-[11px] font-bold text-gray-300 flex items-center gap-1.5">
+                                    <Lock size={12} className="text-cyan-400" /> Security & Access Verification
+                                </span>
+                                <p className="text-[10px] text-gray-400">
+                                    An email invitation containing a secure 1-time onboarding link will be sent to the recipient. Once accepted, they will be verified in the company directory.
+                                </p>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowInviteModal(false)}
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-2.5 rounded-xl font-semibold transition-all cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-cyan-600/30 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
+                                >
+                                    <Send size={14} />
+                                    <span>Send Invite Email</span>
                                 </button>
                             </div>
                         </form>
