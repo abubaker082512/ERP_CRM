@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import Link from "next/link";
 import {
     Calendar as CalendarIcon,
     Clock,
@@ -21,7 +22,10 @@ import {
     Filter,
     ArrowRight,
     Sparkles,
-    Shield
+    Shield,
+    Settings,
+    Send,
+    ExternalLink
 } from "lucide-react";
 
 const MENU_ITEMS = [
@@ -33,12 +37,14 @@ const MENU_ITEMS = [
 
 export type Appointment = {
     id: string;
+    meeting_code: string;
     title: string;
     client_name: string;
     client_email: string;
     client_phone?: string;
     company?: string;
     host_name: string;
+    host_slug: string;
     host_role: string;
     date: string;
     start_time: string;
@@ -46,13 +52,13 @@ export type Appointment = {
     duration_min: number;
     type: "erp_demo" | "architecture_review" | "client_checkin" | "onboarding";
     status: "confirmed" | "completed" | "cancelled" | "pending";
-    meet_link: string;
     notes?: string;
 };
 
 const APPOINTMENT_TYPES = [
     {
         id: "erp_demo",
+        slug: "erp-demo",
         label: "ERP & CRM Product Walkthrough",
         duration: "30 Min",
         badge: "bg-purple-500/20 text-purple-300 border-purple-500/30",
@@ -60,6 +66,7 @@ const APPOINTMENT_TYPES = [
     },
     {
         id: "architecture_review",
+        slug: "salim-ghauri",
         label: "Technical Architecture & API Review",
         duration: "45 Min",
         badge: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
@@ -67,6 +74,7 @@ const APPOINTMENT_TYPES = [
     },
     {
         id: "onboarding",
+        slug: "bilal-mahmood",
         label: "Enterprise Customer Onboarding",
         duration: "60 Min",
         badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
@@ -74,6 +82,7 @@ const APPOINTMENT_TYPES = [
     },
     {
         id: "client_checkin",
+        slug: "sarah-vance",
         label: "Executive Sprint Check-in",
         duration: "15 Min",
         badge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
@@ -84,12 +93,14 @@ const APPOINTMENT_TYPES = [
 const INITIAL_APPOINTMENTS: Appointment[] = [
     {
         id: "APT/2026/01",
+        meeting_code: "nexus-solutions-erp",
         title: "ERP & CRM Product Walkthrough",
         client_name: "Tariq Mansoor",
         client_email: "tariq@nexussolutions.pk",
         client_phone: "+92 300 8472910",
         company: "Nexus Solutions Ltd",
         host_name: "Salim Ghauri",
+        host_slug: "salim-ghauri",
         host_role: "Principal Architect",
         date: "2026-03-10",
         start_time: "10:00 AM",
@@ -97,17 +108,18 @@ const INITIAL_APPOINTMENTS: Appointment[] = [
         duration_min: 30,
         type: "erp_demo",
         status: "confirmed",
-        meet_link: "https://meet.beraxis.online/erp-nexus-demo",
         notes: "Interested in custom warehouse RFID scanner sync and Pakistan live leads pool."
     },
     {
         id: "APT/2026/02",
+        meeting_code: "shifa-tech-review",
         title: "Technical Architecture & API Review",
         client_name: "Dr. Ayesha Malik",
         client_email: "ayesha.malik@shifa.org.pk",
         client_phone: "+92 321 4458921",
         company: "Shifa Healthcare Systems",
         host_name: "Sarah Vance",
+        host_slug: "sarah-vance",
         host_role: "Lead UI/UX Designer",
         date: "2026-03-11",
         start_time: "02:00 PM",
@@ -115,17 +127,18 @@ const INITIAL_APPOINTMENTS: Appointment[] = [
         duration_min: 45,
         type: "architecture_review",
         status: "confirmed",
-        meet_link: "https://meet.beraxis.online/shifa-tech-review",
         notes: "Review patient ledger integration and HIPAA/FBR compliant data storage."
     },
     {
         id: "APT/2026/03",
+        meeting_code: "albaraka-onboard",
         title: "Enterprise Customer Onboarding",
         client_name: "Kamran Akram",
         client_email: "kamran@albaraka.com.pk",
         client_phone: "+92 333 7182930",
         company: "Al Baraka Logistics",
         host_name: "Bilal Mahmood",
+        host_slug: "bilal-mahmood",
         host_role: "ERP Specialist",
         date: "2026-03-12",
         start_time: "11:00 AM",
@@ -133,17 +146,18 @@ const INITIAL_APPOINTMENTS: Appointment[] = [
         duration_min: 60,
         type: "onboarding",
         status: "pending",
-        meet_link: "https://meet.beraxis.online/albaraka-onboard",
         notes: "Initial setup of 4 warehouse hubs across Lahore and Karachi."
     },
     {
         id: "APT/2026/04",
+        meeting_code: "crest-checkin",
         title: "Executive Sprint Check-in",
         client_name: "Zubair Hashmi",
         client_email: "zubair@crestholding.com",
         client_phone: "+92 301 9823411",
         company: "Crest Holdings",
         host_name: "Salim Ghauri",
+        host_slug: "salim-ghauri",
         host_role: "Principal Architect",
         date: "2026-03-08",
         start_time: "04:30 PM",
@@ -151,7 +165,6 @@ const INITIAL_APPOINTMENTS: Appointment[] = [
         duration_min: 15,
         type: "client_checkin",
         status: "completed",
-        meet_link: "https://meet.beraxis.online/crest-checkin",
         notes: "Sprint 4 milestone approved by stakeholders."
     }
 ];
@@ -172,9 +185,14 @@ export default function AppointmentsPage() {
     const [apptTime, setApptTime] = useState("11:00 AM");
     const [notes, setNotes] = useState("");
 
-    // Public link modal
+    // Share Booking Link Modal
     const [showLinkModal, setShowLinkModal] = useState(false);
-    const [activeBookingUrl, setActiveBookingUrl] = useState("https://www.beraxis.online/appointments/book/erp-demo");
+    const [selectedHostSlug, setSelectedHostSlug] = useState("salim-ghauri");
+
+    // Email Invite Modal
+    const [emailAppt, setEmailAppt] = useState<Appointment | null>(null);
+    const [emailRecipient, setEmailRecipient] = useState("");
+    const [emailSubject, setEmailSubject] = useState("");
 
     const [toastMsg, setToastMsg] = useState("");
 
@@ -189,15 +207,19 @@ export default function AppointmentsPage() {
 
         const duration = apptType === "onboarding" ? 60 : apptType === "architecture_review" ? 45 : apptType === "client_checkin" ? 15 : 30;
         const typeInfo = APPOINTMENT_TYPES.find(t => t.id === apptType);
+        const hostSlug = hostName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        const meetingCode = `meet-${clientName.toLowerCase().replace(/[^a-z0-9]/g, "")}-${Math.floor(100 + Math.random() * 900)}`;
 
         const newAppt: Appointment = {
             id: `APT/2026/0${appointments.length + 1}`,
+            meeting_code: meetingCode,
             title: typeInfo?.label || "Meeting",
             client_name: clientName.trim(),
             client_email: clientEmail.trim(),
             client_phone: clientPhone.trim() || undefined,
             company: companyName.trim() || "Independent Organization",
             host_name: hostName,
+            host_slug: hostSlug,
             host_role: hostName.includes("Salim") ? "Principal Architect" : hostName.includes("Sarah") ? "Lead UI/UX" : "ERP Specialist",
             date: apptDate,
             start_time: apptTime,
@@ -205,7 +227,6 @@ export default function AppointmentsPage() {
             duration_min: duration,
             type: apptType,
             status: "confirmed",
-            meet_link: `https://meet.beraxis.online/${clientName.toLowerCase().replace(/[^a-z0-9]/g, "")}-${Math.floor(100 + Math.random() * 900)}`,
             notes: notes.trim()
         };
 
@@ -216,7 +237,7 @@ export default function AppointmentsPage() {
         setClientPhone("");
         setCompanyName("");
         setNotes("");
-        showToast(`🎉 Appointment scheduled with ${newAppt.client_name} (${newAppt.date} at ${newAppt.start_time})!`);
+        showToast(`🎉 Appointment scheduled with ${newAppt.client_name}! In-system video room created.`);
     };
 
     const toggleStatus = (id: string, newStatus: Appointment["status"]) => {
@@ -224,9 +245,17 @@ export default function AppointmentsPage() {
         showToast(`Status updated to ${newStatus.toUpperCase()}`);
     };
 
-    const copyMeetingLink = (url: string) => {
+    const copyMeetingUrl = (meetingCode: string) => {
+        const url = `${typeof window !== "undefined" ? window.location.origin : "https://www.beraxis.online"}/meet/${meetingCode}`;
         navigator.clipboard.writeText(url);
-        showToast("📋 Meeting link copied to clipboard!");
+        showToast("📋 In-system video room link copied to clipboard!");
+    };
+
+    const handleSendEmailInvite = (e: React.FormEvent) => {
+        e.preventDefault();
+        showToast(`🚀 Video meeting invite with calendar link dispatched to ${emailRecipient}!`);
+        setEmailAppt(null);
+        setEmailRecipient("");
     };
 
     const filteredAppointments = statusFilter === "all"
@@ -254,24 +283,21 @@ export default function AppointmentsPage() {
                                     <CalendarCheck size={22} />
                                 </span>
                                 <h2 className="text-2xl font-bold text-white tracking-tight">
-                                    Client Appointments & Video Scheduling
+                                    Client Appointments & In-System Video Rooms
                                 </h2>
                             </div>
                             <p className="text-xs md:text-sm text-gray-300">
-                                Seamlessly schedule product walkthroughs, architecture consultations, and client onboarding sessions with auto-generated Beraxis video meeting links.
+                                Share host-linked booking calendars with external clients. No need for Zoom or third-party subscriptions — conduct encrypted video meetings right inside Beraxis.
                             </p>
                         </div>
 
                         <div className="flex items-center gap-3 flex-wrap">
                             <button
-                                onClick={() => {
-                                    setActiveBookingUrl(`${typeof window !== "undefined" ? window.location.origin : "https://www.beraxis.online"}/appointments/book/erp-demo`);
-                                    setShowLinkModal(true);
-                                }}
+                                onClick={() => setShowLinkModal(true)}
                                 className="bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
                             >
                                 <Share2 size={15} />
-                                <span>Share Booking Page</span>
+                                <span>Share Host Booking Link</span>
                             </button>
 
                             <button
@@ -285,7 +311,7 @@ export default function AppointmentsPage() {
                     </div>
                 </div>
 
-                {/* Pre-Configured Booking Types Bar */}
+                {/* Pre-Configured Service Templates */}
                 <div className="space-y-3">
                     <h3 className="text-sm font-bold text-gray-300 flex items-center gap-2">
                         <Sparkles size={16} className="text-purple-400" /> Active Appointment Service Templates
@@ -310,16 +336,25 @@ export default function AppointmentsPage() {
                                         {type.description}
                                     </p>
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        setApptType(type.id as any);
-                                        setIsBookModalOpen(true);
-                                    }}
-                                    className="pt-2 border-t border-gray-800 text-[11px] text-purple-400 font-bold flex items-center justify-between hover:text-purple-300 cursor-pointer"
-                                >
-                                    <span>Schedule with Host</span>
-                                    <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
-                                </button>
+                                <div className="pt-2 border-t border-gray-800 flex items-center justify-between text-[11px]">
+                                    <Link
+                                        href={`/appointments/book/${type.slug}`}
+                                        target="_blank"
+                                        className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1"
+                                    >
+                                        <span>View Page</span>
+                                        <ExternalLink size={12} />
+                                    </Link>
+                                    <button
+                                        onClick={() => {
+                                            setApptType(type.id as any);
+                                            setIsBookModalOpen(true);
+                                        }}
+                                        className="text-purple-400 hover:text-purple-300 font-bold"
+                                    >
+                                        Schedule →
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -427,23 +462,34 @@ export default function AppointmentsPage() {
                                 </div>
                             </div>
 
-                            {/* Meeting Link & Actions */}
+                            {/* Direct In-System Video Room Joiner & Share */}
                             <div className="pt-3 border-t border-gray-800 space-y-2">
-                                <div className="flex items-center justify-between bg-purple-500/10 border border-purple-500/20 px-3 py-1.5 rounded-xl text-xs">
-                                    <a
-                                        href={appt.meet_link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-purple-300 hover:text-white font-bold flex items-center gap-1.5"
+                                <div className="flex items-center gap-2">
+                                    <Link
+                                        href={`/meet/${appt.meeting_code}`}
+                                        className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95"
                                     >
-                                        <Video size={14} /> Join Video Room
-                                    </a>
+                                        <Video size={14} /> Enter In-System Meet Room
+                                    </Link>
+
                                     <button
-                                        onClick={() => copyMeetingLink(appt.meet_link)}
-                                        className="text-gray-400 hover:text-white p-1 rounded cursor-pointer"
-                                        title="Copy Meet Link"
+                                        onClick={() => copyMeetingUrl(appt.meeting_code)}
+                                        className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                                        title="Copy In-System Meet URL"
                                     >
-                                        <Copy size={13} />
+                                        <Copy size={14} />
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setEmailAppt(appt);
+                                            setEmailRecipient(appt.client_email);
+                                            setEmailSubject(`Meeting Invitation: ${appt.title} with ${appt.host_name}`);
+                                        }}
+                                        className="p-2 text-cyan-400 hover:text-white bg-cyan-500/10 hover:bg-cyan-500/20 rounded-xl transition-colors cursor-pointer"
+                                        title="Forward Video Invite via Email"
+                                    >
+                                        <Mail size={14} />
                                     </button>
                                 </div>
 
@@ -466,6 +512,168 @@ export default function AppointmentsPage() {
                     ))}
                 </div>
             </div>
+
+            {/* ========================================================================= */}
+            {/* SHARE HOST BOOKING LINK MODAL                                             */}
+            {/* ========================================================================= */}
+            {showLinkModal && (
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-cyan-500/20 text-cyan-400 rounded-xl">
+                                    <Share2 size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-base">Company & Host Booking Links</h3>
+                                    <p className="text-xs text-gray-400">Share your personalized scheduling calendar with clients</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowLinkModal(false)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4 text-xs">
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Select Host Specialist Calendar</label>
+                                <select
+                                    value={selectedHostSlug}
+                                    onChange={(e) => setSelectedHostSlug(e.target.value)}
+                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500 cursor-pointer font-semibold"
+                                >
+                                    <option value="salim-ghauri">Salim Ghauri (Principal Architect)</option>
+                                    <option value="sarah-vance">Sarah Vance (Lead UI/UX Designer)</option>
+                                    <option value="bilal-mahmood">Bilal Mahmood (ERP Specialist)</option>
+                                    <option value="erp-demo">Beraxis Solutions Engineering Team</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Public Scheduling Link</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={`${typeof window !== "undefined" ? window.location.origin : "https://www.beraxis.online"}/appointments/book/${selectedHostSlug}`}
+                                        className="flex-1 bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-cyan-300 font-mono text-xs select-all focus:outline-none"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            const url = `${typeof window !== "undefined" ? window.location.origin : "https://www.beraxis.online"}/appointments/book/${selectedHostSlug}`;
+                                            navigator.clipboard.writeText(url);
+                                            showToast("📋 Public calendar booking link copied!");
+                                        }}
+                                        className="bg-cyan-600 hover:bg-cyan-500 text-white px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                        <Copy size={14} /> Copy
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p className="text-gray-400 text-[11px] leading-relaxed">
+                                When clients visit this URL, they see your company branding, host profile, and live calendar availability. Scheduled calls automatically generate an in-system video room.
+                            </p>
+
+                            <div className="flex gap-3 pt-2">
+                                <Link
+                                    href={`/appointments/book/${selectedHostSlug}`}
+                                    target="_blank"
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold py-2.5 rounded-xl text-center flex items-center justify-center gap-1.5"
+                                >
+                                    <ExternalLink size={14} /> Open Public Page
+                                </Link>
+                                <button
+                                    onClick={() => setShowLinkModal(false)}
+                                    className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2.5 rounded-xl"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* EMAIL VIDEO INVITE MODAL                                                  */}
+            {/* ========================================================================= */}
+            {emailAppt && (
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-purple-500/20 text-purple-400 rounded-xl">
+                                    <Mail size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-base">Dispatch Video Meeting Invite</h3>
+                                    <p className="text-xs text-gray-400">Send direct calendar & video join instructions</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setEmailAppt(null)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSendEmailInvite} className="space-y-4 text-xs">
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Recipient Email *</label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={emailRecipient}
+                                    onChange={(e) => setEmailRecipient(e.target.value)}
+                                    placeholder="e.g. client@organization.com"
+                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Subject *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={emailSubject}
+                                    onChange={(e) => setEmailSubject(e.target.value)}
+                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                />
+                            </div>
+
+                            <div className="bg-[#1E293B] p-3.5 rounded-xl border border-white/10 space-y-2">
+                                <label className="text-gray-400 font-semibold block">Pre-Composed Message Preview</label>
+                                <p className="text-[11px] text-gray-300 leading-relaxed font-mono">
+                                    Hi {emailAppt.client_name},<br/><br/>
+                                    You are invited to join "{emailAppt.title}" on {emailAppt.date} at {emailAppt.start_time}.<br/><br/>
+                                    👉 Join In-System Video Room: {typeof window !== "undefined" ? window.location.origin : "https://www.beraxis.online"}/meet/{emailAppt.meeting_code}
+                                </p>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setEmailAppt(null)}
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-2.5 rounded-xl font-semibold transition-all cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+                                >
+                                    <Send size={14} /> Send Email Invite
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* ========================================================================= */}
             {/* BOOK APPOINTMENT MODAL                                                    */}
@@ -622,69 +830,6 @@ export default function AppointmentsPage() {
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            )}
-
-            {/* ========================================================================= */}
-            {/* SHARE PUBLIC BOOKING LINK MODAL                                           */}
-            {/* ========================================================================= */}
-            {showLinkModal && (
-                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-cyan-500/20 text-cyan-400 rounded-xl">
-                                    <Share2 size={22} />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-white text-base">Share Public Booking Page</h3>
-                                    <p className="text-xs text-gray-400">Allow clients and leads to schedule calls automatically</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setShowLinkModal(false)}
-                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <div className="space-y-4 text-xs">
-                            <div>
-                                <label className="block text-gray-300 font-semibold mb-1">Your Public Scheduling URL</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value={activeBookingUrl}
-                                        className="flex-1 bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-cyan-300 font-mono text-xs select-all focus:outline-none"
-                                    />
-                                    <button
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(activeBookingUrl);
-                                            showToast("📋 Public booking link copied!");
-                                        }}
-                                        className="bg-cyan-600 hover:bg-cyan-500 text-white px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer"
-                                    >
-                                        <Copy size={14} /> Copy
-                                    </button>
-                                </div>
-                            </div>
-
-                            <p className="text-gray-400 text-[11px] leading-relaxed">
-                                Share this link in your email signature, proposal emails, or WhatsApp chats. Prospective clients can pick available time slots and receive automatic calendar invitations.
-                            </p>
-
-                            <div className="pt-2">
-                                <button
-                                    onClick={() => setShowLinkModal(false)}
-                                    className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-2.5 rounded-xl transition-all cursor-pointer"
-                                >
-                                    Done
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             )}
