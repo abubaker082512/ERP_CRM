@@ -149,7 +149,7 @@ export default function BeraxisSupportWidgets() {
         {
             id: "welcome",
             sender: "bot",
-            text: "👋 Hi there! I'm your instant Beraxis Smart Assistant. How can I help you streamline your operations today?",
+            text: "👋 Hi there! I'm your instant Beraxis AI Support Assistant. How can I help you streamline your operations today?",
             suggestedTopics: [
                 "How do I create an invoice?",
                 "How does AI Lead Scoring work?",
@@ -161,12 +161,38 @@ export default function BeraxisSupportWidgets() {
     ]);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const widgetRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isOpen) {
             messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         }
     }, [messages, isOpen]);
+
+    // Handle escape key and click outside to close
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && isOpen) {
+                setIsOpen(false);
+            }
+        };
+
+        const handleClickOutside = (e: MouseEvent) => {
+            if (widgetRef.current && !widgetRef.current.contains(e.target as Node) && isOpen) {
+                const targetEl = e.target as HTMLElement;
+                if (!targetEl.closest('#beraxis-ai-support-toggle')) {
+                    setIsOpen(false);
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isOpen]);
 
     const handleSend = (textToSend?: string) => {
         const queryText = (textToSend || input).trim();
@@ -209,19 +235,19 @@ export default function BeraxisSupportWidgets() {
             {/* ========================================================= */}
             {/* 1. WHATSAPP SUPPORT BUTTON (ON THE BOTTOM-LEFT)           */}
             {/* ========================================================= */}
-            <div className="fixed bottom-6 left-6 z-50 flex items-center group">
+            <div className="fixed bottom-5 left-5 z-[90] flex items-center group">
                 <a
                     href="https://wa.me/19707807993?text=Hi%20Beraxis%20Support%2C%20I%20need%20assistance%20with%20my%20workspace"
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-2.5 bg-[#25D366] hover:bg-[#20BA56] text-white pl-3.5 pr-4 py-3 rounded-full shadow-[0_4px_25px_rgba(37,211,102,0.45)] hover:shadow-[0_6px_30px_rgba(37,211,102,0.6)] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20"
+                    className="flex items-center gap-2.5 bg-[#25D366] hover:bg-[#20BA56] text-white pl-3.5 pr-4 py-2.5 rounded-full shadow-[0_4px_25px_rgba(37,211,102,0.45)] hover:shadow-[0_6px_30px_rgba(37,211,102,0.6)] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20"
                     title="Chat with WhatsApp Support"
                 >
                     {/* Official WhatsApp SVG Logo */}
-                    <svg className="w-6 h-6 fill-current shrink-0" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24">
                         <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
                     </svg>
-                    <span className="font-bold text-xs tracking-wide whitespace-nowrap">
+                    <span className="font-bold text-xs tracking-wide whitespace-nowrap hidden sm:inline">
                         WhatsApp Support
                     </span>
                 </a>
@@ -230,10 +256,15 @@ export default function BeraxisSupportWidgets() {
             {/* ========================================================= */}
             {/* 2. AI SUPPORT BUTTON (ON THE BOTTOM-RIGHT)               */}
             {/* ========================================================= */}
-            <div className="fixed bottom-6 right-6 z-50 flex items-center">
+            <div className="fixed bottom-5 right-5 z-[90] flex items-center">
                 <button
+                    id="beraxis-ai-support-toggle"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center gap-2 bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:from-sky-400 hover:to-purple-500 text-white pl-4 pr-5 py-3 rounded-full shadow-[0_4px_25px_rgba(99,102,241,0.45)] hover:shadow-[0_6px_30px_rgba(139,92,246,0.6)] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20 group"
+                    className={`flex items-center gap-2 text-white pl-4 pr-4 sm:pr-5 py-2.5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 border cursor-pointer ${
+                        isOpen 
+                            ? "bg-purple-700 border-purple-400 shadow-[0_0_25px_rgba(168,85,247,0.6)]" 
+                            : "bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:from-sky-400 hover:to-purple-500 border-white/20 shadow-[0_4px_25px_rgba(99,102,241,0.45)]"
+                    }`}
                     title="Open Beraxis AI Support"
                 >
                     <div className="relative">
@@ -241,7 +272,7 @@ export default function BeraxisSupportWidgets() {
                         <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-900" />
                     </div>
                     <span className="font-bold text-xs tracking-wide">
-                        AI Support
+                        {isOpen ? "Close AI" : "AI Support"}
                     </span>
                 </button>
             </div>
@@ -250,9 +281,12 @@ export default function BeraxisSupportWidgets() {
             {/* 3. INTERACTIVE SMART AI SUPPORT MODAL / DRAWER            */}
             {/* ========================================================= */}
             {isOpen && (
-                <div className="fixed bottom-22 right-6 z-50 w-[92vw] max-w-md h-[560px] bg-slate-950/95 backdrop-blur-2xl rounded-2xl border border-purple-500/30 shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden animate-fadeIn">
+                <div 
+                    ref={widgetRef}
+                    className="fixed bottom-20 right-4 sm:right-6 z-[100] w-[94vw] sm:w-[420px] max-h-[82vh] h-[540px] bg-[#0A0E1A]/98 backdrop-blur-2xl rounded-2xl border border-purple-500/40 shadow-[0_20px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
+                >
                     {/* Header */}
-                    <div className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b border-slate-800 flex items-center justify-between">
+                    <div className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-2.5">
                             <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30">
                                 <Sparkles size={16} />
@@ -262,12 +296,12 @@ export default function BeraxisSupportWidgets() {
                                     Beraxis Smart Navigator
                                     <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded font-mono font-medium">Instant</span>
                                 </h3>
-                                <p className="text-[11px] text-slate-400">Ask any internal question or click to redirect</p>
+                                <p className="text-[11px] text-slate-400">Ask any ERP question or click to redirect</p>
                             </div>
                         </div>
                         <button
                             onClick={() => setIsOpen(false)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
                         >
                             <X size={16} />
                         </button>
@@ -283,7 +317,7 @@ export default function BeraxisSupportWidgets() {
                                 <div
                                     className={`max-w-[85%] p-3 rounded-2xl ${
                                         m.sender === "user"
-                                            ? "bg-gradient-to-r from-sky-600 to-indigo-600 text-white rounded-br-none"
+                                            ? "bg-gradient-to-r from-sky-600 to-indigo-600 text-white rounded-br-none shadow-md"
                                             : "bg-slate-900/90 text-slate-200 border border-slate-800 rounded-bl-none shadow-md"
                                     }`}
                                 >
@@ -294,7 +328,7 @@ export default function BeraxisSupportWidgets() {
                                 {m.action && (
                                     <button
                                         onClick={() => handleActionClick(m.action!.href)}
-                                        className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-[11px] transition shadow-md shadow-purple-500/20"
+                                        className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-[11px] transition shadow-md shadow-purple-500/20 cursor-pointer"
                                     >
                                         <span>{m.action.label}</span>
                                     </button>
@@ -307,7 +341,7 @@ export default function BeraxisSupportWidgets() {
                                             <button
                                                 key={idx}
                                                 onClick={() => handleSend(topic)}
-                                                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-purple-950/60 text-slate-300 hover:text-purple-300 border border-slate-800 hover:border-purple-500/40 text-[10.5px] transition flex items-center gap-1 text-left"
+                                                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-purple-950/60 text-slate-300 hover:text-purple-300 border border-slate-800 hover:border-purple-500/40 text-[10.5px] transition flex items-center gap-1 text-left cursor-pointer"
                                             >
                                                 <span>{topic}</span>
                                                 <ChevronRight size={10} className="opacity-60" />
@@ -321,29 +355,29 @@ export default function BeraxisSupportWidgets() {
                     </div>
 
                     {/* Quick Shortcuts Bar */}
-                    <div className="px-3 py-2 bg-slate-900/90 border-t border-slate-800/80 flex items-center gap-2 overflow-x-auto text-[11px] whitespace-nowrap">
+                    <div className="px-3 py-2 bg-slate-900/90 border-t border-slate-800/80 flex items-center gap-2 overflow-x-auto text-[11px] whitespace-nowrap shrink-0 scrollbar-none">
                         <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Quick:</span>
                         <button
                             onClick={() => handleSend("How to create an invoice?")}
-                            className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300"
+                            className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
                         >
                             🧾 Invoicing
                         </button>
                         <button
                             onClick={() => handleSend("How does CRM work?")}
-                            className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300"
+                            className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
                         >
                             💼 CRM
                         </button>
                         <button
                             onClick={() => handleSend("How to manage stock?")}
-                            className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300"
+                            className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
                         >
                             📦 Stock
                         </button>
                         <button
                             onClick={() => handleSend("How to run payroll?")}
-                            className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300"
+                            className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
                         >
                             👥 Payroll
                         </button>
@@ -355,7 +389,7 @@ export default function BeraxisSupportWidgets() {
                             e.preventDefault();
                             handleSend();
                         }}
-                        className="p-3 bg-slate-950 border-t border-slate-800 flex items-center gap-2"
+                        className="p-3 bg-slate-950 border-t border-slate-800 flex items-center gap-2 shrink-0"
                     >
                         <input
                             type="text"
@@ -367,7 +401,7 @@ export default function BeraxisSupportWidgets() {
                         <button
                             type="submit"
                             disabled={!input.trim()}
-                            className="p-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white transition flex items-center justify-center shrink-0 shadow-lg shadow-purple-600/25"
+                            className="p-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white transition flex items-center justify-center shrink-0 shadow-lg shadow-purple-600/25 cursor-pointer"
                         >
                             <Send size={14} />
                         </button>
