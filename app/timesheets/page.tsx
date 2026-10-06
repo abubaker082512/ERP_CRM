@@ -2,7 +2,7 @@
 
 import { fetchAPI } from '@/lib/api';
 import { useState, useEffect, useRef } from 'react';
-import AppHeader from '@/components/layout/AppHeader';
+import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import {
     Plus,
     Clock,
@@ -18,8 +18,19 @@ import {
     Zap,
     History,
     TrendingUp,
-    Filter
+    Filter,
+    Download,
+    RotateCcw,
+    UserCheck
 } from 'lucide-react';
+
+const MENU_ITEMS = [
+    { name: "My Timesheets", href: "/timesheets" },
+    { name: "All Timesheets", href: "/project/timesheets" },
+    { name: "Projects", href: "/project" },
+    { name: "Tasks", href: "/project/tasks" },
+    { name: "Reporting", href: "/project/reporting" },
+];
 
 type Project = {
     id: string;
@@ -34,29 +45,69 @@ type Timesheet = {
     name: string;
     unit_amount: number;
     is_automated?: boolean;
+    status?: "draft" | "submitted" | "approved";
 };
 
+const INITIAL_TIMESHEETS: Timesheet[] = [
+    {
+        id: "ts_1",
+        date: "2026-03-09T09:30:00Z",
+        project_id: "p1",
+        project_name: "Enterprise Website & ERP Portal Redesign",
+        name: "Sprint 14 UI Components & Theme Styling",
+        unit_amount: 3.5,
+        is_automated: false,
+        status: "approved"
+    },
+    {
+        id: "ts_2",
+        date: "2026-03-09T14:00:00Z",
+        project_id: "p2",
+        project_name: "Mobile CRM & Field Agent iOS/Android App",
+        name: "Offline SQLite Cache & Sync Architecture",
+        unit_amount: 2.75,
+        is_automated: true,
+        status: "submitted"
+    },
+    {
+        id: "ts_3",
+        date: "2026-03-08T10:15:00Z",
+        project_id: "p3",
+        project_name: "AI Business Intelligence & Sales Copilot",
+        name: "LLM Pipeline & Prompt Optimization",
+        unit_amount: 4.0,
+        is_automated: false,
+        status: "approved"
+    }
+];
+
 export default function TimesheetPage() {
-    const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [timesheets, setTimesheets] = useState<Timesheet[]>(INITIAL_TIMESHEETS);
+    const [projects, setProjects] = useState<Project[]>([
+        { id: "p1", name: "Enterprise Website & ERP Portal Redesign" },
+        { id: "p2", name: "Mobile CRM & Field Agent iOS/Android App" },
+        { id: "p3", name: "AI Business Intelligence & Sales Copilot" },
+        { id: "p4", name: "Supply Chain & Multi-Warehouse Automation" }
+    ]);
+    const [loading, setLoading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     // ==========================================
-    // Automated Active Session Tracker
+    // Real-Time Active Session Tracker
     // ==========================================
     const [isAutoTracking, setIsAutoTracking] = useState(true);
-    const [sessionSeconds, setSessionSeconds] = useState(1450); // initial offset for realistic live session
+    const [sessionSeconds, setSessionSeconds] = useState(0);
+    const [loginClockTime, setLoginClockTime] = useState("");
     const [activeSessionProject, setActiveSessionProject] = useState("Enterprise Website & ERP Portal Redesign");
-    const [activeSessionTask, setActiveSessionTask] = useState("Active Workspace Operations & Review");
+    const [activeSessionTask, setActiveSessionTask] = useState("Active Workspace Operations & Development");
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Manual Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedProject, setSelectedProject] = useState("");
+    const [selectedProject, setSelectedProject] = useState("Enterprise Website & ERP Portal Redesign");
     const [hours, setHours] = useState("");
     const [description, setDescription] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [saving, setSaving] = useState(false);
     const [toastMsg, setToastMsg] = useState("");
 
     const showToast = (msg: string) => {
@@ -64,7 +115,31 @@ export default function TimesheetPage() {
         setTimeout(() => setToastMsg(""), 5000);
     };
 
-    // Automated timer ticker
+    // Initialize real login time from localStorage/session
+    useEffect(() => {
+        let startTimeStr = localStorage.getItem("beraxis_user_session_start");
+        let startTimestamp = 0;
+
+        if (!startTimeStr) {
+            startTimestamp = Date.now();
+            localStorage.setItem("beraxis_user_session_start", startTimestamp.toString());
+        } else {
+            startTimestamp = parseInt(startTimeStr, 10);
+            // If the stored time is older than 24h, reset to current day's login session
+            if (Date.now() - startTimestamp > 24 * 60 * 60 * 1000 || isNaN(startTimestamp)) {
+                startTimestamp = Date.now();
+                localStorage.setItem("beraxis_user_session_start", startTimestamp.toString());
+            }
+        }
+
+        const realElapsed = Math.max(0, Math.floor((Date.now() - startTimestamp) / 1000));
+        setSessionSeconds(realElapsed);
+
+        const startDate = new Date(startTimestamp);
+        setLoginClockTime(startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    }, []);
+
+    // Real-time timer ticker
     useEffect(() => {
         if (isAutoTracking) {
             timerRef.current = setInterval(() => {
@@ -87,7 +162,10 @@ export default function TimesheetPage() {
 
     const handleSaveAutoSession = () => {
         const loggedHours = parseFloat((sessionSeconds / 3600).toFixed(2));
-        if (loggedHours <= 0) return;
+        if (loggedHours <= 0) {
+            showToast("⚠️ Active time is less than a minute. Work a bit longer before logging!");
+            return;
+        }
 
         const newLog: Timesheet = {
             id: `ts_${Date.now()}`,
@@ -96,392 +174,404 @@ export default function TimesheetPage() {
             project_name: activeSessionProject,
             name: `[Auto-Logged Session] ${activeSessionTask}`,
             unit_amount: loggedHours,
-            is_automated: true
+            is_automated: true,
+            status: "submitted"
         };
 
         setTimesheets([newLog, ...timesheets]);
+        // Reset timer start point
+        const now = Date.now();
+        localStorage.setItem("beraxis_user_session_start", now.toString());
         setSessionSeconds(0);
+        setLoginClockTime(new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
         showToast(`⚡ Automatically logged ${loggedHours} hours to "${activeSessionProject}"!`);
     };
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
-        setLoading(true);
-        try {
-            const [tsRes, projRes] = await Promise.all([
-                fetchAPI("/timesheets/"),
-                fetchAPI("/projects/projects")
-            ]);
-
-            let loadedProjects: Project[] = [
-                { id: "p1", name: "Enterprise Website & ERP Portal Redesign" },
-                { id: "p2", name: "Mobile CRM & Field Agent iOS/Android App" },
-                { id: "p3", name: "Supply Chain & Multi-Warehouse Automation" },
-                { id: "p4", name: "AI Business Intelligence & Sales Copilot" }
-            ];
-
-            if (projRes.ok) {
-                const apiProjs = await projRes.json();
-                if (apiProjs && apiProjs.length > 0) loadedProjects = apiProjs;
-            }
-            setProjects(loadedProjects);
-
-            if (tsRes.ok) {
-                const logs: Timesheet[] = await tsRes.json();
-                if (logs && logs.length > 0) {
-                    const mappedLogs = logs.map(log => ({
-                        ...log,
-                        project_name: loadedProjects.find(p => p.id === log.project_id)?.name || 'General Operations'
-                    }));
-                    setTimesheets(mappedLogs);
-                } else {
-                    // Fallback initial timesheets
-                    setTimesheets([
-                        { id: "ts_1", date: new Date().toISOString(), project_id: "p1", project_name: "Enterprise Website & ERP Portal Redesign", name: "Frontend header & navigation revamp", unit_amount: 3.5, is_automated: true },
-                        { id: "ts_2", date: new Date(Date.now() - 86400000).toISOString(), project_id: "p1", project_name: "Enterprise Website & ERP Portal Redesign", name: "Multi-tenant auth security audit", unit_amount: 4.0, is_automated: false },
-                        { id: "ts_3", date: new Date(Date.now() - 86400000 * 2).toISOString(), project_id: "p4", project_name: "AI Business Intelligence & Sales Copilot", name: "Audio streaming WebSocket ingestion", unit_amount: 5.5, is_automated: true }
-                    ]);
-                }
-            } else {
-                setTimesheets([
-                    { id: "ts_1", date: new Date().toISOString(), project_id: "p1", project_name: "Enterprise Website & ERP Portal Redesign", name: "Frontend header & navigation revamp", unit_amount: 3.5, is_automated: true },
-                    { id: "ts_2", date: new Date(Date.now() - 86400000).toISOString(), project_id: "p1", project_name: "Enterprise Website & ERP Portal Redesign", name: "Multi-tenant auth security audit", unit_amount: 4.0, is_automated: false },
-                    { id: "ts_3", date: new Date(Date.now() - 86400000 * 2).toISOString(), project_id: "p4", project_name: "AI Business Intelligence & Sales Copilot", name: "Audio streaming WebSocket ingestion", unit_amount: 5.5, is_automated: true }
-                ]);
-            }
-        } catch (e) {
-            console.error("Failed to load timesheet details", e);
-        } finally {
-            setLoading(false);
-        }
+    const handleResetSession = () => {
+        const now = Date.now();
+        localStorage.setItem("beraxis_user_session_start", now.toString());
+        setSessionSeconds(0);
+        setLoginClockTime(new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        showToast("🔄 Active session timer reset to 00:00:00");
     };
 
-    const handleLogHours = async (e: React.FormEvent) => {
+    const handleManualSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const amt = parseFloat(hours);
-        if (!selectedProject || isNaN(amt) || amt <= 0 || !description.trim()) return;
-
-        setSaving(true);
-        try {
-            const res = await fetchAPI("/timesheets/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    project_id: selectedProject,
-                    unit_amount: amt,
-                    name: description,
-                    date: new Date(date).toISOString()
-                })
-            });
-
-            const projObj = projects.find(p => p.id === selectedProject);
-            const newEntry: Timesheet = {
-                id: `ts_${Date.now()}`,
-                project_id: selectedProject,
-                project_name: projObj ? projObj.name : "General Project",
-                unit_amount: amt,
-                name: description,
-                date: new Date(date).toISOString(),
-                is_automated: false
-            };
-
-            setTimesheets([newEntry, ...timesheets]);
-            setSelectedProject("");
-            setHours("");
-            setDescription("");
-            setIsModalOpen(false);
-            showToast(`✅ Manually logged ${amt} hours to ${projObj?.name || 'project'}!`);
-        } catch (e) {
-            console.error("Error logging hours", e);
-        } finally {
-            setSaving(false);
+        const numHours = parseFloat(hours);
+        if (isNaN(numHours) || numHours <= 0) {
+            showToast("⚠️ Please enter a valid number of hours.");
+            return;
         }
+
+        const newEntry: Timesheet = {
+            id: `ts_${Date.now()}`,
+            date: new Date(date).toISOString(),
+            project_id: "manual",
+            project_name: selectedProject,
+            name: description.trim() || "Manual Work Log",
+            unit_amount: numHours,
+            is_automated: false,
+            status: "submitted"
+        };
+
+        setTimesheets([newEntry, ...timesheets]);
+        setIsModalOpen(false);
+        setHours("");
+        setDescription("");
+        showToast(`✅ Logged ${numHours} hours to "${selectedProject}" successfully!`);
     };
 
-    const totalHours = timesheets.reduce((acc, curr) => acc + (curr.unit_amount || 0), 0);
-    const autoHours = timesheets.filter(t => t.is_automated).reduce((acc, curr) => acc + (curr.unit_amount || 0), 0);
-    const manualHours = timesheets.filter(t => !t.is_automated).reduce((acc, curr) => acc + (curr.unit_amount || 0), 0);
+    const handleExportCSV = () => {
+        const headers = ["Date", "Project", "Description", "Hours Logged", "Type", "Status"];
+        const rows = timesheets.map(t => [
+            new Date(t.date).toLocaleDateString(),
+            `"${t.project_name || t.project_id}"`,
+            `"${t.name}"`,
+            t.unit_amount,
+            t.is_automated ? "Automated" : "Manual",
+            t.status || "submitted"
+        ]);
+        const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `beraxis_timesheets_${new Date().toISOString().split("T")[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("📥 Exported Timesheet CSV Report!");
+    };
+
+    const totalHoursLogged = timesheets.reduce((acc, curr) => acc + curr.unit_amount, 0);
+    const activeLiveHours = parseFloat((sessionSeconds / 3600).toFixed(2));
+    const combinedTodayHours = totalHoursLogged + activeLiveHours;
+
+    const filteredTimesheets = timesheets.filter(t =>
+        t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.project_name && t.project_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
 
     return (
-        <div className="flex flex-col h-screen bg-[#0F172A]">
-            <AppHeader title="Timesheets & Work Hours" />
+        <div className="flex flex-col min-h-screen bg-[#0a0d14] text-white">
+            <StandardModuleHeader
+                moduleName="Timesheets"
+                moduleIcon={<Clock size={20} className="text-indigo-400" />}
+                menuItems={MENU_ITEMS}
+                searchPlaceholder="Search task, project or memo..."
+                onSearch={setSearchQuery}
+                onNewClick={() => setIsModalOpen(true)}
+                newButtonText="+ Log Hours"
+            />
 
-            <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
-                {/* Top Automated Live Tracker Banner */}
-                <div className="bg-gradient-to-r from-purple-900/40 via-[#1E293B] to-cyan-900/30 border border-purple-500/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+            {/* Toast Notification */}
+            {toastMsg && (
+                <div className="fixed top-16 right-6 z-50 bg-indigo-600 text-white px-5 py-3 rounded-xl shadow-2xl shadow-indigo-900/50 flex items-center gap-3 border border-indigo-400 animate-in fade-in slide-in-from-top-4 duration-300">
+                    <Sparkles size={18} className="animate-spin text-indigo-200" />
+                    <span className="text-sm font-medium">{toastMsg}</span>
+                </div>
+            )}
+
+            <div className="flex-1 overflow-auto p-6 max-w-7xl mx-auto w-full space-y-6">
+                {/* Header Controls */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-900/60 p-4 rounded-2xl border border-gray-800 backdrop-blur-xl">
+                    <div>
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-300 bg-clip-text text-transparent">
+                                Time & Activity Tracker
+                            </h2>
+                            <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold">
+                                Real Session Time Active
+                            </span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                            Automatic in-system session logging with billable client project allocations
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        <button
+                            onClick={handleExportCSV}
+                            className="bg-gray-800/90 hover:bg-gray-700 text-gray-200 border border-gray-700 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
+                        >
+                            <Download size={15} className="text-emerald-400" /> Export CSV
+                        </button>
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30 transition transform hover:-translate-y-0.5"
+                        >
+                            <Plus size={16} /> + Manual Log Hours
+                        </button>
+                    </div>
+                </div>
+
+                {/* Real-time Automated Clock Card */}
+                <div className="bg-gradient-to-r from-indigo-950/40 via-gray-900/80 to-purple-950/40 border border-indigo-500/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-xl">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-                        {/* Live Counter & Status */}
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2.5">
-                                <span className="relative flex h-3 w-3">
-                                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isAutoTracking ? 'bg-emerald-400' : 'bg-amber-400'} opacity-75`}></span>
-                                    <span className={`relative inline-flex rounded-full h-3 w-3 ${isAutoTracking ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                </span>
-                                <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
-                                    {isAutoTracking ? "Live Work Session Auto-Logger" : "Session Auto-Logger Paused"}
-                                </span>
-                                <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-gray-300 font-medium">
-                                    Automated Log Active
-                                </span>
+                        <div className="space-y-3 max-w-xl">
+                            <div className="flex items-center gap-2 text-indigo-400 font-semibold text-xs uppercase tracking-wider">
+                                <Zap size={15} className="text-amber-400 animate-pulse" />
+                                <span>Real In-System Working Time</span>
+                                {loginClockTime && (
+                                    <span className="text-gray-400 font-normal">
+                                        (Clocked In: <span className="text-white font-bold">{loginClockTime}</span>)
+                                    </span>
+                                )}
                             </div>
 
                             <div className="flex items-baseline gap-4">
-                                <h1 className="text-4xl md:text-5xl font-mono font-extrabold text-white tracking-tight">
+                                <div className="text-4xl sm:text-5xl font-mono font-black tracking-tight text-white drop-shadow-md">
                                     {formatSeconds(sessionSeconds)}
-                                </h1>
-                                <span className="text-xs text-gray-400 font-medium">
-                                    ({(sessionSeconds / 3600).toFixed(2)} hrs logged)
+                                </div>
+                                <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase ${
+                                    isAutoTracking
+                                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                        : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                }`}>
+                                    {isAutoTracking ? "● Live In Progress" : "❚❚ Paused"}
                                 </span>
                             </div>
 
-                            <p className="text-xs text-gray-400">
-                                Automatically tracking your active working hours while logged in Beraxis CRM. You can also add manual entries at any time.
-                            </p>
+                            {/* Project and Task Selectors */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                                <div>
+                                    <label className="text-[11px] font-semibold text-gray-400 block mb-1">Target Project:</label>
+                                    <select
+                                        value={activeSessionProject}
+                                        onChange={(e) => setActiveSessionProject(e.target.value)}
+                                        className="w-full bg-gray-950/80 border border-gray-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                                    >
+                                        {projects.map(p => (
+                                            <option key={p.id} value={p.name}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-[11px] font-semibold text-gray-400 block mb-1">Task Memo / Action:</label>
+                                    <input
+                                        type="text"
+                                        value={activeSessionTask}
+                                        onChange={(e) => setActiveSessionTask(e.target.value)}
+                                        placeholder="e.g. Code Review & QA Testing"
+                                        className="w-full bg-gray-950/80 border border-gray-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Session Project Selection & Action Controls */}
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-[#0F172A]/80 p-3.5 rounded-2xl border border-white/10">
-                            <div className="space-y-1">
-                                <label className="text-[11px] text-gray-400 font-semibold block">Attributed Project</label>
-                                <select
-                                    value={activeSessionProject}
-                                    onChange={(e) => setActiveSessionProject(e.target.value)}
-                                    className="bg-[#1E293B] border border-gray-700 text-xs font-bold text-white rounded-xl px-3 py-2 outline-none focus:border-purple-500 cursor-pointer"
-                                >
-                                    <option value="Enterprise Website & ERP Portal Redesign">Enterprise Website & ERP Portal Redesign</option>
-                                    <option value="Mobile CRM & Field Agent iOS/Android App">Mobile CRM & Field Agent iOS/Android App</option>
-                                    <option value="Supply Chain & Multi-Warehouse Automation">Supply Chain & Multi-Warehouse Automation</option>
-                                    <option value="AI Business Intelligence & Sales Copilot">AI Business Intelligence & Sales Copilot</option>
-                                </select>
-                            </div>
+                        {/* Controls */}
+                        <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 min-w-[200px]">
+                            <button
+                                onClick={handleSaveAutoSession}
+                                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-5 py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition transform hover:-translate-y-0.5"
+                            >
+                                <Save size={16} /> Save to Timesheet
+                            </button>
 
-                            <div className="flex items-center gap-2 pt-2 sm:pt-4">
+                            <div className="flex gap-2">
                                 <button
                                     onClick={() => setIsAutoTracking(!isAutoTracking)}
-                                    className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                                        isAutoTracking
-                                            ? "bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40"
-                                            : "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40"
-                                    }`}
+                                    className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition"
                                 >
-                                    {isAutoTracking ? <Pause size={14} /> : <Play size={14} />}
+                                    {isAutoTracking ? <Pause size={14} className="text-amber-400" /> : <Play size={14} className="text-emerald-400" />}
                                     <span>{isAutoTracking ? "Pause" : "Resume"}</span>
                                 </button>
 
                                 <button
-                                    onClick={handleSaveAutoSession}
-                                    className="bg-purple-600 hover:bg-purple-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95"
+                                    onClick={handleResetSession}
+                                    title="Reset current live session counter"
+                                    className="px-3 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 rounded-xl text-xs flex items-center justify-center transition"
                                 >
-                                    <Save size={14} />
-                                    <span>Log Session</span>
+                                    <RotateCcw size={14} />
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Metrics Summary Row */}
+                {/* KPI Metrics */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-[#1E293B] border border-gray-800 p-5 rounded-2xl flex items-center justify-between">
-                        <div>
-                            <span className="text-xs text-gray-400 font-semibold uppercase">Total Tracked Hours</span>
-                            <div className="text-2xl font-bold text-white mt-1">{totalHours.toFixed(1)} hrs</div>
-                            <span className="text-[11px] text-purple-400 font-medium">All recorded activities</span>
+                    <div className="bg-gradient-to-br from-gray-900/80 to-indigo-950/20 p-5 rounded-2xl border border-gray-800 shadow-lg">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-gray-400 font-semibold uppercase">Total Hours Logged</span>
+                            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                                <Clock size={18} />
+                            </div>
                         </div>
-                        <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
-                            <Clock size={24} />
-                        </div>
+                        <div className="text-3xl font-black text-white">{totalHoursLogged.toFixed(2)} hrs</div>
+                        <div className="text-[11px] text-gray-400 mt-1">Across {timesheets.length} completed logs</div>
                     </div>
 
-                    <div className="bg-[#1E293B] border border-gray-800 p-5 rounded-2xl flex items-center justify-between">
-                        <div>
-                            <span className="text-xs text-gray-400 font-semibold uppercase">Auto-Logged Sessions</span>
-                            <div className="text-2xl font-bold text-cyan-400 mt-1">{autoHours.toFixed(1)} hrs</div>
-                            <span className="text-[11px] text-cyan-300 font-medium">Recorded via active session</span>
+                    <div className="bg-gradient-to-br from-gray-900/80 to-emerald-950/20 p-5 rounded-2xl border border-gray-800 shadow-lg">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-gray-400 font-semibold uppercase">Live Session Active</span>
+                            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <Zap size={18} />
+                            </div>
                         </div>
-                        <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl">
-                            <Zap size={24} />
-                        </div>
+                        <div className="text-3xl font-black text-emerald-400">{activeLiveHours.toFixed(2)} hrs</div>
+                        <div className="text-[11px] text-emerald-300 mt-1">Real-time working session</div>
                     </div>
 
-                    <div className="bg-[#1E293B] border border-gray-800 p-5 rounded-2xl flex items-center justify-between">
-                        <div>
-                            <span className="text-xs text-gray-400 font-semibold uppercase">Manual Time Logs</span>
-                            <div className="text-2xl font-bold text-emerald-400 mt-1">{manualHours.toFixed(1)} hrs</div>
-                            <span className="text-[11px] text-emerald-300 font-medium">Logged by team members</span>
+                    <div className="bg-gradient-to-br from-gray-900/80 to-purple-950/20 p-5 rounded-2xl border border-gray-800 shadow-lg">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-gray-400 font-semibold uppercase">Total Effective Today</span>
+                            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                <TrendingUp size={18} />
+                            </div>
                         </div>
-                        <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
-                            <TrendingUp size={24} />
-                        </div>
+                        <div className="text-3xl font-black text-purple-300">{combinedTodayHours.toFixed(2)} hrs</div>
+                        <div className="text-[11px] text-purple-300 mt-1">Billable effort recorded</div>
                     </div>
                 </div>
 
-                {/* Toast Notification */}
-                {toastMsg && (
-                    <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-2xl text-xs md:text-sm font-semibold flex items-center justify-between shadow-lg backdrop-blur-md animate-in fade-in">
+                {/* Timesheet History Table */}
+                <div className="bg-gray-900/80 rounded-2xl border border-gray-800 overflow-hidden shadow-2xl backdrop-blur-xl">
+                    <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-950/40">
                         <div className="flex items-center gap-2">
-                            <CheckCircle2 size={18} />
-                            <span>{toastMsg}</span>
+                            <History size={18} className="text-indigo-400" />
+                            <h3 className="font-bold text-white text-sm">Timesheet Log Entries</h3>
+                            <span className="text-xs text-gray-400">({filteredTimesheets.length} records)</span>
                         </div>
-                        <button onClick={() => setToastMsg("")} className="text-gray-400 hover:text-white cursor-pointer">
-                            ✕
-                        </button>
-                    </div>
-                )}
-
-                {/* Timesheets Table Header & Actions */}
-                <div className="flex items-center justify-between flex-wrap gap-4 pt-2">
-                    <div>
-                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                            <History className="text-purple-400" size={20} /> Recorded Timesheets Ledger
-                        </h3>
-                        <p className="text-xs text-gray-400">Review all automated and manually entered project work hours.</p>
                     </div>
 
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs md:text-sm font-bold flex items-center gap-1.5 shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95"
-                    >
-                        <Plus size={16} />
-                        <span>Manual Time Entry</span>
-                    </button>
-                </div>
-
-                {/* Timesheet List Table */}
-                <div className="bg-[#1E293B] rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
-                    <table className="w-full text-xs md:text-sm">
-                        <thead className="bg-[#0F172A] border-b border-gray-700 text-left text-gray-400 uppercase text-xs">
-                            <tr>
-                                <th className="px-4 py-3.5">Date</th>
-                                <th className="px-4 py-3.5">Project</th>
-                                <th className="px-4 py-3.5">Activity & Description</th>
-                                <th className="px-4 py-3.5">Method</th>
-                                <th className="px-4 py-3.5 text-right">Duration (Hours)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {timesheets.map((entry) => (
-                                <tr key={entry.id} className="border-b border-gray-800 hover:bg-white/5 transition-colors">
-                                    <td className="px-4 py-3.5 text-gray-400 font-mono">
-                                        {new Date(entry.date).toLocaleDateString()}
-                                    </td>
-                                    <td className="px-4 py-3.5 font-bold text-cyan-400">
-                                        {entry.project_name || "General"}
-                                    </td>
-                                    <td className="px-4 py-3.5 text-white font-medium">
-                                        {entry.name}
-                                    </td>
-                                    <td className="px-4 py-3.5">
-                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
-                                            entry.is_automated
-                                                ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                                                : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                                        }`}>
-                                            {entry.is_automated ? "⚡ Auto-Logged" : "✍️ Manual"}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3.5 text-right font-mono font-bold text-white">
-                                        {entry.unit_amount.toFixed(2)} hrs
-                                    </td>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                            <thead className="bg-gray-950 text-gray-400 uppercase text-[10px] border-b border-gray-800 font-semibold">
+                                <tr>
+                                    <th className="px-5 py-3.5">Date & Time</th>
+                                    <th className="px-4 py-3.5">Project</th>
+                                    <th className="px-4 py-3.5">Description / Task</th>
+                                    <th className="px-4 py-3.5 text-center">Type</th>
+                                    <th className="px-4 py-3.5 text-right">Hours Logged</th>
+                                    <th className="px-5 py-3.5 text-center">Status</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-800/60">
+                                {filteredTimesheets.map((ts) => (
+                                    <tr key={ts.id} className="hover:bg-indigo-950/10 transition">
+                                        <td className="px-5 py-3.5 font-medium text-gray-300">
+                                            {new Date(ts.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </td>
+                                        <td className="px-4 py-3.5 font-bold text-white">
+                                            {ts.project_name || "General Workspace"}
+                                        </td>
+                                        <td className="px-4 py-3.5 text-gray-300">
+                                            {ts.name}
+                                        </td>
+                                        <td className="px-4 py-3.5 text-center">
+                                            {ts.is_automated ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-bold">
+                                                    <Zap size={11} /> Auto
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold">
+                                                    Manual
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3.5 text-right font-mono font-black text-sm text-indigo-300">
+                                            {ts.unit_amount.toFixed(2)} hrs
+                                        </td>
+                                        <td className="px-5 py-3.5 text-center">
+                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                                ts.status === "approved" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                                                "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                            }`}>
+                                                {ts.status || "submitted"}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            {/* Manual Entry Modal */}
+            {/* Manual Timesheet Log Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-purple-500/20 text-purple-400 rounded-xl">
-                                    <Clock size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-white text-base">Add Manual Hours</h3>
-                                    <p className="text-xs text-gray-400">Log custom hours worked on deliverables</p>
-                                </div>
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg shadow-2xl p-6 relative animate-in fade-in zoom-in duration-200">
+                        <button
+                            onClick={() => setIsModalOpen(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+                                <Clock size={22} />
                             </div>
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
-                            >
-                                <X size={18} />
-                            </button>
+                            <div>
+                                <h3 className="text-lg font-bold text-white">Log Project Hours</h3>
+                                <p className="text-xs text-gray-400">Record manual time against client deliverables</p>
+                            </div>
                         </div>
 
-                        <form onSubmit={handleLogHours} className="space-y-4 text-xs">
+                        <form onSubmit={handleManualSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-gray-300 font-semibold mb-1">Target Project *</label>
+                                <label className="block text-xs font-semibold text-gray-300 mb-1">Select Project *</label>
                                 <select
-                                    required
                                     value={selectedProject}
                                     onChange={(e) => setSelectedProject(e.target.value)}
-                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
                                 >
-                                    <option value="">Select Project</option>
-                                    {projects.map((p) => (
-                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    {projects.map(p => (
+                                        <option key={p.id} value={p.name}>{p.name}</option>
                                     ))}
                                 </select>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-gray-300 font-semibold mb-1">Hours Worked *</label>
+                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Hours Logged (e.g. 2.5) *</label>
                                     <input
                                         type="number"
                                         step="0.25"
+                                        min="0.1"
                                         required
                                         value={hours}
                                         onChange={(e) => setHours(e.target.value)}
-                                        placeholder="e.g. 3.5"
-                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                        placeholder="0.00"
+                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-indigo-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-gray-300 font-semibold mb-1">Date *</label>
+                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Date</label>
                                     <input
                                         type="date"
-                                        required
                                         value={date}
                                         onChange={(e) => setDate(e.target.value)}
-                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-gray-300 font-semibold mb-1">Description / Deliverable *</label>
+                                <label className="block text-xs font-semibold text-gray-300 mb-1">Work Description / Memo</label>
                                 <textarea
                                     rows={3}
-                                    required
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="What tasks or features were completed?"
-                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    placeholder="Describe specific tasks completed during this time..."
+                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 resize-none"
                                 />
                             </div>
 
-                            <div className="flex gap-3 pt-2">
+                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-800">
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-2.5 rounded-xl font-semibold transition-all cursor-pointer"
+                                    className="px-4 py-2.5 rounded-xl bg-gray-800 text-gray-300 hover:bg-gray-700 text-xs font-semibold"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={saving}
-                                    className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95"
+                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30"
                                 >
-                                    {saving ? "Saving..." : "Save Time Entry"}
+                                    Commit Log Entry
                                 </button>
                             </div>
                         </form>

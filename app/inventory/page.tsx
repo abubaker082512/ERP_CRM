@@ -11,6 +11,7 @@ import {
     Boxes,
     ArrowRightLeft,
     Download,
+    Upload,
     Search,
     Barcode,
     Filter,
@@ -23,9 +24,13 @@ import {
     SlidersHorizontal,
     Sparkles,
     Trash2,
-    Eye
+    Eye,
+    PlusCircle,
+    MinusCircle,
+    AlertTriangle,
+    FileSpreadsheet,
+    Check
 } from "lucide-react";
-import { fetchAPI } from "@/lib/api";
 
 const MENU_ITEMS = [
     { name: "Products", href: "/inventory" },
@@ -167,11 +172,12 @@ export default function InventoryPage() {
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [selectedCategory, setSelectedCategory] = useState<string>("All Categories");
     const [stockFilter, setStockFilter] = useState<"all" | "low_stock" | "in_stock" | "out_of_stock">("all");
-    const [loading, setLoading] = useState<boolean>(false);
 
     // Modals
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+    const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
+    const [isBulkCsvModalOpen, setIsBulkCsvModalOpen] = useState(false);
     const [toastMsg, setToastMsg] = useState("");
 
     // Add Product Form State
@@ -185,12 +191,15 @@ export default function InventoryPage() {
     const [newProdPrice, setNewProdPrice] = useState(199.99);
     const [newProdCost, setNewProdCost] = useState(110.00);
 
-    // Stock Transfer Form State
-    const [transferProdId, setTransferProdId] = useState(INITIAL_PRODUCTS[0].id);
-    const [transferSourceWh, setTransferSourceWh] = useState(WAREHOUSES[0]);
-    const [transferDestWh, setTransferDestWh] = useState(WAREHOUSES[1]);
-    const [transferQty, setTransferQty] = useState(5);
-    const [transferNotes, setTransferNotes] = useState("Inter-warehouse rebalancing transfer");
+    // Fast Track Stock Adjuster State
+    const [adjustProdId, setAdjustProdId] = useState(INITIAL_PRODUCTS[0].id);
+    const [adjustType, setAdjustType] = useState<"add" | "subtract" | "damaged">("add");
+    const [adjustQty, setAdjustQty] = useState(1);
+    const [adjustReason, setAdjustReason] = useState("Routine Stock Adjustment");
+
+    // Bulk CSV Import State
+    const [rawCsvText, setRawCsvText] = useState("");
+    const [parsedCsvProducts, setParsedCsvProducts] = useState<Partial<Product>[]>([]);
 
     const showToast = (msg: string) => {
         setToastMsg(msg);
@@ -221,7 +230,7 @@ export default function InventoryPage() {
 
         setProducts([newProduct, ...products]);
         setIsAddModalOpen(false);
-        showToast(`✅ Product "${newProdName}" (${generatedSku}) successfully registered into inventory!`);
+        showToast(`✅ Registered SKU "${newProdName}" (${generatedSku}) into inventory!`);
 
         // Reset form
         setNewProdName("");
@@ -229,30 +238,141 @@ export default function InventoryPage() {
         setNewProdBarcode("");
     };
 
-    const handleTransferStock = (e: React.FormEvent) => {
-        e.preventDefault();
-        const targetProd = products.find(p => p.id === transferProdId);
-        if (!targetProd) return;
-
-        if (targetProd.quantity < transferQty) {
-            showToast(`⚠️ Transfer failed: Insufficient stock (Available: ${targetProd.quantity}, Requested: ${transferQty})`);
-            return;
-        }
-
+    // Fast Track Single Action (Inline + / - / Damaged)
+    const handleQuickStockStep = (product: Product, delta: number, type: "add" | "subtract" | "damaged") => {
         setProducts(products.map(p => {
-            if (p.id === transferProdId) {
-                const remainingQty = p.quantity - transferQty;
+            if (p.id === product.id) {
+                const newQty = Math.max(0, p.quantity + delta);
+                const status: "in_stock" | "low_stock" | "out_of_stock" =
+                    newQty <= 0 ? "out_of_stock" : newQty <= p.min_quantity ? "low_stock" : "in_stock";
                 return {
                     ...p,
-                    quantity: remainingQty,
-                    status: remainingQty <= 0 ? "out_of_stock" : remainingQty <= p.min_quantity ? "low_stock" : "in_stock"
+                    quantity: newQty,
+                    status
                 };
             }
             return p;
         }));
 
-        setIsTransferModalOpen(false);
-        showToast(`📦 Transferred ${transferQty} units of "${targetProd.name}" from ${transferSourceWh} ➔ ${transferDestWh}!`);
+        if (type === "add") {
+            showToast(`📈 Added +${Math.abs(delta)} stock to "${product.name}" (Now: ${Math.max(0, product.quantity + delta)})`);
+        } else if (type === "subtract") {
+            showToast(`📉 Subtracted ${Math.abs(delta)} from "${product.name}" (Now: ${Math.max(0, product.quantity + delta)})`);
+        } else {
+            showToast(`💥 Logged ${Math.abs(delta)} damaged/written-off units for "${product.name}"!`);
+        }
+    };
+
+    const handleExecuteAdjustment = (e: React.FormEvent) => {
+        e.preventDefault();
+        const targetProd = products.find(p => p.id === adjustProdId);
+        if (!targetProd) return;
+
+        const delta = adjustType === "add" ? adjustQty : -adjustQty;
+        const newQty = Math.max(0, targetProd.quantity + delta);
+
+        setProducts(products.map(p => {
+            if (p.id === adjustProdId) {
+                const status: "in_stock" | "low_stock" | "out_of_stock" =
+                    newQty <= 0 ? "out_of_stock" : newQty <= p.min_quantity ? "low_stock" : "in_stock";
+                return {
+                    ...p,
+                    quantity: newQty,
+                    status
+                };
+            }
+            return p;
+        }));
+
+        setIsAdjustModalOpen(false);
+        showToast(`⚡ Adjusted "${targetProd.name}": ${adjustType.toUpperCase()} ${adjustQty} units (${adjustReason}). New Qty: ${newQty}`);
+    };
+
+    // Bulk CSV Parser
+    const handleParseCsv = (text: string) => {
+        setRawCsvText(text);
+        if (!text.trim()) {
+            setParsedCsvProducts([]);
+            return;
+        }
+
+        const lines = text.trim().split("\n");
+        if (lines.length <= 1) {
+            setParsedCsvProducts([]);
+            return;
+        }
+
+        const parsed: Partial<Product>[] = [];
+        // Skip header if it exists
+        const startIdx = lines[0].toLowerCase().includes("name") || lines[0].toLowerCase().includes("sku") ? 1 : 0;
+
+        for (let i = startIdx; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            const cols = line.split(",").map(c => c.trim().replace(/^["']|["']$/g, ""));
+            if (cols.length >= 2) {
+                parsed.push({
+                    name: cols[0] || `Product Item ${i}`,
+                    sku: cols[1] || `SKU-BULK-${Date.now().toString().slice(-4)}${i}`,
+                    category: cols[2] || "Hardware & Devices",
+                    warehouse: cols[3] || WAREHOUSES[0],
+                    quantity: Number(cols[4]) || 10,
+                    cost_price: Number(cols[5]) || 50,
+                    unit_price: Number(cols[6]) || 99,
+                    barcode: cols[7] || `89345${Math.floor(1000000 + Math.random() * 9000000)}`
+                });
+            }
+        }
+        setParsedCsvProducts(parsed);
+    };
+
+    const handleImportParsedCsv = () => {
+        if (parsedCsvProducts.length === 0) return;
+
+        const newItems: Product[] = parsedCsvProducts.map((p, idx) => {
+            const qty = p.quantity ?? 10;
+            const minQty = 5;
+            const status: "in_stock" | "low_stock" | "out_of_stock" =
+                qty <= 0 ? "out_of_stock" : qty <= minQty ? "low_stock" : "in_stock";
+
+            return {
+                id: `prod_bulk_${Date.now()}_${idx}`,
+                name: p.name || "Bulk Product",
+                sku: p.sku || `SKU-${Date.now().toString().slice(-4)}${idx}`,
+                barcode: p.barcode || `89345${Math.floor(1000000 + Math.random() * 9000000)}`,
+                quantity: qty,
+                min_quantity: minQty,
+                unit_price: p.unit_price ?? 99,
+                cost_price: p.cost_price ?? 50,
+                category: p.category || "Hardware & Devices",
+                warehouse: p.warehouse || WAREHOUSES[0],
+                status
+            };
+        });
+
+        setProducts([...newItems, ...products]);
+        setIsBulkCsvModalOpen(false);
+        setRawCsvText("");
+        setParsedCsvProducts([]);
+        showToast(`🎉 Successfully imported ${newItems.length} products from CSV into Inventory!`);
+    };
+
+    const handleLoadSampleCsv = () => {
+        const sample = `Name,SKU,Category,Warehouse,Quantity,Cost Price,Retail Price,Barcode\n"Logitech MX Master 3S Mouse",MOU-MX-3S,"Hardware & Devices","Main DC Warehouse - Bay 2",25,65.00,99.99,893450033102\n"Dell UltraSharp 27 4K USB-C Monitor",MON-U27-4K,"Hardware & Devices","Main DC Warehouse - Bay 4",12,380.00,599.00,893450044211\n"Zebra ZD421 Thermal Barcode Printer",PRN-ZB-ZD421,"Office & Retail","Retail Hub East",8,220.00,349.50,893450055322\n"Enterprise SSL Wildcard Certificate 1Y",SEC-SSL-WILD,"Software & Licenses","Digital Cloud Repository",50,80.00,199.00,893450066433`;
+        handleParseCsv(sample);
+    };
+
+    const handleDownloadTemplate = () => {
+        const template = `Name,SKU,Category,Warehouse,Quantity,Cost Price,Retail Price,Barcode\n"Example Item Name",SKU-EX-001,"Hardware & Devices","Main DC Warehouse - Bay 1",10,50.00,100.00,893450011223`;
+        const encodedUri = encodeURI("data:text/csv;charset=utf-8," + template);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "beraxis_product_bulk_upload_template.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("📥 Downloaded Product Bulk Upload CSV Template!");
     };
 
     const handleExportCSV = () => {
@@ -328,14 +448,14 @@ export default function InventoryPage() {
                     <div>
                         <div className="flex items-center gap-3">
                             <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-300 bg-clip-text text-transparent">
-                                Inventory & Stock Valuation
+                                Inventory & Fast-Track Stock Control
                             </h2>
                             <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">
                                 {products.length} SKUs Managed
                             </span>
                         </div>
                         <p className="text-xs text-gray-400 mt-1">
-                            Real-time multi-warehouse stock management, valuation, and barcode tracking
+                            Fast-track stock adjustment (+/- / damaged write-offs), bulk CSV importing & multi-warehouse valuation
                         </p>
                     </div>
 
@@ -347,24 +467,31 @@ export default function InventoryPage() {
                         />
 
                         <button
-                            onClick={handleExportCSV}
-                            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-800/90 hover:bg-gray-700 text-gray-200 text-xs font-semibold border border-gray-700 transition shadow-sm"
+                            onClick={() => setIsBulkCsvModalOpen(true)}
+                            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white text-xs font-bold border border-purple-500/30 transition shadow-sm"
                         >
-                            <Download size={15} className="text-emerald-400" /> Export Valuation CSV
+                            <Upload size={15} className="text-purple-300" /> Bulk CSV Upload
                         </button>
 
                         <button
-                            onClick={() => setIsTransferModalOpen(true)}
+                            onClick={() => setIsAdjustModalOpen(true)}
                             className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-800/90 hover:bg-gray-700 text-gray-200 text-xs font-semibold border border-gray-700 transition shadow-sm"
                         >
-                            <ArrowRightLeft size={15} className="text-cyan-400" /> Stock Transfer
+                            <SlidersHorizontal size={15} className="text-amber-400" /> Fast Stock Adjust
+                        </button>
+
+                        <button
+                            onClick={handleExportCSV}
+                            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-800/90 hover:bg-gray-700 text-gray-200 text-xs font-semibold border border-gray-700 transition shadow-sm"
+                        >
+                            <Download size={15} className="text-emerald-400" /> Export CSV
                         </button>
 
                         <button
                             onClick={() => setIsAddModalOpen(true)}
                             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30 transition transform hover:-translate-y-0.5"
                         >
-                            <Plus size={16} /> + New Product SKU
+                            <Plus size={16} /> + New SKU
                         </button>
                     </div>
                 </div>
@@ -468,11 +595,11 @@ export default function InventoryPage() {
                                     <tr>
                                         <th className="px-5 py-3.5">Product SKU & Name</th>
                                         <th className="px-4 py-3.5">Barcode</th>
-                                        <th className="px-4 py-3.5">Category</th>
-                                        <th className="px-4 py-3.5">Warehouse Location</th>
+                                        <th className="px-4 py-3.5">Category & Location</th>
                                         <th className="px-4 py-3.5 text-right">Available Qty</th>
-                                        <th className="px-4 py-3.5 text-right">Unit Price</th>
-                                        <th className="px-4 py-3.5 text-right">Total Valuation</th>
+                                        <th className="px-4 py-3.5 text-center">Fast-Track Stock Maintain</th>
+                                        <th className="px-4 py-3.5 text-right">Unit Retail</th>
+                                        <th className="px-4 py-3.5 text-right">Valuation</th>
                                         <th className="px-5 py-3.5 text-center">Status</th>
                                     </tr>
                                 </thead>
@@ -501,12 +628,8 @@ export default function InventoryPage() {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3.5 text-gray-300">
-                                                <span className="px-2.5 py-1 rounded-lg bg-gray-800/80 border border-gray-700 text-gray-300 text-[11px] font-medium">
-                                                    {product.category}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3.5 text-gray-300 text-[11px]">
-                                                {product.warehouse}
+                                                <div className="font-medium text-white">{product.category}</div>
+                                                <div className="text-[10px] text-gray-500">{product.warehouse}</div>
                                             </td>
                                             <td className="px-4 py-3.5 text-right">
                                                 <div className="font-black text-sm text-white">
@@ -516,6 +639,39 @@ export default function InventoryPage() {
                                                     Min: {product.min_quantity}
                                                 </div>
                                             </td>
+
+                                            {/* Fast Track Maintain Buttons */}
+                                            <td className="px-4 py-3.5 text-center">
+                                                <div className="inline-flex items-center gap-1 bg-gray-950/80 p-1 rounded-xl border border-gray-800">
+                                                    <button
+                                                        onClick={() => handleQuickStockStep(product, 1, "add")}
+                                                        title="Fast Add +1 Stock"
+                                                        className="p-1 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition"
+                                                    >
+                                                        <PlusCircle size={15} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleQuickStockStep(product, -1, "subtract")}
+                                                        title="Fast Subtract -1 Stock"
+                                                        className="p-1 hover:bg-amber-500/20 text-amber-400 rounded-lg transition"
+                                                    >
+                                                        <MinusCircle size={15} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setAdjustProdId(product.id);
+                                                            setAdjustType("damaged");
+                                                            setAdjustReason("Damaged / Defective Stock Write-off");
+                                                            setIsAdjustModalOpen(true);
+                                                        }}
+                                                        title="Log Damaged / Broken Units"
+                                                        className="p-1 hover:bg-rose-500/20 text-rose-400 rounded-lg transition"
+                                                    >
+                                                        <AlertTriangle size={15} />
+                                                    </button>
+                                                </div>
+                                            </td>
+
                                             <td className="px-4 py-3.5 text-right text-gray-300 font-mono font-semibold">
                                                 ${product.unit_price.toFixed(2)}
                                             </td>
@@ -602,16 +758,45 @@ export default function InventoryPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between border-t border-gray-800 pt-3 text-xs">
-                                    <div>
-                                        <div className="text-[10px] uppercase text-gray-500 font-semibold">Available Qty</div>
-                                        <div className="text-base font-black text-white">{product.quantity} Units</div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-[10px] uppercase text-gray-500 font-semibold">Valuation</div>
-                                        <div className="text-base font-black text-emerald-400">
-                                            ${(product.quantity * product.unit_price).toLocaleString()}
+                                <div className="border-t border-gray-800 pt-3 space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <div>
+                                            <div className="text-[10px] uppercase text-gray-500 font-semibold">Available Qty</div>
+                                            <div className="text-base font-black text-white">{product.quantity} Units</div>
                                         </div>
+                                        <div className="text-right">
+                                            <div className="text-[10px] uppercase text-gray-500 font-semibold">Valuation</div>
+                                            <div className="text-base font-black text-emerald-400">
+                                                ${(product.quantity * product.unit_price).toLocaleString()}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Quick action bar */}
+                                    <div className="flex items-center gap-1.5 pt-1">
+                                        <button
+                                            onClick={() => handleQuickStockStep(product, 1, "add")}
+                                            className="flex-1 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white py-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1"
+                                        >
+                                            <PlusCircle size={13} /> +1 Add
+                                        </button>
+                                        <button
+                                            onClick={() => handleQuickStockStep(product, -1, "subtract")}
+                                            className="flex-1 bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white py-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1"
+                                        >
+                                            <MinusCircle size={13} /> -1 Sub
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setAdjustProdId(product.id);
+                                                setAdjustType("damaged");
+                                                setIsAdjustModalOpen(true);
+                                            }}
+                                            className="px-2.5 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white py-1 rounded-lg text-xs font-bold transition"
+                                            title="Log Damaged"
+                                        >
+                                            <AlertTriangle size={13} />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -770,108 +955,246 @@ export default function InventoryPage() {
                 </div>
             )}
 
-            {/* Modal 2: Stock Transfer */}
-            {isTransferModalOpen && (
+            {/* Modal 2: Fast-Track Stock Adjuster (Add, Subtract, Damaged) */}
+            {isAdjustModalOpen && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg shadow-2xl p-6 relative animate-in fade-in zoom-in duration-200">
                         <button
-                            onClick={() => setIsTransferModalOpen(false)}
+                            onClick={() => setIsAdjustModalOpen(false)}
                             className="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800"
                         >
                             <X size={20} />
                         </button>
 
                         <div className="flex items-center gap-3 mb-5">
-                            <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
-                                <ArrowRightLeft size={22} />
+                            <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+                                <SlidersHorizontal size={22} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Inter-Warehouse Stock Transfer</h3>
-                                <p className="text-xs text-gray-400">Move inventory between locations and hubs</p>
+                                <h3 className="text-lg font-bold text-white">Fast-Track Stock Maintainer</h3>
+                                <p className="text-xs text-gray-400">Quickly add stock, record shrinkage, or write off damaged units</p>
                             </div>
                         </div>
 
-                        <form onSubmit={handleTransferStock} className="space-y-4">
+                        <form onSubmit={handleExecuteAdjustment} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold text-gray-300 mb-1">Select Product Item *</label>
+                                <label className="block text-xs font-semibold text-gray-300 mb-1">Target Product Item *</label>
                                 <select
-                                    value={transferProdId}
-                                    onChange={(e) => setTransferProdId(e.target.value)}
-                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500"
+                                    value={adjustProdId}
+                                    onChange={(e) => setAdjustProdId(e.target.value)}
+                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
                                 >
                                     {products.map(p => (
                                         <option key={p.id} value={p.id}>
-                                            {p.name} ({p.sku}) — Available: {p.quantity} Units
+                                            {p.name} ({p.sku}) — In Stock: {p.quantity} Units
                                         </option>
                                     ))}
                                 </select>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Source Warehouse</label>
-                                    <select
-                                        value={transferSourceWh}
-                                        onChange={(e) => setTransferSourceWh(e.target.value)}
-                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
+                            {/* Adjustment Type Selector */}
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-300 mb-1.5">Action Type</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setAdjustType("add")}
+                                        className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition ${
+                                            adjustType === "add"
+                                                ? "bg-emerald-600/30 border-emerald-500 text-emerald-300"
+                                                : "bg-gray-800 border-gray-700 text-gray-400 hover:text-white"
+                                        }`}
                                     >
-                                        {WAREHOUSES.map(w => (
-                                            <option key={w} value={w}>{w}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Destination Warehouse</label>
-                                    <select
-                                        value={transferDestWh}
-                                        onChange={(e) => setTransferDestWh(e.target.value)}
-                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
+                                        <PlusCircle size={18} />
+                                        <span>+ Add Restock</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setAdjustType("subtract")}
+                                        className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition ${
+                                            adjustType === "subtract"
+                                                ? "bg-amber-600/30 border-amber-500 text-amber-300"
+                                                : "bg-gray-800 border-gray-700 text-gray-400 hover:text-white"
+                                        }`}
                                     >
-                                        {WAREHOUSES.map(w => (
-                                            <option key={w} value={w}>{w}</option>
-                                        ))}
-                                    </select>
+                                        <MinusCircle size={18} />
+                                        <span>- Subtract Count</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setAdjustType("damaged")}
+                                        className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition ${
+                                            adjustType === "damaged"
+                                                ? "bg-rose-600/30 border-rose-500 text-rose-300"
+                                                : "bg-gray-800 border-gray-700 text-gray-400 hover:text-white"
+                                        }`}
+                                    >
+                                        <AlertTriangle size={18} />
+                                        <span>💥 Damaged Write-off</span>
+                                    </button>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-gray-300 mb-1">Units to Transfer</label>
+                                <label className="block text-xs font-semibold text-gray-300 mb-1">Quantity of Units to Adjust</label>
                                 <input
                                     type="number"
                                     min="1"
-                                    value={transferQty}
-                                    onChange={(e) => setTransferQty(Number(e.target.value))}
-                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500"
+                                    required
+                                    value={adjustQty}
+                                    onChange={(e) => setAdjustQty(Number(e.target.value))}
+                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-amber-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-gray-300 mb-1">Transfer Memo / Reference</label>
+                                <label className="block text-xs font-semibold text-gray-300 mb-1">Reason / Audit Memo</label>
                                 <input
                                     type="text"
-                                    value={transferNotes}
-                                    onChange={(e) => setTransferNotes(e.target.value)}
-                                    placeholder="e.g. Replenishing retail front for weekend surge"
-                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500"
+                                    value={adjustReason}
+                                    onChange={(e) => setAdjustReason(e.target.value)}
+                                    placeholder="e.g. Supplier delivery arrival, physical inventory count correction"
+                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
                                 />
                             </div>
 
                             <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-800">
                                 <button
                                     type="button"
-                                    onClick={() => setIsTransferModalOpen(false)}
+                                    onClick={() => setIsAdjustModalOpen(false)}
                                     className="px-4 py-2.5 rounded-xl bg-gray-800 text-gray-300 hover:bg-gray-700 text-xs font-semibold"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-600/30"
+                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold shadow-lg shadow-amber-600/30"
                                 >
-                                    Execute Transfer
+                                    Apply Stock Adjustment
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal 3: Bulk CSV Upload & Import */}
+            {isBulkCsvModalOpen && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-3xl shadow-2xl p-6 relative animate-in fade-in zoom-in duration-200">
+                        <button
+                            onClick={() => setIsBulkCsvModalOpen(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20">
+                                <FileSpreadsheet size={22} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-white">Bulk Product Import (CSV)</h3>
+                                <p className="text-xs text-gray-400">Upload or paste spreadsheet data to create multiple products at once</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            {/* Action Bar for Template */}
+                            <div className="flex items-center justify-between bg-gray-950/70 p-3 rounded-xl border border-gray-800">
+                                <div className="text-xs text-gray-300">
+                                    Need the standard CSV format? Download our pre-configured template.
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleLoadSampleCsv}
+                                        className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold border border-gray-700 transition"
+                                    >
+                                        Load Sample Data
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleDownloadTemplate}
+                                        className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white text-xs font-bold border border-purple-500/30 transition flex items-center gap-1.5"
+                                    >
+                                        <Download size={13} /> Download Template
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* CSV Input Area */}
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                                    Paste CSV Content or Upload File
+                                </label>
+                                <textarea
+                                    rows={5}
+                                    value={rawCsvText}
+                                    onChange={(e) => handleParseCsv(e.target.value)}
+                                    placeholder="Name,SKU,Category,Warehouse,Quantity,Cost Price,Retail Price,Barcode&#10;&quot;Logitech MX Master 3S&quot;,MOU-MX-3S,&quot;Hardware & Devices&quot;,&quot;Main DC Warehouse&quot;,25,65.00,99.99,893450033102"
+                                    className="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-purple-500"
+                                />
+                            </div>
+
+                            {/* Live Parsed Preview Table */}
+                            {parsedCsvProducts.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-xs font-semibold text-purple-400">
+                                        <span>Preview Validated Products ({parsedCsvProducts.length} items ready to import)</span>
+                                        <span className="text-emerald-400 flex items-center gap-1">
+                                            <Check size={14} /> Ready to commit
+                                        </span>
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto rounded-xl border border-gray-800 bg-gray-950/60">
+                                        <table className="w-full text-left text-[11px]">
+                                            <thead className="bg-gray-900 text-gray-400 uppercase text-[9px] border-b border-gray-800 sticky top-0">
+                                                <tr>
+                                                    <th className="px-3 py-2">Name</th>
+                                                    <th className="px-2 py-2">SKU</th>
+                                                    <th className="px-2 py-2">Category</th>
+                                                    <th className="px-2 py-2 text-right">Qty</th>
+                                                    <th className="px-2 py-2 text-right">Cost</th>
+                                                    <th className="px-2 py-2 text-right">Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-800">
+                                                {parsedCsvProducts.map((p, idx) => (
+                                                    <tr key={idx} className="hover:bg-purple-950/20">
+                                                        <td className="px-3 py-2 font-medium text-white">{p.name}</td>
+                                                        <td className="px-2 py-2 font-mono text-gray-300">{p.sku}</td>
+                                                        <td className="px-2 py-2 text-gray-400">{p.category}</td>
+                                                        <td className="px-2 py-2 text-right font-bold text-white">{p.quantity}</td>
+                                                        <td className="px-2 py-2 text-right text-gray-400">${p.cost_price}</td>
+                                                        <td className="px-2 py-2 text-right font-bold text-emerald-400">${p.unit_price}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-800">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsBulkCsvModalOpen(false)}
+                                    className="px-4 py-2.5 rounded-xl bg-gray-800 text-gray-300 hover:bg-gray-700 text-xs font-semibold"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={parsedCsvProducts.length === 0}
+                                    onClick={handleImportParsedCsv}
+                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white text-xs font-bold shadow-lg shadow-purple-600/30 transition flex items-center gap-1.5"
+                                >
+                                    <Upload size={14} /> Import {parsedCsvProducts.length} Products
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
