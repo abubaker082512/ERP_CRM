@@ -29,7 +29,10 @@ import {
     MinusCircle,
     AlertTriangle,
     FileSpreadsheet,
-    Check
+    Check,
+    Edit3,
+    Hash,
+    Scale
 } from "lucide-react";
 
 const MENU_ITEMS = [
@@ -46,6 +49,7 @@ export type Product = {
     sku: string;
     barcode?: string;
     quantity: number;
+    uom: string; // Unit of Measure e.g. "Pcs", "Boxes", "Rolls", "Sets", "Kg"
     min_quantity: number;
     unit_price: number;
     cost_price: number;
@@ -62,6 +66,7 @@ const INITIAL_PRODUCTS: Product[] = [
         sku: "SRV-RACK-001",
         barcode: "893450012984",
         quantity: 14,
+        uom: "Units",
         min_quantity: 5,
         unit_price: 2499.00,
         cost_price: 1650.00,
@@ -75,6 +80,7 @@ const INITIAL_PRODUCTS: Product[] = [
         sku: "NET-WIFI6-AP",
         barcode: "893450029381",
         quantity: 42,
+        uom: "Pcs",
         min_quantity: 10,
         unit_price: 189.99,
         cost_price: 110.00,
@@ -88,6 +94,7 @@ const INITIAL_PRODUCTS: Product[] = [
         sku: "POS-SCAN-2D",
         barcode: "893450041209",
         quantity: 4,
+        uom: "Pcs",
         min_quantity: 8,
         unit_price: 129.50,
         cost_price: 75.00,
@@ -101,6 +108,7 @@ const INITIAL_PRODUCTS: Product[] = [
         sku: "LIC-DB-ENT-1Y",
         barcode: "893450077812",
         quantity: 99,
+        uom: "Licenses",
         min_quantity: 20,
         unit_price: 1200.00,
         cost_price: 450.00,
@@ -114,6 +122,7 @@ const INITIAL_PRODUCTS: Product[] = [
         sku: "POS-DRW-24V",
         barcode: "893450099120",
         quantity: 2,
+        uom: "Units",
         min_quantity: 6,
         unit_price: 85.00,
         cost_price: 48.00,
@@ -127,6 +136,7 @@ const INITIAL_PRODUCTS: Product[] = [
         sku: "CAB-FO-10M",
         barcode: "893450055410",
         quantity: 120,
+        uom: "Pcs",
         min_quantity: 25,
         unit_price: 14.50,
         cost_price: 5.20,
@@ -140,6 +150,7 @@ const INITIAL_PRODUCTS: Product[] = [
         sku: "POS-PPR-80MM",
         barcode: "893450066231",
         quantity: 0,
+        uom: "Boxes",
         min_quantity: 15,
         unit_price: 45.00,
         cost_price: 22.00,
@@ -166,6 +177,19 @@ const CATEGORIES = [
     "Consulting & Services"
 ];
 
+const UOM_OPTIONS = [
+    "Pcs (Pieces)",
+    "Boxes",
+    "Cartons",
+    "Units",
+    "Sets",
+    "Rolls",
+    "Packs",
+    "Kg (Kilograms)",
+    "Meters",
+    "Licenses"
+];
+
 export default function InventoryPage() {
     const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
     const [currentView, setCurrentView] = useState<ViewType>("list");
@@ -173,9 +197,12 @@ export default function InventoryPage() {
     const [selectedCategory, setSelectedCategory] = useState<string>("All Categories");
     const [stockFilter, setStockFilter] = useState<"all" | "low_stock" | "in_stock" | "out_of_stock">("all");
 
+    // Inline manual editing state
+    const [editingQtyId, setEditingQtyId] = useState<string | null>(null);
+    const [editingQtyVal, setEditingQtyVal] = useState<number>(0);
+
     // Modals
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
     const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
     const [isBulkCsvModalOpen, setIsBulkCsvModalOpen] = useState(false);
     const [toastMsg, setToastMsg] = useState("");
@@ -184,6 +211,7 @@ export default function InventoryPage() {
     const [newProdName, setNewProdName] = useState("");
     const [newProdSku, setNewProdSku] = useState("");
     const [newProdBarcode, setNewProdBarcode] = useState("");
+    const [newProdUom, setNewProdUom] = useState("Pcs");
     const [newProdCategory, setNewProdCategory] = useState("Hardware & Devices");
     const [newProdWarehouse, setNewProdWarehouse] = useState(WAREHOUSES[0]);
     const [newProdQty, setNewProdQty] = useState(10);
@@ -193,7 +221,7 @@ export default function InventoryPage() {
 
     // Fast Track Stock Adjuster State
     const [adjustProdId, setAdjustProdId] = useState(INITIAL_PRODUCTS[0].id);
-    const [adjustType, setAdjustType] = useState<"add" | "subtract" | "damaged">("add");
+    const [adjustType, setAdjustType] = useState<"add" | "subtract" | "damaged" | "set_exact">("add");
     const [adjustQty, setAdjustQty] = useState(1);
     const [adjustReason, setAdjustReason] = useState("Routine Stock Adjustment");
 
@@ -211,6 +239,7 @@ export default function InventoryPage() {
         if (!newProdName.trim()) return;
 
         const generatedSku = newProdSku.trim() || `SKU-${Date.now().toString().slice(-6)}`;
+        const cleanUom = newProdUom.split(" ")[0]; // "Pcs", "Boxes", etc.
         const status: "in_stock" | "low_stock" | "out_of_stock" =
             newProdQty <= 0 ? "out_of_stock" : newProdQty <= newProdMinQty ? "low_stock" : "in_stock";
 
@@ -220,6 +249,7 @@ export default function InventoryPage() {
             sku: generatedSku,
             barcode: newProdBarcode || `89345${Math.floor(1000000 + Math.random() * 9000000)}`,
             quantity: Number(newProdQty),
+            uom: cleanUom,
             min_quantity: Number(newProdMinQty),
             unit_price: Number(newProdPrice),
             cost_price: Number(newProdCost),
@@ -230,7 +260,7 @@ export default function InventoryPage() {
 
         setProducts([newProduct, ...products]);
         setIsAddModalOpen(false);
-        showToast(`✅ Registered SKU "${newProdName}" (${generatedSku}) into inventory!`);
+        showToast(`✅ Registered SKU "${newProdName}" (${newProdQty} ${cleanUom}) into inventory!`);
 
         // Reset form
         setNewProdName("");
@@ -255,12 +285,35 @@ export default function InventoryPage() {
         }));
 
         if (type === "add") {
-            showToast(`📈 Added +${Math.abs(delta)} stock to "${product.name}" (Now: ${Math.max(0, product.quantity + delta)})`);
+            showToast(`📈 Added +${Math.abs(delta)} ${product.uom} to "${product.name}" (Now: ${Math.max(0, product.quantity + delta)} ${product.uom})`);
         } else if (type === "subtract") {
-            showToast(`📉 Subtracted ${Math.abs(delta)} from "${product.name}" (Now: ${Math.max(0, product.quantity + delta)})`);
+            showToast(`📉 Subtracted ${Math.abs(delta)} ${product.uom} from "${product.name}" (Now: ${Math.max(0, product.quantity + delta)} ${product.uom})`);
         } else {
-            showToast(`💥 Logged ${Math.abs(delta)} damaged/written-off units for "${product.name}"!`);
+            showToast(`💥 Logged ${Math.abs(delta)} damaged ${product.uom} for "${product.name}"!`);
         }
+    };
+
+    // Save inline manually typed exact quantity
+    const handleSaveManualQuantity = (productId: string) => {
+        const target = products.find(p => p.id === productId);
+        if (!target) return;
+
+        const manualQty = Math.max(0, Number(editingQtyVal) || 0);
+        setProducts(products.map(p => {
+            if (p.id === productId) {
+                const status: "in_stock" | "low_stock" | "out_of_stock" =
+                    manualQty <= 0 ? "out_of_stock" : manualQty <= p.min_quantity ? "low_stock" : "in_stock";
+                return {
+                    ...p,
+                    quantity: manualQty,
+                    status
+                };
+            }
+            return p;
+        }));
+
+        setEditingQtyId(null);
+        showToast(`✏️ Updated "${target.name}" stock manually to ${manualQty} ${target.uom}!`);
     };
 
     const handleExecuteAdjustment = (e: React.FormEvent) => {
@@ -268,8 +321,14 @@ export default function InventoryPage() {
         const targetProd = products.find(p => p.id === adjustProdId);
         if (!targetProd) return;
 
-        const delta = adjustType === "add" ? adjustQty : -adjustQty;
-        const newQty = Math.max(0, targetProd.quantity + delta);
+        let newQty = 0;
+        if (adjustType === "set_exact") {
+            newQty = Math.max(0, adjustQty);
+        } else if (adjustType === "add") {
+            newQty = targetProd.quantity + adjustQty;
+        } else {
+            newQty = Math.max(0, targetProd.quantity - adjustQty);
+        }
 
         setProducts(products.map(p => {
             if (p.id === adjustProdId) {
@@ -285,7 +344,7 @@ export default function InventoryPage() {
         }));
 
         setIsAdjustModalOpen(false);
-        showToast(`⚡ Adjusted "${targetProd.name}": ${adjustType.toUpperCase()} ${adjustQty} units (${adjustReason}). New Qty: ${newQty}`);
+        showToast(`⚡ Stock Adjusted for "${targetProd.name}": Set to ${newQty} ${targetProd.uom} (${adjustReason})`);
     };
 
     // Bulk CSV Parser
@@ -303,7 +362,6 @@ export default function InventoryPage() {
         }
 
         const parsed: Partial<Product>[] = [];
-        // Skip header if it exists
         const startIdx = lines[0].toLowerCase().includes("name") || lines[0].toLowerCase().includes("sku") ? 1 : 0;
 
         for (let i = startIdx; i < lines.length; i++) {
@@ -315,12 +373,13 @@ export default function InventoryPage() {
                 parsed.push({
                     name: cols[0] || `Product Item ${i}`,
                     sku: cols[1] || `SKU-BULK-${Date.now().toString().slice(-4)}${i}`,
-                    category: cols[2] || "Hardware & Devices",
-                    warehouse: cols[3] || WAREHOUSES[0],
-                    quantity: Number(cols[4]) || 10,
-                    cost_price: Number(cols[5]) || 50,
-                    unit_price: Number(cols[6]) || 99,
-                    barcode: cols[7] || `89345${Math.floor(1000000 + Math.random() * 9000000)}`
+                    uom: cols[2] || "Pcs",
+                    category: cols[3] || "Hardware & Devices",
+                    warehouse: cols[4] || WAREHOUSES[0],
+                    quantity: Number(cols[5]) || 10,
+                    cost_price: Number(cols[6]) || 50,
+                    unit_price: Number(cols[7]) || 99,
+                    barcode: cols[8] || `89345${Math.floor(1000000 + Math.random() * 9000000)}`
                 });
             }
         }
@@ -342,6 +401,7 @@ export default function InventoryPage() {
                 sku: p.sku || `SKU-${Date.now().toString().slice(-4)}${idx}`,
                 barcode: p.barcode || `89345${Math.floor(1000000 + Math.random() * 9000000)}`,
                 quantity: qty,
+                uom: p.uom || "Pcs",
                 min_quantity: minQty,
                 unit_price: p.unit_price ?? 99,
                 cost_price: p.cost_price ?? 50,
@@ -355,16 +415,16 @@ export default function InventoryPage() {
         setIsBulkCsvModalOpen(false);
         setRawCsvText("");
         setParsedCsvProducts([]);
-        showToast(`🎉 Successfully imported ${newItems.length} products from CSV into Inventory!`);
+        showToast(`🎉 Imported ${newItems.length} products with piece counts from CSV into Inventory!`);
     };
 
     const handleLoadSampleCsv = () => {
-        const sample = `Name,SKU,Category,Warehouse,Quantity,Cost Price,Retail Price,Barcode\n"Logitech MX Master 3S Mouse",MOU-MX-3S,"Hardware & Devices","Main DC Warehouse - Bay 2",25,65.00,99.99,893450033102\n"Dell UltraSharp 27 4K USB-C Monitor",MON-U27-4K,"Hardware & Devices","Main DC Warehouse - Bay 4",12,380.00,599.00,893450044211\n"Zebra ZD421 Thermal Barcode Printer",PRN-ZB-ZD421,"Office & Retail","Retail Hub East",8,220.00,349.50,893450055322\n"Enterprise SSL Wildcard Certificate 1Y",SEC-SSL-WILD,"Software & Licenses","Digital Cloud Repository",50,80.00,199.00,893450066433`;
+        const sample = `Name,SKU,UoM,Category,Warehouse,Quantity,Cost Price,Retail Price,Barcode\n"Logitech MX Master 3S Mouse",MOU-MX-3S,Pcs,"Hardware & Devices","Main DC Warehouse - Bay 2",25,65.00,99.99,893450033102\n"Dell UltraSharp 27 4K USB-C Monitor",MON-U27-4K,Units,"Hardware & Devices","Main DC Warehouse - Bay 4",12,380.00,599.00,893450044211\n"Zebra ZD421 Thermal Barcode Printer",PRN-ZB-ZD421,Pcs,"Office & Retail","Retail Hub East",8,220.00,349.50,893450055322\n"Thermal Paper 80mm Roll",PPR-80MM-ROLL,Boxes,"Office & Retail","Retail Hub East",50,22.00,45.00,893450066433`;
         handleParseCsv(sample);
     };
 
     const handleDownloadTemplate = () => {
-        const template = `Name,SKU,Category,Warehouse,Quantity,Cost Price,Retail Price,Barcode\n"Example Item Name",SKU-EX-001,"Hardware & Devices","Main DC Warehouse - Bay 1",10,50.00,100.00,893450011223`;
+        const template = `Name,SKU,UoM,Category,Warehouse,Quantity,Cost Price,Retail Price,Barcode\n"Example Item Name",SKU-EX-001,Pcs,"Hardware & Devices","Main DC Warehouse - Bay 1",100,50.00,100.00,893450011223`;
         const encodedUri = encodeURI("data:text/csv;charset=utf-8," + template);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -376,11 +436,12 @@ export default function InventoryPage() {
     };
 
     const handleExportCSV = () => {
-        const headers = ["ID", "Name", "SKU", "Barcode", "Category", "Warehouse", "Quantity", "Min Qty", "Unit Price", "Cost Price", "Status"];
+        const headers = ["ID", "Name", "SKU", "UoM", "Barcode", "Category", "Warehouse", "Quantity", "Min Qty", "Unit Price", "Cost Price", "Status"];
         const rows = products.map(p => [
             p.id,
             `"${p.name}"`,
             p.sku,
+            p.uom,
             p.barcode || "N/A",
             `"${p.category}"`,
             `"${p.warehouse}"`,
@@ -448,14 +509,14 @@ export default function InventoryPage() {
                     <div>
                         <div className="flex items-center gap-3">
                             <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-300 bg-clip-text text-transparent">
-                                Inventory & Fast-Track Stock Control
+                                Inventory & Stock Control
                             </h2>
                             <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">
                                 {products.length} SKUs Managed
                             </span>
                         </div>
                         <p className="text-xs text-gray-400 mt-1">
-                            Fast-track stock adjustment (+/- / damaged write-offs), bulk CSV importing & multi-warehouse valuation
+                            Manual piece count adjustments, Unit of Measure (UoM), bulk CSV uploads & multi-warehouse tracking
                         </p>
                     </div>
 
@@ -491,7 +552,7 @@ export default function InventoryPage() {
                             onClick={() => setIsAddModalOpen(true)}
                             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30 transition transform hover:-translate-y-0.5"
                         >
-                            <Plus size={16} /> + New SKU
+                            <Plus size={16} /> + New SKU / Pieces
                         </button>
                     </div>
                 </div>
@@ -505,7 +566,7 @@ export default function InventoryPage() {
                                 <Boxes size={18} />
                             </div>
                         </div>
-                        <div className="text-2xl font-black text-white">{totalStockQty.toLocaleString()}</div>
+                        <div className="text-2xl font-black text-white">{totalStockQty.toLocaleString()} Pieces</div>
                         <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-1.5">
                             <span className="text-purple-400 font-medium">{products.length} distinct items</span> across 6 hubs
                         </div>
@@ -596,8 +657,8 @@ export default function InventoryPage() {
                                         <th className="px-5 py-3.5">Product SKU & Name</th>
                                         <th className="px-4 py-3.5">Barcode</th>
                                         <th className="px-4 py-3.5">Category & Location</th>
-                                        <th className="px-4 py-3.5 text-right">Available Qty</th>
-                                        <th className="px-4 py-3.5 text-center">Fast-Track Stock Maintain</th>
+                                        <th className="px-4 py-3.5 text-right">Available Quantity (Manual Edit)</th>
+                                        <th className="px-4 py-3.5 text-center">Fast Adjust (+/- / 💥)</th>
                                         <th className="px-4 py-3.5 text-right">Unit Retail</th>
                                         <th className="px-4 py-3.5 text-right">Valuation</th>
                                         <th className="px-5 py-3.5 text-center">Status</th>
@@ -615,8 +676,11 @@ export default function InventoryPage() {
                                                         <div className="font-bold text-white text-sm group-hover:text-purple-300 transition">
                                                             {product.name}
                                                         </div>
-                                                        <div className="text-[11px] text-gray-400 font-mono">
-                                                            {product.sku}
+                                                        <div className="text-[11px] text-gray-400 font-mono flex items-center gap-1.5">
+                                                            <span>{product.sku}</span>
+                                                            <span className="text-[10px] bg-gray-800 px-1.5 py-0.2 rounded text-purple-300 border border-gray-700">
+                                                                {product.uom}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -631,13 +695,57 @@ export default function InventoryPage() {
                                                 <div className="font-medium text-white">{product.category}</div>
                                                 <div className="text-[10px] text-gray-500">{product.warehouse}</div>
                                             </td>
+
+                                            {/* Manual Quantity Cell with Inline Editor */}
                                             <td className="px-4 py-3.5 text-right">
-                                                <div className="font-black text-sm text-white">
-                                                    {product.quantity.toLocaleString()}
-                                                </div>
-                                                <div className="text-[10px] text-gray-500">
-                                                    Min: {product.min_quantity}
-                                                </div>
+                                                {editingQtyId === product.id ? (
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={editingQtyVal}
+                                                            onChange={(e) => setEditingQtyVal(Number(e.target.value))}
+                                                            className="w-20 bg-gray-950 border border-purple-500 rounded-lg px-2 py-1 text-xs text-white font-mono font-bold text-right focus:outline-none"
+                                                            autoFocus
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === "Enter") handleSaveManualQuantity(product.id);
+                                                                if (e.key === "Escape") setEditingQtyId(null);
+                                                            }}
+                                                        />
+                                                        <button
+                                                            onClick={() => handleSaveManualQuantity(product.id)}
+                                                            className="p-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg"
+                                                            title="Save quantity"
+                                                        >
+                                                            <Check size={13} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setEditingQtyId(null)}
+                                                            className="p-1 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-lg"
+                                                            title="Cancel"
+                                                        >
+                                                            <X size={13} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div
+                                                        onClick={() => {
+                                                            setEditingQtyId(product.id);
+                                                            setEditingQtyVal(product.quantity);
+                                                        }}
+                                                        className="cursor-pointer group/qty inline-flex flex-col items-end"
+                                                        title="Click to manually edit exact piece count"
+                                                    >
+                                                        <div className="font-black text-sm text-white flex items-center gap-1 group-hover/qty:text-purple-300">
+                                                            <span>{product.quantity.toLocaleString()}</span>
+                                                            <span className="text-[11px] text-purple-300 font-normal">{product.uom}</span>
+                                                            <Edit3 size={11} className="opacity-0 group-hover/qty:opacity-100 text-gray-400" />
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-500">
+                                                            Min Alert: {product.min_quantity}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </td>
 
                                             {/* Fast Track Maintain Buttons */}
@@ -645,14 +753,14 @@ export default function InventoryPage() {
                                                 <div className="inline-flex items-center gap-1 bg-gray-950/80 p-1 rounded-xl border border-gray-800">
                                                     <button
                                                         onClick={() => handleQuickStockStep(product, 1, "add")}
-                                                        title="Fast Add +1 Stock"
+                                                        title={`Add +1 ${product.uom}`}
                                                         className="p-1 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition"
                                                     >
                                                         <PlusCircle size={15} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleQuickStockStep(product, -1, "subtract")}
-                                                        title="Fast Subtract -1 Stock"
+                                                        title={`Subtract -1 ${product.uom}`}
                                                         className="p-1 hover:bg-amber-500/20 text-amber-400 rounded-lg transition"
                                                     >
                                                         <MinusCircle size={15} />
@@ -724,7 +832,12 @@ export default function InventoryPage() {
                                             </div>
                                             <div>
                                                 <h3 className="font-bold text-white text-sm">{product.name}</h3>
-                                                <p className="text-[11px] text-gray-400 font-mono">{product.sku}</p>
+                                                <p className="text-[11px] text-gray-400 font-mono flex items-center gap-1.5">
+                                                    <span>{product.sku}</span>
+                                                    <span className="text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.2 rounded font-semibold">
+                                                        {product.uom}
+                                                    </span>
+                                                </p>
                                             </div>
                                         </div>
                                         {product.status === "in_stock" ? (
@@ -761,8 +874,10 @@ export default function InventoryPage() {
                                 <div className="border-t border-gray-800 pt-3 space-y-2">
                                     <div className="flex items-center justify-between text-xs">
                                         <div>
-                                            <div className="text-[10px] uppercase text-gray-500 font-semibold">Available Qty</div>
-                                            <div className="text-base font-black text-white">{product.quantity} Units</div>
+                                            <div className="text-[10px] uppercase text-gray-500 font-semibold">Quantity On Hand</div>
+                                            <div className="text-base font-black text-white">
+                                                {product.quantity} <span className="text-xs font-normal text-purple-300">{product.uom}</span>
+                                            </div>
                                         </div>
                                         <div className="text-right">
                                             <div className="text-[10px] uppercase text-gray-500 font-semibold">Valuation</div>
@@ -778,13 +893,25 @@ export default function InventoryPage() {
                                             onClick={() => handleQuickStockStep(product, 1, "add")}
                                             className="flex-1 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white py-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1"
                                         >
-                                            <PlusCircle size={13} /> +1 Add
+                                            <PlusCircle size={13} /> +1
                                         </button>
                                         <button
                                             onClick={() => handleQuickStockStep(product, -1, "subtract")}
                                             className="flex-1 bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white py-1 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1"
                                         >
-                                            <MinusCircle size={13} /> -1 Sub
+                                            <MinusCircle size={13} /> -1
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setAdjustProdId(product.id);
+                                                setAdjustType("set_exact");
+                                                setAdjustQty(product.quantity);
+                                                setIsAdjustModalOpen(true);
+                                            }}
+                                            className="px-2.5 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white py-1 rounded-lg text-xs font-bold transition"
+                                            title="Set Exact Manual Pieces"
+                                        >
+                                            <Edit3 size={13} />
                                         </button>
                                         <button
                                             onClick={() => {
@@ -805,7 +932,7 @@ export default function InventoryPage() {
                 )}
             </div>
 
-            {/* Modal 1: + New Product SKU */}
+            {/* Modal 1: + New Product SKU with UoM & Manual Pieces */}
             {isAddModalOpen && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-xl shadow-2xl p-6 relative animate-in fade-in zoom-in duration-200">
@@ -821,8 +948,8 @@ export default function InventoryPage() {
                                 <Plus size={22} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Create Inventory Product SKU</h3>
-                                <p className="text-xs text-gray-400">Add a trackable stock item with valuation & barcode</p>
+                                <h3 className="text-lg font-bold text-white">Register Product SKU & Quantities</h3>
+                                <p className="text-xs text-gray-400">Add trackable stock with piece counts, UoM & barcodes</p>
                             </div>
                         </div>
 
@@ -862,7 +989,19 @@ export default function InventoryPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Unit of Measure (UoM)</label>
+                                    <select
+                                        value={newProdUom}
+                                        onChange={(e) => setNewProdUom(e.target.value)}
+                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500"
+                                    >
+                                        {UOM_OPTIONS.map(u => (
+                                            <option key={u} value={u}>{u}</option>
+                                        ))}
+                                    </select>
+                                </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-300 mb-1">Category</label>
                                     <select
@@ -877,7 +1016,7 @@ export default function InventoryPage() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Primary Warehouse</label>
+                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Storage Warehouse</label>
                                     <select
                                         value={newProdWarehouse}
                                         onChange={(e) => setNewProdWarehouse(e.target.value)}
@@ -892,23 +1031,23 @@ export default function InventoryPage() {
 
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Initial Qty</label>
+                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Initial Quantity ({newProdUom.split(" ")[0]})</label>
                                     <input
                                         type="number"
                                         min="0"
                                         value={newProdQty}
                                         onChange={(e) => setNewProdQty(Number(e.target.value))}
-                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-purple-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Min Reorder Qty</label>
+                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Min Reorder Level</label>
                                     <input
                                         type="number"
                                         min="0"
                                         value={newProdMinQty}
                                         onChange={(e) => setNewProdMinQty(Number(e.target.value))}
-                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-purple-500"
                                     />
                                 </div>
                                 <div>
@@ -919,7 +1058,7 @@ export default function InventoryPage() {
                                         min="0"
                                         value={newProdCost}
                                         onChange={(e) => setNewProdCost(Number(e.target.value))}
-                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-purple-500"
                                     />
                                 </div>
                                 <div>
@@ -930,7 +1069,7 @@ export default function InventoryPage() {
                                         min="0"
                                         value={newProdPrice}
                                         onChange={(e) => setNewProdPrice(Number(e.target.value))}
-                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-purple-500"
                                     />
                                 </div>
                             </div>
@@ -947,7 +1086,7 @@ export default function InventoryPage() {
                                     type="submit"
                                     className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30"
                                 >
-                                    Save Product SKU
+                                    Save Product & Pieces
                                 </button>
                             </div>
                         </form>
@@ -955,7 +1094,7 @@ export default function InventoryPage() {
                 </div>
             )}
 
-            {/* Modal 2: Fast-Track Stock Adjuster (Add, Subtract, Damaged) */}
+            {/* Modal 2: Fast-Track Stock Adjuster (Add, Subtract, Set Exact, Damaged) */}
             {isAdjustModalOpen && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg shadow-2xl p-6 relative animate-in fade-in zoom-in duration-200">
@@ -972,7 +1111,7 @@ export default function InventoryPage() {
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-white">Fast-Track Stock Maintainer</h3>
-                                <p className="text-xs text-gray-400">Quickly add stock, record shrinkage, or write off damaged units</p>
+                                <p className="text-xs text-gray-400">Set exact piece counts, restock, or record damaged items</p>
                             </div>
                         </div>
 
@@ -986,7 +1125,7 @@ export default function InventoryPage() {
                                 >
                                     {products.map(p => (
                                         <option key={p.id} value={p.id}>
-                                            {p.name} ({p.sku}) — In Stock: {p.quantity} Units
+                                            {p.name} ({p.sku}) — Available: {p.quantity} {p.uom}
                                         </option>
                                     ))}
                                 </select>
@@ -994,8 +1133,8 @@ export default function InventoryPage() {
 
                             {/* Adjustment Type Selector */}
                             <div>
-                                <label className="block text-xs font-semibold text-gray-300 mb-1.5">Action Type</label>
-                                <div className="grid grid-cols-3 gap-2">
+                                <label className="block text-xs font-semibold text-gray-300 mb-1.5">Action Mode</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     <button
                                         type="button"
                                         onClick={() => setAdjustType("add")}
@@ -1005,8 +1144,8 @@ export default function InventoryPage() {
                                                 : "bg-gray-800 border-gray-700 text-gray-400 hover:text-white"
                                         }`}
                                     >
-                                        <PlusCircle size={18} />
-                                        <span>+ Add Restock</span>
+                                        <PlusCircle size={16} />
+                                        <span>+ Add</span>
                                     </button>
 
                                     <button
@@ -1018,8 +1157,21 @@ export default function InventoryPage() {
                                                 : "bg-gray-800 border-gray-700 text-gray-400 hover:text-white"
                                         }`}
                                     >
-                                        <MinusCircle size={18} />
-                                        <span>- Subtract Count</span>
+                                        <MinusCircle size={16} />
+                                        <span>- Subtract</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setAdjustType("set_exact")}
+                                        className={`p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition ${
+                                            adjustType === "set_exact"
+                                                ? "bg-purple-600/30 border-purple-500 text-purple-300"
+                                                : "bg-gray-800 border-gray-700 text-gray-400 hover:text-white"
+                                        }`}
+                                    >
+                                        <Hash size={16} />
+                                        <span>Set Exact</span>
                                     </button>
 
                                     <button
@@ -1031,17 +1183,19 @@ export default function InventoryPage() {
                                                 : "bg-gray-800 border-gray-700 text-gray-400 hover:text-white"
                                         }`}
                                     >
-                                        <AlertTriangle size={18} />
-                                        <span>💥 Damaged Write-off</span>
+                                        <AlertTriangle size={16} />
+                                        <span>💥 Damaged</span>
                                     </button>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-gray-300 mb-1">Quantity of Units to Adjust</label>
+                                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                                    {adjustType === "set_exact" ? "New Exact Quantity (No. of Pieces/Units) *" : "Quantity of Units to Adjust *"}
+                                </label>
                                 <input
                                     type="number"
-                                    min="1"
+                                    min="0"
                                     required
                                     value={adjustQty}
                                     onChange={(e) => setAdjustQty(Number(e.target.value))}
@@ -1055,7 +1209,7 @@ export default function InventoryPage() {
                                     type="text"
                                     value={adjustReason}
                                     onChange={(e) => setAdjustReason(e.target.value)}
-                                    placeholder="e.g. Supplier delivery arrival, physical inventory count correction"
+                                    placeholder="e.g. Physical inventory count verified, damaged in transport"
                                     className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
                                 />
                             </div>
@@ -1072,7 +1226,7 @@ export default function InventoryPage() {
                                     type="submit"
                                     className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold shadow-lg shadow-amber-600/30"
                                 >
-                                    Apply Stock Adjustment
+                                    Confirm Adjustment
                                 </button>
                             </div>
                         </form>
@@ -1097,7 +1251,7 @@ export default function InventoryPage() {
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-white">Bulk Product Import (CSV)</h3>
-                                <p className="text-xs text-gray-400">Upload or paste spreadsheet data to create multiple products at once</p>
+                                <p className="text-xs text-gray-400">Upload or paste spreadsheet rows with piece counts & UoM</p>
                             </div>
                         </div>
 
@@ -1134,7 +1288,7 @@ export default function InventoryPage() {
                                     rows={5}
                                     value={rawCsvText}
                                     onChange={(e) => handleParseCsv(e.target.value)}
-                                    placeholder="Name,SKU,Category,Warehouse,Quantity,Cost Price,Retail Price,Barcode&#10;&quot;Logitech MX Master 3S&quot;,MOU-MX-3S,&quot;Hardware & Devices&quot;,&quot;Main DC Warehouse&quot;,25,65.00,99.99,893450033102"
+                                    placeholder="Name,SKU,UoM,Category,Warehouse,Quantity,Cost Price,Retail Price,Barcode&#10;&quot;Logitech MX Master 3S&quot;,MOU-MX-3S,Pcs,&quot;Hardware & Devices&quot;,&quot;Main DC Warehouse&quot;,25,65.00,99.99,893450033102"
                                     className="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-purple-500"
                                 />
                             </div>
@@ -1154,8 +1308,9 @@ export default function InventoryPage() {
                                                 <tr>
                                                     <th className="px-3 py-2">Name</th>
                                                     <th className="px-2 py-2">SKU</th>
+                                                    <th className="px-2 py-2">UoM</th>
                                                     <th className="px-2 py-2">Category</th>
-                                                    <th className="px-2 py-2 text-right">Qty</th>
+                                                    <th className="px-2 py-2 text-right">Quantity</th>
                                                     <th className="px-2 py-2 text-right">Cost</th>
                                                     <th className="px-2 py-2 text-right">Price</th>
                                                 </tr>
@@ -1165,6 +1320,7 @@ export default function InventoryPage() {
                                                     <tr key={idx} className="hover:bg-purple-950/20">
                                                         <td className="px-3 py-2 font-medium text-white">{p.name}</td>
                                                         <td className="px-2 py-2 font-mono text-gray-300">{p.sku}</td>
+                                                        <td className="px-2 py-2 text-purple-300">{p.uom || "Pcs"}</td>
                                                         <td className="px-2 py-2 text-gray-400">{p.category}</td>
                                                         <td className="px-2 py-2 text-right font-bold text-white">{p.quantity}</td>
                                                         <td className="px-2 py-2 text-right text-gray-400">${p.cost_price}</td>

@@ -11,6 +11,7 @@ import { useState, useEffect, useRef } from 'react';
 import GalaxyTopBar from './GalaxyTopBar';
 import CommandOverlay from '../antigravity/CommandOverlay';
 import BeraxisSupportWidgets from '../support/BeraxisSupportWidgets';
+import InactivitySessionTracker from '../auth/InactivitySessionTracker';
 
 const navItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -218,6 +219,9 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
             {/* Persistent Support Widgets: WhatsApp on Left, AI Support on Right */}
             <BeraxisSupportWidgets />
+
+            {/* Inactivity Auto-Logout & Session Tracker (1 minute idle limit) */}
+            <InactivitySessionTracker />
 
             {/* Antigravity Cockpit Overlay */}
             <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />

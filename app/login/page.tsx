@@ -1,17 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff, Loader2, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
 import { fetchAPI } from "@/lib/api";
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [inactivityMsg, setInactivityMsg] = useState(false);
+
+    useEffect(() => {
+        if (searchParams.get("reason") === "inactivity") {
+            setInactivityMsg(true);
+        }
+    }, [searchParams]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,6 +74,15 @@ export default function LoginPage() {
                 </div>
 
                 <div className="bg-[#1E293B] rounded-2xl border border-gray-700/50 p-8 shadow-2xl">
+                    {inactivityMsg && (
+                        <div className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl mb-6">
+                            <Clock size={18} className="text-amber-400 shrink-0" />
+                            <p className="text-amber-300 text-xs font-semibold">
+                                You were automatically logged out due to 1 minute of inactivity. Your work time was saved to Timesheets.
+                            </p>
+                        </div>
+                    )}
+
                     {error && (
                         <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg mb-6">
                             <AlertCircle size={18} className="text-red-400 shrink-0" />
@@ -134,5 +151,13 @@ export default function LoginPage() {
                 <p className="text-center text-xs text-gray-600 mt-6">Next-Gen AI ERP · 7-Day Free Trial</p>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-gray-400">Loading...</div>}>
+            <LoginForm />
+        </Suspense>
     );
 }
