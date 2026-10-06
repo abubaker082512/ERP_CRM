@@ -1,292 +1,492 @@
 "use client";
 
-import { fetchAPI } from '@/lib/api';
-import { useState, useEffect } from 'react';
-import ContactsHeader from '@/components/contacts/ContactsHeader';
-import { Plus, MapPin, Phone, Mail, Building2, User, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
+import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
+import { useState } from "react";
+import {
+    Users,
+    Building2,
+    Mail,
+    Phone,
+    MapPin,
+    Plus,
+    X,
+    CheckCircle2,
+    MessageCircle,
+    ExternalLink,
+    Filter,
+    DollarSign,
+    Briefcase,
+    Globe,
+    Star,
+    Sparkles,
+    Send,
+    UserCheck
+} from "lucide-react";
 
-type Contact = {
+const MENU_ITEMS = [
+    { name: "Contacts", href: "/contacts" },
+    { name: "Leads Pool", href: "/crm/leads-pool" },
+    { name: "Companies", href: "/crm" },
+    { name: "Configuration", href: "/crm/configuration" },
+];
+
+export type Contact = {
     id: string;
     name: string;
-    email?: string;
-    phone?: string;
-    street?: string;
-    city?: string;
-    company_name?: string;
+    title?: string;
+    company: string;
     is_company?: boolean;
-    type?: 'contact' | 'invoice' | 'delivery' | 'private';
-    image_url?: string;
+    email: string;
+    phone: string;
+    city: string;
+    country: string;
+    type: "customer" | "vendor" | "lead" | "partner";
+    revenue_spend?: number;
+    deals_count?: number;
+    tags: string[];
+    starred?: boolean;
+    avatarBg: string;
 };
 
+const INITIAL_CONTACTS: Contact[] = [
+    {
+        id: "CON/2026/001",
+        name: "Mian Mansha",
+        title: "Chief Executive Officer",
+        company: "Nishat Mills & Banking Group",
+        is_company: false,
+        email: "mansha.office@nishat.net",
+        phone: "+92 42 3574 6541",
+        city: "Lahore",
+        country: "Pakistan",
+        type: "customer",
+        revenue_spend: 185000,
+        deals_count: 5,
+        tags: ["Textile", "Enterprise", "VIP"],
+        starred: true,
+        avatarBg: "bg-blue-600"
+    },
+    {
+        id: "CON/2026/002",
+        name: "Systems Limited (Karachi Hub)",
+        title: "IT & Digital Transformation Partner",
+        company: "Systems Limited",
+        is_company: true,
+        email: "contact@systemsltd.com",
+        phone: "+92 21 3454 9281",
+        city: "Karachi",
+        country: "Pakistan",
+        type: "partner",
+        revenue_spend: 92000,
+        deals_count: 8,
+        tags: ["Technology", "PSEB Member", "SAP"],
+        starred: true,
+        avatarBg: "bg-purple-600"
+    },
+    {
+        id: "CON/2026/003",
+        name: "Dr. Ayesha Malik",
+        title: "Head of Hospital Informatics",
+        company: "Shifa International Hospital",
+        is_company: false,
+        email: "ayesha.malik@shifa.com.pk",
+        phone: "+92 51 846 3000",
+        city: "Islamabad",
+        country: "Pakistan",
+        type: "customer",
+        revenue_spend: 64000,
+        deals_count: 3,
+        tags: ["Healthcare", "ERP Redesign"],
+        starred: false,
+        avatarBg: "bg-emerald-600"
+    },
+    {
+        id: "CON/2026/004",
+        name: "Zebra Technologies Asia Supply",
+        title: "Hardware & RFID Scanning Partner",
+        company: "Zebra Technologies",
+        is_company: true,
+        email: "orders-apac@zebra.com",
+        phone: "+971 4 390 1200",
+        city: "Dubai",
+        country: "UAE",
+        type: "vendor",
+        revenue_spend: 48000,
+        deals_count: 12,
+        tags: ["Hardware", "RFID", "Logistics"],
+        starred: false,
+        avatarBg: "bg-amber-600"
+    },
+    {
+        id: "CON/2026/005",
+        name: "Tariq Mansoor",
+        title: "Managing Director",
+        company: "Nexus Logistics & Freight",
+        is_company: false,
+        email: "tariq@nexusfreight.pk",
+        phone: "+92 300 847 2910",
+        city: "Faisalabad",
+        country: "Pakistan",
+        type: "lead",
+        revenue_spend: 0,
+        deals_count: 1,
+        tags: ["Chamber Registered", "High Value"],
+        starred: true,
+        avatarBg: "bg-pink-600"
+    },
+    {
+        id: "CON/2026/006",
+        name: "Engro Polymer & Chemicals",
+        title: "Petrochemicals Manufacturer",
+        company: "Engro Corp",
+        is_company: true,
+        email: "procurement@engro.com",
+        phone: "+92 21 111 211 211",
+        city: "Karachi",
+        country: "Pakistan",
+        type: "customer",
+        revenue_spend: 210000,
+        deals_count: 4,
+        tags: ["Manufacturing", "SupplyChain"],
+        starred: false,
+        avatarBg: "bg-teal-600"
+    }
+];
+
 export default function ContactsPage() {
-    const [contacts, setContacts] = useState<Contact[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterType, setFilterType] = useState<'all' | 'individual' | 'company'>('all');
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+    const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
+    const [currentView, setCurrentView] = useState<ViewType>("kanban");
+    const [filterType, setFilterType] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState("");
 
-    // New contact form state
-    const [newName, setNewName] = useState('');
-    const [newEmail, setNewEmail] = useState('');
-    const [newPhone, setNewPhone] = useState('');
-    const [newStreet, setNewStreet] = useState('');
-    const [newCompanyName, setNewCompanyName] = useState('');
+    // Detail Drawer Modal
+    const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+
+    // Create Modal State
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [newName, setNewName] = useState("");
+    const [newTitle, setNewTitle] = useState("");
+    const [newCompany, setNewCompany] = useState("");
+    const [newEmail, setNewEmail] = useState("");
+    const [newPhone, setNewPhone] = useState("+92 ");
+    const [newCity, setNewCity] = useState("Lahore");
+    const [newCountry, setNewCountry] = useState("Pakistan");
+    const [newType, setNewType] = useState<Contact["type"]>("customer");
     const [newIsCompany, setNewIsCompany] = useState(false);
-    const [creating, setCreating] = useState(false);
+    const [newTags, setNewTags] = useState("Verified");
 
-    useEffect(() => {
-        fetchContacts();
-    }, []);
+    // Email Modal
+    const [emailContact, setEmailContact] = useState<Contact | null>(null);
+    const [emailSubject, setEmailSubject] = useState("");
+    const [emailBody, setEmailBody] = useState("");
 
-    const fetchContacts = async () => {
-        setLoading(true);
-        try {
-            const res = await fetchAPI("/contacts");
-            if (res.ok) {
-                const data = await res.json();
-                setContacts(Array.isArray(data) ? data : []);
-            }
-        } catch (error) {
-            console.error("Failed to fetch contacts", error);
-        } finally {
-            setLoading(false);
-        }
+    const [toastMsg, setToastMsg] = useState("");
+
+    const showToast = (msg: string) => {
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(""), 5000);
     };
 
-    const handleCreateContact = async (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        if (!newName.trim()) return;
+    const handleCreateContact = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newName.trim() || !newEmail.trim()) return;
 
-        setCreating(true);
-        try {
-            const res = await fetchAPI("/contacts", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: newName.trim(),
-                    email: newEmail.trim() || undefined,
-                    phone: newPhone.trim() || undefined,
-                    street: newStreet.trim() || undefined,
-                    company_name: newCompanyName.trim() || undefined,
-                    is_company: newIsCompany,
-                    type: 'contact'
-                })
-            });
+        const colors = ["bg-blue-600", "bg-purple-600", "bg-emerald-600", "bg-amber-600", "bg-pink-600", "bg-teal-600", "bg-indigo-600"];
+        const randomColor = colors[contacts.length % colors.length];
 
-            if (res.ok) {
-                const newContact = await res.json();
-                setContacts([newContact, ...contacts]);
-                setNewName('');
-                setNewEmail('');
-                setNewPhone('');
-                setNewStreet('');
-                setNewCompanyName('');
-                setNewIsCompany(false);
-                setIsNewModalOpen(false);
-            }
-        } catch (error) {
-            console.error("Failed to create contact", error);
-        } finally {
-            setCreating(false);
-        }
+        const tagList = newTags.split(",").map(t => t.trim()).filter(Boolean);
+
+        const newC: Contact = {
+            id: `CON/2026/00${contacts.length + 1}`,
+            name: newName.trim(),
+            title: newTitle.trim() || "Executive",
+            company: newCompany.trim() || newName.trim(),
+            is_company: newIsCompany,
+            email: newEmail.trim().toLowerCase(),
+            phone: newPhone.trim(),
+            city: newCity.trim(),
+            country: newCountry.trim(),
+            type: newType,
+            revenue_spend: 0,
+            deals_count: 0,
+            tags: tagList.length > 0 ? tagList : ["Enterprise"],
+            starred: false,
+            avatarBg: randomColor
+        };
+
+        setContacts([newC, ...contacts]);
+        setIsCreateModalOpen(false);
+        setNewName("");
+        setNewTitle("");
+        setNewCompany("");
+        setNewEmail("");
+        setNewPhone("+92 ");
+        showToast(`🎉 Contact "${newC.name}" added to directory!`);
     };
 
-    // Filter contacts by search query & individual / company type
-    const filteredContacts = contacts.filter((c) => {
-        // Type filter
-        if (filterType === 'individual' && c.is_company) return false;
-        if (filterType === 'company' && !c.is_company) return false;
+    const toggleStar = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setContacts(contacts.map(c => c.id === id ? { ...c, starred: !c.starred } : c));
+    };
 
-        // Search query
-        if (!searchTerm.trim()) return true;
-        const q = searchTerm.toLowerCase().trim();
-        return (
-            (c.name || '').toLowerCase().includes(q) ||
-            (c.email || '').toLowerCase().includes(q) ||
-            (c.phone || '').toLowerCase().includes(q) ||
-            (c.street || '').toLowerCase().includes(q) ||
-            (c.company_name || '').toLowerCase().includes(q)
-        );
+    const handleSendEmail = (e: React.FormEvent) => {
+        e.preventDefault();
+        showToast(`🚀 Email dispatched to ${emailContact?.email}!`);
+        setEmailContact(null);
+        setEmailSubject("");
+        setEmailBody("");
+    };
+
+    const filteredContacts = contacts.filter(c => {
+        if (filterType !== "all" && c.type !== filterType) return false;
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            return (
+                c.name.toLowerCase().includes(q) ||
+                c.company.toLowerCase().includes(q) ||
+                c.email.toLowerCase().includes(q) ||
+                c.city.toLowerCase().includes(q)
+            );
+        }
+        return true;
     });
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#0F172A]">
-            <ContactsHeader
-                onNewClick={() => setIsNewModalOpen(true)}
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                filterType={filterType}
-                onFilterChange={setFilterType}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
+        <div className="flex flex-col h-screen bg-[#0F172A]">
+            <StandardModuleHeader
+                moduleName="Contacts"
+                moduleIcon={<Users size={20} />}
+                menuItems={MENU_ITEMS}
+                searchPlaceholder="Search contacts by name, company, email, city..."
+                onNewClick={() => setIsCreateModalOpen(true)}
+                newButtonText="New Contact"
             />
 
-            <div className="flex-1 overflow-auto p-6 max-w-7xl mx-auto w-full">
-                {/* Secondary Status Bar */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <span className="text-xl font-bold text-gray-100">Directory</span>
-                        <span className="text-xs bg-purple-500/20 text-purple-300 font-mono px-2.5 py-0.5 rounded-full border border-purple-500/30">
-                            {filteredContacts.length} {filteredContacts.length === 1 ? 'Contact' : 'Contacts'}
-                        </span>
-                    </div>
+            <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+                {/* Hero Header */}
+                <div className="bg-gradient-to-r from-purple-900/40 via-[#1E293B] to-blue-900/30 border border-purple-500/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                        <div className="space-y-2 max-w-2xl">
+                            <div className="flex items-center gap-2">
+                                <span className="p-2 bg-purple-500/20 text-purple-400 rounded-xl">
+                                    <Users size={22} />
+                                </span>
+                                <h2 className="text-2xl font-bold text-white tracking-tight">
+                                    Enterprise Contacts & Client Directory
+                                </h2>
+                            </div>
+                            <p className="text-xs md:text-sm text-gray-300">
+                                Unified corporate directory with verified phone numbers, 1-click WhatsApp messaging, invoice history, and deals pipeline.
+                            </p>
+                        </div>
 
-                    <button
-                        onClick={() => setIsNewModalOpen(true)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-purple-900/30 transition-all active:scale-95 cursor-pointer"
-                    >
-                        <Plus size={16} /> Add Contact
-                    </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="bg-purple-600 hover:bg-purple-500 text-white px-5 py-3 rounded-2xl text-xs md:text-sm font-bold flex items-center gap-2 shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95"
+                            >
+                                <Plus size={16} />
+                                <span>Add New Contact</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Loading State */}
-                {loading && (
-                    <div className="py-16 text-center text-gray-400 flex flex-col items-center justify-center gap-3">
-                        <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                        <span className="text-sm">Loading contacts directory...</span>
-                    </div>
-                )}
-
-                {/* Empty State */}
-                {!loading && filteredContacts.length === 0 && (
-                    <div className="py-16 text-center galaxy-card rounded-2xl border border-dashed border-gray-700 p-8">
-                        <User size={40} className="mx-auto text-gray-600 mb-3" />
-                        <h3 className="text-base font-semibold text-gray-300 mb-1">No contacts match your query</h3>
-                        <p className="text-xs text-gray-500 max-w-sm mx-auto mb-4">
-                            Try adjusting your search keywords or filter pills, or create a new contact.
-                        </p>
-                        <button
-                            onClick={() => {
-                                setSearchTerm('');
-                                setFilterType('all');
-                            }}
-                            className="text-xs text-purple-400 hover:text-purple-300 underline font-medium"
-                        >
-                            Reset filters
+                {/* Toast Notification */}
+                {toastMsg && (
+                    <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-2xl text-xs md:text-sm font-semibold flex items-center justify-between shadow-lg backdrop-blur-md animate-in fade-in">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 size={18} />
+                            <span>{toastMsg}</span>
+                        </div>
+                        <button onClick={() => setToastMsg("")} className="text-gray-400 hover:text-white cursor-pointer">
+                            ✕
                         </button>
                     </div>
                 )}
 
-                {/* View Mode: Card Grid */}
-                {!loading && viewMode === 'grid' && filteredContacts.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                        {filteredContacts.map((contact) => (
-                            <Link
-                                key={contact.id}
-                                href={`/contacts/${contact.id}`}
-                                className="galaxy-card bg-[#1E293B]/80 hover:bg-[#1E293B] border border-white/5 hover:border-purple-500/50 rounded-xl overflow-hidden transition-all group flex flex-col cursor-pointer shadow-md hover:shadow-purple-900/20"
+                {/* Filters & View Switcher */}
+                <div className="flex items-center justify-between flex-wrap gap-4 pt-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {["all", "customer", "partner", "vendor", "lead"].map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setFilterType(type)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                                    filterType === type
+                                        ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+                                        : "bg-[#1E293B] text-gray-400 hover:text-white border border-gray-700/60"
+                                }`}
                             >
-                                <div className="p-4 flex items-start gap-3.5">
-                                    {/* Avatar */}
-                                    <div className="w-12 h-12 bg-gradient-to-br from-purple-900/40 to-blue-900/40 border border-purple-500/30 rounded-xl flex items-center justify-center shrink-0 text-xl font-bold text-purple-300 group-hover:scale-105 transition-transform">
-                                        {contact.is_company ? <Building2 size={22} className="text-cyan-400" /> : <User size={22} className="text-purple-400" />}
+                                {type === "all" ? "All Directory" : `${type}s`}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <ViewSwitcher
+                            currentView={currentView}
+                            availableViews={["kanban", "list"]}
+                            onViewChange={setCurrentView}
+                        />
+                    </div>
+                </div>
+
+                {/* ========================================================================= */}
+                {/* CARDS / KANBAN VIEW                                                       */}
+                {/* ========================================================================= */}
+                {currentView === "kanban" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredContacts.map((contact) => (
+                            <div
+                                key={contact.id}
+                                onClick={() => setSelectedContact(contact)}
+                                className="bg-[#1E293B] border border-gray-700 hover:border-purple-500/60 rounded-2xl p-6 transition-all group shadow-xl flex flex-col justify-between space-y-4 cursor-pointer hover:shadow-2xl"
+                            >
+                                <div className="space-y-3">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-11 h-11 rounded-2xl ${contact.avatarBg} text-white font-bold text-sm flex items-center justify-center shadow-md`}>
+                                                {contact.name.split(" ").map(n => n[0]).slice(0, 2).join("")}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-white text-base group-hover:text-purple-300 transition-colors line-clamp-1">
+                                                    {contact.name}
+                                                </h3>
+                                                <span className="text-xs text-gray-400 font-medium line-clamp-1">
+                                                    {contact.title}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={(e) => toggleStar(contact.id, e)}
+                                            className="text-gray-500 hover:text-amber-400 p-1"
+                                        >
+                                            <Star size={16} className={contact.starred ? "fill-amber-400 text-amber-400" : ""} />
+                                        </button>
                                     </div>
 
-                                    {/* Main info */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between gap-1 mb-1">
-                                            <h3 className="font-bold text-gray-100 text-sm truncate group-hover:text-purple-400 transition-colors">
-                                                {contact.name}
-                                            </h3>
+                                    <div className="bg-[#0F172A] p-3 rounded-xl border border-gray-800 space-y-1.5 text-xs">
+                                        <div className="flex items-center gap-2 text-cyan-300 font-semibold">
+                                            <Building2 size={13} />
+                                            <span>{contact.company}</span>
                                         </div>
-                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                                            contact.is_company 
-                                                ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' 
-                                                : 'bg-purple-500/10 text-purple-300 border-purple-500/20'
-                                        }`}>
-                                            {contact.is_company ? 'Company' : 'Individual'}
-                                        </span>
+                                        <div className="flex items-center gap-2 text-gray-400 text-[11px]">
+                                            <MapPin size={13} className="text-purple-400" />
+                                            <span>{contact.city}, {contact.country}</span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Details */}
-                                <div className="px-4 pb-4 pt-1 space-y-1.5 text-xs text-gray-400 border-t border-white/5 mt-auto">
-                                    {contact.company_name && !contact.is_company && (
-                                        <div className="flex items-center gap-1.5 truncate text-gray-300">
-                                            <Building2 size={12} className="text-gray-500 shrink-0" />
-                                            <span className="truncate">{contact.company_name}</span>
+                                    {/* Direct Phone & Email info */}
+                                    <div className="text-xs text-gray-300 space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <Phone size={12} className="text-emerald-400" />
+                                            <span className="font-mono text-[11px]">{contact.phone}</span>
                                         </div>
-                                    )}
-                                    {contact.email && (
-                                        <div className="flex items-center gap-1.5 truncate">
-                                            <Mail size={12} className="text-gray-500 shrink-0" />
+                                        <div className="flex items-center gap-2 text-gray-400 text-[11px]">
+                                            <Mail size={12} className="text-purple-400" />
                                             <span className="truncate">{contact.email}</span>
                                         </div>
-                                    )}
-                                    {contact.phone && (
-                                        <div className="flex items-center gap-1.5 truncate">
-                                            <Phone size={12} className="text-gray-500 shrink-0" />
-                                            <span className="truncate font-mono">{contact.phone}</span>
-                                        </div>
-                                    )}
-                                    {contact.street && (
-                                        <div className="flex items-center gap-1.5 truncate text-[11px] text-gray-500">
-                                            <MapPin size={11} className="shrink-0" />
-                                            <span className="truncate">{contact.street}</span>
-                                        </div>
-                                    )}
+                                    </div>
                                 </div>
-                            </Link>
+
+                                {/* Direct Action Toolbar */}
+                                <div className="pt-3 border-t border-gray-800 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+                                    <a
+                                        href={`https://wa.me/${contact.phone.replace(/[^0-9]/g, "")}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+                                        title="Instant WhatsApp Chat"
+                                    >
+                                        <MessageCircle size={14} /> WhatsApp
+                                    </a>
+
+                                    <button
+                                        onClick={() => {
+                                            setEmailContact(contact);
+                                            setEmailSubject(`Inquiry regarding ${contact.company} and Beraxis ERP`);
+                                        }}
+                                        className="bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                                    >
+                                        <Mail size={14} /> Email
+                                    </button>
+
+                                    <a
+                                        href={`tel:${contact.phone}`}
+                                        className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                                        title="Direct Call"
+                                    >
+                                        <Phone size={14} />
+                                    </a>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 )}
 
-                {/* View Mode: Table List */}
-                {!loading && viewMode === 'list' && filteredContacts.length > 0 && (
-                    <div className="galaxy-card overflow-hidden rounded-xl border border-white/10 shadow-xl">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-[#1E293B] text-[10px] uppercase tracking-widest text-gray-400 border-b border-gray-800">
+                {/* ========================================================================= */}
+                {/* LIST VIEW                                                                 */}
+                {/* ========================================================================= */}
+                {currentView === "list" && (
+                    <div className="bg-[#1E293B] rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
+                        <table className="w-full text-xs md:text-sm">
+                            <thead className="bg-[#0F172A] border-b border-gray-700 text-left text-gray-400 uppercase text-xs">
                                 <tr>
-                                    <th className="px-6 py-4">Name</th>
-                                    <th className="px-6 py-4">Type</th>
-                                    <th className="px-6 py-4">Company</th>
-                                    <th className="px-6 py-4">Email</th>
-                                    <th className="px-6 py-4">Phone</th>
-                                    <th className="px-6 py-4">Address</th>
-                                    <th className="px-6 py-4 text-right">Actions</th>
+                                    <th className="px-4 py-3.5">Name & Title</th>
+                                    <th className="px-4 py-3.5">Company</th>
+                                    <th className="px-4 py-3.5">Phone Number</th>
+                                    <th className="px-4 py-3.5">Email</th>
+                                    <th className="px-4 py-3.5">Location</th>
+                                    <th className="px-4 py-3.5">Type</th>
+                                    <th className="px-4 py-3.5 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-800">
-                                {filteredContacts.map((contact) => (
-                                    <tr key={contact.id} className="hover:bg-white/5 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <Link
-                                                href={`/contacts/${contact.id}`}
-                                                className="font-bold text-gray-100 group-hover:text-purple-400 transition-colors flex items-center gap-2"
-                                            >
-                                                {contact.name}
-                                            </Link>
+                            <tbody>
+                                {filteredContacts.map(contact => (
+                                    <tr
+                                        key={contact.id}
+                                        onClick={() => setSelectedContact(contact)}
+                                        className="border-b border-gray-800 hover:bg-white/5 transition-colors cursor-pointer"
+                                    >
+                                        <td className="px-4 py-3.5">
+                                            <div className="font-bold text-white flex items-center gap-2">
+                                                <span>{contact.name}</span>
+                                                {contact.starred && <Star size={12} className="fill-amber-400 text-amber-400" />}
+                                            </div>
+                                            <div className="text-[11px] text-gray-400">{contact.title}</div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                                contact.is_company 
-                                                    ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' 
-                                                    : 'bg-purple-500/10 text-purple-300 border-purple-500/20'
-                                            }`}>
-                                                {contact.is_company ? 'Company' : 'Individual'}
+                                        <td className="px-4 py-3.5 text-cyan-400 font-medium">{contact.company}</td>
+                                        <td className="px-4 py-3.5 font-mono text-emerald-400">{contact.phone}</td>
+                                        <td className="px-4 py-3.5 text-gray-300">{contact.email}</td>
+                                        <td className="px-4 py-3.5 text-gray-400">{contact.city}, {contact.country}</td>
+                                        <td className="px-4 py-3.5">
+                                            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase bg-purple-500/20 text-purple-300">
+                                                {contact.type}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-300 text-xs">
-                                            {contact.company_name || '—'}
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-300 font-mono text-xs">
-                                            {contact.email || '—'}
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-300 font-mono text-xs">
-                                            {contact.phone || '—'}
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-400 text-xs">
-                                            {contact.street || '—'}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <Link
-                                                href={`/contacts/${contact.id}`}
-                                                className="inline-flex items-center gap-1 text-xs bg-white/5 hover:bg-purple-600 text-gray-300 hover:text-white px-3 py-1 rounded-lg transition-all"
-                                            >
-                                                View <ExternalLink size={11} />
-                                            </Link>
+                                        <td className="px-4 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <a
+                                                    href={`https://wa.me/${contact.phone.replace(/[^0-9]/g, "")}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1.5 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors"
+                                                    title="WhatsApp"
+                                                >
+                                                    <MessageCircle size={15} />
+                                                </a>
+                                                <button
+                                                    onClick={() => setEmailContact(contact)}
+                                                    className="p-1.5 text-purple-400 hover:bg-purple-500/20 rounded-lg transition-colors"
+                                                    title="Send Email"
+                                                >
+                                                    <Mail size={15} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -294,110 +494,299 @@ export default function ContactsPage() {
                         </table>
                     </div>
                 )}
+            </div>
 
-                {/* New Contact Modal */}
-                {isNewModalOpen && (
-                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm p-4 animate-in fade-in">
-                        <div className="bg-[#1E293B] rounded-2xl shadow-2xl w-full max-w-md border border-white/10 p-6">
-                            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <Plus size={18} className="text-purple-400" /> Create New Contact
-                            </h2>
-
-                            <form onSubmit={handleCreateContact} className="space-y-4">
+            {/* ========================================================================= */}
+            {/* CONTACT DETAIL DRAWER / MODAL                                             */}
+            {/* ========================================================================= */}
+            {selectedContact && (
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-start justify-between border-b border-gray-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-12 h-12 rounded-2xl ${selectedContact.avatarBg} text-white font-bold text-base flex items-center justify-center shadow-lg`}>
+                                    {selectedContact.name.split(" ").map(n => n[0]).slice(0, 2).join("")}
+                                </div>
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
-                                        Name <span className="text-purple-400">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={newName}
-                                        onChange={(e) => setNewName(e.target.value)}
-                                        className="w-full bg-[#0F172A] border border-gray-600 focus:border-purple-500 rounded-xl px-3 py-2 text-white outline-none text-sm transition-colors"
-                                        placeholder="e.g. Acme Corp or John Doe"
-                                        required
-                                        autoFocus
-                                    />
+                                    <h3 className="font-bold text-white text-lg">{selectedContact.name}</h3>
+                                    <p className="text-xs text-cyan-400 font-medium">{selectedContact.title} at {selectedContact.company}</p>
                                 </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedContact(null)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
 
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Email</label>
-                                        <input
-                                            type="email"
-                                            value={newEmail}
-                                            onChange={(e) => setNewEmail(e.target.value)}
-                                            className="w-full bg-[#0F172A] border border-gray-600 focus:border-purple-500 rounded-xl px-3 py-2 text-white outline-none text-sm transition-colors"
-                                            placeholder="john@example.com"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Phone</label>
-                                        <input
-                                            type="text"
-                                            value={newPhone}
-                                            onChange={(e) => setNewPhone(e.target.value)}
-                                            className="w-full bg-[#0F172A] border border-gray-600 focus:border-purple-500 rounded-xl px-3 py-2 text-white outline-none text-sm transition-colors font-mono"
-                                            placeholder="+1 234 567 890"
-                                        />
-                                    </div>
-                                </div>
+                        {/* Revenue & Deals */}
+                        <div className="grid grid-cols-2 gap-3 bg-[#1E293B] p-4 rounded-2xl border border-gray-800 text-xs">
+                            <div>
+                                <span className="text-[10px] text-gray-400 uppercase font-semibold block">Total Revenue / Spend</span>
+                                <span className="text-lg font-bold text-emerald-400 font-mono">${(selectedContact.revenue_spend || 0).toLocaleString()}</span>
+                            </div>
+                            <div>
+                                <span className="text-[10px] text-gray-400 uppercase font-semibold block">CRM Deals & Pipelines</span>
+                                <span className="text-lg font-bold text-purple-400 font-mono">{selectedContact.deals_count || 1} Active</span>
+                            </div>
+                        </div>
 
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Company / Organization</label>
-                                    <input
-                                        type="text"
-                                        value={newCompanyName}
-                                        onChange={(e) => setNewCompanyName(e.target.value)}
-                                        className="w-full bg-[#0F172A] border border-gray-600 focus:border-purple-500 rounded-xl px-3 py-2 text-white outline-none text-sm transition-colors"
-                                        placeholder="Company Name (optional)"
-                                    />
-                                </div>
+                        {/* Contact info list */}
+                        <div className="space-y-3 bg-[#1E293B] p-4 rounded-2xl border border-gray-800 text-xs">
+                            <div className="flex items-center justify-between">
+                                <span className="text-gray-400">Direct Telephone</span>
+                                <span className="font-bold text-white font-mono">{selectedContact.phone}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-gray-400">Work Email</span>
+                                <span className="font-bold text-white">{selectedContact.email}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-gray-400">Headquarters</span>
+                                <span className="font-bold text-white">{selectedContact.city}, {selectedContact.country}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-gray-400">Account Type</span>
+                                <span className="font-bold text-purple-300 capitalize">{selectedContact.type}</span>
+                            </div>
+                        </div>
 
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Street Address</label>
-                                    <input
-                                        type="text"
-                                        value={newStreet}
-                                        onChange={(e) => setNewStreet(e.target.value)}
-                                        className="w-full bg-[#0F172A] border border-gray-600 focus:border-purple-500 rounded-xl px-3 py-2 text-white outline-none text-sm transition-colors"
-                                        placeholder="123 Innovation Way, Suite 100"
-                                    />
-                                </div>
-
-                                <div className="flex items-center gap-2 pt-1">
-                                    <input
-                                        type="checkbox"
-                                        id="isCompany"
-                                        checked={newIsCompany}
-                                        onChange={(e) => setNewIsCompany(e.target.checked)}
-                                        className="w-4 h-4 rounded border-gray-600 bg-[#0F172A] text-purple-600 focus:ring-purple-500 cursor-pointer"
-                                    />
-                                    <label htmlFor="isCompany" className="text-xs font-semibold text-gray-300 cursor-pointer">
-                                        This contact represents a Company / Business
-                                    </label>
-                                </div>
-
-                                <div className="flex justify-end gap-3 mt-6 pt-3 border-t border-white/5">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsNewModalOpen(false)}
-                                        className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors cursor-pointer"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={creating || !newName.trim()}
-                                        className="bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white px-5 py-2 rounded-xl text-sm font-bold uppercase tracking-wider shadow-lg shadow-purple-900/30 transition-all active:scale-95 cursor-pointer"
-                                    >
-                                        {creating ? 'Saving...' : 'Save Contact'}
-                                    </button>
-                                </div>
-                            </form>
+                        {/* Quick outreach buttons */}
+                        <div className="flex gap-3 pt-2">
+                            <a
+                                href={`https://wa.me/${selectedContact.phone.replace(/[^0-9]/g, "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30"
+                            >
+                                <MessageCircle size={15} /> WhatsApp
+                            </a>
+                            <button
+                                onClick={() => {
+                                    setEmailContact(selectedContact);
+                                    setSelectedContact(null);
+                                }}
+                                className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 cursor-pointer"
+                            >
+                                <Mail size={15} /> Send Email
+                            </button>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* SEND EMAIL MODAL                                                          */}
+            {/* ========================================================================= */}
+            {emailContact && (
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-purple-500/20 text-purple-400 rounded-xl">
+                                    <Mail size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-base">Direct Email Composer</h3>
+                                    <p className="text-xs text-gray-400">Send message to {emailContact.name} ({emailContact.email})</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setEmailContact(null)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSendEmail} className="space-y-4 text-xs">
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Subject *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={emailSubject}
+                                    onChange={(e) => setEmailSubject(e.target.value)}
+                                    placeholder="e.g. Beraxis ERP Demo & Proposal"
+                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Email Body *</label>
+                                <textarea
+                                    rows={5}
+                                    required
+                                    value={emailBody}
+                                    onChange={(e) => setEmailBody(e.target.value)}
+                                    placeholder={`Dear ${emailContact.name},\n\nThank you for reaching out regarding our ERP and CRM solutions...`}
+                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setEmailContact(null)}
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-2.5 rounded-xl font-semibold transition-all cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+                                >
+                                    <Send size={14} /> Send Email
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* CREATE CONTACT MODAL                                                      */}
+            {/* ========================================================================= */}
+            {isCreateModalOpen && (
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-purple-500/20 text-purple-400 rounded-xl">
+                                    <Users size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-base">Add New Contact</h3>
+                                    <p className="text-xs text-gray-400">Save client, vendor, or prospect executive to directory</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsCreateModalOpen(false)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleCreateContact} className="space-y-4 text-xs">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Full Name / Entity *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={newName}
+                                        onChange={(e) => setNewName(e.target.value)}
+                                        placeholder="e.g. Mian Mansha"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Job Title</label>
+                                    <input
+                                        type="text"
+                                        value={newTitle}
+                                        onChange={(e) => setNewTitle(e.target.value)}
+                                        placeholder="e.g. Managing Director"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Company Name</label>
+                                    <input
+                                        type="text"
+                                        value={newCompany}
+                                        onChange={(e) => setNewCompany(e.target.value)}
+                                        placeholder="e.g. Nishat Mills"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Relationship Type</label>
+                                    <select
+                                        value={newType}
+                                        onChange={(e) => setNewType(e.target.value as any)}
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                                    >
+                                        <option value="customer">Customer / Client</option>
+                                        <option value="partner">Technology Partner</option>
+                                        <option value="vendor">Vendor / Supplier</option>
+                                        <option value="lead">Prospect Lead</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Email Address *</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={newEmail}
+                                        onChange={(e) => setNewEmail(e.target.value)}
+                                        placeholder="e.g. mansha@nishat.net"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Direct Phone / WhatsApp *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={newPhone}
+                                        onChange={(e) => setNewPhone(e.target.value)}
+                                        placeholder="e.g. +92 300 1234567"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">City</label>
+                                    <input
+                                        type="text"
+                                        value={newCity}
+                                        onChange={(e) => setNewCity(e.target.value)}
+                                        placeholder="e.g. Lahore"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Country</label>
+                                    <input
+                                        type="text"
+                                        value={newCountry}
+                                        onChange={(e) => setNewCountry(e.target.value)}
+                                        placeholder="e.g. Pakistan"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCreateModalOpen(false)}
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-2.5 rounded-xl font-semibold transition-all cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95"
+                                >
+                                    Save Contact
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

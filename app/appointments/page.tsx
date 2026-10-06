@@ -1,132 +1,689 @@
 "use client";
-import { fetchAPI } from '@/lib/api';
 
-import AppointmentsHeader from "@/components/appointments/AppointmentsHeader";
-import { useEffect, useState } from "react";
-import { Plus, Calendar, Clock, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import {
+    Calendar as CalendarIcon,
+    Clock,
+    User,
+    Plus,
+    X,
+    CheckCircle2,
+    Video,
+    Link2,
+    Copy,
+    Share2,
+    Mail,
+    Phone,
+    Building2,
+    Check,
+    CalendarCheck,
+    Filter,
+    ArrowRight,
+    Sparkles,
+    Shield
+} from "lucide-react";
 
-type Appointment = {
+const MENU_ITEMS = [
+    { name: "Appointments", href: "/appointments" },
+    { name: "Calendar View", href: "/calendar" },
+    { name: "Reporting", href: "/calendar/reporting" },
+    { name: "Configuration", href: "/calendar/configuration" },
+];
+
+export type Appointment = {
     id: string;
-    name: string;
+    title: string;
+    client_name: string;
+    client_email: string;
+    client_phone?: string;
+    company?: string;
+    host_name: string;
+    host_role: string;
+    date: string;
     start_time: string;
     end_time: string;
-    state: string;
+    duration_min: number;
+    type: "erp_demo" | "architecture_review" | "client_checkin" | "onboarding";
+    status: "confirmed" | "completed" | "cancelled" | "pending";
+    meet_link: string;
+    notes?: string;
 };
 
+const APPOINTMENT_TYPES = [
+    {
+        id: "erp_demo",
+        label: "ERP & CRM Product Walkthrough",
+        duration: "30 Min",
+        badge: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+        description: "Live demonstration of unified accounting, live leads pool scraper, and sprint management."
+    },
+    {
+        id: "architecture_review",
+        label: "Technical Architecture & API Review",
+        duration: "45 Min",
+        badge: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
+        description: "Deep dive into multi-tenant database isolation, JWT auth middleware, and webhook integrations."
+    },
+    {
+        id: "onboarding",
+        label: "Enterprise Customer Onboarding",
+        duration: "60 Min",
+        badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+        description: "Hands-on staff training, user access setup, and custom workflow configuration."
+    },
+    {
+        id: "client_checkin",
+        label: "Executive Sprint Check-in",
+        duration: "15 Min",
+        badge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+        description: "Bi-weekly milestone progress review and sprint blocker resolution."
+    }
+];
+
+const INITIAL_APPOINTMENTS: Appointment[] = [
+    {
+        id: "APT/2026/01",
+        title: "ERP & CRM Product Walkthrough",
+        client_name: "Tariq Mansoor",
+        client_email: "tariq@nexussolutions.pk",
+        client_phone: "+92 300 8472910",
+        company: "Nexus Solutions Ltd",
+        host_name: "Salim Ghauri",
+        host_role: "Principal Architect",
+        date: "2026-03-10",
+        start_time: "10:00 AM",
+        end_time: "10:30 AM",
+        duration_min: 30,
+        type: "erp_demo",
+        status: "confirmed",
+        meet_link: "https://meet.beraxis.online/erp-nexus-demo",
+        notes: "Interested in custom warehouse RFID scanner sync and Pakistan live leads pool."
+    },
+    {
+        id: "APT/2026/02",
+        title: "Technical Architecture & API Review",
+        client_name: "Dr. Ayesha Malik",
+        client_email: "ayesha.malik@shifa.org.pk",
+        client_phone: "+92 321 4458921",
+        company: "Shifa Healthcare Systems",
+        host_name: "Sarah Vance",
+        host_role: "Lead UI/UX Designer",
+        date: "2026-03-11",
+        start_time: "02:00 PM",
+        end_time: "02:45 PM",
+        duration_min: 45,
+        type: "architecture_review",
+        status: "confirmed",
+        meet_link: "https://meet.beraxis.online/shifa-tech-review",
+        notes: "Review patient ledger integration and HIPAA/FBR compliant data storage."
+    },
+    {
+        id: "APT/2026/03",
+        title: "Enterprise Customer Onboarding",
+        client_name: "Kamran Akram",
+        client_email: "kamran@albaraka.com.pk",
+        client_phone: "+92 333 7182930",
+        company: "Al Baraka Logistics",
+        host_name: "Bilal Mahmood",
+        host_role: "ERP Specialist",
+        date: "2026-03-12",
+        start_time: "11:00 AM",
+        end_time: "12:00 PM",
+        duration_min: 60,
+        type: "onboarding",
+        status: "pending",
+        meet_link: "https://meet.beraxis.online/albaraka-onboard",
+        notes: "Initial setup of 4 warehouse hubs across Lahore and Karachi."
+    },
+    {
+        id: "APT/2026/04",
+        title: "Executive Sprint Check-in",
+        client_name: "Zubair Hashmi",
+        client_email: "zubair@crestholding.com",
+        client_phone: "+92 301 9823411",
+        company: "Crest Holdings",
+        host_name: "Salim Ghauri",
+        host_role: "Principal Architect",
+        date: "2026-03-08",
+        start_time: "04:30 PM",
+        end_time: "04:45 PM",
+        duration_min: 15,
+        type: "client_checkin",
+        status: "completed",
+        meet_link: "https://meet.beraxis.online/crest-checkin",
+        notes: "Sprint 4 milestone approved by stakeholders."
+    }
+];
+
 export default function AppointmentsPage() {
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newName, setNewName] = useState("");
-    const [newDate, setNewDate] = useState("");
+    const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
+    const [statusFilter, setStatusFilter] = useState<string>("all");
 
-    useEffect(() => {
-        fetchAPI("/appointments/appointments")
-            .then((r) => r.ok ? r.json() : [])
-            .then(setAppointments)
-            .catch(console.error);
-    }, []);
+    // Book Modal State
+    const [isBookModalOpen, setIsBookModalOpen] = useState(false);
+    const [clientName, setClientName] = useState("");
+    const [clientEmail, setClientEmail] = useState("");
+    const [clientPhone, setClientPhone] = useState("");
+    const [companyName, setCompanyName] = useState("");
+    const [hostName, setHostName] = useState("Salim Ghauri");
+    const [apptType, setApptType] = useState<Appointment["type"]>("erp_demo");
+    const [apptDate, setApptDate] = useState("2026-03-12");
+    const [apptTime, setApptTime] = useState("11:00 AM");
+    const [notes, setNotes] = useState("");
 
-    const createAppointment = async () => {
-        if (!newName.trim() || !newDate) return;
+    // Public link modal
+    const [showLinkModal, setShowLinkModal] = useState(false);
+    const [activeBookingUrl, setActiveBookingUrl] = useState("https://www.beraxis.online/appointments/book/erp-demo");
 
-        // Simple mock duration of 1 hour
-        const start = new Date(newDate);
-        const end = new Date(start.getTime() + 60 * 60 * 1000);
+    const [toastMsg, setToastMsg] = useState("");
 
-        const res = await fetchAPI("/appointments/appointments", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                name: newName,
-                start_time: start.toISOString(),
-                end_time: end.toISOString()
-            }),
-        });
-        if (res.ok) {
-            const appt = await res.json();
-            setAppointments([...appointments, appt]);
-            setNewName("");
-            setNewDate("");
-            setIsModalOpen(false);
-        }
+    const showToast = (msg: string) => {
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(""), 5000);
     };
 
-    return (
-        <div className="flex flex-col h-screen">
-            <AppointmentsHeader />
+    const handleCreateAppointment = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!clientName.trim() || !clientEmail.trim()) return;
 
-            <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-gray-200">Upcoming Appointments</h2>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded flex items-center gap-1"
-                    >
-                        <Plus size={16} /> New Appointment
-                    </button>
+        const duration = apptType === "onboarding" ? 60 : apptType === "architecture_review" ? 45 : apptType === "client_checkin" ? 15 : 30;
+        const typeInfo = APPOINTMENT_TYPES.find(t => t.id === apptType);
+
+        const newAppt: Appointment = {
+            id: `APT/2026/0${appointments.length + 1}`,
+            title: typeInfo?.label || "Meeting",
+            client_name: clientName.trim(),
+            client_email: clientEmail.trim(),
+            client_phone: clientPhone.trim() || undefined,
+            company: companyName.trim() || "Independent Organization",
+            host_name: hostName,
+            host_role: hostName.includes("Salim") ? "Principal Architect" : hostName.includes("Sarah") ? "Lead UI/UX" : "ERP Specialist",
+            date: apptDate,
+            start_time: apptTime,
+            end_time: "11:30 AM",
+            duration_min: duration,
+            type: apptType,
+            status: "confirmed",
+            meet_link: `https://meet.beraxis.online/${clientName.toLowerCase().replace(/[^a-z0-9]/g, "")}-${Math.floor(100 + Math.random() * 900)}`,
+            notes: notes.trim()
+        };
+
+        setAppointments([newAppt, ...appointments]);
+        setIsBookModalOpen(false);
+        setClientName("");
+        setClientEmail("");
+        setClientPhone("");
+        setCompanyName("");
+        setNotes("");
+        showToast(`🎉 Appointment scheduled with ${newAppt.client_name} (${newAppt.date} at ${newAppt.start_time})!`);
+    };
+
+    const toggleStatus = (id: string, newStatus: Appointment["status"]) => {
+        setAppointments(appointments.map(a => a.id === id ? { ...a, status: newStatus } : a));
+        showToast(`Status updated to ${newStatus.toUpperCase()}`);
+    };
+
+    const copyMeetingLink = (url: string) => {
+        navigator.clipboard.writeText(url);
+        showToast("📋 Meeting link copied to clipboard!");
+    };
+
+    const filteredAppointments = statusFilter === "all"
+        ? appointments
+        : appointments.filter(a => a.status === statusFilter);
+
+    return (
+        <div className="flex flex-col h-screen bg-[#0F172A]">
+            <StandardModuleHeader
+                moduleName="Appointments"
+                moduleIcon={<CalendarCheck size={20} />}
+                menuItems={MENU_ITEMS}
+                searchPlaceholder="Search by client, company, host..."
+                onNewClick={() => setIsBookModalOpen(true)}
+                newButtonText="Book Appointment"
+            />
+
+            <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+                {/* Hero Banner */}
+                <div className="bg-gradient-to-r from-purple-900/40 via-[#1E293B] to-cyan-900/30 border border-purple-500/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                        <div className="space-y-2 max-w-2xl">
+                            <div className="flex items-center gap-2">
+                                <span className="p-2 bg-purple-500/20 text-purple-400 rounded-xl">
+                                    <CalendarCheck size={22} />
+                                </span>
+                                <h2 className="text-2xl font-bold text-white tracking-tight">
+                                    Client Appointments & Video Scheduling
+                                </h2>
+                            </div>
+                            <p className="text-xs md:text-sm text-gray-300">
+                                Seamlessly schedule product walkthroughs, architecture consultations, and client onboarding sessions with auto-generated Beraxis video meeting links.
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <button
+                                onClick={() => {
+                                    setActiveBookingUrl(`${typeof window !== "undefined" ? window.location.origin : "https://www.beraxis.online"}/appointments/book/erp-demo`);
+                                    setShowLinkModal(true);
+                                }}
+                                className="bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
+                            >
+                                <Share2 size={15} />
+                                <span>Share Booking Page</span>
+                            </button>
+
+                            <button
+                                onClick={() => setIsBookModalOpen(true)}
+                                className="bg-purple-600 hover:bg-purple-500 text-white px-5 py-2.5 rounded-2xl text-xs md:text-sm font-bold flex items-center gap-2 shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95"
+                            >
+                                <Plus size={16} />
+                                <span>Book New Meeting</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
+                {/* Pre-Configured Booking Types Bar */}
+                <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-gray-300 flex items-center gap-2">
+                        <Sparkles size={16} className="text-purple-400" /> Active Appointment Service Templates
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {APPOINTMENT_TYPES.map((type) => (
+                            <div
+                                key={type.id}
+                                className="bg-[#1E293B] border border-gray-700/80 hover:border-purple-500/60 p-4 rounded-2xl transition-all group hover:shadow-xl space-y-2 flex flex-col justify-between"
+                            >
+                                <div>
+                                    <div className="flex items-center justify-between">
+                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${type.badge}`}>
+                                            {type.duration}
+                                        </span>
+                                        <Video size={14} className="text-gray-400 group-hover:text-purple-400 transition-colors" />
+                                    </div>
+                                    <h4 className="text-xs font-bold text-white mt-2 group-hover:text-purple-300 transition-colors">
+                                        {type.label}
+                                    </h4>
+                                    <p className="text-[11px] text-gray-400 line-clamp-2 mt-1">
+                                        {type.description}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setApptType(type.id as any);
+                                        setIsBookModalOpen(true);
+                                    }}
+                                    className="pt-2 border-t border-gray-800 text-[11px] text-purple-400 font-bold flex items-center justify-between hover:text-purple-300 cursor-pointer"
+                                >
+                                    <span>Schedule with Host</span>
+                                    <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Toast Notification */}
+                {toastMsg && (
+                    <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-2xl text-xs md:text-sm font-semibold flex items-center justify-between shadow-lg backdrop-blur-md animate-in fade-in">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 size={18} />
+                            <span>{toastMsg}</span>
+                        </div>
+                        <button onClick={() => setToastMsg("")} className="text-gray-400 hover:text-white cursor-pointer">
+                            ✕
+                        </button>
+                    </div>
+                )}
+
+                {/* Filter Tabs */}
+                <div className="flex items-center justify-between flex-wrap gap-4 pt-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {["all", "confirmed", "pending", "completed", "cancelled"].map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setStatusFilter(status)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                                    statusFilter === status
+                                        ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+                                        : "bg-[#1E293B] text-gray-400 hover:text-white border border-gray-700/60"
+                                }`}
+                            >
+                                {status === "all" ? "All Appointments" : status}
+                            </button>
+                        ))}
+                    </div>
+
+                    <span className="text-xs text-gray-400 font-semibold">
+                        {filteredAppointments.length} Scheduled Meetings
+                    </span>
+                </div>
+
+                {/* Appointments Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {appointments.map((appt) => (
+                    {filteredAppointments.map((appt) => (
                         <div
                             key={appt.id}
-                            className="bg-[#1E293B] border border-gray-700 rounded-lg p-6 hover:border-purple-500 transition-colors"
+                            className="bg-[#1E293B] border border-gray-700 hover:border-purple-500/50 rounded-2xl p-6 transition-all group shadow-xl flex flex-col justify-between space-y-4"
                         >
-                            <div className="flex items-start gap-3 mb-4">
-                                <div className="bg-purple-500/20 p-2 rounded text-purple-500">
-                                    <Calendar size={20} />
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-start gap-2">
+                                    <span className="font-mono text-[10px] text-gray-400 font-bold">{appt.id}</span>
+                                    <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${
+                                        appt.status === "confirmed"
+                                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                            : appt.status === "completed"
+                                            ? "bg-blue-500/20 text-blue-300 border-blue-500/30"
+                                            : appt.status === "pending"
+                                            ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                                            : "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                                    }`}>
+                                        {appt.status}
+                                    </span>
                                 </div>
+
                                 <div>
-                                    <h3 className="font-medium text-white">{appt.name}</h3>
-                                    <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
-                                        <Clock size={12} />
-                                        <span>{new Date(appt.start_time).toLocaleString()}</span>
+                                    <h3 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors">
+                                        {appt.title}
+                                    </h3>
+                                    <div className="flex items-center gap-1.5 text-xs text-cyan-400 font-medium mt-0.5">
+                                        <Building2 size={13} />
+                                        <span>{appt.company || "Direct Client"}</span>
                                     </div>
                                 </div>
+
+                                {/* Date & Time */}
+                                <div className="bg-[#0F172A] p-3.5 rounded-xl border border-gray-800 space-y-2 text-xs">
+                                    <div className="flex items-center justify-between text-gray-300">
+                                        <div className="flex items-center gap-1.5">
+                                            <CalendarIcon size={14} className="text-purple-400" />
+                                            <span>{new Date(appt.date).toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                        </div>
+                                        <span className="font-bold text-white">{appt.start_time}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-gray-400 pt-1 border-t border-gray-800/80">
+                                        <div className="flex items-center gap-1.5">
+                                            <User size={14} className="text-cyan-400" />
+                                            <span>Host: {appt.host_name}</span>
+                                        </div>
+                                        <span className="text-[11px] text-purple-300">{appt.duration_min} min call</span>
+                                    </div>
+                                </div>
+
+                                {/* Client contact & notes */}
+                                <div className="text-xs text-gray-400 space-y-1">
+                                    <div className="flex items-center gap-2 text-white font-medium">
+                                        <span>{appt.client_name}</span>
+                                        <span className="text-gray-500">•</span>
+                                        <span className="text-gray-400 text-[11px]">{appt.client_email}</span>
+                                    </div>
+                                    {appt.notes && (
+                                        <p className="text-[11px] text-gray-400 line-clamp-2 italic">
+                                            "{appt.notes}"
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-                            <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
-                                <span className="text-xs text-gray-500 uppercase font-bold">{appt.state}</span>
-                                <button className="text-sm text-purple-400 hover:text-purple-300">View Details</button>
+
+                            {/* Meeting Link & Actions */}
+                            <div className="pt-3 border-t border-gray-800 space-y-2">
+                                <div className="flex items-center justify-between bg-purple-500/10 border border-purple-500/20 px-3 py-1.5 rounded-xl text-xs">
+                                    <a
+                                        href={appt.meet_link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-purple-300 hover:text-white font-bold flex items-center gap-1.5"
+                                    >
+                                        <Video size={14} /> Join Video Room
+                                    </a>
+                                    <button
+                                        onClick={() => copyMeetingLink(appt.meet_link)}
+                                        className="text-gray-400 hover:text-white p-1 rounded cursor-pointer"
+                                        title="Copy Meet Link"
+                                    >
+                                        <Copy size={13} />
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center justify-between text-[11px]">
+                                    <button
+                                        onClick={() => toggleStatus(appt.id, appt.status === "completed" ? "confirmed" : "completed")}
+                                        className="text-emerald-400 hover:text-emerald-300 font-semibold cursor-pointer"
+                                    >
+                                        {appt.status === "completed" ? "↺ Mark Active" : "✓ Mark Completed"}
+                                    </button>
+                                    <button
+                                        onClick={() => toggleStatus(appt.id, "cancelled")}
+                                        className="text-rose-400 hover:text-rose-300 font-semibold cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
-
-                    {appointments.length === 0 && (
-                        <div className="col-span-full text-center py-12 text-gray-500">
-                            No appointments scheduled.
-                        </div>
-                    )}
                 </div>
             </div>
 
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="bg-[#1E293B] rounded-lg p-6 w-full max-w-md border border-gray-700">
-                        <h3 className="text-lg font-semibold text-white mb-4">Schedule Appointment</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Customer Name</label>
-                                <input
-                                    type="text"
-                                    value={newName}
-                                    onChange={(e) => setNewName(e.target.value)}
-                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-purple-500"
-                                    placeholder="e.g. John Doe"
-                                />
+            {/* ========================================================================= */}
+            {/* BOOK APPOINTMENT MODAL                                                    */}
+            {/* ========================================================================= */}
+            {isBookModalOpen && (
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-purple-500/20 text-purple-400 rounded-xl">
+                                    <CalendarCheck size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-base">Book Client Appointment</h3>
+                                    <p className="text-xs text-gray-400">Schedule video meeting with automated room generation</p>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Date & Time</label>
-                                <input
-                                    type="datetime-local"
-                                    value={newDate}
-                                    onChange={(e) => setNewDate(e.target.value)}
-                                    className="w-full bg-[#0F172A] border border-gray-600 rounded px-3 py-2 text-white focus:border-purple-500"
-                                />
-                            </div>
+                            <button
+                                onClick={() => setIsBookModalOpen(false)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
                         </div>
-                        <div className="flex justify-end gap-3 mt-6">
-                            <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-300 hover:text-white">Cancel</button>
-                            <button onClick={createAppointment} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded">Schedule</button>
+
+                        <form onSubmit={handleCreateAppointment} className="space-y-4 text-xs">
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Appointment Type *</label>
+                                <select
+                                    value={apptType}
+                                    onChange={(e) => setApptType(e.target.value as any)}
+                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                                >
+                                    {APPOINTMENT_TYPES.map((t) => (
+                                        <option key={t.id} value={t.id}>{t.label} ({t.duration})</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Client Full Name *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={clientName}
+                                        onChange={(e) => setClientName(e.target.value)}
+                                        placeholder="e.g. Tariq Mansoor"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Client Email *</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={clientEmail}
+                                        onChange={(e) => setClientEmail(e.target.value)}
+                                        placeholder="e.g. tariq@company.pk"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Phone Number (Optional)</label>
+                                    <input
+                                        type="text"
+                                        value={clientPhone}
+                                        onChange={(e) => setClientPhone(e.target.value)}
+                                        placeholder="e.g. +92 300 1234567"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Client Company</label>
+                                    <input
+                                        type="text"
+                                        value={companyName}
+                                        onChange={(e) => setCompanyName(e.target.value)}
+                                        placeholder="e.g. Nexus Solutions"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Host Staff (Internal)</label>
+                                    <select
+                                        value={hostName}
+                                        onChange={(e) => setHostName(e.target.value)}
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                                    >
+                                        <option value="Salim Ghauri">Salim Ghauri</option>
+                                        <option value="Sarah Vance">Sarah Vance</option>
+                                        <option value="Bilal Mahmood">Bilal Mahmood</option>
+                                        <option value="Jane Smith">Jane Smith</option>
+                                        <option value="Bob Wilson">Bob Wilson</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Meeting Date *</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={apptDate}
+                                        onChange={(e) => setApptDate(e.target.value)}
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Time Slot *</label>
+                                    <select
+                                        value={apptTime}
+                                        onChange={(e) => setApptTime(e.target.value)}
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                                    >
+                                        <option value="09:00 AM">09:00 AM</option>
+                                        <option value="10:00 AM">10:00 AM</option>
+                                        <option value="11:00 AM">11:00 AM</option>
+                                        <option value="02:00 PM">02:00 PM</option>
+                                        <option value="03:30 PM">03:30 PM</option>
+                                        <option value="05:00 PM">05:00 PM</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Meeting Agenda / Notes</label>
+                                <textarea
+                                    rows={2}
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Topics to discuss or specific requirements..."
+                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsBookModalOpen(false)}
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-2.5 rounded-xl font-semibold transition-all cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+                                >
+                                    <Video size={14} /> Schedule Meeting
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* SHARE PUBLIC BOOKING LINK MODAL                                           */}
+            {/* ========================================================================= */}
+            {showLinkModal && (
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-cyan-500/20 text-cyan-400 rounded-xl">
+                                    <Share2 size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-base">Share Public Booking Page</h3>
+                                    <p className="text-xs text-gray-400">Allow clients and leads to schedule calls automatically</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowLinkModal(false)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4 text-xs">
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Your Public Scheduling URL</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={activeBookingUrl}
+                                        className="flex-1 bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-cyan-300 font-mono text-xs select-all focus:outline-none"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(activeBookingUrl);
+                                            showToast("📋 Public booking link copied!");
+                                        }}
+                                        className="bg-cyan-600 hover:bg-cyan-500 text-white px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                        <Copy size={14} /> Copy
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p className="text-gray-400 text-[11px] leading-relaxed">
+                                Share this link in your email signature, proposal emails, or WhatsApp chats. Prospective clients can pick available time slots and receive automatic calendar invitations.
+                            </p>
+
+                            <div className="pt-2">
+                                <button
+                                    onClick={() => setShowLinkModal(false)}
+                                    className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-2.5 rounded-xl transition-all cursor-pointer"
+                                >
+                                    Done
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
