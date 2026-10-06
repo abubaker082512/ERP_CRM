@@ -20,7 +20,8 @@ import {
     ArrowRight,
     ArrowLeft,
     CheckCircle2,
-    Globe
+    Globe,
+    Zap
 } from "lucide-react";
 
 type HostProfile = {
@@ -188,9 +189,19 @@ export default function PublicBookingPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <Globe size={13} className="text-purple-400" />
-                    <span>{host.timezone}</span>
+                <div className="flex items-center gap-3">
+                    <Link
+                        href="/meet"
+                        className="hidden sm:flex items-center gap-1.5 text-xs text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 px-3 py-1.5 rounded-xl font-bold transition-all"
+                    >
+                        <Zap size={13} className="text-amber-300 fill-amber-300" />
+                        <span>Instant Video Room</span>
+                    </Link>
+
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <Globe size={13} className="text-purple-400" />
+                        <span>{host.timezone}</span>
+                    </div>
                 </div>
             </header>
 

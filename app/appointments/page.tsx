@@ -25,7 +25,8 @@ import {
     Shield,
     Settings,
     Send,
-    ExternalLink
+    ExternalLink,
+    Zap
 } from "lucide-react";
 
 const MENU_ITEMS = [
@@ -189,6 +190,10 @@ export default function AppointmentsPage() {
     const [showLinkModal, setShowLinkModal] = useState(false);
     const [selectedHostSlug, setSelectedHostSlug] = useState("salim-ghauri");
 
+    // Instant Meeting Modal State
+    const [showInstantModal, setShowInstantModal] = useState(false);
+    const [instantMeetingUrl, setInstantMeetingUrl] = useState("");
+
     // Email Invite Modal
     const [emailAppt, setEmailAppt] = useState<Appointment | null>(null);
     const [emailRecipient, setEmailRecipient] = useState("");
@@ -199,6 +204,17 @@ export default function AppointmentsPage() {
     const showToast = (msg: string) => {
         setToastMsg(msg);
         setTimeout(() => setToastMsg(""), 5000);
+    };
+
+    const handleCreateInstantMeeting = () => {
+        const uniqueRoomCode = `meet-${Math.random().toString(36).substring(2, 8)}-${Math.random().toString(36).substring(2, 6)}`;
+        const url = typeof window !== "undefined"
+            ? `${window.location.origin}/meet/${uniqueRoomCode}`
+            : `https://www.beraxis.online/meet/${uniqueRoomCode}`;
+        setInstantMeetingUrl(url);
+        setShowInstantModal(true);
+        navigator.clipboard.writeText(url);
+        showToast("⚡ Instant video room generated & copied to clipboard!");
     };
 
     const handleCreateAppointment = (e: React.FormEvent) => {
@@ -293,6 +309,15 @@ export default function AppointmentsPage() {
 
                         <div className="flex items-center gap-3 flex-wrap">
                             <button
+                                onClick={handleCreateInstantMeeting}
+                                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-4 py-2.5 rounded-2xl text-xs md:text-sm font-bold flex items-center gap-2 shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95"
+                                title="Generate an instant video room link"
+                            >
+                                <Zap size={16} className="text-amber-300 fill-amber-300" />
+                                <span>Instant Meeting Link</span>
+                            </button>
+
+                            <button
                                 onClick={() => setShowLinkModal(true)}
                                 className="bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
                             >
@@ -302,10 +327,10 @@ export default function AppointmentsPage() {
 
                             <button
                                 onClick={() => setIsBookModalOpen(true)}
-                                className="bg-purple-600 hover:bg-purple-500 text-white px-5 py-2.5 rounded-2xl text-xs md:text-sm font-bold flex items-center gap-2 shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95"
+                                className="bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
                             >
                                 <Plus size={16} />
-                                <span>Book New Meeting</span>
+                                <span>Schedule Meeting</span>
                             </button>
                         </div>
                     </div>
@@ -830,6 +855,70 @@ export default function AppointmentsPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* INSTANT MEETING POPUP MODAL */}
+            {showInstantModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+                    <div className="bg-[#141C2E] border border-purple-500/40 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">
+                                    <Zap size={20} className="text-amber-300 fill-amber-300" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-base">Instant Video Meeting Link</h3>
+                                    <p className="text-xs text-gray-400">Share with external clients or join immediately</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowInstantModal(false)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold text-gray-300">Generated Video Room URL</label>
+                            <div className="flex items-center gap-2 bg-[#0F172A] border border-purple-500/20 rounded-2xl p-2.5 text-xs font-mono text-purple-200">
+                                <span className="flex-1 truncate">{instantMeetingUrl}</span>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(instantMeetingUrl);
+                                        showToast("📋 Link copied to clipboard!");
+                                    }}
+                                    className="p-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl transition-all cursor-pointer shrink-0"
+                                    title="Copy Link"
+                                >
+                                    <Copy size={14} />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2.5 pt-2">
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(instantMeetingUrl);
+                                    showToast("📋 Link copied to clipboard!");
+                                }}
+                                className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                            >
+                                <Copy size={14} />
+                                <span>Copy Link</span>
+                            </button>
+                            <a
+                                href={instantMeetingUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 transition-all text-center"
+                            >
+                                <span>Launch Room</span>
+                                <ExternalLink size={14} />
+                            </a>
+                        </div>
                     </div>
                 </div>
             )}
