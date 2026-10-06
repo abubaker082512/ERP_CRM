@@ -44,6 +44,7 @@ const apps = [
     { name: "Knowledge", icon: BookOpen, color: "bg-teal-500", href: "/knowledge" },
     { name: "Contacts", icon: Users, color: "bg-purple-500", href: "/contacts" },
     { name: "CRM", icon: Target, color: "bg-cyan-600", href: "/crm" },
+    { name: "Leads Pool", icon: Globe, color: "bg-cyan-500", href: "/crm/leads-pool" },
     { name: "Sales", icon: BarChart3, color: "bg-orange-600", href: "/sales" },
     { name: "Dashboards", icon: Grid3x3, color: "bg-pink-500", href: "/dashboard" },
     { name: "Point of Sale", icon: ShoppingCart, color: "bg-amber-600", href: "/pos" },
@@ -70,7 +71,11 @@ const apps = [
 
 function matchesModule(appName: string, selectedModule: string): boolean {
     if (!selectedModule) return false;
-    return appName.toLowerCase().trim() === selectedModule.toLowerCase().trim();
+    const cleanApp = appName.toLowerCase().trim();
+    const cleanMod = selectedModule.toLowerCase().trim();
+    if (cleanApp === cleanMod) return true;
+    if (cleanMod === 'crm' && (cleanApp === 'leads pool' || cleanApp === 'contacts')) return true;
+    return false;
 }
 
 export default function AppsDashboardPage() {

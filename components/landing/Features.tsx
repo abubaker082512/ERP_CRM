@@ -1,7 +1,14 @@
-import { LayoutDashboard, Users, ShoppingCart, Package, ShieldCheck, Zap, Sparkles, Mic, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
+import { LayoutDashboard, Users, ShoppingCart, Package, ShieldCheck, Zap, Sparkles, Mic, CheckCircle2, XCircle, ArrowRight, Globe, Database, PhoneCall, Mail } from 'lucide-react';
 import Link from 'next/link';
 
 const features = [
+    {
+        title: "Global Leads Pool (10M+)",
+        description: "Access 10M+ worldwide verified B2B leads across USA, UK, UAE, Saudi, Europe & Asia with direct dials, verified emails, and 1-click CRM import.",
+        icon: Globe,
+        color: "text-cyan-400",
+        bg: "bg-cyan-500/10"
+    },
     {
         title: "Intelligent CRM & Pipeline",
         description: "Track leads, manage opportunities, and build lasting customer relationships with interactive Kanban drag-and-drop workflow automation.",
@@ -50,17 +57,16 @@ const features = [
         icon: ShieldCheck,
         color: "text-green-400",
         bg: "bg-green-500/10"
-    },
-    {
-        title: "Ultra-Fast Next.js 15 Engine",
-        description: "Sub-50ms API response times built on Next.js 15, React, and Python FastAPI serverless architecture.",
-        icon: Zap,
-        color: "text-yellow-400",
-        bg: "bg-yellow-500/10"
     }
 ];
 
 const odooComparison = [
+    {
+        feature: "Global Leads Pool (10M+ Contacts)",
+        beraxis: "100% Free & Built-In",
+        odoo: "Expensive Third-Party Credits",
+        winner: "beraxis"
+    },
     {
         feature: "AI Voice Pilot Assistant",
         beraxis: "Included Native (Duplex Voice)",
@@ -136,6 +142,122 @@ export default function Features() {
                             </div>
                         </div>
                     ))}
+                </div>
+
+                {/* Dedicated High-Impact Showcase: Global Leads Pool */}
+                <div className="mb-24 bg-gradient-to-br from-cyan-950/40 via-[#070B16] to-purple-950/30 border border-cyan-500/30 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+
+                    <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                        <div>
+                            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-bold uppercase tracking-wider mb-5">
+                                <Globe size={14} className="animate-spin text-cyan-400" /> Free Native B2B Engine
+                            </div>
+                            <h3 className="text-3xl sm:text-4xl font-extrabold text-white mb-5 leading-tight">
+                                Never Pay For Apollo or ZoomInfo Again: <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-purple-400">
+                                    10M+ Global Leads Pool Built-in
+                                </span>
+                            </h3>
+                            <p className="text-gray-300 text-base font-light leading-relaxed mb-6">
+                                Stop burning thousands of dollars every month on separate lead enrichment tools. Beraxis comes with a pre-indexed, verified international leads pool. Discover decision-makers, direct phone numbers, and verified corporate emails, then import them directly into your sales pipeline in a single click.
+                            </p>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3.5">
+                                    <div className="text-xl sm:text-2xl font-black text-cyan-300">10M+</div>
+                                    <div className="text-xs text-gray-400">B2B Contacts</div>
+                                </div>
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3.5">
+                                    <div className="text-xl sm:text-2xl font-black text-purple-300">50+</div>
+                                    <div className="text-xs text-gray-400">Countries Covered</div>
+                                </div>
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3.5 col-span-2 sm:col-span-1">
+                                    <div className="text-xl sm:text-2xl font-black text-emerald-400">$0</div>
+                                    <div className="text-xs text-gray-400">Zero Add-on Fees</div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-4">
+                                <Link 
+                                    href="/crm/leads-pool"
+                                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold px-6 py-3.5 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-cyan-900/30 transition-all hover:scale-105"
+                                >
+                                    Launch Leads Pool <ArrowRight size={17} />
+                                </Link>
+                                <Link 
+                                    href="/signup"
+                                    className="px-6 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-gray-200 hover:text-white font-medium text-sm transition-all"
+                                >
+                                    Get Free Account
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Visual Mock of Leads Pool in action */}
+                        <div className="bg-[#0D1326] border border-cyan-500/30 rounded-2xl p-5 shadow-xl">
+                            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4 text-xs text-gray-400">
+                                <div className="flex items-center gap-2 font-mono text-cyan-300">
+                                    <Database size={14} /> LIVE_PROSPECTING_FEED
+                                </div>
+                                <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">1-Click Import</span>
+                            </div>
+                            
+                            <div className="space-y-3">
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-purple-600/30 text-purple-300 flex items-center justify-center font-bold text-xs">
+                                            SC
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-bold text-white">Sarah Jenkins • Chief Technology Officer</div>
+                                            <div className="text-[11px] text-gray-400 flex items-center gap-2">
+                                                <span>Apex Cloud AI</span> • <span className="text-cyan-400">San Francisco, USA</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 flex items-center gap-1">
+                                        <Mail size={11} /> Verified
+                                    </span>
+                                </div>
+
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-blue-600/30 text-blue-300 flex items-center justify-center font-bold text-xs">
+                                            TA
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-bold text-white">Tariq Al-Mansoor • VP of Procurement</div>
+                                            <div className="text-[11px] text-gray-400 flex items-center gap-2">
+                                                <span>Gulf Horizon Logistics</span> • <span className="text-cyan-400">Dubai, UAE</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 flex items-center gap-1">
+                                        <PhoneCall size={11} /> Direct Dial
+                                    </span>
+                                </div>
+
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-pink-600/30 text-pink-300 flex items-center justify-center font-bold text-xs">
+                                            EM
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-bold text-white">Elena Müller • Head of Supply Chain</div>
+                                            <div className="text-[11px] text-gray-400 flex items-center gap-2">
+                                                <span>Nordic Green Energy</span> • <span className="text-cyan-400">Berlin, Germany</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span className="text-[11px] font-semibold text-purple-300 bg-purple-500/10 px-2 py-1 rounded border border-purple-500/20 flex items-center gap-1">
+                                        <Mail size={11} /> Permuted MX
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Dedicated SEO Section: Beraxis vs Odoo Comparison Matrix */}

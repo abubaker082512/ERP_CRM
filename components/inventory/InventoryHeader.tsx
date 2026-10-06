@@ -128,13 +128,16 @@ export default function InventoryHeader({ onNewClick, searchTerm = '', onSearchC
                     </button>
 
                     <Link
-                        href="/settings"
-                        title="Company Settings"
-                        className="flex items-center gap-2 border-l border-gray-700 pl-3 hover:opacity-90 transition-opacity"
+                        href="/billing"
+                        title="Subscription & Plan"
+                        className="flex items-center gap-1.5 border-l border-gray-700 pl-3 hover:opacity-90 transition-opacity"
                     >
-                        <span className="text-xs text-gray-300 font-medium hidden xl:inline">ABT IT Innovation</span>
-                        <div className="w-7 h-7 bg-emerald-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm">
-                            A
+                        <div className="flex flex-col text-right hidden xl:flex">
+                            <span className="text-xs text-gray-200 font-semibold truncate max-w-[130px]">ABT IT Innovation</span>
+                            <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Free Plan</span>
+                        </div>
+                        <div className="w-7 h-7 bg-gradient-to-tr from-emerald-600 to-teal-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm shrink-0">
+                            <Package size={13} />
                         </div>
                     </Link>
                 </div>

@@ -11,25 +11,26 @@ export default function Hero() {
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 
                 {/* SEO & High-Converting Badge */}
-                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 mb-8 backdrop-blur-sm shadow-md">
+                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500/20 via-cyan-500/20 to-pink-500/20 border border-purple-500/40 mb-8 backdrop-blur-sm shadow-lg shadow-purple-900/20">
                     <span className="flex h-2.5 w-2.5 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
                     </span>
-                    <span className="text-xs sm:text-sm font-semibold text-purple-200 tracking-wide">
-                        The #1 AI-Driven Odoo Alternative — 10x Faster & Smarter
+                    <span className="text-xs sm:text-sm font-semibold text-purple-200 tracking-wide flex items-center gap-2">
+                        <span className="bg-cyan-500/30 text-cyan-200 text-[11px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">New</span>
+                        Global Leads Pool Live — 10M+ Free B2B Contacts & 1-Click CRM Import!
                     </span>
                 </div>
 
                 {/* Main Headline */}
                 <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.08]">
                     Manage Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-amber-400">Universe</span><br />
-                    With AI & Voice Pilot
+                    With AI, Voice & Leads Pool
                 </h1>
 
                 {/* Subheadline with key SEO keywords */}
                 <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-12 font-light leading-relaxed">
-                    Beraxis ERP unifies CRM, Sales, Inventory, Accounting, HRMS, and POS under one context-aware AI framework with hands-free duplex Voice Pilot. The modern open-source alternative to Odoo built for speed and seamless growth.
+                    Beraxis ERP unifies CRM with a built-in <strong className="text-white font-semibold">Worldwide Leads Pool</strong>, Omnichannel Sales, Inventory, Accounting, HRMS, and Duplex Voice Pilot. The modern open-source alternative to Odoo built for explosive growth.
                 </p>
 
                 {/* Call To Actions */}
@@ -38,13 +39,13 @@ export default function Hero() {
                         Launch Your Free Workspace <ArrowRight className="group-hover:translate-x-1.5 transition-transform" size={22} />
                     </Link>
                     
-                    <a href="#odoo-comparison" className="px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-purple-400/40">
+                    <Link href="/crm/leads-pool" className="px-8 py-4 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-cyan-400/50">
+                        <Globe size={20} className="text-cyan-400" /> Explore Leads Pool
+                    </Link>
+
+                    <a href="#odoo-comparison" className="px-7 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-medium transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-purple-400/40">
                         <Layers size={20} className="text-purple-400" /> Compare vs Odoo
                     </a>
-
-                    <Link href="/contact" className="px-7 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white font-medium transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-sm">
-                        <PlayCircle size={20} className="text-pink-400" /> Book Demo
-                    </Link>
                 </div>
 
                 {/* Fast ERP Showcase Preview Container */}
@@ -58,7 +59,7 @@ export default function Hero() {
                                     <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
                                     <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
                                 </div>
-                                <span className="text-xs font-mono text-gray-400 border-l border-white/10 pl-3">beraxis.online/dashboard</span>
+                                <span className="text-xs font-mono text-gray-400 border-l border-white/10 pl-3">beraxis.online/crm/leads-pool</span>
                             </div>
                             <div className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 px-3 py-1 rounded-full text-xs text-purple-300 font-medium">
                                 <Mic size={14} className="animate-pulse text-purple-400" /> AI Voice Assistant Active
@@ -67,16 +68,18 @@ export default function Hero() {
 
                         {/* ERP Mock Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {/* Card 1: CRM & Pipeline */}
-                            <div className="bg-white/5 rounded-xl p-5 border border-white/10">
+                            {/* Card 1: Global Leads Pool */}
+                            <div className="bg-gradient-to-br from-cyan-950/40 to-blue-950/40 rounded-xl p-5 border border-cyan-500/30 relative overflow-hidden">
                                 <div className="flex justify-between items-center mb-3">
-                                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">CRM Pipeline</span>
-                                    <span className="text-xs bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded">+42% Growth</span>
+                                    <span className="text-xs font-semibold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
+                                        <Globe size={14} /> Leads Pool
+                                    </span>
+                                    <span className="text-xs bg-cyan-500/20 text-cyan-300 font-bold px-2 py-0.5 rounded">10M+ Records</span>
                                 </div>
-                                <div className="text-2xl font-extrabold text-white">$184,500</div>
-                                <p className="text-xs text-gray-400 mt-1">28 Active Deals in Pipeline</p>
-                                <div className="w-full bg-white/10 h-2 rounded-full mt-4 overflow-hidden">
-                                    <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-full w-[78%]"></div>
+                                <div className="text-2xl font-extrabold text-white">Global B2B Contacts</div>
+                                <p className="text-xs text-gray-300 mt-1">Verified Emails, Direct Dials & 1-Click Import</p>
+                                <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400 font-semibold">
+                                    <CheckCircle size={14} /> 100% Free Included
                                 </div>
                             </div>
 
@@ -88,7 +91,7 @@ export default function Hero() {
                                     </span>
                                     <span className="text-[10px] bg-purple-500/30 text-purple-200 px-2 py-0.5 rounded font-mono">Live</span>
                                 </div>
-                                <p className="text-sm font-medium text-white italic">"Create invoice for Acme Corp and update inventory status."</p>
+                                <p className="text-sm font-medium text-white italic">"Import 50 SaaS CEOs from USA to my CRM pipeline."</p>
                                 <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400 font-semibold">
                                     <CheckCircle size={14} /> Executed in 45ms
                                 </div>
@@ -116,10 +119,10 @@ export default function Hero() {
                         <ShieldCheck size={18} className="text-purple-400" /> Enterprise RLS Security
                     </div>
                     <div className="flex items-center justify-center gap-2.5 text-sm text-gray-300 font-medium">
-                        <Zap size={18} className="text-amber-400" /> Real-time Sub-second Sync
+                        <Globe size={18} className="text-cyan-400" /> 10M+ Global Leads Pool
                     </div>
                     <div className="flex items-center justify-center gap-2.5 text-sm text-gray-300 font-medium">
-                        <Globe size={18} className="text-cyan-400" /> Global Cloud Infrastructure
+                        <Zap size={18} className="text-amber-400" /> Real-time Sub-second Sync
                     </div>
                     <div className="flex items-center justify-center gap-2.5 text-sm text-gray-300 font-medium">
                         <Sparkles size={18} className="text-pink-400" /> 100% Odoo Feature Parity

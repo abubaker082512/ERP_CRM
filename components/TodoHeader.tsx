@@ -97,12 +97,19 @@ export default function TodoHeader({
                     >
                         <SettingsIcon size={18} />
                     </Link>
-                    <div className="flex items-center gap-2 border-l border-gray-700 pl-3">
-                        <span className="text-xs text-gray-300 hidden xl:inline font-medium">ABT IT Innovation PVT LTD.</span>
-                        <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-xs font-bold text-white shadow-inner">
-                            A
+                    <Link
+                        href="/billing"
+                        title="Subscription & Plan"
+                        className="flex items-center gap-1.5 border-l border-gray-700 pl-3 hover:opacity-90 transition-opacity"
+                    >
+                        <div className="flex flex-col text-right hidden xl:flex">
+                            <span className="text-xs text-gray-200 font-semibold truncate max-w-[130px]">ABT IT Innovation</span>
+                            <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Free Plan</span>
                         </div>
-                    </div>
+                        <div className="w-7 h-7 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm shrink-0">
+                            <CheckSquare size={13} />
+                        </div>
+                    </Link>
                 </div>
             </div>
         </header>
