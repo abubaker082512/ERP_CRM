@@ -24,6 +24,8 @@ import {
     Package
 } from "lucide-react";
 import { fetchAPI } from "@/lib/api";
+import BarcodeAndQRCanvas from "@/components/shared/BarcodeAndQRCanvas";
+import { Link as LinkIcon, Globe, FileText, Calendar } from "lucide-react";
 
 const MENU_ITEMS = [
     { name: "Barcode Scanner", href: "/barcode" },
@@ -434,7 +436,7 @@ export default function BarcodePage() {
                 </div>
             </div>
 
-            {/* Modal: Generate Printable Barcode Label */}
+            {/* Modal: Generate Printable Barcode & QR Code Label */}
             {isGenModalOpen && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg shadow-2xl p-6 relative animate-in fade-in zoom-in duration-200">
@@ -445,85 +447,152 @@ export default function BarcodePage() {
                             <X size={20} />
                         </button>
 
-                        <div className="flex items-center gap-3 mb-5">
+                        <div className="flex items-center gap-3 mb-4">
                             <div className="p-3 bg-pink-500/10 text-pink-400 rounded-xl border border-pink-500/20">
                                 <QrCode size={22} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Generate Product Barcode Label</h3>
-                                <p className="text-xs text-gray-400">Generate Code 128 / QR sticker for thermal printing</p>
+                                <h3 className="text-lg font-bold text-white">Generate Barcode or QR Code</h3>
+                                <p className="text-xs text-gray-400">Generate for any Website URL, Appointment Link, or Product SKU</p>
                             </div>
                         </div>
 
-                        <div className="space-y-4">
+                        {/* Quick Presets */}
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                            <span className="text-[10px] text-gray-400 font-bold uppercase self-center mr-1">Quick Presets:</span>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setGenSku("https://access.beraxis.online/appointments/book/demo");
+                                    setGenType("qr");
+                                }}
+                                className="text-[10px] bg-gray-800 hover:bg-gray-700 text-cyan-300 px-2.5 py-1 rounded-lg border border-gray-700 flex items-center gap-1"
+                            >
+                                <Calendar size={11} /> Appointment Link
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setGenSku("https://access.beraxis.online");
+                                    setGenType("qr");
+                                }}
+                                className="text-[10px] bg-gray-800 hover:bg-gray-700 text-purple-300 px-2.5 py-1 rounded-lg border border-gray-700 flex items-center gap-1"
+                            >
+                                <Globe size={11} /> Main Website
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setGenSku("BER-PROD-2026");
+                                    setGenType("code128");
+                                }}
+                                className="text-[10px] bg-gray-800 hover:bg-gray-700 text-pink-300 px-2.5 py-1 rounded-lg border border-gray-700 flex items-center gap-1"
+                            >
+                                <Box size={11} /> Product SKU
+                            </button>
+                        </div>
+
+                        <div className="space-y-3.5">
                             <div>
-                                <label className="block text-xs font-semibold text-gray-300 mb-1">SKU / Barcode Digits *</label>
+                                <label className="block text-xs font-semibold text-gray-300 mb-1">Target Link / URL / SKU Digits *</label>
                                 <input
                                     type="text"
                                     value={genSku}
-                                    onChange={(e) => setGenSku(e.target.value)}
-                                    placeholder="e.g. 893450091234 or SKU-PROD"
-                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-pink-500"
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setGenSku(val);
+                                        if (val.startsWith("http://") || val.startsWith("https://")) {
+                                            setGenType("qr");
+                                        }
+                                    }}
+                                    placeholder="e.g. https://access.beraxis.online/... or 893450091234"
+                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-pink-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-gray-300 mb-1">Format Type</label>
+                                <label className="block text-xs font-semibold text-gray-300 mb-1">Encoding Format</label>
                                 <div className="grid grid-cols-3 gap-2">
-                                    {(["code128", "qr", "ean13"] as const).map(fmt => (
-                                        <button
-                                            key={fmt}
-                                            type="button"
-                                            onClick={() => setGenType(fmt)}
-                                            className={`p-2 rounded-xl text-xs font-bold uppercase transition ${
-                                                genType === fmt
-                                                    ? "bg-pink-600 text-white shadow-md shadow-pink-600/30"
-                                                    : "bg-gray-800 text-gray-400 hover:text-white border border-gray-700"
-                                            }`}
-                                        >
-                                            {fmt}
-                                        </button>
-                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => setGenType("qr")}
+                                        className={`p-2 rounded-xl text-xs font-bold uppercase transition flex items-center justify-center gap-1.5 ${
+                                            genType === "qr"
+                                                ? "bg-pink-600 text-white shadow-md shadow-pink-600/30"
+                                                : "bg-gray-800 text-gray-400 hover:text-white border border-gray-700"
+                                        }`}
+                                    >
+                                        <QrCode size={14} /> QR Code
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setGenType("code128")}
+                                        className={`p-2 rounded-xl text-xs font-bold uppercase transition flex items-center justify-center gap-1.5 ${
+                                            genType === "code128"
+                                                ? "bg-pink-600 text-white shadow-md shadow-pink-600/30"
+                                                : "bg-gray-800 text-gray-400 hover:text-white border border-gray-700"
+                                        }`}
+                                    >
+                                        <BarcodeIcon size={14} /> Code 128
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setGenType("ean13")}
+                                        className={`p-2 rounded-xl text-xs font-bold uppercase transition flex items-center justify-center gap-1.5 ${
+                                            genType === "ean13"
+                                                ? "bg-pink-600 text-white shadow-md shadow-pink-600/30"
+                                                : "bg-gray-800 text-gray-400 hover:text-white border border-gray-700"
+                                        }`}
+                                    >
+                                        <BarcodeIcon size={14} /> EAN-13
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Label Graphic Preview Card */}
-                            <div className="p-6 bg-white rounded-2xl text-black text-center space-y-2 shadow-inner border border-gray-300">
-                                <div className="text-xs font-bold tracking-wider text-gray-800">BERAXIS ENTERPRISE ASSET</div>
-                                <div className="py-2 flex items-center justify-center font-mono">
-                                    {genType === "qr" ? (
-                                        <div className="w-24 h-24 bg-black text-white flex items-center justify-center font-bold text-xs p-2">
-                                            [QR: {genSku}]
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-1">
-                                            <div className="tracking-[6px] text-3xl font-black font-mono">|||||||||||||||||||</div>
-                                            <div className="font-mono text-xs font-bold tracking-widest">{genSku}</div>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="text-[10px] text-gray-500">Standard 80mm x 50mm Thermal Sticker</div>
+                            {/* Live Real-time Canvas Rendering */}
+                            <div className="py-2">
+                                <BarcodeAndQRCanvas
+                                    value={genSku}
+                                    type={genType}
+                                    title="BERAXIS ENTERPRISE ASSET"
+                                    subtitle="Standard 80mm x 50mm Thermal Sticker • Scannable"
+                                    width={320}
+                                    height={genType === "qr" ? 170 : 130}
+                                    showText={true}
+                                />
                             </div>
 
-                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-800">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsGenModalOpen(false)}
-                                    className="px-4 py-2.5 rounded-xl bg-gray-800 text-gray-300 hover:bg-gray-700 text-xs font-semibold"
-                                >
-                                    Cancel
-                                </button>
+                            <div className="flex items-center justify-between pt-3 border-t border-gray-800">
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        window.print();
-                                        setIsGenModalOpen(false);
-                                        showToast("🖨️ Dispatched label sticker to thermal printer!");
+                                        navigator.clipboard.writeText(genSku);
+                                        showToast("📋 Copied barcode content to clipboard!");
                                     }}
-                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-pink-600/30 flex items-center gap-1.5"
+                                    className="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold flex items-center gap-1.5"
                                 >
-                                    <Printer size={15} /> Print Thermal Label
+                                    <Copy size={13} /> Copy Value
                                 </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsGenModalOpen(false)}
+                                        className="px-4 py-2 rounded-xl bg-gray-800 text-gray-400 hover:text-white text-xs font-semibold"
+                                    >
+                                        Close
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            window.print();
+                                            setIsGenModalOpen(false);
+                                            showToast("🖨️ Label sent to 80mm thermal printer!");
+                                        }}
+                                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-pink-600/30 flex items-center gap-1.5"
+                                    >
+                                        <Printer size={14} /> Print Thermal Label
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
