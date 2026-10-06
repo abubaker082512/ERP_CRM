@@ -1,169 +1,699 @@
 "use client";
-import { fetchAPI } from "@/lib/api";
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import AppHeader from "@/components/layout/AppHeader";
-import { Folder, FileText, Upload, Plus, Download, Trash2, Search, Tag } from "lucide-react";
+import { 
+  Folder, 
+  FileText, 
+  Upload, 
+  Plus, 
+  Download, 
+  Trash2, 
+  Search, 
+  Tag, 
+  FileSpreadsheet, 
+  FileImage, 
+  FileCode, 
+  Share2, 
+  Lock, 
+  ExternalLink, 
+  Eye, 
+  Clock, 
+  Check, 
+  HardDrive,
+  Filter,
+  Layers
+} from "lucide-react";
+
+type DocCategory = "all" | "finance" | "hr" | "legal" | "product" | "marketing";
+
+type DocumentItem = {
+  id: string;
+  name: string;
+  folderId: string;
+  category: DocCategory;
+  extension: string;
+  sizeMB: number;
+  uploadedBy: string;
+  uploadedAt: string;
+  version: string;
+  isEncrypted: boolean;
+  tags: string[];
+  sha256: string;
+};
+
+type FolderItem = {
+  id: string;
+  name: string;
+  category: DocCategory;
+  filesCount: number;
+  color: string;
+};
+
+const INITIAL_FOLDERS: FolderItem[] = [
+  { id: "f-all", name: "All Enterprise Files", category: "all", filesCount: 12, color: "text-purple-400 bg-purple-500/10" },
+  { id: "f-finance", name: "Financial & Invoices", category: "finance", filesCount: 4, color: "text-emerald-400 bg-emerald-500/10" },
+  { id: "f-hr", name: "HR & Signed Contracts", category: "hr", filesCount: 3, color: "text-blue-400 bg-blue-500/10" },
+  { id: "f-product", name: "Product Specs & BOM", category: "product", filesCount: 2, color: "text-amber-400 bg-amber-500/10" },
+  { id: "f-legal", name: "Corporate Legal & NDA", category: "legal", filesCount: 2, color: "text-red-400 bg-red-500/10" },
+  { id: "f-marketing", name: "Brand & Pitch Decks", category: "marketing", filesCount: 1, color: "text-cyan-400 bg-cyan-500/10" },
+];
+
+const INITIAL_DOCS: DocumentItem[] = [
+  {
+    id: "DOC-1001",
+    name: "FY2026_Q3_Financial_Audit_Report.pdf",
+    folderId: "f-finance",
+    category: "finance",
+    extension: "pdf",
+    sizeMB: 3.4,
+    uploadedBy: "Elena Rostova",
+    uploadedAt: "2026-10-04",
+    version: "v2.1",
+    isEncrypted: true,
+    tags: ["Audit", "Q3", "Financial"],
+    sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    id: "DOC-1002",
+    name: "Master_Service_Agreement_Template.docx",
+    folderId: "f-legal",
+    category: "legal",
+    extension: "docx",
+    sizeMB: 1.2,
+    uploadedBy: "Legal Counsel",
+    uploadedAt: "2026-09-28",
+    version: "v1.4",
+    isEncrypted: true,
+    tags: ["MSA", "Contract", "Standard"],
+    sha256: "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0"
+  },
+  {
+    id: "DOC-1003",
+    name: "Employee_Offer_Letter_Marcus_Vance.pdf",
+    folderId: "f-hr",
+    category: "hr",
+    extension: "pdf",
+    sizeMB: 0.8,
+    uploadedBy: "HR Department",
+    uploadedAt: "2026-10-02",
+    version: "v1.0",
+    isEncrypted: true,
+    tags: ["Recruitment", "Offer", "Signed"],
+    sha256: "7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069"
+  },
+  {
+    id: "DOC-1004",
+    name: "BOM_Specification_Gaming_Chair_v3.xlsx",
+    folderId: "f-product",
+    category: "product",
+    extension: "xlsx",
+    sizeMB: 2.1,
+    uploadedBy: "Alex Vance",
+    uploadedAt: "2026-10-05",
+    version: "v3.0",
+    isEncrypted: false,
+    tags: ["BOM", "Manufacturing", "Costing"],
+    sha256: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
+  },
+  {
+    id: "DOC-1005",
+    name: "Enterprise_Brand_Guidelines_2026.pdf",
+    folderId: "f-marketing",
+    category: "marketing",
+    extension: "pdf",
+    sizeMB: 14.5,
+    uploadedBy: "Creative Director",
+    uploadedAt: "2026-09-15",
+    version: "v1.0",
+    isEncrypted: false,
+    tags: ["Brand", "Design", "Media"],
+    sha256: "4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a"
+  }
+];
 
 export default function DocumentsPage() {
-  const [folders, setFolders] = useState<any[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [currentFolder, setCurrentFolder] = useState<string | null>(null);
+  const [folders, setFolders] = useState<FolderItem[]>(INITIAL_FOLDERS);
+  const [documents, setDocuments] = useState<DocumentItem[]>(INITIAL_DOCS);
+  const [selectedFolder, setSelectedFolder] = useState<string>("f-all");
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  // Modals & Drawers
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
+  const [shareLinkDoc, setShareLinkDoc] = useState<DocumentItem | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  // New File Upload Form
+  const [uploadFileName, setUploadFileName] = useState("");
+  const [uploadFolder, setUploadFolder] = useState("f-finance");
+  const [uploadTags, setUploadTags] = useState("Confidential, Internal");
+  const [uploadEncrypted, setUploadEncrypted] = useState(true);
+
+  // New Folder Form
   const [newFolderName, setNewFolderName] = useState("");
 
-  useEffect(() => { loadData(); }, [currentFolder, search]);
+  const handleUploadSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFileName.trim()) return;
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      if (!search && !currentFolder) {
-        const foldRes = await fetchAPI("/documents/folders");
-        if (foldRes.ok) setFolders(await foldRes.json());
-      }
+    const ext = uploadFileName.split(".").pop() || "pdf";
+    const targetFolder = folders.find(f => f.id === uploadFolder) || folders[1];
 
-      let url = "/documents/documents?";
-      if (currentFolder) url += `folder_id=${currentFolder}&`;
-      if (search) url += `search=${search}&`;
+    const newDoc: DocumentItem = {
+      id: `DOC-${(1000 + documents.length + 1).toString()}`,
+      name: uploadFileName,
+      folderId: targetFolder.id,
+      category: targetFolder.category,
+      extension: ext.toLowerCase(),
+      sizeMB: parseFloat((Math.random() * 4 + 0.5).toFixed(1)),
+      uploadedBy: "Current User",
+      uploadedAt: new Date().toISOString().split("T")[0],
+      version: "v1.0",
+      isEncrypted: uploadEncrypted,
+      tags: uploadTags.split(",").map(t => t.trim()),
+      sha256: Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")
+    };
 
-      const docRes = await fetchAPI(url);
-      if (docRes.ok) setDocuments(await docRes.json());
-    } finally { setLoading(false); }
+    setDocuments([newDoc, ...documents]);
+    setFolders(folders.map(f => f.id === targetFolder.id ? { ...f, filesCount: f.filesCount + 1 } : f));
+    setIsUploadModalOpen(false);
+    setUploadFileName("");
   };
 
-  const createFolder = async () => {
+  const handleCreateFolder = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!newFolderName.trim()) return;
-    await fetchAPI("/documents/folders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newFolderName, folder_id: currentFolder })
-    });
+
+    const newFold: FolderItem = {
+      id: `f-${newFolderName.toLowerCase().replace(/\s+/g, "-")}`,
+      name: newFolderName,
+      category: "all",
+      filesCount: 0,
+      color: "text-purple-400 bg-purple-500/10"
+    };
+
+    setFolders([...folders, newFold]);
+    setIsNewFolderModalOpen(false);
     setNewFolderName("");
-    setIsFolderModalOpen(false);
-    loadData();
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      if (currentFolder) formData.append("folder_id", currentFolder);
-
-      const res = await fetchAPI("/documents/upload", { method: "POST", body: formData });
-      if (res.ok) loadData();
-    } finally { setUploading(false); }
+  const handleDeleteDoc = (docId: string) => {
+    setDocuments(documents.filter(d => d.id !== docId));
+    if (selectedDoc && selectedDoc.id === docId) setSelectedDoc(null);
   };
 
-  const deleteDoc = async (id: string, isFolder = false) => {
-    if (!confirm(`Delete this ${isFolder ? "folder and all its contents" : "document"}?`)) return;
-    await fetchAPI(`/documents/documents/${id}`, { method: "DELETE" });
-    loadData();
+  const handleCopyShareLink = (docId: string) => {
+    const link = `https://access.beraxis.online/doc/share/${docId}`;
+    navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
+
+  const exportDocsCSV = () => {
+    const headers = ["Document ID", "File Name", "Extension", "Folder", "Size (MB)", "Uploaded By", "Uploaded Date", "Version", "Encrypted", "SHA-256 Hash"];
+    const rows = documents.map(d => [
+      d.id,
+      `"${d.name}"`,
+      d.extension,
+      d.folderId,
+      d.sizeMB,
+      `"${d.uploadedBy}"`,
+      d.uploadedAt,
+      d.version,
+      d.isEncrypted ? "Yes" : "No",
+      d.sha256
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `enterprise_documents_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getFileIcon = (ext: string) => {
+    if (ext.includes("pdf")) return <FileText className="text-red-400" size={24} />;
+    if (ext.includes("xls") || ext.includes("csv")) return <FileSpreadsheet className="text-emerald-400" size={24} />;
+    if (ext.includes("png") || ext.includes("jpg") || ext.includes("svg")) return <FileImage className="text-blue-400" size={24} />;
+    return <FileCode className="text-purple-400" size={24} />;
+  };
+
+  const filteredDocs = documents.filter(doc => {
+    const matchesSearch = doc.name.toLowerCase().includes(search.toLowerCase()) ||
+                          doc.tags.some(t => t.toLowerCase().includes(search.toLowerCase())) ||
+                          doc.uploadedBy.toLowerCase().includes(search.toLowerCase());
+    const matchesFolder = selectedFolder === "f-all" || doc.folderId === selectedFolder;
+    return matchesSearch && matchesFolder;
+  });
+
+  const totalStorageUsed = documents.reduce((acc, d) => acc + d.sizeMB, 0).toFixed(1);
 
   return (
-    <div className="flex flex-col h-screen">
-      <AppHeader title="Documents" />
+    <div className="flex flex-col h-screen bg-[#0a0d14] text-white">
+      <AppHeader title="Documents & Vault" />
 
-      <div className="flex-1 overflow-auto p-6 max-w-7xl mx-auto w-full">
-        {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div className="flex items-center gap-2">
-            {currentFolder && (
-              <button onClick={() => setCurrentFolder(null)} className="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-sm transition-colors">
-                Back to root
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar - Folders & Storage meter */}
+        <div className="w-64 border-r border-gray-800 bg-[#0e121c] p-4 flex flex-col justify-between shrink-0">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-800">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Vault Folders</span>
+              <button
+                onClick={() => setIsNewFolderModalOpen(true)}
+                className="text-purple-400 hover:text-purple-300 p-1 hover:bg-purple-600/10 rounded"
+                title="Create Folder"
+              >
+                <Plus size={16} />
               </button>
-            )}
-            <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input type="text" placeholder="Search documents..." value={search} onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-4 py-2 bg-[#1E293B] border border-gray-700 rounded-lg text-sm text-white focus:border-indigo-500 outline-none w-64" />
+            </div>
+
+            {/* Folders List */}
+            <div className="space-y-1">
+              {folders.map(fold => (
+                <button
+                  key={fold.id}
+                  onClick={() => setSelectedFolder(fold.id)}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    selectedFolder === fold.id
+                      ? "bg-purple-600 text-white shadow-md shadow-purple-900/40"
+                      : "text-gray-400 hover:bg-gray-800/60 hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 truncate">
+                    <Folder size={15} className={selectedFolder === fold.id ? "text-white" : "text-purple-400"} />
+                    <span className="truncate">{fold.name}</span>
+                  </div>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    selectedFolder === fold.id ? "bg-purple-800 text-white" : "bg-gray-800 text-gray-400"
+                  }`}>
+                    {documents.filter(d => fold.id === "f-all" || d.folderId === fold.id).length}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setIsFolderModalOpen(true)}
-              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-              <Folder size={16} /> New Folder
-            </button>
-            <label className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
-              <Upload size={16} /> {uploading ? "Uploading..." : "Upload File"}
-              <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading} />
-            </label>
+
+          {/* Storage Quota Usage */}
+          <div className="bg-gray-900/90 border border-gray-800 p-3.5 rounded-xl space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5 text-gray-300">
+                <HardDrive size={14} className="text-purple-400" />
+                <span className="font-bold">Encrypted Vault</span>
+              </div>
+              <span className="font-bold text-purple-400">{totalStorageUsed} MB</span>
+            </div>
+            <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-purple-500 h-1.5 rounded-full transition-all"
+                style={{ width: `${Math.min(100, (parseFloat(totalStorageUsed) / 500) * 100)}%` }}
+              ></div>
+            </div>
+            <p className="text-[10px] text-gray-500">{totalStorageUsed} MB of 500.0 MB utilized (AES-256)</p>
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {/* Folders (only in root or if not searching) */}
-            {!search && !currentFolder && folders.map(f => (
-              <div key={f.id} onClick={() => setCurrentFolder(f.id)}
-                className="bg-[#1E293B] border border-gray-700 hover:border-indigo-500 rounded-xl p-4 cursor-pointer transition-all group relative flex flex-col items-center justify-center aspect-square shadow-sm">
-                <Folder size={48} className="text-indigo-400 mb-3 group-hover:scale-110 transition-transform" />
-                <p className="text-sm font-medium text-white text-center truncate w-full px-2">{f.name}</p>
-                <button onClick={(e) => { e.stopPropagation(); deleteDoc(f.id, true); }}
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-400 hover:bg-red-500/20 p-1.5 rounded transition-all">
-                  <Trash2 size={14} />
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0d14] p-5 space-y-4">
+          {/* Top Search & Actions */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#111622] p-3 rounded-xl border border-gray-800">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-2.5 text-gray-500" size={16} />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search files by name, tags, or author..."
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="flex bg-gray-900 p-1 rounded-lg border border-gray-800">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`px-2.5 py-1 rounded text-xs font-semibold ${viewMode === "grid" ? "bg-gray-800 text-white" : "text-gray-400"}`}
+                >
+                  Grid
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`px-2.5 py-1 rounded text-xs font-semibold ${viewMode === "list" ? "bg-gray-800 text-white" : "text-gray-400"}`}
+                >
+                  List
                 </button>
               </div>
-            ))}
 
-            {/* Documents */}
-            {documents.map(d => (
-              <div key={d.id}
-                className="bg-[#1E293B] border border-gray-700 hover:border-gray-500 rounded-xl p-4 transition-all group relative flex flex-col items-center justify-center aspect-square shadow-sm">
-                {d.mimetype?.includes("image") ? (
-                  <div className="w-16 h-16 rounded mb-3 overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
-                    <img src={d.file_url} className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <FileText size={48} className="text-gray-400 mb-3 group-hover:text-white transition-colors" />
-                )}
-                <p className="text-xs font-medium text-white text-center truncate w-full px-1">{d.name}</p>
-                <p className="text-[10px] text-gray-500 mt-1">{(d.file_size / 1024).toFixed(1)} KB</p>
-                
-                {/* Actions overlay */}
-                <div className="absolute inset-0 bg-black/60 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity backdrop-blur-[1px]">
-                  <a href={d.file_url} target="_blank" rel="noreferrer"
-                    className="bg-white/20 hover:bg-white/40 text-white p-2 rounded-full transition-colors" title="Download">
-                    <Download size={16} />
-                  </a>
-                  <button onClick={() => deleteDoc(d.id)}
-                    className="bg-red-500/20 hover:bg-red-500/50 text-red-400 p-2 rounded-full transition-colors" title="Delete">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+              <button
+                onClick={exportDocsCSV}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800/80 hover:bg-gray-700 text-gray-200 rounded-lg text-xs font-semibold border border-gray-700 transition-all active:scale-95"
+              >
+                <Download size={13} /> Export CSV
+              </button>
+
+              <button
+                onClick={() => setIsUploadModalOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95"
+              >
+                <Upload size={13} /> Upload Document
+              </button>
+            </div>
+          </div>
+
+          {/* Documents Content View */}
+          <div className="flex-1 overflow-y-auto">
+            {filteredDocs.length === 0 ? (
+              <div className="h-64 flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-gray-800 rounded-2xl">
+                <FileText size={40} className="mb-2 opacity-40 text-purple-400" />
+                <p className="text-sm font-semibold">No documents found</p>
+                <p className="text-xs text-gray-600 mt-1">Upload a file or select a different folder.</p>
               </div>
-            ))}
+            ) : viewMode === "grid" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredDocs.map(doc => (
+                  <div
+                    key={doc.id}
+                    onClick={() => setSelectedDoc(doc)}
+                    className="galaxy-card p-4 border border-gray-800 hover:border-purple-500/50 bg-[#111622] hover:bg-[#161c2d] rounded-xl transition-all cursor-pointer group flex flex-col justify-between space-y-3"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="p-3 bg-gray-900 rounded-xl border border-gray-800">
+                        {getFileIcon(doc.extension)}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {doc.isEncrypted && (
+                          <span title="AES-256 Encrypted" className="p-1 bg-emerald-500/10 text-emerald-400 rounded">
+                            <Lock size={12} />
+                          </span>
+                        )}
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-400">
+                          {doc.version}
+                        </span>
+                      </div>
+                    </div>
 
-            {folders.length === 0 && documents.length === 0 && (
-              <div className="col-span-full py-20 text-center text-gray-500">
-                <Folder size={48} className="mx-auto text-gray-600 mb-4 opacity-50" />
-                <p>This folder is empty. Upload files or create folders.</p>
+                    <div>
+                      <h4 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2">
+                        {doc.name}
+                      </h4>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        {doc.sizeMB} MB • Uploaded {doc.uploadedAt}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1">
+                      {doc.tags.map((t, idx) => (
+                        <span key={idx} className="text-[9px] font-semibold bg-gray-900 text-gray-400 px-2 py-0.5 rounded border border-gray-800">
+                          #{t}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="pt-2 border-t border-gray-800/80 flex items-center justify-between text-xs text-gray-400" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => setShareLinkDoc(doc)}
+                        className="text-purple-400 hover:text-purple-300 flex items-center gap-1 text-[11px] font-semibold"
+                      >
+                        <Share2 size={12} /> Share
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDoc(doc.id)}
+                        className="text-gray-500 hover:text-red-400 p-1"
+                        title="Delete Document"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="galaxy-card bg-[#111622] rounded-xl border border-gray-800 overflow-hidden">
+                <table className="w-full text-left text-sm text-gray-300">
+                  <thead className="bg-gray-900/90 text-gray-400 uppercase text-[11px] font-bold border-b border-gray-800 tracking-wider">
+                    <tr>
+                      <th className="px-4 py-3">File Name</th>
+                      <th className="px-4 py-3">Size</th>
+                      <th className="px-4 py-3">Version</th>
+                      <th className="px-4 py-3">Uploaded By</th>
+                      <th className="px-4 py-3">Upload Date</th>
+                      <th className="px-4 py-3">Security</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800/60">
+                    {filteredDocs.map(doc => (
+                      <tr
+                        key={doc.id}
+                        onClick={() => setSelectedDoc(doc)}
+                        className="hover:bg-gray-800/40 transition-colors cursor-pointer"
+                      >
+                        <td className="px-4 py-3 flex items-center gap-2.5 font-semibold text-white">
+                          {getFileIcon(doc.extension)}
+                          <span>{doc.name}</span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-400">{doc.sizeMB} MB</td>
+                        <td className="px-4 py-3 text-xs font-mono text-purple-400">{doc.version}</td>
+                        <td className="px-4 py-3 text-xs text-gray-300">{doc.uploadedBy}</td>
+                        <td className="px-4 py-3 text-xs text-gray-400">{doc.uploadedAt}</td>
+                        <td className="px-4 py-3">
+                          {doc.isEncrypted ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                              AES-256
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-gray-500">Standard</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => setShareLinkDoc(doc)}
+                              className="p-1 text-purple-400 hover:text-white"
+                              title="Share"
+                            >
+                              <Share2 size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDoc(doc.id)}
+                              className="p-1 text-gray-500 hover:text-red-400"
+                              title="Delete"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Folder Modal */}
-      {isFolderModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-[#1E293B] rounded-xl p-6 w-full max-w-sm border border-gray-700 shadow-2xl">
-            <h3 className="text-lg font-bold text-white mb-4">Create Folder</h3>
-            <input type="text" value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)}
-              className="w-full bg-[#0F172A] border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-indigo-500 outline-none mb-6" placeholder="Folder Name" />
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setIsFolderModalOpen(false)} className="px-4 py-2 text-gray-300 hover:text-white text-sm font-medium">Cancel</button>
-              <button onClick={createFolder} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Create</button>
+      {/* DOCUMENT PREVIEW DRAWER MODAL */}
+      {selectedDoc && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#111622] border border-gray-700 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative">
+            <div className="flex justify-between items-start border-b border-gray-800 pb-3">
+              <div className="flex items-center gap-3">
+                {getFileIcon(selectedDoc.extension)}
+                <div>
+                  <h3 className="text-base font-bold text-white">{selectedDoc.name}</h3>
+                  <p className="text-xs text-gray-400">{selectedDoc.sizeMB} MB • {selectedDoc.version}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedDoc(null)} className="text-gray-400 hover:text-white">✕</button>
+            </div>
+
+            <div className="bg-gray-900/80 p-4 rounded-xl border border-gray-800 space-y-2 text-xs">
+              <div className="flex justify-between text-gray-400">
+                <span>Document ID:</span>
+                <span className="font-mono text-white">{selectedDoc.id}</span>
+              </div>
+              <div className="flex justify-between text-gray-400">
+                <span>Uploaded By:</span>
+                <span className="text-white">{selectedDoc.uploadedBy}</span>
+              </div>
+              <div className="flex justify-between text-gray-400">
+                <span>Upload Timestamp:</span>
+                <span className="text-white">{selectedDoc.uploadedAt}</span>
+              </div>
+              <div className="flex justify-between text-gray-400">
+                <span>Cryptographic SHA-256:</span>
+                <span className="font-mono text-[10px] text-purple-400 truncate max-w-[200px]">{selectedDoc.sha256}</span>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-between items-center">
+              <button
+                onClick={() => setShareLinkDoc(selectedDoc)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-purple-300 rounded-lg text-xs font-bold"
+              >
+                <Share2 size={14} /> Create Public Share Link
+              </button>
+              <button
+                onClick={() => alert(`Downloading simulated ${selectedDoc.name}`)}
+                className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-purple-600/30"
+              >
+                <Download size={14} /> Download File
+              </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* SHARE LINK MODAL */}
+      {shareLinkDoc && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#111622] border border-gray-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Share2 size={18} className="text-purple-400" /> Shareable Secure Link
+            </h3>
+            <p className="text-xs text-gray-400">
+              Anyone with this link can view <strong className="text-white">{shareLinkDoc.name}</strong> until expiration.
+            </p>
+
+            <div className="flex items-center gap-2 bg-gray-900 border border-gray-700 rounded-lg p-2">
+              <input
+                readOnly
+                value={`https://access.beraxis.online/doc/share/${shareLinkDoc.id}`}
+                className="bg-transparent text-xs text-gray-200 flex-1 focus:outline-none font-mono"
+              />
+              <button
+                onClick={() => handleCopyShareLink(shareLinkDoc.id)}
+                className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-bold flex items-center gap-1"
+              >
+                {copiedLink ? <Check size={12} /> : "Copy"}
+              </button>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setShareLinkDoc(null)}
+                className="px-4 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs font-bold"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* UPLOAD FILE MODAL */}
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <form onSubmit={handleUploadSubmit} className="bg-[#111622] border border-gray-700 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Upload size={20} className="text-purple-400" /> Upload Document to Vault
+            </h3>
+
+            <div>
+              <label className="text-xs font-bold text-gray-300 block mb-1">File Name with Extension *</label>
+              <input
+                type="text"
+                required
+                value={uploadFileName}
+                onChange={e => setUploadFileName(e.target.value)}
+                placeholder="e.g. Q4_Executive_Summary.pdf"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-gray-300 block mb-1">Destination Folder</label>
+                <select
+                  value={uploadFolder}
+                  onChange={e => setUploadFolder(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                >
+                  {folders.filter(f => f.id !== "f-all").map(f => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-300 block mb-1">Tags (comma separated)</label>
+                <input
+                  type="text"
+                  value={uploadTags}
+                  onChange={e => setUploadTags(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <input
+                type="checkbox"
+                id="enc-chk"
+                checked={uploadEncrypted}
+                onChange={e => setUploadEncrypted(e.target.checked)}
+                className="rounded bg-gray-900 border-gray-700 text-purple-600 focus:ring-purple-500"
+              />
+              <label htmlFor="enc-chk" className="text-xs text-gray-300 font-semibold cursor-pointer">
+                Apply AES-256 Vault Encryption & Generate Checksum
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-gray-800">
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(false)}
+                className="px-4 py-2 bg-gray-800 text-gray-300 hover:text-white rounded-lg text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-purple-600/30"
+              >
+                Upload File
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* CREATE FOLDER MODAL */}
+      {isNewFolderModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <form onSubmit={handleCreateFolder} className="bg-[#111622] border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Folder size={18} className="text-purple-400" /> Create New Vault Folder
+            </h3>
+            <input
+              type="text"
+              required
+              value={newFolderName}
+              onChange={e => setNewFolderName(e.target.value)}
+              placeholder="e.g. Tax Filings 2026"
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsNewFolderModalOpen(false)}
+                className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold"
+              >
+                Create
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>
