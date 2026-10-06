@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { fetchAPI } from "@/lib/api";
 import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
+import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
 
 const apps = [
     { name: "Discuss", icon: LayoutDashboard, color: "bg-orange-500", href: "/discuss" },
@@ -184,24 +185,7 @@ export default function AppsDashboardPage() {
                         <span>Visit Website</span>
                     </Link>
 
-                    <button
-                        onClick={() => router.push("/settings")}
-                        className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all border border-white/5 cursor-pointer"
-                        title="Notifications"
-                    >
-                        <Bell size={18} />
-                    </button>
-                    
-                    <button 
-                        onClick={() => {
-                            localStorage.removeItem("token");
-                            window.location.href = "/login";
-                        }}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white/5 hover:bg-red-500/15 text-gray-400 hover:text-red-400 transition-all border border-white/5 text-xs font-medium cursor-pointer"
-                    >
-                        <LogOut size={16} />
-                        <span className="hidden sm:inline">Logout</span>
-                    </button>
+                    <UserProfileDropdown />
                 </div>
             </div>
 

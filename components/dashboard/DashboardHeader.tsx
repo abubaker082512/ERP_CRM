@@ -10,11 +10,10 @@ import {
     Bot,
     MessageSquare,
     Settings,
-    RefreshCw,
-    Sparkles,
-    Zap
+    RefreshCw
 } from "lucide-react";
 import UniversalModuleSearch from "@/components/shared/UniversalModuleSearch";
+import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
 
 interface DashboardHeaderProps {
     onSync?: () => void;
@@ -28,8 +27,7 @@ export default function DashboardHeader({
     onSync,
     isSyncing = false,
     searchTerm = "",
-    onSearchChange,
-    planBadge = "Free Tier",
+    onSearchChange
 }: DashboardHeaderProps) {
     const pathname = usePathname();
     const router = useRouter();
@@ -43,17 +41,27 @@ export default function DashboardHeader({
     ];
 
     return (
-        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50">
-            <div className="flex items-center justify-between px-4 py-2.5 gap-3">
-                {/* Left Section: Back, Apps, Website & Module Logo */}
+        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2 gap-2 sm:gap-3">
+                {/* Left Section: Beraxis Logo, Back, Apps, Website & Module Logo */}
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                    {/* Beraxis Logo & Branding */}
+                    <Link
+                        href="/apps"
+                        title="Beraxis Workspace"
+                        className="flex items-center gap-2 pr-2 border-r border-gray-700/80 shrink-0 hover:opacity-90 transition-opacity"
+                    >
+                        <img src="/logo2.png" alt="Beraxis Logo" className="h-6 w-auto" />
+                        <span className="font-extrabold text-sm tracking-tight text-white hidden xl:inline">BERAXIS</span>
+                    </Link>
+
                     {/* Back Button */}
                     <button
                         onClick={() => router.back()}
                         title="Go back"
                         className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold cursor-pointer shrink-0"
                     >
-                        <ArrowLeft size={16} />
+                        <ArrowLeft size={15} />
                         <span className="hidden sm:inline">Back</span>
                     </button>
 
@@ -63,7 +71,7 @@ export default function DashboardHeader({
                         title="Workspace Apps Dashboard"
                         className="flex items-center gap-1 text-gray-400 hover:text-purple-300 transition-colors p-1.5 rounded-lg hover:bg-purple-600/20 shrink-0"
                     >
-                        <LayoutGrid size={18} />
+                        <LayoutGrid size={17} />
                     </Link>
 
                     {/* Public Website Button */}
@@ -72,31 +80,44 @@ export default function DashboardHeader({
                         title="Public Website"
                         className="flex items-center gap-1 text-gray-400 hover:text-cyan-300 transition-colors p-1.5 rounded-lg hover:bg-cyan-600/20 shrink-0"
                     >
-                        <Globe size={18} />
+                        <Globe size={17} />
                     </Link>
 
+                    {/* Module Title */}
                     <Link
                         href="/dashboard"
-                        title="Executive Dashboard"
-                        className="flex items-center gap-2 text-base sm:text-lg font-bold text-gray-100 hover:text-white transition-colors ml-1"
+                        className="flex items-center gap-2 text-sm sm:text-base font-bold text-gray-100 hover:text-white transition-colors ml-0.5"
                     >
-                        <div className="bg-pink-600/30 text-pink-400 border border-pink-500/30 w-8 h-8 flex items-center justify-center rounded-lg shadow-sm shrink-0">
-                            <BarChart3 size={18} />
+                        <div className="bg-purple-600/30 text-purple-400 border border-purple-500/30 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg shadow-sm shrink-0">
+                            <BarChart3 size={17} />
                         </div>
-                        <span className="hidden md:inline font-bold tracking-tight">Executive Dashboard</span>
+                        <span className="font-bold tracking-tight">Dashboard</span>
                     </Link>
 
-                    {/* Navigation Links */}
-                    <nav className="hidden lg:flex items-center gap-1 ml-2">
+                    {/* Live Sync Action */}
+                    {onSync && (
+                        <button
+                            onClick={onSync}
+                            disabled={isSyncing}
+                            className="bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ml-1 shrink-0"
+                            title="Sync live analytics"
+                        >
+                            <RefreshCw size={13} className={isSyncing ? "animate-spin text-purple-400" : ""} />
+                            <span className="hidden sm:inline">{isSyncing ? "Syncing..." : "Sync"}</span>
+                        </button>
+                    )}
+
+                    {/* Navigation Pills */}
+                    <nav className="hidden lg:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-none">
                         {navItems.map((item) => {
                             const isActive = pathname === item.href;
                             return (
                                 <Link
                                     key={item.name}
                                     href={item.href}
-                                    className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+                                    className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
                                         isActive
-                                            ? "text-white bg-white/10 border border-white/10"
+                                            ? "text-white bg-white/15 border border-white/10 shadow-inner"
                                             : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
                                     }`}
                                 >
@@ -108,66 +129,70 @@ export default function DashboardHeader({
                 </div>
 
                 {/* Center: Universal Search */}
-                <div className="flex-1 max-w-lg mx-2 hidden sm:block">
+                <div className="flex-1 max-w-md mx-2 hidden md:block">
                     <UniversalModuleSearch
-                        moduleName="Dashboard"
-                        placeholder="Search metrics, orders, leads, or jump anywhere..."
+                        moduleName="Analytics"
+                        placeholder="Search KPIs, revenue, charts, metrics..."
                         value={searchTerm}
                         onChange={onSearchChange}
                     />
                 </div>
 
-                {/* Right Action Icons & Sync */}
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                    {onSync && (
-                        <button
-                            onClick={onSync}
-                            title="Sync live metrics"
-                            className="bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 hover:text-white border border-purple-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                        >
-                            <RefreshCw size={13} className={isSyncing ? "animate-spin" : ""} />
-                            <span className="hidden sm:inline">{isSyncing ? "Syncing..." : "Sync"}</span>
-                        </button>
-                    )}
-
+                {/* Right Action Icons & User Profile Dropdown */}
+                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
                     <Link
                         href="/ai"
-                        title="Galaxy AI Business Intelligence"
+                        title="AI Business Assistant"
                         className="text-gray-400 hover:text-purple-400 p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
                     >
-                        <Bot size={18} />
+                        <Bot size={17} />
                     </Link>
 
                     <Link
                         href="/discuss"
                         title="Team Chat & Discuss"
-                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 relative transition-colors cursor-pointer"
                     >
-                        <MessageSquare size={18} />
+                        <MessageSquare size={17} />
+                        <span className="absolute top-1 right-1 bg-purple-500 text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                            3
+                        </span>
                     </Link>
 
                     <Link
                         href="/settings"
-                        title="Settings"
+                        title="System Settings"
                         className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
                     >
-                        <Settings size={18} />
+                        <Settings size={17} />
                     </Link>
 
-                    <Link
-                        href="/billing"
-                        title="Subscription & Plan"
-                        className="flex items-center gap-1.5 border-l border-gray-700 pl-3 hover:opacity-90 transition-opacity"
-                    >
-                        <div className="flex flex-col text-right hidden xl:flex">
-                            <span className="text-xs text-gray-200 font-semibold truncate max-w-[120px]">Workspace</span>
-                            <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">{planBadge}</span>
-                        </div>
-                        <div className="w-7 h-7 bg-gradient-to-tr from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm">
-                            <Zap size={13} />
-                        </div>
-                    </Link>
+                    {/* Vertical Divider */}
+                    <div className="w-px h-5 bg-gray-700 mx-1"></div>
+
+                    {/* Integrated User Profile Dropdown */}
+                    <UserProfileDropdown />
                 </div>
+            </div>
+
+            {/* Mobile / Tablet Horizontal Navigation */}
+            <div className="lg:hidden flex items-center px-3 py-1.5 gap-1.5 text-xs overflow-x-auto bg-[#1E293B]/90 border-t border-gray-700/50 scrollbar-none">
+                {navItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                        <Link
+                            key={item.name}
+                            href={item.href}
+                            className={`font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md transition-colors whitespace-nowrap ${
+                                isActive
+                                    ? "text-white bg-white/10"
+                                    : "text-gray-400 hover:text-gray-200"
+                            }`}
+                        >
+                            {item.name}
+                        </Link>
+                    );
+                })}
             </div>
         </header>
     );

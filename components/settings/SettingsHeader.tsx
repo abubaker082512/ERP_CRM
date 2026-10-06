@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from 'next/navigation';
 import { Settings as SettingsIcon, Bot, MessageSquare, ArrowLeft, LayoutGrid, Globe } from 'lucide-react';
 import UniversalModuleSearch from "../shared/UniversalModuleSearch";
+import UserProfileDropdown from "../shared/UserProfileDropdown";
 
 interface SettingsHeaderProps {
     searchTerm?: string;
@@ -19,22 +20,31 @@ export default function SettingsHeader({
 
     const navItems = [
         { name: "General", href: "/settings" },
-        { name: "Users & Companies", href: "/settings/users" },
-        { name: "Technical", href: "/settings/technical" },
+        { name: "Users & Companies", href: "/settings" },
+        { name: "Technical", href: "/settings" },
     ];
 
     return (
-        <header className="bg-[#1E293B] border-b border-gray-700 text-white">
-            <div className="flex items-center justify-between px-4 py-2 gap-4">
-                <div className="flex items-center gap-4 shrink-0">
-                    
+        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2 gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                    {/* Beraxis Logo & Branding */}
+                    <Link
+                        href="/apps"
+                        title="Beraxis Workspace"
+                        className="flex items-center gap-2 pr-2 border-r border-gray-700/80 shrink-0 hover:opacity-90 transition-opacity"
+                    >
+                        <img src="/logo2.png" alt="Beraxis Logo" className="h-6 w-auto" />
+                        <span className="font-extrabold text-sm tracking-tight text-white hidden xl:inline">BERAXIS</span>
+                    </Link>
+
                     {/* Back Button */}
                     <button
                         onClick={() => router.back()}
                         title="Go back"
                         className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold cursor-pointer shrink-0"
                     >
-                        <ArrowLeft size={16} />
+                        <ArrowLeft size={15} />
                         <span className="hidden sm:inline">Back</span>
                     </button>
 
@@ -44,7 +54,7 @@ export default function SettingsHeader({
                         title="Workspace Apps Dashboard"
                         className="flex items-center gap-1 text-gray-400 hover:text-purple-300 transition-colors p-1.5 rounded-lg hover:bg-purple-600/20 shrink-0"
                     >
-                        <LayoutGrid size={18} />
+                        <LayoutGrid size={17} />
                     </Link>
 
                     {/* Public Website Button */}
@@ -53,61 +63,73 @@ export default function SettingsHeader({
                         title="Public Website"
                         className="flex items-center gap-1 text-gray-400 hover:text-cyan-300 transition-colors p-1.5 rounded-lg hover:bg-cyan-600/20 shrink-0"
                     >
-                        <Globe size={18} />
+                        <Globe size={17} />
                     </Link>
 
-                    <Link href="/settings" className="flex items-center gap-2 text-xl font-semibold text-gray-200 hover:text-white">
-                        <div className="bg-gray-600 w-7 h-7 flex items-center justify-center rounded text-sm font-bold text-white shadow-sm">
-                            <SettingsIcon size={16} />
+                    {/* Settings Module Branding */}
+                    <Link href="/settings" title="System Settings" className="flex items-center gap-2 text-sm sm:text-base font-bold text-gray-100 hover:text-white transition-colors ml-0.5">
+                        <div className="bg-gray-600/30 text-gray-300 border border-gray-500/30 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg shadow-sm shrink-0">
+                            <SettingsIcon size={17} />
                         </div>
-                        Settings
+                        <span className="font-bold tracking-tight">Settings</span>
                     </Link>
-                    <nav className="hidden md:flex items-center gap-4 ml-2">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`text-xs font-medium transition-colors ${pathname === item.href || (item.href !== "/settings" && pathname.startsWith(item.href))
-                                        ? "text-white border-b-2 border-purple-500 pb-0.5"
-                                        : "text-gray-400 hover:text-gray-200"
+
+                    <nav className="hidden lg:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-none">
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.href;
+                            return (
+                                <Link
+                                    key={item.name}
+                                    href={item.href}
+                                    className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+                                        isActive
+                                            ? 'text-white bg-white/15 border border-white/10 shadow-inner'
+                                            : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                                     }`}
-                            >
-                                {item.name}
-                            </Link>
-                        ))}
+                                >
+                                    {item.name}
+                                </Link>
+                            );
+                        })}
                     </nav>
                 </div>
 
-                <div className="flex-1 max-w-xl mx-2">
+                {/* Universal Search Bar */}
+                <div className="flex-1 max-w-md mx-2 hidden md:block">
                     <UniversalModuleSearch
                         moduleName="Settings"
-                        placeholder="Search system settings, companies, users, or jump to module..."
+                        placeholder="Search system settings, permissions..."
                         value={searchTerm}
                         onChange={onSearchChange}
                     />
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0">
-                    <Link
-                        href="/ai"
-                        title="AI Assistant"
-                        className="p-1.5 text-purple-400 hover:text-purple-300 hover:bg-gray-800 rounded transition"
+                {/* Actions & User Profile Dropdown */}
+                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                    <button
+                        onClick={() => router.push("/ai")}
+                        title="AI Search & Assistant"
+                        className="text-gray-400 hover:text-purple-400 p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
                     >
-                        <Bot size={18} />
-                    </Link>
-                    <Link
-                        href="/discuss"
+                        <Bot size={17} />
+                    </button>
+
+                    <button
+                        onClick={() => router.push("/discuss")}
                         title="Discuss"
-                        className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition relative"
+                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 relative transition-colors cursor-pointer"
                     >
-                        <MessageSquare size={18} />
-                    </Link>
-                    <div className="flex items-center gap-2 border-l border-gray-700 pl-3">
-                        <span className="text-xs text-gray-300 hidden xl:inline font-medium">ABT IT Innovation PVT LTD.</span>
-                        <div className="w-6 h-6 bg-purple-600 rounded flex items-center justify-center text-xs font-bold text-white shadow-inner">
-                            A
-                        </div>
-                    </div>
+                        <MessageSquare size={17} />
+                        <span className="absolute top-1 right-1 bg-purple-500 text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                            3
+                        </span>
+                    </button>
+
+                    {/* Vertical Divider */}
+                    <div className="w-px h-5 bg-gray-700 mx-1"></div>
+
+                    {/* Integrated User Profile Dropdown */}
+                    <UserProfileDropdown />
                 </div>
             </div>
         </header>

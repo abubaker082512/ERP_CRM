@@ -198,7 +198,6 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
             <main className={`flex-1 flex flex-col transition-all duration-500 ease-in-out ${
                 isSidebarOpen ? 'ml-64' : 'ml-0'
             }`}>
-                <GalaxyTopBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
                 <div 
                     className="flex-1 overflow-y-auto overflow-x-hidden bg-[#020205] relative custom-scrollbar"
                     style={{ 
