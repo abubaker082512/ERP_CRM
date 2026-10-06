@@ -83,7 +83,7 @@ export default function UserProfileDropdown() {
     };
 
     return (
-        <div className="relative" ref={dropdownRef}>
+        <div className={`relative ${isOpen ? "z-[9999]" : "z-20"}`} ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2.5 p-1 sm:px-2 sm:py-1 rounded-xl hover:bg-white/10 transition-all border border-transparent hover:border-white/10 cursor-pointer group"
@@ -116,7 +116,7 @@ export default function UserProfileDropdown() {
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-[#0F172A] border border-cyan-500/30 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 backdrop-blur-xl">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-[#0F172A] border border-cyan-500/40 rounded-2xl shadow-2xl p-2 z-[9999] animate-in fade-in slide-in-from-top-2 backdrop-blur-2xl shadow-cyan-950/80">
                     {/* Header Info */}
                     <div className="px-3 py-2.5 bg-white/5 rounded-xl border border-white/5 mb-1.5">
                         <div className="flex items-center justify-between">

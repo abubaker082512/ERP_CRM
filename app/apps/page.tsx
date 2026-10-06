@@ -159,7 +159,7 @@ export default function AppsDashboardPage() {
     return (
         <div className="min-h-screen bg-transparent text-white p-4 md:p-8 relative">
             {/* Top Command Banner */}
-            <div className="max-w-7xl mx-auto mb-8 flex flex-wrap justify-between items-center bg-[#0F172A]/60 backdrop-blur-xl p-5 md:p-6 rounded-3xl border border-white/10 shadow-2xl gap-4">
+            <div className="max-w-7xl mx-auto mb-8 flex flex-wrap justify-between items-center bg-[#0F172A]/60 backdrop-blur-xl p-5 md:p-6 rounded-3xl border border-white/10 shadow-2xl gap-4 relative z-30">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-purple-500/20 border border-white/10 shrink-0">
                         {userData?.metadata?.name?.charAt(0) || userData?.email?.charAt(0)?.toUpperCase() || "U"}
