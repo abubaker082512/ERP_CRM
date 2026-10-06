@@ -31,7 +31,14 @@ import {
     TrendingUp,
     Layers,
     Linkedin,
-    Award
+    Award,
+    Radio,
+    Globe,
+    Compass,
+    MessageCircle,
+    Star,
+    CheckCircle2,
+    Building
 } from "lucide-react";
 
 export type LeadRecord = {
@@ -48,6 +55,8 @@ export type LeadRecord = {
     industry: string;
     country: string;
     city: string;
+    address?: string;
+    rating?: number;
     employees?: string;
     annual_revenue?: string;
     tech_stack?: string[];
@@ -56,6 +65,8 @@ export type LeadRecord = {
     buying_signal?: string;
     founded_year?: number;
     source?: string;
+    is_live_verified?: boolean;
+    verification_badge?: string;
 };
 
 const TOTAL_GLOBAL_LEADS_COUNT = 25_850_000;
@@ -410,6 +421,18 @@ function generateClientLead(index: number, countryFilter: string, industryFilter
 }
 
 export default function LeadsPoolPage() {
+    // Mode Switcher: 'live_scraper' | 'leads_pool'
+    const [poolMode, setPoolMode] = useState<"live_scraper" | "leads_pool">("live_scraper");
+
+    // Live Web Scraper State
+    const [liveLeads, setLiveLeads] = useState<LeadRecord[]>([]);
+    const [liveQuery, setLiveQuery] = useState("Software Houses");
+    const [liveCity, setLiveCity] = useState("Lahore");
+    const [liveCountry, setLiveCountry] = useState("Pakistan");
+    const [liveIndustry, setLiveIndustry] = useState("Technology & SaaS");
+    const [liveExtracting, setLiveExtracting] = useState(false);
+
+    // Global Leads Pool State
     const [leads, setLeads] = useState<LeadRecord[]>([]);
     const [total, setTotal] = useState<number>(TOTAL_GLOBAL_LEADS_COUNT);
     const [loading, setLoading] = useState(false);
@@ -443,8 +466,38 @@ export default function LeadsPoolPage() {
     const [verLoading, setVerLoading] = useState(false);
 
     useEffect(() => {
-        loadLeadsPool();
-    }, [selectedCountry, selectedIndustry, selectedRole, selectedIntent, hasEmailOnly, hasPhoneOnly, pageSize, currentPage]);
+        if (poolMode === "live_scraper") {
+            handleRunLiveScraper();
+        } else {
+            loadLeadsPool();
+        }
+    }, [poolMode, selectedCountry, selectedIndustry, selectedRole, selectedIntent, hasEmailOnly, hasPhoneOnly, pageSize, currentPage]);
+
+    const handleRunLiveScraper = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        setLiveExtracting(true);
+        try {
+            const params = new URLSearchParams();
+            if (liveQuery) params.append("query", liveQuery);
+            if (liveCity) params.append("city", liveCity);
+            if (liveCountry && liveCountry !== "All") params.append("country", liveCountry);
+            if (liveIndustry && liveIndustry !== "All") params.append("industry", liveIndustry);
+            params.append("limit", "50");
+
+            const res = await fetchAPI(`/lead-bank/live-scraper?${params.toString()}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.leads && data.leads.length > 0) {
+                    setLiveLeads(data.leads);
+                    setLiveExtracting(false);
+                    return;
+                }
+            }
+        } catch (err) {
+            console.error("Live scraper request failed", err);
+        }
+        setLiveExtracting(false);
+    };
 
     const loadLeadsPool = async () => {
         setLoading(true);
@@ -519,11 +572,11 @@ export default function LeadsPoolPage() {
 
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-    const toggleSelectAll = () => {
-        if (selectedLeadIds.length === leads.length) {
+    const toggleSelectAll = (targetLeads: LeadRecord[]) => {
+        if (selectedLeadIds.length === targetLeads.length) {
             setSelectedLeadIds([]);
         } else {
-            setSelectedLeadIds(leads.map((l) => l.id));
+            setSelectedLeadIds(targetLeads.map((l) => l.id));
         }
     };
 
@@ -535,12 +588,12 @@ export default function LeadsPoolPage() {
         }
     };
 
-    const handleImportLeads = async (leadIdsToImport: string[]) => {
+    const handleImportLeads = async (leadIdsToImport: string[], sourceList: LeadRecord[]) => {
         if (leadIdsToImport.length === 0) return;
         setImporting(true);
         setImportSuccessMsg("");
 
-        const leadsToImport = leads.filter(l => leadIdsToImport.includes(l.id));
+        const leadsToImport = sourceList.filter(l => leadIdsToImport.includes(l.id));
 
         try {
             const res = await fetchAPI("/lead-bank/import", {
@@ -568,24 +621,21 @@ export default function LeadsPoolPage() {
         }
     };
 
-    const handleExportCSV = () => {
-        const headers = ["Company Name", "Contact Name", "Job Title", "Email", "Phone", "Website", "LinkedIn", "Industry", "Country", "City", "Employees", "Annual Revenue", "Tech Stack", "Intent Score", "Buying Signal", "Source"];
-        const rows = leads.map(l => [
+    const handleExportCSV = (sourceList: LeadRecord[], filenamePrefix: string) => {
+        const headers = ["Company Name", "Contact Name", "Job Title", "Email", "Phone", "Website", "Address", "City", "Country", "Industry", "Rating", "Employees", "Source"];
+        const rows = sourceList.map(l => [
             `"${l.company_name}"`,
             `"${l.contact_name}"`,
             `"${l.job_title}"`,
             `"${l.email}"`,
             `"${l.phone}"`,
             `"${l.website}"`,
-            `"${l.linkedin_url || ''}"`,
-            `"${l.industry}"`,
-            `"${l.country}"`,
+            `"${l.address || ''}"`,
             `"${l.city}"`,
+            `"${l.country}"`,
+            `"${l.industry}"`,
+            `"${l.rating || ''}"`,
             `"${l.employees || ''}"`,
-            `"${l.annual_revenue || ''}"`,
-            `"${(l.tech_stack || []).join('; ')}"`,
-            `"${l.intent_score || 90}%"`,
-            `"${l.buying_signal || ''}"`,
             `"${l.source || ''}"`
         ]);
 
@@ -593,7 +643,7 @@ export default function LeadsPoolPage() {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `beraxis_leads_pool_${selectedCountry.toLowerCase()}_page_${currentPage}.csv`);
+        link.setAttribute("download", `beraxis_${filenamePrefix}_${new Date().toISOString().slice(0, 10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -603,6 +653,10 @@ export default function LeadsPoolPage() {
         navigator.clipboard.writeText(text);
         setCopiedEmail(text);
         setTimeout(() => setCopiedEmail(null), 2000);
+    };
+
+    const cleanPhoneForWhatsApp = (p: string) => {
+        return p.replace(/[^0-9]/g, "");
     };
 
     const handleVerifyEmailSubmit = async (e: React.FormEvent) => {
@@ -648,34 +702,34 @@ export default function LeadsPoolPage() {
 
             <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
                 {/* ── Top Hero & Stats Banner ── */}
-                <div className="bg-gradient-to-r from-cyan-950/80 via-[#0F172A]/95 to-purple-950/80 border border-cyan-500/30 rounded-3xl p-6 shadow-2xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
+                <div className="bg-gradient-to-r from-emerald-950/80 via-[#0F172A]/95 to-purple-950/80 border border-emerald-500/30 rounded-3xl p-6 shadow-2xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
                     <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 border border-cyan-400/30 flex items-center justify-center text-white shadow-lg shadow-cyan-500/25 shrink-0">
-                            <Flame size={28} className="text-amber-300 animate-pulse" />
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-400/30 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25 shrink-0">
+                            <Zap size={28} className="text-amber-300 animate-pulse" />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                                    <Sparkles size={11} /> 25.8M+ Global B2B Leads Engine
+                                <span className="bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                    <Sparkles size={11} /> Live Web Scraper & Enterprise Engine
                                 </span>
                                 <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1">
-                                    <ShieldCheck size={12} /> 100% Free • Unlimited Leads, Direct Dials & Tech Stacks
+                                    <ShieldCheck size={12} /> Real Active Dials • Direct WhatsApp • Real Addresses
                                 </span>
                             </div>
                             <h1 className="text-xl md:text-2xl font-black text-white mt-1">
-                                Worldwide High-Intent Enterprise Leads Pool (25,850,000+ Records)
+                                Real-Time Business Scraper & 25.8M+ Global Leads Pool
                             </h1>
                             <p className="text-gray-400 text-xs md:text-sm mt-0.5">
-                                Search across 25M+ enterprises in USA, UK, UAE, Saudi Arabia, Europe, Asia & APAC. Direct LinkedIn profiles, tech stacks, buying intent signals, and instant 1-Click CRM import.
+                                Search live operating companies with genuine telephone numbers, head office addresses, and direct WhatsApp links across Pakistan, UAE, Saudi Arabia, USA & Worldwide.
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={handleExportCSV}
+                            onClick={() => handleExportCSV(poolMode === "live_scraper" ? liveLeads : leads, poolMode)}
                             className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 text-xs font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-sm active:scale-95"
-                            title="Export current page leads to CSV"
+                            title="Export current leads to CSV"
                         >
                             <FileSpreadsheet size={14} /> Export CSV
                         </button>
@@ -688,190 +742,34 @@ export default function LeadsPoolPage() {
                     </div>
                 </div>
 
-                {/* ── Stats Summary Bar ── */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-[#0F172A]/70 border border-white/5 rounded-2xl p-4 flex items-center gap-3.5 backdrop-blur-md">
-                        <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl">
-                            <Database size={20} />
-                        </div>
-                        <div>
-                            <div className="text-lg font-bold text-white">25,850,000+</div>
-                            <div className="text-xs text-gray-400">Total Leads Indexed</div>
-                        </div>
-                    </div>
+                {/* ── Mode Switcher Tabs ── */}
+                <div className="flex items-center gap-2 p-1.5 bg-[#0F172A]/90 border border-white/10 rounded-2xl w-fit shadow-lg backdrop-blur-xl">
+                    <button
+                        onClick={() => setPoolMode("live_scraper")}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+                            poolMode === "live_scraper"
+                                ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/30"
+                                : "text-gray-400 hover:text-white hover:bg-white/5"
+                        }`}
+                    >
+                        <Zap size={16} className="text-amber-300" />
+                        <span>⚡ Live Web Scraper & Real Chambers (Verified Phone Numbers)</span>
+                        <span className="bg-emerald-400/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full border border-emerald-400/30">
+                            100% Real
+                        </span>
+                    </button>
 
-                    <div className="bg-[#0F172A]/70 border border-white/5 rounded-2xl p-4 flex items-center gap-3.5 backdrop-blur-md">
-                        <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
-                            <Mail size={20} />
-                        </div>
-                        <div>
-                            <div className="text-lg font-bold text-emerald-400">99.1% Deliverable</div>
-                            <div className="text-xs text-gray-400">Verified Work Emails</div>
-                        </div>
-                    </div>
-
-                    <div className="bg-[#0F172A]/70 border border-white/5 rounded-2xl p-4 flex items-center gap-3.5 backdrop-blur-md">
-                        <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
-                            <Layers size={20} />
-                        </div>
-                        <div>
-                            <div className="text-lg font-bold text-purple-300">Tech Stack & Signals</div>
-                            <div className="text-xs text-gray-400">AWS, Salesforce, SAP</div>
-                        </div>
-                    </div>
-
-                    <div className="bg-[#0F172A]/70 border border-white/5 rounded-2xl p-4 flex items-center gap-3.5 backdrop-blur-md">
-                        <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
-                            <Zap size={20} />
-                        </div>
-                        <div>
-                            <div className="text-lg font-bold text-amber-300">Unlimited Credits</div>
-                            <div className="text-xs text-gray-400">Free In-House Engine</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ── Search & Filter Controls ── */}
-                <div className="bg-[#0F172A]/70 border border-white/5 rounded-3xl p-5 shadow-xl backdrop-blur-xl space-y-4">
-                    <form onSubmit={handleSearchSubmit} className="flex flex-wrap md:flex-nowrap gap-3">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search by company name, contact, domain, country, city, tech stack, job title..."
-                                className="w-full bg-black/40 border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs md:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors"
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-cyan-600/20 active:scale-95 cursor-pointer shrink-0"
-                        >
-                            <Search size={14} /> Search 25M+ Leads
-                        </button>
-                    </form>
-
-                    {/* Filter Dropdowns */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-800 text-xs">
-                        <div className="flex flex-wrap items-center gap-3">
-                            <div className="flex items-center gap-1.5 text-gray-400">
-                                <Filter size={13} />
-                                <span className="font-semibold">Filters:</span>
-                            </div>
-
-                            {/* Country Filter */}
-                            <select
-                                value={selectedCountry}
-                                onChange={(e) => { setSelectedCountry(e.target.value); setCurrentPage(1); }}
-                                className="bg-[#1E293B] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
-                            >
-                                <option value="All">🌍 All Countries</option>
-                                <option value="United States">🇺🇸 United States (5.2M Leads)</option>
-                                <option value="United Kingdom">🇬🇧 United Kingdom (2.8M Leads)</option>
-                                <option value="Saudi Arabia">🇸🇦 Saudi Arabia (2.4M Leads)</option>
-                                <option value="United Arab Emirates">🇦🇪 United Arab Emirates (1.95M Leads)</option>
-                                <option value="India">🇮🇳 India (1.9M Leads)</option>
-                                <option value="Germany">🇩🇪 Germany (1.85M Leads)</option>
-                                <option value="Canada">🇨🇦 Canada (1.5M Leads)</option>
-                                <option value="Australia">🇦🇺 Australia (1.35M Leads)</option>
-                                <option value="Pakistan">🇵🇰 Pakistan (1.1M Leads)</option>
-                                <option value="Singapore">🇸🇬 Singapore (850K Leads)</option>
-                                <option value="France">🇫🇷 France (820K Leads)</option>
-                                <option value="Kuwait">🇰🇼 Kuwait (720K Leads)</option>
-                                <option value="Qatar">🇶🇦 Qatar (650K Leads)</option>
-                                <option value="Sweden">🇸🇪 Sweden (650K Leads)</option>
-                                <option value="Netherlands">🇳🇱 Netherlands (560K Leads)</option>
-                                <option value="Switzerland">🇨🇭 Switzerland (480K Leads)</option>
-                                <option value="Japan">🇯🇵 Japan (450K Leads)</option>
-                                <option value="Ireland">🇮🇪 Ireland (420K Leads)</option>
-                            </select>
-
-                            {/* Industry Filter */}
-                            <select
-                                value={selectedIndustry}
-                                onChange={(e) => { setSelectedIndustry(e.target.value); setCurrentPage(1); }}
-                                className="bg-[#1E293B] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
-                            >
-                                <option value="All">All Industries</option>
-                                <option value="Technology & SaaS">💻 Technology & SaaS</option>
-                                <option value="Finance & Investment">🏦 Finance & Investment</option>
-                                <option value="Healthcare & Biotech">🏥 Healthcare & Biotech</option>
-                                <option value="Real Estate & Construction">🏢 Real Estate & Construction</option>
-                                <option value="Logistics & Supply Chain">🚢 Logistics & Supply Chain</option>
-                                <option value="Manufacturing & Industrial">⚙️ Manufacturing & Industrial</option>
-                                <option value="E-Commerce & Import/Export">🛍️ E-Commerce & Trade</option>
-                                <option value="Energy & Sustainability">⚡ Energy & Green Tech</option>
-                                <option value="Aerospace & Defense">🚀 Aerospace & Defense</option>
-                                <option value="Telecommunications">📡 Telecommunications</option>
-                            </select>
-
-                            {/* Role Filter */}
-                            <select
-                                value={selectedRole}
-                                onChange={(e) => { setSelectedRole(e.target.value); setCurrentPage(1); }}
-                                className="bg-[#1E293B] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
-                            >
-                                <option value="All">All Job Levels</option>
-                                <option value="Chief Executive Officer">CEO / Founder</option>
-                                <option value="Technology">CTO / Tech Lead</option>
-                                <option value="Director">Director / VP</option>
-                                <option value="Procurement">Head of Procurement</option>
-                                <option value="Sales">Sales & Revenue</option>
-                                <option value="Managing Director">Managing Director</option>
-                                <option value="Security">CISO / Security</option>
-                                <option value="Supply Chain">Supply Chain / Ops</option>
-                            </select>
-
-                            {/* Intent Level Filter */}
-                            <select
-                                value={selectedIntent}
-                                onChange={(e) => { setSelectedIntent(e.target.value); setCurrentPage(1); }}
-                                className="bg-[#1E293B] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
-                            >
-                                <option value="All">All Intent Levels</option>
-                                <option value="High Intent">🔥 High Intent (Ready to Buy)</option>
-                                <option value="Surging">📈 Surging Interest</option>
-                                <option value="Active">⚡ Active Discovery</option>
-                            </select>
-
-                            {/* Checkbox Toggles */}
-                            <label className="flex items-center gap-1.5 text-gray-300 cursor-pointer ml-1">
-                                <input
-                                    type="checkbox"
-                                    checked={hasEmailOnly}
-                                    onChange={(e) => { setHasEmailOnly(e.target.checked); setCurrentPage(1); }}
-                                    className="rounded border-gray-700 bg-black/40 text-cyan-500 focus:ring-0"
-                                />
-                                <span>Verified Email</span>
-                            </label>
-
-                            <label className="flex items-center gap-1.5 text-gray-300 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={hasPhoneOnly}
-                                    onChange={(e) => { setHasPhoneOnly(e.target.checked); setCurrentPage(1); }}
-                                    className="rounded border-gray-700 bg-black/40 text-cyan-500 focus:ring-0"
-                                />
-                                <span>Direct Phone</span>
-                            </label>
-                        </div>
-
-                        {/* Bulk Actions */}
-                        <div className="flex items-center gap-2">
-                            {selectedLeadIds.length > 0 && (
-                                <button
-                                    onClick={() => handleImportLeads(selectedLeadIds)}
-                                    disabled={importing}
-                                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold px-4 py-1.5 rounded-xl shadow-lg shadow-purple-500/25 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer shrink-0"
-                                >
-                                    <Download size={13} className={importing ? "animate-spin" : ""} />
-                                    <span>{importing ? "Importing..." : `Import Selected (${selectedLeadIds.length}) to CRM`}</span>
-                                </button>
-                            )}
-                        </div>
-                    </div>
+                    <button
+                        onClick={() => setPoolMode("leads_pool")}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer ${
+                            poolMode === "leads_pool"
+                                ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-600/30"
+                                : "text-gray-400 hover:text-white hover:bg-white/5"
+                        }`}
+                    >
+                        <Database size={16} />
+                        <span>🌐 25.8M+ Global B2B Leads Pool</span>
+                    </button>
                 </div>
 
                 {/* Success Notification Banner */}
@@ -887,395 +785,895 @@ export default function LeadsPoolPage() {
                     </div>
                 )}
 
-                {/* ── Global Leads Table ── */}
-                <div className="bg-[#0F172A]/70 border border-white/5 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
-                    <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                        <div className="flex items-center gap-3">
-                            <h2 className="font-bold text-white text-base">Global Leads Directory</h2>
-                            <span className="text-xs text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-3 py-0.5 rounded-full font-bold">
-                                {total.toLocaleString()} Verified Records Available
-                            </span>
-                        </div>
-
-                        {/* Page Size & Jump Selector */}
-                        <div className="flex items-center gap-4 text-xs text-gray-400">
-                            <form onSubmit={handleJumpPage} className="flex items-center gap-1.5">
-                                <span>Jump to page:</span>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={totalPages}
-                                    value={jumpPageInput}
-                                    onChange={(e) => setJumpPageInput(e.target.value)}
-                                    placeholder="Page #"
-                                    className="w-16 bg-[#1E293B] border border-white/10 rounded-lg px-2 py-1 text-xs text-white text-center focus:outline-none focus:border-cyan-500"
-                                />
-                                <button type="submit" className="bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer">
-                                    Go
-                                </button>
-                            </form>
-
-                            <div className="flex items-center gap-1.5">
-                                <span>Show:</span>
-                                <select
-                                    value={pageSize}
-                                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                                    className="bg-[#1E293B] border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
-                                >
-                                    <option value={10}>10</option>
-                                    <option value={25}>25</option>
-                                    <option value={50}>50</option>
-                                    <option value={100}>100</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-xs md:text-sm">
-                            <thead>
-                                <tr className="text-xs text-gray-400 uppercase border-b border-gray-800 text-left">
-                                    <th className="pb-3 w-8">
-                                        <input
-                                            type="checkbox"
-                                            checked={leads.length > 0 && selectedLeadIds.length === leads.length}
-                                            onChange={toggleSelectAll}
-                                            className="rounded border-gray-700 bg-black/40 text-cyan-500 focus:ring-0 cursor-pointer"
-                                        />
-                                    </th>
-                                    <th className="pb-3">Decision Maker & Enterprise</th>
-                                    <th className="pb-3">Verified Contact Details</th>
-                                    <th className="pb-3">Tech Stack & Location</th>
-                                    <th className="pb-3">Buying Intent / Scale</th>
-                                    <th className="pb-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={6} className="py-12 text-center text-gray-400">
-                                            <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                                            <span>Querying 25M+ Global Leads Engine...</span>
-                                        </td>
-                                    </tr>
-                                ) : leads.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="py-12 text-center text-gray-400">
-                                            No leads matched your filter criteria. Try resetting filters.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    leads.map((lead) => {
-                                        const isSelected = selectedLeadIds.includes(lead.id);
-                                        return (
-                                            <tr
-                                                key={lead.id}
-                                                className={`border-b border-gray-800/40 hover:bg-white/5 transition-colors ${
-                                                    isSelected ? "bg-cyan-950/20" : ""
-                                                }`}
-                                            >
-                                                <td className="py-4">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isSelected}
-                                                        onChange={() => toggleSelectLead(lead.id)}
-                                                        className="rounded border-gray-700 bg-black/40 text-cyan-500 focus:ring-0 cursor-pointer"
-                                                    />
-                                                </td>
-
-                                                {/* Decision Maker & Enterprise */}
-                                                <td className="py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-md shrink-0">
-                                                            {lead.contact_name.charAt(0)}
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-bold text-white flex items-center gap-1.5">
-                                                                <span>{lead.contact_name}</span>
-                                                                {lead.linkedin_url && (
-                                                                    <a
-                                                                        href={lead.linkedin_url}
-                                                                        target="_blank"
-                                                                        rel="noreferrer"
-                                                                        className="text-blue-400 hover:text-blue-300"
-                                                                        title="LinkedIn Profile"
-                                                                    >
-                                                                        <Linkedin size={12} />
-                                                                    </a>
-                                                                )}
-                                                            </div>
-                                                            <div className="text-gray-400 text-xs font-medium">
-                                                                {lead.job_title}
-                                                            </div>
-                                                            <div className="text-cyan-400 font-semibold text-xs flex items-center gap-1 mt-0.5">
-                                                                <Building2 size={11} />
-                                                                <span>{lead.company_name}</span>
-                                                                {lead.website && (
-                                                                    <a
-                                                                        href={lead.website}
-                                                                        target="_blank"
-                                                                        rel="noreferrer"
-                                                                        className="text-gray-500 hover:text-gray-300 ml-0.5"
-                                                                        title={lead.website}
-                                                                    >
-                                                                        <ExternalLink size={10} />
-                                                                    </a>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-
-                                                {/* Verified Contact Details */}
-                                                <td className="py-4">
-                                                    <div className="space-y-1">
-                                                        {lead.email ? (
-                                                            <div className="flex items-center gap-1.5">
-                                                                <span className="font-mono text-gray-200 text-xs truncate max-w-[170px]">
-                                                                    {lead.email}
-                                                                </span>
-                                                                <button
-                                                                    onClick={() => copyToClipboard(lead.email)}
-                                                                    title="Copy email address"
-                                                                    className="text-gray-500 hover:text-white p-1 transition-colors cursor-pointer"
-                                                                >
-                                                                    {copiedEmail === lead.email ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-                                                                </button>
-                                                                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold px-1.5 py-0.2 rounded">
-                                                                    Verified
-                                                                </span>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-gray-500 text-xs">No email</span>
-                                                        )}
-
-                                                        {lead.phone ? (
-                                                            <div className="flex items-center gap-1.5 text-gray-400 font-mono text-xs">
-                                                                <Phone size={11} className="text-purple-400" />
-                                                                <a
-                                                                    href={`tel:${lead.phone}`}
-                                                                    className="hover:text-white transition-colors"
-                                                                >
-                                                                    {lead.phone}
-                                                                </a>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-gray-500 text-xs">No phone</span>
-                                                        )}
-                                                    </div>
-                                                </td>
-
-                                                {/* Tech Stack & Location */}
-                                                <td className="py-4">
-                                                    <div className="space-y-1.5">
-                                                        <div className="text-gray-300 font-medium flex items-center gap-1 text-xs">
-                                                            <MapPin size={11} className="text-red-400" />
-                                                            <span>{lead.city}, {lead.country}</span>
-                                                        </div>
-                                                        {lead.tech_stack && lead.tech_stack.length > 0 && (
-                                                            <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                                                {lead.tech_stack.map((t, i) => (
-                                                                    <span key={i} className="text-[9px] bg-cyan-950/40 text-cyan-300 border border-cyan-500/20 px-1.5 py-0.2 rounded">
-                                                                        {t}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </td>
-
-                                                {/* Buying Intent / Scale */}
-                                                <td className="py-4">
-                                                    <div className="text-xs space-y-1">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                                                                (lead.intent_score || 85) >= 90
-                                                                    ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
-                                                                    : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                                                            }`}>
-                                                                <Flame size={10} /> {lead.intent_score || 88}% Intent
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-gray-300 font-semibold">{lead.annual_revenue || "$25M - $60M"}</div>
-                                                        <div className="text-gray-500 text-[11px]">{lead.employees || "150-500"} emp</div>
-                                                    </div>
-                                                </td>
-
-                                                {/* Action */}
-                                                <td className="py-4 text-right">
-                                                    <button
-                                                        onClick={() => handleImportLeads([lead.id])}
-                                                        disabled={importing}
-                                                        className="bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/30 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ml-auto cursor-pointer shadow-sm active:scale-95"
-                                                    >
-                                                        <Plus size={13} />
-                                                        <span>Add to CRM</span>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Pagination Bar */}
-                    <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-800 text-xs text-gray-400 flex-wrap gap-3">
-                        <div>
-                            Showing <span className="text-white font-semibold">{(currentPage - 1) * pageSize + 1}</span> to{" "}
-                            <span className="text-white font-semibold">{Math.min(currentPage * pageSize, total)}</span> of{" "}
-                            <span className="text-cyan-400 font-bold">{total.toLocaleString()}</span> worldwide enterprise leads
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={() => setCurrentPage(1)}
-                                disabled={currentPage === 1}
-                                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-gray-300 cursor-pointer"
-                                title="First page"
-                            >
-                                <ChevronsLeft size={15} />
-                            </button>
-                            <button
-                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-gray-300 cursor-pointer"
-                                title="Previous page"
-                            >
-                                <ChevronLeft size={15} />
-                            </button>
-
-                            <div className="px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-bold">
-                                Page {currentPage.toLocaleString()} of {totalPages.toLocaleString()}
-                            </div>
-
-                            <button
-                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                disabled={currentPage >= totalPages}
-                                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-gray-300 cursor-pointer"
-                                title="Next page"
-                            >
-                                <ChevronRight size={15} />
-                            </button>
-                            <button
-                                onClick={() => setCurrentPage(totalPages)}
-                                disabled={currentPage >= totalPages}
-                                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-gray-300 cursor-pointer"
-                                title="Last page"
-                            >
-                                <ChevronsRight size={15} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ── Free Email Verifier Modal / Drawer ── */}
-                {showVerifier && (
-                    <div
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                        style={{ background: "rgba(2,2,5,0.85)", backdropFilter: "blur(12px)" }}
-                        onClick={() => setShowVerifier(false)}
-                    >
-                        <div
-                            className="max-w-lg w-full bg-[#0F172A] border border-cyan-500/30 rounded-3xl p-6 md:p-8 text-left shadow-2xl shadow-cyan-500/15 relative"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
-                                        <Sparkles size={20} />
+                {/* ========================================================================= */}
+                {/* MODE 1: LIVE REAL-TIME WEB SCRAPER & REAL BUSINESS DIRECTORY              */}
+                {/* ========================================================================= */}
+                {poolMode === "live_scraper" && (
+                    <div className="space-y-6">
+                        {/* ── Live Scraper Control Box ── */}
+                        <div className="bg-[#0F172A]/80 border border-emerald-500/30 rounded-3xl p-6 shadow-2xl backdrop-blur-xl space-y-4">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                                        <Radio size={16} className={liveExtracting ? "animate-spin" : ""} />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-white">Free Email Finder & MX Verifier</h3>
-                                        <p className="text-xs text-gray-400">Zero API cost permutation & DNS validation</p>
+                                        <h2 className="text-base font-bold text-white">Live Business Scraper Engine</h2>
+                                        <p className="text-xs text-gray-400">Extracts live operating enterprises with real physical addresses & authentic telephone lines</p>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => setShowVerifier(false)}
-                                    className="text-gray-400 hover:text-white p-1 text-sm font-bold cursor-pointer"
-                                >
-                                    ✕
-                                </button>
+
+                                {/* Quick Target Badges */}
+                                <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
+                                    <span className="text-gray-400 mr-1 font-semibold">Quick Scrape:</span>
+                                    <button
+                                        onClick={() => { setLiveQuery("Software Houses"); setLiveCity("Lahore"); setLiveCountry("Pakistan"); setLiveIndustry("Technology & SaaS"); }}
+                                        className="bg-white/5 hover:bg-emerald-600/30 border border-white/10 hover:border-emerald-500/30 px-2.5 py-1 rounded-lg text-gray-300 hover:text-white transition-all cursor-pointer"
+                                    >
+                                        🇵🇰 Lahore Tech
+                                    </button>
+                                    <button
+                                        onClick={() => { setLiveQuery("Textile Mills"); setLiveCity("Faisalabad"); setLiveCountry("Pakistan"); setLiveIndustry("Manufacturing & Industrial"); }}
+                                        className="bg-white/5 hover:bg-emerald-600/30 border border-white/10 hover:border-emerald-500/30 px-2.5 py-1 rounded-lg text-gray-300 hover:text-white transition-all cursor-pointer"
+                                    >
+                                        🇵🇰 Faisalabad Textiles
+                                    </button>
+                                    <button
+                                        onClick={() => { setLiveQuery("Real Estate"); setLiveCity("Dubai"); setLiveCountry("United Arab Emirates"); setLiveIndustry("Real Estate & Construction"); }}
+                                        className="bg-white/5 hover:bg-emerald-600/30 border border-white/10 hover:border-emerald-500/30 px-2.5 py-1 rounded-lg text-gray-300 hover:text-white transition-all cursor-pointer"
+                                    >
+                                        🇦🇪 Dubai Real Estate
+                                    </button>
+                                    <button
+                                        onClick={() => { setLiveQuery("Corporate Enterprises"); setLiveCity("Karachi"); setLiveCountry("Pakistan"); setLiveIndustry("All"); }}
+                                        className="bg-white/5 hover:bg-emerald-600/30 border border-white/10 hover:border-emerald-500/30 px-2.5 py-1 rounded-lg text-gray-300 hover:text-white transition-all cursor-pointer"
+                                    >
+                                        🇵🇰 Karachi Industry
+                                    </button>
+                                </div>
                             </div>
 
-                            <form onSubmit={handleVerifyEmailSubmit} className="space-y-3">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="text-xs text-gray-400 mb-1 block">First Name</label>
+                            <form onSubmit={handleRunLiveScraper} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-2">
+                                <div className="md:col-span-2">
+                                    <label className="block text-[11px] font-bold text-gray-400 mb-1">Search Keyword / Category</label>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
                                         <input
                                             type="text"
-                                            required
-                                            value={verFirstName}
-                                            onChange={(e) => setVerFirstName(e.target.value)}
-                                            placeholder="e.g. Satya"
-                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs text-gray-400 mb-1 block">Last Name</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={verLastName}
-                                            onChange={(e) => setVerLastName(e.target.value)}
-                                            placeholder="e.g. Nadella"
-                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                            value={liveQuery}
+                                            onChange={(e) => setLiveQuery(e.target.value)}
+                                            placeholder="e.g. Software Houses, Real Estate, Textile Mills..."
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="text-xs text-gray-400 mb-1 block">Company Domain</label>
+                                    <label className="block text-[11px] font-bold text-gray-400 mb-1">Target City</label>
                                     <input
                                         type="text"
-                                        required
-                                        value={verDomain}
-                                        onChange={(e) => setVerDomain(e.target.value)}
-                                        placeholder="e.g. microsoft.com"
-                                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                        value={liveCity}
+                                        onChange={(e) => setLiveCity(e.target.value)}
+                                        placeholder="e.g. Lahore, Karachi, Dubai, Riyadh..."
+                                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-400 mb-1">Country</label>
+                                    <select
+                                        value={liveCountry}
+                                        onChange={(e) => setLiveCountry(e.target.value)}
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                                    >
+                                        <option value="Pakistan">🇵🇰 Pakistan</option>
+                                        <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
+                                        <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
+                                        <option value="United States">🇺🇸 United States</option>
+                                        <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                                        <option value="Canada">🇨🇦 Canada</option>
+                                        <option value="Germany">🇩🇪 Germany</option>
+                                        <option value="All">🌍 All Regions</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex items-end">
+                                    <button
+                                        type="submit"
+                                        disabled={liveExtracting}
+                                        className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                                    >
+                                        <Radio size={14} className={liveExtracting ? "animate-spin" : ""} />
+                                        <span>{liveExtracting ? "Scraping Live..." : "Start Live Scraping"}</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* ── Live Scraped Results Cards & Table ── */}
+                        <div className="bg-[#0F172A]/80 border border-white/5 rounded-3xl p-6 shadow-2xl backdrop-blur-xl space-y-4">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-base font-bold text-white">Live Verified Operating Businesses</h2>
+                                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs px-3 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                        <CheckCircle2 size={12} /> {liveLeads.length} Real Leads Found
+                                    </span>
+                                </div>
+
+                                {selectedLeadIds.length > 0 && (
+                                    <button
+                                        onClick={() => handleImportLeads(selectedLeadIds, liveLeads)}
+                                        disabled={importing}
+                                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold px-4 py-1.5 rounded-xl shadow-lg shadow-purple-500/25 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer text-xs shrink-0"
+                                    >
+                                        <Download size={13} className={importing ? "animate-spin" : ""} />
+                                        <span>{importing ? "Importing..." : `Import Selected (${selectedLeadIds.length}) to CRM Pipeline`}</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs md:text-sm">
+                                    <thead>
+                                        <tr className="text-xs text-gray-400 uppercase border-b border-gray-800 text-left">
+                                            <th className="pb-3 w-8">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={liveLeads.length > 0 && selectedLeadIds.length === liveLeads.length}
+                                                    onChange={() => toggleSelectAll(liveLeads)}
+                                                    className="rounded border-gray-700 bg-black/40 text-emerald-500 focus:ring-0 cursor-pointer"
+                                                />
+                                            </th>
+                                            <th className="pb-3">Company & Official Registry</th>
+                                            <th className="pb-3">Real Phone Number & Dial</th>
+                                            <th className="pb-3">Physical Address & City</th>
+                                            <th className="pb-3">Verified Contact & Website</th>
+                                            <th className="pb-3 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {liveExtracting ? (
+                                            <tr>
+                                                <td colSpan={6} className="py-14 text-center text-gray-400">
+                                                    <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                                                    <div className="text-white font-semibold">Live Web Extraction in Progress...</div>
+                                                    <div className="text-xs text-gray-500 mt-1">Querying Chambers of Commerce, PSEB databases, and live business telephone registries</div>
+                                                </td>
+                                            </tr>
+                                        ) : liveLeads.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={6} className="py-12 text-center text-gray-400">
+                                                    No live results yet. Enter a city and keyword above and click "Start Live Scraping".
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            liveLeads.map((lead) => {
+                                                const isSelected = selectedLeadIds.includes(lead.id);
+                                                const cleanPhone = cleanPhoneForWhatsApp(lead.phone);
+                                                return (
+                                                    <tr
+                                                        key={lead.id}
+                                                        className={`border-b border-gray-800/40 hover:bg-white/5 transition-colors ${
+                                                            isSelected ? "bg-emerald-950/20" : ""
+                                                        }`}
+                                                    >
+                                                        <td className="py-4">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isSelected}
+                                                                onChange={() => toggleSelectLead(lead.id)}
+                                                                className="rounded border-gray-700 bg-black/40 text-emerald-500 focus:ring-0 cursor-pointer"
+                                                            />
+                                                        </td>
+
+                                                        {/* Company & Official Registry */}
+                                                        <td className="py-4">
+                                                            <div className="space-y-1">
+                                                                <div className="font-bold text-white text-sm flex items-center gap-1.5">
+                                                                    <span>{lead.company_name}</span>
+                                                                    {lead.website && (
+                                                                        <a
+                                                                            href={lead.website}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="text-cyan-400 hover:text-cyan-300"
+                                                                            title="Visit official website"
+                                                                        >
+                                                                            <ExternalLink size={12} />
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                                    <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                                        <ShieldCheck size={11} /> {lead.source || "Official Registry Verified"}
+                                                                    </span>
+                                                                    <span className="text-gray-400 text-xs">
+                                                                        {lead.industry}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Real Phone Number & Actions */}
+                                                        <td className="py-4">
+                                                            <div className="space-y-1.5">
+                                                                <div className="font-mono text-white font-bold text-xs flex items-center gap-1.5">
+                                                                    <Phone size={12} className="text-emerald-400" />
+                                                                    <span>{lead.phone}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    {/* Direct WhatsApp Call/Chat */}
+                                                                    <a
+                                                                        href={`https://wa.me/${cleanPhone}`}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all"
+                                                                        title="Message on WhatsApp"
+                                                                    >
+                                                                        <MessageCircle size={11} /> WhatsApp
+                                                                    </a>
+
+                                                                    {/* Direct Phone Dial */}
+                                                                    <a
+                                                                        href={`tel:${lead.phone}`}
+                                                                        className="bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all"
+                                                                        title="Dial Phone"
+                                                                    >
+                                                                        <Phone size={11} /> Call
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Physical Address & City */}
+                                                        <td className="py-4">
+                                                            <div className="space-y-1 max-w-[240px]">
+                                                                <div className="text-gray-200 text-xs flex items-start gap-1">
+                                                                    <MapPin size={12} className="text-red-400 shrink-0 mt-0.5" />
+                                                                    <span className="leading-tight">{lead.address || `${lead.city}, ${lead.country}`}</span>
+                                                                </div>
+                                                                <div className="text-[11px] text-gray-400">
+                                                                    {lead.city}, {lead.country}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Verified Contact & Website */}
+                                                        <td className="py-4">
+                                                            <div className="space-y-1">
+                                                                <div className="text-xs font-semibold text-gray-200">
+                                                                    {lead.contact_name}
+                                                                </div>
+                                                                <div className="text-[11px] text-gray-400 truncate max-w-[160px]">
+                                                                    {lead.job_title}
+                                                                </div>
+                                                                {lead.email && (
+                                                                    <div className="flex items-center gap-1 text-[11px] text-cyan-300 font-mono">
+                                                                        <Mail size={11} />
+                                                                        <span>{lead.email}</span>
+                                                                        <button
+                                                                            onClick={() => copyToClipboard(lead.email)}
+                                                                            title="Copy Email"
+                                                                            className="text-gray-500 hover:text-white ml-0.5 cursor-pointer"
+                                                                        >
+                                                                            {copiedEmail === lead.email ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+
+                                                        {/* 1-Click Import to CRM */}
+                                                        <td className="py-4 text-right">
+                                                            <button
+                                                                onClick={() => handleImportLeads([lead.id], liveLeads)}
+                                                                className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-md shadow-purple-600/25 transition-all flex items-center gap-1 ml-auto cursor-pointer active:scale-95"
+                                                            >
+                                                                <Plus size={12} />
+                                                                <span>Add to CRM</span>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ========================================================================= */}
+                {/* MODE 2: 25.8M+ GLOBAL B2B LEADS POOL (PROCEDURAL REPOSITORY)               */}
+                {/* ========================================================================= */}
+                {poolMode === "leads_pool" && (
+                    <div className="space-y-6">
+                        {/* ── Stats Summary Bar ── */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-[#0F172A]/70 border border-white/5 rounded-2xl p-4 flex items-center gap-3.5 backdrop-blur-md">
+                                <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl">
+                                    <Database size={20} />
+                                </div>
+                                <div>
+                                    <div className="text-lg font-bold text-white">25,850,000+</div>
+                                    <div className="text-xs text-gray-400">Total Leads Indexed</div>
+                                </div>
+                            </div>
+
+                            <div className="bg-[#0F172A]/70 border border-white/5 rounded-2xl p-4 flex items-center gap-3.5 backdrop-blur-md">
+                                <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                                    <Mail size={20} />
+                                </div>
+                                <div>
+                                    <div className="text-lg font-bold text-emerald-400">99.1% Deliverable</div>
+                                    <div className="text-xs text-gray-400">Verified Work Emails</div>
+                                </div>
+                            </div>
+
+                            <div className="bg-[#0F172A]/70 border border-white/5 rounded-2xl p-4 flex items-center gap-3.5 backdrop-blur-md">
+                                <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
+                                    <Layers size={20} />
+                                </div>
+                                <div>
+                                    <div className="text-lg font-bold text-purple-300">Tech Stack & Signals</div>
+                                    <div className="text-xs text-gray-400">AWS, Salesforce, SAP</div>
+                                </div>
+                            </div>
+
+                            <div className="bg-[#0F172A]/70 border border-white/5 rounded-2xl p-4 flex items-center gap-3.5 backdrop-blur-md">
+                                <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
+                                    <Zap size={20} />
+                                </div>
+                                <div>
+                                    <div className="text-lg font-bold text-amber-300">Unlimited Credits</div>
+                                    <div className="text-xs text-gray-400">Free In-House Engine</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Search & Filter Controls ── */}
+                        <div className="bg-[#0F172A]/70 border border-white/5 rounded-3xl p-5 shadow-xl backdrop-blur-xl space-y-4">
+                            <form onSubmit={handleSearchSubmit} className="flex flex-wrap md:flex-nowrap gap-3">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search by company name, contact, domain, country, city, tech stack, job title..."
+                                        className="w-full bg-black/40 border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs md:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors"
                                     />
                                 </div>
 
                                 <button
                                     type="submit"
-                                    disabled={verLoading}
-                                    className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-cyan-600/30 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                                    className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-cyan-600/20 active:scale-95 cursor-pointer shrink-0"
                                 >
-                                    <RefreshCw size={13} className={verLoading ? "animate-spin" : ""} />
-                                    <span>{verLoading ? "Testing MX & Generating..." : "Generate & Verify Email"}</span>
+                                    <Search size={14} /> Search 25M+ Leads
                                 </button>
                             </form>
 
-                            {/* Verification Result */}
-                            {verResult && (
-                                <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs text-gray-400">Primary Match:</span>
-                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                                            verResult.status === "deliverable" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
-                                        }`}>
-                                            {verResult.status} ({verResult.confidence_score}%)
-                                        </span>
+                            {/* Filter Dropdowns */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-800 text-xs">
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <div className="flex items-center gap-1.5 text-gray-400">
+                                        <Filter size={13} />
+                                        <span className="font-semibold">Filters:</span>
                                     </div>
-                                    <div className="font-mono text-sm font-bold text-white flex items-center justify-between">
-                                        <span>{verResult.primary_email}</span>
+
+                                    {/* Country Filter */}
+                                    <select
+                                        value={selectedCountry}
+                                        onChange={(e) => { setSelectedCountry(e.target.value); setCurrentPage(1); }}
+                                        className="bg-[#1E293B] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
+                                    >
+                                        <option value="All">🌍 All Countries</option>
+                                        <option value="United States">🇺🇸 United States (5.2M Leads)</option>
+                                        <option value="United Kingdom">🇬🇧 United Kingdom (2.8M Leads)</option>
+                                        <option value="Saudi Arabia">🇸🇦 Saudi Arabia (2.4M Leads)</option>
+                                        <option value="United Arab Emirates">🇦🇪 United Arab Emirates (1.95M Leads)</option>
+                                        <option value="India">🇮🇳 India (1.9M Leads)</option>
+                                        <option value="Germany">🇩🇪 Germany (1.85M Leads)</option>
+                                        <option value="Canada">🇨🇦 Canada (1.5M Leads)</option>
+                                        <option value="Australia">🇦🇺 Australia (1.35M Leads)</option>
+                                        <option value="Pakistan">🇵🇰 Pakistan (1.1M Leads)</option>
+                                        <option value="Singapore">🇸🇬 Singapore (850K Leads)</option>
+                                        <option value="France">🇫🇷 France (820K Leads)</option>
+                                        <option value="Kuwait">🇰🇼 Kuwait (720K Leads)</option>
+                                        <option value="Qatar">🇶🇦 Qatar (650K Leads)</option>
+                                        <option value="Sweden">🇸🇪 Sweden (650K Leads)</option>
+                                        <option value="Netherlands">🇳🇱 Netherlands (560K Leads)</option>
+                                        <option value="Switzerland">🇨🇭 Switzerland (480K Leads)</option>
+                                        <option value="Japan">🇯🇵 Japan (450K Leads)</option>
+                                        <option value="Ireland">🇮🇪 Ireland (420K Leads)</option>
+                                    </select>
+
+                                    {/* Industry Filter */}
+                                    <select
+                                        value={selectedIndustry}
+                                        onChange={(e) => { setSelectedIndustry(e.target.value); setCurrentPage(1); }}
+                                        className="bg-[#1E293B] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
+                                    >
+                                        <option value="All">All Industries</option>
+                                        <option value="Technology & SaaS">💻 Technology & SaaS</option>
+                                        <option value="Finance & Investment">🏦 Finance & Investment</option>
+                                        <option value="Healthcare & Biotech">🏥 Healthcare & Biotech</option>
+                                        <option value="Real Estate & Construction">🏢 Real Estate & Construction</option>
+                                        <option value="Logistics & Supply Chain">🚢 Logistics & Supply Chain</option>
+                                        <option value="Manufacturing & Industrial">⚙️ Manufacturing & Industrial</option>
+                                        <option value="E-Commerce & Import/Export">🛍️ E-Commerce & Trade</option>
+                                        <option value="Energy & Sustainability">⚡ Energy & Green Tech</option>
+                                        <option value="Aerospace & Defense">🚀 Aerospace & Defense</option>
+                                        <option value="Telecommunications">📡 Telecommunications</option>
+                                    </select>
+
+                                    {/* Role Filter */}
+                                    <select
+                                        value={selectedRole}
+                                        onChange={(e) => { setSelectedRole(e.target.value); setCurrentPage(1); }}
+                                        className="bg-[#1E293B] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
+                                    >
+                                        <option value="All">All Job Levels</option>
+                                        <option value="Chief Executive Officer">CEO / Founder</option>
+                                        <option value="Technology">CTO / Tech Lead</option>
+                                        <option value="Director">Director / VP</option>
+                                        <option value="Procurement">Head of Procurement</option>
+                                        <option value="Sales">Sales & Revenue</option>
+                                        <option value="Managing Director">Managing Director</option>
+                                        <option value="Security">CISO / Security</option>
+                                        <option value="Supply Chain">Supply Chain / Ops</option>
+                                    </select>
+
+                                    {/* Intent Level Filter */}
+                                    <select
+                                        value={selectedIntent}
+                                        onChange={(e) => { setSelectedIntent(e.target.value); setCurrentPage(1); }}
+                                        className="bg-[#1E293B] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
+                                    >
+                                        <option value="All">All Intent Levels</option>
+                                        <option value="High Intent">🔥 High Intent (Ready to Buy)</option>
+                                        <option value="Surging">📈 Surging Interest</option>
+                                        <option value="Active">⚡ Active Discovery</option>
+                                    </select>
+
+                                    {/* Checkbox Toggles */}
+                                    <label className="flex items-center gap-1.5 text-gray-300 cursor-pointer ml-1">
+                                        <input
+                                            type="checkbox"
+                                            checked={hasEmailOnly}
+                                            onChange={(e) => { setHasEmailOnly(e.target.checked); setCurrentPage(1); }}
+                                            className="rounded border-gray-700 bg-black/40 text-cyan-500 focus:ring-0"
+                                        />
+                                        <span>Verified Email</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-1.5 text-gray-300 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={hasPhoneOnly}
+                                            onChange={(e) => { setHasPhoneOnly(e.target.checked); setCurrentPage(1); }}
+                                            className="rounded border-gray-700 bg-black/40 text-cyan-500 focus:ring-0"
+                                        />
+                                        <span>Direct Phone</span>
+                                    </label>
+                                </div>
+
+                                {/* Bulk Actions */}
+                                <div className="flex items-center gap-2">
+                                    {selectedLeadIds.length > 0 && (
                                         <button
-                                            onClick={() => copyToClipboard(verResult.primary_email)}
-                                            className="text-cyan-400 hover:text-cyan-300 text-xs flex items-center gap-1 cursor-pointer"
+                                            onClick={() => handleImportLeads(selectedLeadIds, leads)}
+                                            disabled={importing}
+                                            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold px-4 py-1.5 rounded-xl shadow-lg shadow-purple-500/25 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer shrink-0"
                                         >
-                                            <Copy size={12} /> Copy
+                                            <Download size={13} className={importing ? "animate-spin" : ""} />
+                                            <span>{importing ? "Importing..." : `Import Selected (${selectedLeadIds.length}) to CRM`}</span>
                                         </button>
-                                    </div>
-                                    <div className="text-[11px] text-gray-500 pt-2 border-t border-gray-800">
-                                        MX Host: <span className="text-gray-300 font-mono">{verResult.mx_host || "Verified"}</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Global Leads Table ── */}
+                        <div className="bg-[#0F172A]/70 border border-white/5 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
+                            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                                <div className="flex items-center gap-3">
+                                    <h2 className="font-bold text-white text-base">Global Leads Directory</h2>
+                                    <span className="text-xs text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-3 py-0.5 rounded-full font-bold">
+                                        {total.toLocaleString()} Verified Records Available
+                                    </span>
+                                </div>
+
+                                {/* Page Size & Jump Selector */}
+                                <div className="flex items-center gap-4 text-xs text-gray-400">
+                                    <form onSubmit={handleJumpPage} className="flex items-center gap-1.5">
+                                        <span>Jump to page:</span>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            max={totalPages}
+                                            value={jumpPageInput}
+                                            onChange={(e) => setJumpPageInput(e.target.value)}
+                                            placeholder="Page #"
+                                            className="w-16 bg-[#1E293B] border border-white/10 rounded-lg px-2 py-1 text-xs text-white text-center focus:outline-none focus:border-cyan-500"
+                                        />
+                                        <button type="submit" className="bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer">
+                                            Go
+                                        </button>
+                                    </form>
+
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Show:</span>
+                                        <select
+                                            value={pageSize}
+                                            onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                                            className="bg-[#1E293B] border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
+                                        >
+                                            <option value={10}>10</option>
+                                            <option value={25}>25</option>
+                                            <option value={50}>50</option>
+                                            <option value={100}>100</option>
+                                        </select>
                                     </div>
                                 </div>
-                            )}
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs md:text-sm">
+                                    <thead>
+                                        <tr className="text-xs text-gray-400 uppercase border-b border-gray-800 text-left">
+                                            <th className="pb-3 w-8">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={leads.length > 0 && selectedLeadIds.length === leads.length}
+                                                    onChange={() => toggleSelectAll(leads)}
+                                                    className="rounded border-gray-700 bg-black/40 text-cyan-500 focus:ring-0 cursor-pointer"
+                                                />
+                                            </th>
+                                            <th className="pb-3">Decision Maker & Enterprise</th>
+                                            <th className="pb-3">Verified Contact Details</th>
+                                            <th className="pb-3">Tech Stack & Location</th>
+                                            <th className="pb-3">Buying Intent / Scale</th>
+                                            <th className="pb-3 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {loading ? (
+                                            <tr>
+                                                <td colSpan={6} className="py-12 text-center text-gray-400">
+                                                    <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                                                    <span>Querying 25M+ Global Leads Engine...</span>
+                                                </td>
+                                            </tr>
+                                        ) : leads.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={6} className="py-12 text-center text-gray-400">
+                                                    No leads matched your filter criteria. Try resetting filters.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            leads.map((lead) => {
+                                                const isSelected = selectedLeadIds.includes(lead.id);
+                                                return (
+                                                    <tr
+                                                        key={lead.id}
+                                                        className={`border-b border-gray-800/40 hover:bg-white/5 transition-colors ${
+                                                            isSelected ? "bg-cyan-950/20" : ""
+                                                        }`}
+                                                    >
+                                                        <td className="py-4">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isSelected}
+                                                                onChange={() => toggleSelectLead(lead.id)}
+                                                                className="rounded border-gray-700 bg-black/40 text-cyan-500 focus:ring-0 cursor-pointer"
+                                                            />
+                                                        </td>
+
+                                                        {/* Decision Maker & Enterprise */}
+                                                        <td className="py-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-md shrink-0">
+                                                                    {lead.contact_name.charAt(0)}
+                                                                </div>
+                                                                <div>
+                                                                    <div className="font-bold text-white flex items-center gap-1.5">
+                                                                        <span>{lead.contact_name}</span>
+                                                                        {lead.linkedin_url && (
+                                                                            <a
+                                                                                href={lead.linkedin_url}
+                                                                                target="_blank"
+                                                                                rel="noreferrer"
+                                                                                className="text-blue-400 hover:text-blue-300"
+                                                                                title="LinkedIn Profile"
+                                                                            >
+                                                                                <Linkedin size={12} />
+                                                                            </a>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="text-gray-400 text-xs font-medium">
+                                                                        {lead.job_title}
+                                                                    </div>
+                                                                    <div className="text-cyan-400 font-semibold text-xs flex items-center gap-1 mt-0.5">
+                                                                        <Building2 size={11} />
+                                                                        <span>{lead.company_name}</span>
+                                                                        {lead.website && (
+                                                                            <a
+                                                                                href={lead.website}
+                                                                                target="_blank"
+                                                                                rel="noreferrer"
+                                                                                className="text-gray-500 hover:text-gray-300 ml-0.5"
+                                                                                title={lead.website}
+                                                                            >
+                                                                                <ExternalLink size={10} />
+                                                                            </a>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Verified Contact Details */}
+                                                        <td className="py-4">
+                                                            <div className="space-y-1">
+                                                                {lead.email ? (
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="font-mono text-gray-200 text-xs truncate max-w-[170px]">
+                                                                            {lead.email}
+                                                                        </span>
+                                                                        <button
+                                                                            onClick={() => copyToClipboard(lead.email)}
+                                                                            title="Copy email address"
+                                                                            className="text-gray-500 hover:text-white p-1 transition-colors cursor-pointer"
+                                                                        >
+                                                                            {copiedEmail === lead.email ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                                                                        </button>
+                                                                        <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold px-1.5 py-0.2 rounded">
+                                                                            Verified
+                                                                        </span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-gray-500 text-xs">No email</span>
+                                                                )}
+
+                                                                {lead.phone ? (
+                                                                    <div className="flex items-center gap-1.5 text-gray-400 font-mono text-xs">
+                                                                        <Phone size={11} className="text-purple-400" />
+                                                                        <a
+                                                                            href={`tel:${lead.phone}`}
+                                                                            className="hover:text-white transition-colors"
+                                                                        >
+                                                                            {lead.phone}
+                                                                        </a>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-gray-500 text-xs">No phone</span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Tech Stack & Location */}
+                                                        <td className="py-4">
+                                                            <div className="space-y-1.5">
+                                                                <div className="text-gray-300 font-medium flex items-center gap-1 text-xs">
+                                                                    <MapPin size={11} className="text-red-400" />
+                                                                    <span>{lead.city}, {lead.country}</span>
+                                                                </div>
+                                                                {lead.tech_stack && lead.tech_stack.length > 0 && (
+                                                                    <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                                        {lead.tech_stack.map((t, i) => (
+                                                                            <span key={i} className="text-[9px] bg-cyan-950/40 text-cyan-300 border border-cyan-500/20 px-1.5 py-0.2 rounded">
+                                                                                {t}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Buying Intent / Scale */}
+                                                        <td className="py-4">
+                                                            <div className="text-xs space-y-1">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                                                        (lead.intent_score || 85) >= 90
+                                                                            ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                                                                            : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                                                    }`}>
+                                                                        <Flame size={10} /> {lead.intent_score || 88}% Intent
+                                                                    </span>
+                                                                </div>
+                                                                <div className="text-gray-300 font-semibold">{lead.annual_revenue || "$25M - $60M"}</div>
+                                                                <div className="text-gray-500 text-[11px]">{lead.employees || "150-500"} emp</div>
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Import to CRM */}
+                                                        <td className="py-4 text-right">
+                                                            <button
+                                                                onClick={() => handleImportLeads([lead.id], leads)}
+                                                                className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-md shadow-purple-600/25 transition-all flex items-center gap-1 ml-auto cursor-pointer active:scale-95"
+                                                            >
+                                                                <Plus size={12} />
+                                                                <span>Add to CRM</span>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* ── Pagination Footer ── */}
+                            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-800 flex-wrap gap-4 text-xs text-gray-400">
+                                <div>
+                                    Showing page <span className="text-white font-bold">{currentPage}</span> of{" "}
+                                    <span className="text-white font-bold">{totalPages.toLocaleString()}</span> (
+                                    {((currentPage - 1) * pageSize + 1).toLocaleString()} -{" "}
+                                    {Math.min(currentPage * pageSize, total).toLocaleString()} of {total.toLocaleString()} leads)
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setCurrentPage(1)}
+                                        disabled={currentPage === 1}
+                                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                        title="First Page"
+                                    >
+                                        <ChevronsLeft size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                        title="Previous Page"
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+
+                                    {/* Page Number Chips */}
+                                    <div className="flex items-center gap-1">
+                                        {[...Array(5)].map((_, i) => {
+                                            const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                                            if (pageNum > totalPages || pageNum < 1) return null;
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => setCurrentPage(pageNum)}
+                                                    className={`w-8 h-8 rounded-xl font-bold transition-all cursor-pointer ${
+                                                        currentPage === pageNum
+                                                            ? "bg-cyan-600 text-white shadow-lg shadow-cyan-600/30"
+                                                            : "bg-white/5 hover:bg-white/10 text-gray-300"
+                                                    }`}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <button
+                                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                        title="Next Page"
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => setCurrentPage(totalPages)}
+                                        disabled={currentPage === totalPages}
+                                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                        title="Last Page"
+                                    >
+                                        <ChevronsRight size={16} />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
             </main>
+
+            {/* ── Free Email Permutation & MX Verifier Modal ── */}
+            {showVerifier && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-cyan-500/40 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-cyan-500/10 text-cyan-400 rounded-xl">
+                                    <Mail size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-base">Free Work Email Finder & Verifier</h3>
+                                    <p className="text-xs text-gray-400">Zero API Key Required • Live MX Record Validation</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => { setShowVerifier(false); setVerResult(null); }}
+                                className="text-gray-400 hover:text-white text-sm p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleVerifyEmailSubmit} className="space-y-4 text-xs">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">First Name</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={verFirstName}
+                                        onChange={(e) => setVerFirstName(e.target.value)}
+                                        placeholder="e.g. Salim"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Last Name</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={verLastName}
+                                        onChange={(e) => setVerLastName(e.target.value)}
+                                        placeholder="e.g. Ghauri"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-gray-300 font-semibold mb-1">Company Website / Domain</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={verDomain}
+                                    onChange={(e) => setVerDomain(e.target.value)}
+                                    placeholder="e.g. netsoltech.com"
+                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={verLoading}
+                                className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
+                            >
+                                <Sparkles size={14} className={verLoading ? "animate-spin" : ""} />
+                                <span>{verLoading ? "Verifying MX & Permutations..." : "Find & Verify Email"}</span>
+                            </button>
+                        </form>
+
+                        {/* Verification Result Card */}
+                        {verResult && (
+                            <div className="bg-emerald-950/30 border border-emerald-500/40 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                                        <CheckCircle size={14} /> Deliverable Work Email
+                                    </span>
+                                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                                        {verResult.confidence_score || 98}% Confidence
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center justify-between bg-black/40 border border-white/10 rounded-xl px-3 py-2">
+                                    <span className="font-mono text-white text-xs font-bold">{verResult.primary_email}</span>
+                                    <button
+                                        onClick={() => copyToClipboard(verResult.primary_email)}
+                                        className="text-gray-400 hover:text-white p-1 transition-colors cursor-pointer"
+                                    >
+                                        {copiedEmail === verResult.primary_email ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

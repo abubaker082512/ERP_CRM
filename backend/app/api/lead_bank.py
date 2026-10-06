@@ -187,3 +187,26 @@ def verify_email_permutation(payload: EmailVerifyRequest):
         last_name=payload.last_name,
         domain=payload.domain
     )
+
+@router.get("/live-scraper")
+def live_scrape_leads(
+    query: Optional[str] = Query(None, description="Industry or business type"),
+    city: Optional[str] = Query(None, description="City (e.g. Lahore, Karachi, Dubai, London)"),
+    country: Optional[str] = Query(None, description="Country"),
+    industry: Optional[str] = Query(None, description="Industry category"),
+    limit: int = Query(25, ge=1, le=100),
+    client: Client = Depends(get_supabase_client)
+):
+    """
+    Live Real-Time Web Scraper & Chamber of Commerce Verified Enterprise Search.
+    Extracts real operating companies with verified phone numbers, addresses, and domains.
+    """
+    from app.services.live_scraper_service import live_scraper_service
+    return live_scraper_service.live_extract(
+        query=query,
+        city=city,
+        country=country,
+        industry=industry,
+        limit=limit
+    )
+
