@@ -270,10 +270,106 @@ function generateClientLead(index: number, countryFilter: string, industryFilter
     const pat = index % 3;
     const email = pat === 0 ? `${fn.toLowerCase()}.${ln.toLowerCase()}@${domain}` : pat === 1 ? `${fn[0].toLowerCase()}${ln.toLowerCase()}@${domain}` : `${fn.toLowerCase()}@${domain}`;
 
-    const area = 100 + ((index * 37) % 899);
-    const mid = 100 + ((index * 73) % 899);
-    const last = 1000 + ((index * 97) % 8999);
-    const phone = `${cdata.dial} ${area} ${mid} ${last}`;
+    // Deterministic authentic country-specific phone numbering
+    const h = Math.abs(Math.sin(index * 997 + 13) * 10000000) | 0;
+    let phone = "";
+    if (country === "Pakistan") {
+        const pakMobilePrefixes = [
+            "300", "301", "302", "303", "304", "305", "306", "307", "308", "309", // Jazz
+            "320", "321", "322", "323", "324",                                     // Warid
+            "331", "332", "333", "334", "335", "336",                             // Ufone
+            "340", "341", "342", "343", "344", "345", "346", "347",               // Telenor
+            "310", "311", "312", "313", "314", "315", "316", "317", "318"        // Zong
+        ];
+        if (index % 5 === 0 && city.includes("Lahore")) {
+            const sub = (1000000 + (h % 8999999)).toString().slice(0, 7);
+            phone = `+92 42 3${sub}`;
+        } else if (index % 5 === 1 && city.includes("Karachi")) {
+            const sub = (1000000 + (h % 8999999)).toString().slice(0, 7);
+            phone = `+92 21 3${sub}`;
+        } else if (index % 5 === 2 && city.includes("Islamabad")) {
+            const sub = (100000 + (h % 899999)).toString().slice(0, 6);
+            phone = `+92 51 2${sub}`;
+        } else {
+            const pPrefix = pakMobilePrefixes[h % pakMobilePrefixes.length];
+            const sub = (1000000 + ((h * 13) % 8999999)).toString();
+            phone = `+92 ${pPrefix} ${sub}`;
+        }
+    } else if (country === "United States") {
+        const usAreaCodes = ["415", "212", "512", "206", "617", "312", "720", "310", "305", "404", "214", "619", "602", "408", "917", "650", "202"];
+        const ac = usAreaCodes[h % usAreaCodes.length];
+        const mid = 200 + ((h * 7) % 799);
+        const last = 1000 + ((h * 11) % 8999);
+        phone = `+1 (${ac}) ${mid}-${last}`;
+    } else if (country === "United Kingdom") {
+        if (index % 3 === 0) {
+            const sub1 = 100 + ((h * 3) % 899);
+            const sub2 = 1000 + ((h * 7) % 8999);
+            phone = `+44 20 ${sub1} ${sub2}`;
+        } else {
+            const ukMob = ["7911", "7700", "7850", "7400", "7980", "7520", "7890", "7720"];
+            const pref = ukMob[h % ukMob.length];
+            const sub = 100000 + ((h * 9) % 899999);
+            phone = `+44 ${pref} ${sub}`;
+        }
+    } else if (country === "United Arab Emirates") {
+        if (index % 4 === 0) {
+            const sub = (1000000 + (h % 8999999)).toString().slice(0, 6);
+            phone = `+971 4 3${sub}`;
+        } else {
+            const uaePrefixes = ["50", "52", "54", "55", "56", "58"];
+            const pref = uaePrefixes[h % uaePrefixes.length];
+            const sub = 1000000 + ((h * 7) % 8999999);
+            phone = `+971 ${pref} ${sub}`;
+        }
+    } else if (country === "Saudi Arabia") {
+        if (index % 4 === 0) {
+            const sub = (1000000 + (h % 8999999)).toString().slice(0, 6);
+            phone = `+966 11 4${sub}`;
+        } else {
+            const ksaPrefixes = ["50", "53", "54", "55", "56", "57", "58", "59"];
+            const pref = ksaPrefixes[h % ksaPrefixes.length];
+            const sub = 1000000 + ((h * 7) % 8999999);
+            phone = `+966 ${pref} ${sub}`;
+        }
+    } else if (country === "Germany") {
+        const dePrefixes = ["151", "160", "170", "171", "175", "152", "172", "176", "179"];
+        const pref = dePrefixes[h % dePrefixes.length];
+        const sub = 10000000 + ((h * 11) % 89999999);
+        phone = `+49 ${pref} ${sub}`;
+    } else if (country === "Canada") {
+        const caAreaCodes = ["416", "604", "514", "403", "613", "905", "587", "438"];
+        const ac = caAreaCodes[h % caAreaCodes.length];
+        const mid = 200 + ((h * 7) % 799);
+        const last = 1000 + ((h * 11) % 8999);
+        phone = `+1 (${ac}) ${mid}-${last}`;
+    } else if (country === "Australia") {
+        if (index % 3 === 0) {
+            const sub = (10000000 + (h % 89999999)).toString();
+            phone = `+61 2 ${sub.slice(0, 4)} ${sub.slice(4)}`;
+        } else {
+            const auMob = ["412", "423", "434", "445", "456", "467", "478", "489"];
+            const pref = auMob[h % auMob.length];
+            const sub1 = 100 + ((h * 3) % 899);
+            const sub2 = 100 + ((h * 7) % 899);
+            phone = `+61 ${pref} ${sub1} ${sub2}`;
+        }
+    } else if (country === "Singapore") {
+        const sgPref = ["6", "8", "9"][h % 3];
+        const sub = (1000000 + (h % 8999999)).toString().slice(0, 7);
+        phone = `+65 ${sgPref}${sub}`;
+    } else if (country === "India") {
+        const inPrefixes = ["98", "99", "97", "88", "70", "91", "94", "96", "89", "80"];
+        const pref = inPrefixes[h % inPrefixes.length];
+        const sub1 = 100 + ((h * 3) % 899);
+        const sub2 = 10000 + ((h * 7) % 89999);
+        phone = `+91 ${pref}${sub1} ${sub2}`;
+    } else {
+        const dial = cdata.dial || "+1";
+        const sub1 = 100 + ((h * 3) % 899);
+        const sub2 = 100000 + ((h * 7) % 899999);
+        phone = `${dial} ${sub1} ${sub2}`;
+    }
 
     let jobTitle = ROLES_LIST[(index * 19) % ROLES_LIST.length];
     if (roleFilter && roleFilter !== "All") {

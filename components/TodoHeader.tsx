@@ -33,14 +33,14 @@ export default function TodoHeader({
                     </Link>
 
                     {/* Back Button */}
-                    <button
-                        onClick={() => router.back()}
-                        title="Go back"
+                    <Link
+                        href="/apps"
+                        title="Back to Apps Dashboard"
                         className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold cursor-pointer shrink-0"
                     >
                         <ArrowLeft size={15} />
                         <span className="hidden sm:inline">Back</span>
-                    </button>
+                    </Link>
 
                     {/* Apps Dashboard Launcher Button */}
                     <Link

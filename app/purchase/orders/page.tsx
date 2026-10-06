@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
 import { useState } from "react";
-import { ShoppingCart, CheckCircle, Clock, DollarSign } from "lucide-react";
+import { ShoppingCart, CheckCircle, Clock, DollarSign, Plus } from "lucide-react";
 
 const MENU_ITEMS = [
     { name: "RFQs", href: "/purchase" },
@@ -29,6 +31,7 @@ const mockOrders: PurchaseOrder[] = [
 ];
 
 export default function PurchaseOrdersPage() {
+    const router = useRouter();
     const [orders] = useState<PurchaseOrder[]>(mockOrders);
     const [currentView, setCurrentView] = useState<ViewType>("list");
 
@@ -39,6 +42,8 @@ export default function PurchaseOrdersPage() {
                 moduleIcon={<ShoppingCart size={20} />}
                 menuItems={MENU_ITEMS}
                 searchPlaceholder="Search purchase orders..."
+                onNewClick={() => router.push("/purchase/rfq/new")}
+                newButtonText="New Order"
             />
 
             <div className="flex-1 overflow-auto p-6">
@@ -54,6 +59,14 @@ export default function PurchaseOrdersPage() {
                             onViewChange={setCurrentView}
                         />
                     </div>
+
+                    <Link
+                        href="/purchase/rfq/new"
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-md shadow-purple-900/30 transition-all hover:scale-105 active:scale-95"
+                    >
+                        <Plus size={16} />
+                        <span>Create Purchase Order / RFQ</span>
+                    </Link>
                 </div>
 
                 {/* Key Metrics */}

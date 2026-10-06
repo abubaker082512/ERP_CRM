@@ -39,15 +39,15 @@ export default function PurchaseHeader({ onNewClick, searchTerm = '', onSearchCh
                         <span className="font-extrabold text-sm tracking-tight text-white hidden xl:inline">BERAXIS</span>
                     </Link>
 
-                    {/* Back Button */}
-                    <button
-                        onClick={() => router.back()}
-                        title="Go back"
+                    {/* Back to Apps Button */}
+                    <Link
+                        href="/apps"
+                        title="Back to Apps Dashboard"
                         className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold cursor-pointer shrink-0"
                     >
                         <ArrowLeft size={15} />
                         <span className="hidden sm:inline">Back</span>
-                    </button>
+                    </Link>
 
                     {/* Apps Dashboard Launcher Button */}
                     <Link
@@ -75,13 +75,20 @@ export default function PurchaseHeader({ onNewClick, searchTerm = '', onSearchCh
                         <span className="font-bold tracking-tight">Purchase</span>
                     </Link>
 
-                    {onNewClick && (
+                    {onNewClick ? (
                         <button
                             onClick={onNewClick}
                             className="bg-purple-600 hover:bg-purple-700 text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-md shadow-purple-900/30 transition-all active:scale-95 cursor-pointer ml-1 shrink-0"
                         >
                             <Plus size={14} /> New RFQ
                         </button>
+                    ) : (
+                        <Link
+                            href="/purchase/rfq/new"
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-md shadow-purple-900/30 transition-all active:scale-95 cursor-pointer ml-1 shrink-0"
+                        >
+                            <Plus size={14} /> New RFQ
+                        </Link>
                     )}
 
                     <nav className="hidden lg:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-none">

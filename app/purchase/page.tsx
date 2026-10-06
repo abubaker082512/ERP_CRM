@@ -1,10 +1,12 @@
 "use client";
 import { fetchAPI } from '@/lib/api';
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
 import { useState } from "react";
-import { ShoppingCart, FileText, DollarSign, Calendar } from "lucide-react";
+import { ShoppingCart, FileText, DollarSign, Calendar, Plus } from "lucide-react";
 
 const MENU_ITEMS = [
     { name: "RFQs", href: "/purchase" },
@@ -29,6 +31,7 @@ const mockRFQs: RFQ[] = [
 ];
 
 export default function PurchasePage() {
+    const router = useRouter();
     const [rfqs] = useState<RFQ[]>(mockRFQs);
     const [currentView, setCurrentView] = useState<ViewType>("list");
 
@@ -39,6 +42,8 @@ export default function PurchasePage() {
                 moduleIcon={<ShoppingCart size={20} />}
                 menuItems={MENU_ITEMS}
                 searchPlaceholder="Search RFQs..."
+                onNewClick={() => router.push("/purchase/rfq/new")}
+                newButtonText="New RFQ"
             />
 
             <div className="flex-1 overflow-auto p-6">
@@ -54,6 +59,14 @@ export default function PurchasePage() {
                             onViewChange={setCurrentView}
                         />
                     </div>
+
+                    <Link
+                        href="/purchase/rfq/new"
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-md shadow-purple-900/30 transition-all hover:scale-105 active:scale-95"
+                    >
+                        <Plus size={16} />
+                        <span>Add New RFQ / Purchase</span>
+                    </Link>
                 </div>
 
                 {currentView === "list" && (

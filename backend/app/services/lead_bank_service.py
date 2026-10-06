@@ -271,12 +271,100 @@ def synthesize_lead(index: int, country_filter: Optional[str] = None, industry_f
     else:
         email = f"{fn.lower()}@{domain}"
 
-    # Deterministic phone number
-    h = int(hashlib.md5(f"phone-{index}-{country}".encode()).hexdigest(), 16)
-    area = (h % 900) + 100
-    mid = ((h >> 8) % 900) + 100
-    last = ((h >> 16) % 9000) + 1000
-    phone = f"{cdata['dial_code']} {area} {mid} {last}"
+    # Deterministic authentic country-specific phone numbering
+    h = int(hashlib.md5(f"phone-seed-{index}-{country}".encode()).hexdigest(), 16)
+    
+    if country == "Pakistan":
+        pak_mobile_prefixes = [
+            "300", "301", "302", "303", "304", "305", "306", "307", "308", "309", # Jazz
+            "320", "321", "322", "323", "324",                                     # Warid
+            "331", "332", "333", "334", "335", "336",                             # Ufone
+            "340", "341", "342", "343", "344", "345", "346", "347",               # Telenor
+            "310", "311", "312", "313", "314", "315", "316", "317", "318"        # Zong
+        ]
+        if index % 5 == 0 and "Lahore" in city:
+            sub = ((h % 8999999) + 1000000)
+            phone = f"+92 42 3{str(sub)[:7]}"
+        elif index % 5 == 1 and "Karachi" in city:
+            sub = ((h % 8999999) + 1000000)
+            phone = f"+92 21 3{str(sub)[:7]}"
+        elif index % 5 == 2 and "Islamabad" in city:
+            sub = ((h % 899999) + 100000)
+            phone = f"+92 51 2{str(sub)[:6]}"
+        else:
+            p_prefix = pak_mobile_prefixes[h % len(pak_mobile_prefixes)]
+            sub = ((h >> 8) % 8999999) + 1000000
+            phone = f"+92 {p_prefix} {sub}"
+    elif country == "United States":
+        us_area_codes = ["415", "212", "512", "206", "617", "312", "720", "310", "305", "404", "214", "619", "602", "408", "917", "650", "202"]
+        ac = us_area_codes[h % len(us_area_codes)]
+        mid = ((h >> 6) % 800) + 200
+        last = ((h >> 14) % 9000) + 1000
+        phone = f"+1 ({ac}) {mid}-{last}"
+    elif country == "United Kingdom":
+        if index % 3 == 0:
+            sub1 = ((h >> 4) % 899) + 100
+            sub2 = ((h >> 12) % 8999) + 1000
+            phone = f"+44 20 {sub1} {sub2}"
+        else:
+            uk_mob = ["7911", "7700", "7850", "7400", "7980", "7520", "7890", "7720"]
+            pref = uk_mob[h % len(uk_mob)]
+            sub = ((h >> 8) % 899999) + 100000
+            phone = f"+44 {pref} {sub}"
+    elif country == "United Arab Emirates":
+        if index % 4 == 0:
+            sub = ((h >> 8) % 8999999) + 1000000
+            phone = f"+971 4 3{str(sub)[:6]}"
+        else:
+            uae_prefixes = ["50", "52", "54", "55", "56", "58"]
+            pref = uae_prefixes[h % len(uae_prefixes)]
+            sub = ((h >> 8) % 8999999) + 1000000
+            phone = f"+971 {pref} {sub}"
+    elif country == "Saudi Arabia":
+        if index % 4 == 0:
+            sub = ((h >> 8) % 8999999) + 1000000
+            phone = f"+966 11 4{str(sub)[:6]}"
+        else:
+            ksa_prefixes = ["50", "53", "54", "55", "56", "57", "58", "59"]
+            pref = ksa_prefixes[h % len(ksa_prefixes)]
+            sub = ((h >> 8) % 8999999) + 1000000
+            phone = f"+966 {pref} {sub}"
+    elif country == "Germany":
+        de_prefixes = ["151", "160", "170", "171", "175", "152", "172", "176", "179"]
+        pref = de_prefixes[h % len(de_prefixes)]
+        sub = ((h >> 8) % 89999999) + 10000000
+        phone = f"+49 {pref} {sub}"
+    elif country == "Canada":
+        ca_area_codes = ["416", "604", "514", "403", "613", "905", "587", "438"]
+        ac = ca_area_codes[h % len(ca_area_codes)]
+        mid = ((h >> 6) % 800) + 200
+        last = ((h >> 14) % 9000) + 1000
+        phone = f"+1 ({ac}) {mid}-{last}"
+    elif country == "Australia":
+        if index % 3 == 0:
+            sub = ((h >> 8) % 89999999) + 10000000
+            phone = f"+61 2 {str(sub)[:4]} {str(sub)[4:]}"
+        else:
+            au_mob = ["412", "423", "434", "445", "456", "467", "478", "489"]
+            pref = au_mob[h % len(au_mob)]
+            sub1 = ((h >> 8) % 899) + 100
+            sub2 = ((h >> 16) % 899) + 100
+            phone = f"+61 {pref} {sub1} {sub2}"
+    elif country == "Singapore":
+        sg_pref = ["6", "8", "9"][h % 3]
+        sub = ((h >> 8) % 8999999) + 1000000
+        phone = f"+65 {sg_pref}{str(sub)[:7]}"
+    elif country == "India":
+        in_prefixes = ["98", "99", "97", "88", "70", "91", "94", "96", "89", "80"]
+        pref = in_prefixes[h % len(in_prefixes)]
+        sub1 = ((h >> 8) % 899) + 100
+        sub2 = ((h >> 16) % 89999) + 10000
+        phone = f"+91 {pref}{str(sub1)[:3]} {sub2}"
+    else:
+        dial = cdata.get('dial_code', '+1')
+        sub1 = ((h >> 8) % 899) + 100
+        sub2 = ((h >> 16) % 899999) + 100000
+        phone = f"{dial} {sub1} {sub2}"
 
     # Job title
     if role_filter and any(role_filter.lower() in t.lower() for t in JOB_TITLES):
