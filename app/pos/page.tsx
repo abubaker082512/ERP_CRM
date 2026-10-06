@@ -1,8 +1,8 @@
 "use client";
 import { fetchAPI } from "@/lib/api";
 import { useState, useEffect, useRef } from "react";
-import AppHeader from "@/components/layout/AppHeader";
-import { Calculator, ShoppingCart, DollarSign, X, Check, Search, CreditCard, Clock, Plus, Loader2, Printer } from "lucide-react";
+import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { Calculator, ShoppingCart, DollarSign, X, Check, Search, CreditCard, Clock, Plus, Loader2, Printer, Tag, Sparkles, Filter, Receipt } from "lucide-react";
 
 export default function POSPage() {
   const [session, setSession] = useState<any>(null);
@@ -242,25 +242,43 @@ export default function POSPage() {
     }
   };
 
+  const POS_MENU_ITEMS = [
+    { name: "POS Terminal", href: "/pos" },
+    { name: "Orders & Sessions", href: "/pos/orders" },
+    { name: "Products & Pricing", href: "/pos/products" },
+    { name: "Reporting", href: "/pos/reporting" },
+    { name: "Configuration", href: "/pos/configuration" },
+  ];
+
   if (loading) return (
-    <div className="flex flex-col h-screen">
-      <AppHeader title="Point of Sale" />
+    <div className="flex flex-col h-screen bg-[#0B101E]">
+      <StandardModuleHeader
+        moduleName="Point of Sale"
+        moduleIcon={<Calculator size={20} />}
+        menuItems={POS_MENU_ITEMS}
+      />
       <div className="flex-1 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     </div>
   );
 
   if (!session) return (
-    <div className="flex flex-col h-screen">
-      <AppHeader title="Point of Sale" />
+    <div className="flex flex-col h-screen bg-[#0B101E]">
+      <StandardModuleHeader
+        moduleName="Point of Sale"
+        moduleIcon={<Calculator size={20} />}
+        menuItems={POS_MENU_ITEMS}
+      />
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="galaxy-card p-10 max-w-md w-full text-center">
-          <Calculator size={48} className="text-green-400 mx-auto mb-6" />
-          <h2 className="text-2xl font-bold text-white mb-2">Point of Sale</h2>
-          <p className="text-gray-400 mb-8">Start a new POS session to process sales.</p>
-          <button onClick={openSession} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-lg transition-colors shadow-lg shadow-green-600/20">
-            Open Session
+        <div className="bg-[#1E293B] border border-gray-800 rounded-3xl p-10 max-w-md w-full text-center shadow-2xl space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
+            <Calculator size={36} />
+          </div>
+          <h2 className="text-2xl font-bold text-white">Point of Sale Terminal</h2>
+          <p className="text-xs text-gray-400">Open a live cashier register session to start scanning products and processing fast checkouts.</p>
+          <button onClick={openSession} className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl text-sm transition-all shadow-xl shadow-emerald-600/30 cursor-pointer active:scale-95">
+            Open POS Register Session
           </button>
         </div>
       </div>
@@ -292,20 +310,30 @@ export default function POSPage() {
         }
       `}} />
 
-      {/* POS Header */}
-      <div className="h-16 border-b border-gray-800 bg-[#141A28] flex items-center justify-between px-6 shrink-0 shadow-md no-print">
-        <div className="flex items-center gap-3 text-white font-semibold">
-          <Calculator className="text-green-400" />
-          <span>POS Session</span>
-          <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full border border-green-500/30">OPEN</span>
-          <div className="text-[10px] text-gray-500 hidden md:flex items-center gap-2 pl-4 border-l border-gray-800">
+      {/* POS Top Standard Header */}
+      <StandardModuleHeader
+        moduleName="Point of Sale"
+        moduleIcon={<Calculator size={20} />}
+        menuItems={POS_MENU_ITEMS}
+        searchPlaceholder="Scan barcode or type SKU..."
+        onNewClick={() => setIsAddProductOpen(true)}
+        newButtonText="+ Quick Add Item"
+      />
+
+      {/* Active Session Sub-Header */}
+      <div className="h-12 border-b border-gray-800 bg-[#141A28] flex items-center justify-between px-4 sm:px-6 shrink-0 shadow-sm no-print text-xs">
+        <div className="flex items-center gap-2.5 text-white font-semibold">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>Active Cashier Register</span>
+          <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">ONLINE</span>
+          <div className="text-[10px] text-gray-500 hidden md:flex items-center gap-2 pl-3 border-l border-gray-800">
             <span>Shortcuts:</span>
             <kbd className="bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 font-mono font-bold text-gray-300">s</kbd> search |
             <kbd className="bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 font-mono font-bold text-gray-300">c</kbd> checkout |
-            <kbd className="bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 font-mono font-bold text-gray-300">p</kbd> add product
+            <kbd className="bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 font-mono font-bold text-gray-300">p</kbd> add item
           </div>
         </div>
-        <button onClick={closeSession} className="text-red-400 hover:bg-red-500/10 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <button onClick={closeSession} className="text-rose-400 hover:bg-rose-500/10 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
           Close Session
         </button>
       </div>

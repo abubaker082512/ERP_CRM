@@ -142,7 +142,8 @@ export default function CRMPage() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-120px)]">
+        <div className="flex flex-col h-screen bg-[#0F172A]">
+            <CRMHeader onNewClick={() => setIsNewModalOpen(true)} />
             {/* View Switcher and Action Toolbar */}
             <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-[#1E293B]">
                 <div className="flex items-center gap-3">
