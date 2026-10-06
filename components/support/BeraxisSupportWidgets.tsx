@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
     Sparkles,
     X,
@@ -143,8 +143,14 @@ function resolveSupportQuery(query: string): { text: string; action?: { label: s
 
 export default function BeraxisSupportWidgets() {
     const router = useRouter();
+    const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState("");
+
+    // Hide support overlay entirely on full-screen video meet rooms and client booking calendars
+    if (pathname && (pathname === '/meet' || pathname.startsWith('/meet/') || pathname.startsWith('/appointments/book/'))) {
+        return null;
+    }
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "welcome",

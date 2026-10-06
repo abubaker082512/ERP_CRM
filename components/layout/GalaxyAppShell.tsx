@@ -106,9 +106,9 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
     if (!mounted) return null;
 
-    // Don't show shell on landing, login, signup, shop, checkout, billing, apps dashboard, main dashboard, or forgotten password page
+    // Don't show shell on landing, login, signup, shop, checkout, billing, apps dashboard, main dashboard, meet room, or public booking page
     const isLandingPage = pathname === '/about' || pathname === '/contact' || pathname === '/' || pathname === '/pricing';
-    const isExcludedPage = pathname === '/apps' || pathname === '/dashboard' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || pathname.startsWith('/shop/') || isLandingPage;
+    const isExcludedPage = pathname === '/apps' || pathname === '/dashboard' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || pathname.startsWith('/shop/') || pathname === '/meet' || pathname.startsWith('/meet/') || pathname.startsWith('/appointments/book/') || isLandingPage;
     
     if (isExcludedPage) return <>{children}</>;
 

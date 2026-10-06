@@ -117,7 +117,7 @@ export default function InSystemVideoMeetPage() {
 
     // Participants List
     const [participants, setParticipants] = useState<Participant[]>([
-        { id: "self", name: "You (Host)", role: "Host / Meeting Organizer", isHost: true, isMuted: false, isVideoOff: false, avatarBg: "bg-purple-600" },
+        { id: "self", name: "You (Host)", role: "Host / Organizer", isHost: true, isMuted: false, isVideoOff: false, avatarBg: "bg-purple-600" },
         { id: "guest_1", name: "Client Partner (Connected)", role: "Participant / Guest", isHost: false, isMuted: false, isVideoOff: false, avatarBg: "bg-indigo-600" }
     ]);
 
@@ -141,7 +141,6 @@ export default function InSystemVideoMeetPage() {
     const startLocalStream = useCallback(async (audioId?: string, videoId?: string) => {
         try {
             setMediaError(null);
-            // Stop previous tracks if any
             if (mediaStreamRef.current) {
                 mediaStreamRef.current.getTracks().forEach(t => t.stop());
             }
@@ -159,11 +158,9 @@ export default function InSystemVideoMeetPage() {
                 localVideoRef.current.srcObject = stream;
             }
 
-            // Sync Mute / VideoOff initial tracks
             stream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
             stream.getVideoTracks().forEach(t => { t.enabled = !isVideoOff; });
 
-            // Initialize Web Audio API Analyser for real-time voice meter
             try {
                 const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
                 const audioCtx = new AudioCtx();
@@ -194,7 +191,6 @@ export default function InSystemVideoMeetPage() {
                 console.warn("Web Audio meter init fallback:", err);
             }
 
-            // Enumerate hardware devices
             const devices = await navigator.mediaDevices.enumerateDevices();
             setAudioDevices(devices.filter(d => d.kind === "audioinput"));
             setVideoDevices(devices.filter(d => d.kind === "videoinput"));
@@ -212,7 +208,6 @@ export default function InSystemVideoMeetPage() {
             startLocalStream();
         }
 
-        // Setup BroadcastChannel for cross-tab multi-user room sync
         try {
             const bc = new BroadcastChannel(`beraxis_room_${meetId}`);
             broadcastChannelRef.current = bc;
@@ -231,13 +226,12 @@ export default function InSystemVideoMeetPage() {
                 }
             };
 
-            // Broadcast self joined
             bc.postMessage({
                 type: "USER_JOINED",
                 user: { id: `user_${Date.now()}`, name: "Remote Participant", role: "Client Member", isHost: false, isMuted: false, isVideoOff: false, avatarBg: "bg-emerald-600" }
             });
         } catch {
-            // BroadcastChannel not supported in certain isolated environments
+            // BroadcastChannel not supported in isolated tests
         }
 
         return () => {
@@ -312,7 +306,6 @@ export default function InSystemVideoMeetPage() {
                 setIsScreenSharing(true);
                 showToast("🖥️ Screen sharing is now live!");
 
-                // Automatically handle when user clicks browser's native "Stop Sharing" floating bar
                 screenStream.getVideoTracks()[0].onended = () => {
                     setIsScreenSharing(false);
                     screenStreamRef.current = null;
@@ -367,7 +360,7 @@ export default function InSystemVideoMeetPage() {
                 showToast("🔴 In-system meeting recording started");
             } catch (err) {
                 console.warn("Recording error:", err);
-                setIsRecording(true); // fallback indicator
+                setIsRecording(true);
                 showToast("🔴 In-system meeting recording started (Cloud sync mode)");
             }
         } else {
@@ -435,9 +428,9 @@ export default function InSystemVideoMeetPage() {
     };
 
     return (
-        <div className="h-screen w-screen bg-[#070B14] text-white flex flex-col overflow-hidden select-none font-sans">
+        <div className="fixed inset-0 h-[100dvh] w-full max-h-screen max-w-full bg-[#070B14] text-white flex flex-col overflow-hidden select-none font-sans z-[100]">
             {/* Top Conference Header */}
-            <header className="h-14 bg-[#0F172A]/90 border-b border-gray-800/80 px-4 md:px-6 flex items-center justify-between shrink-0 backdrop-blur-md z-20">
+            <header className="h-14 bg-[#0F172A]/95 border-b border-gray-800 px-3 sm:px-6 flex items-center justify-between shrink-0 backdrop-blur-md z-20">
                 <div className="flex items-center gap-3">
                     <Link
                         href="/appointments"
@@ -464,13 +457,13 @@ export default function InSystemVideoMeetPage() {
                                 title="Click to Stop Recording"
                             >
                                 <span className="w-2 h-2 rounded-full bg-rose-500" />
-                                REC (In-System)
+                                REC
                             </button>
                         )}
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 text-xs">
+                <div className="flex items-center gap-2 text-xs">
                     {/* Live Duration */}
                     <div className="flex items-center gap-1.5 bg-[#1E293B] px-3 py-1.5 rounded-xl border border-gray-700 font-mono font-bold text-gray-300">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
@@ -516,10 +509,10 @@ export default function InSystemVideoMeetPage() {
                 </div>
             )}
 
-            {/* Main Stage & Drawers */}
-            <div className="flex-1 flex overflow-hidden relative">
-                {/* Video Grid Viewport */}
-                <div className="flex-1 p-3 md:p-6 flex flex-col justify-center items-center overflow-y-auto">
+            {/* Main Stage & Drawers Viewport */}
+            <div className="flex-1 min-h-0 flex overflow-hidden relative w-full">
+                {/* Video Grid Container */}
+                <div className="flex-1 min-h-0 p-2 sm:p-4 flex flex-col justify-center items-center overflow-hidden w-full h-full">
                     {isCallEnded ? (
                         <div className="max-w-md w-full bg-[#1E293B] border border-gray-700 rounded-3xl p-8 text-center space-y-4 shadow-2xl animate-in zoom-in-95">
                             <div className="w-16 h-16 bg-purple-500/20 text-purple-400 rounded-2xl flex items-center justify-center mx-auto">
@@ -559,62 +552,62 @@ export default function InSystemVideoMeetPage() {
                         </div>
                     ) : isScreenSharing ? (
                         /* SCREEN SHARING HERO VIEW */
-                        <div className="w-full h-full max-w-6xl flex flex-col gap-3">
-                            <div className="flex-1 bg-black rounded-3xl border border-purple-500/40 relative overflow-hidden flex items-center justify-center shadow-2xl">
+                        <div className="w-full h-full max-w-6xl flex flex-col gap-2 min-h-0">
+                            <div className="flex-1 min-h-0 bg-black rounded-2xl md:rounded-3xl border border-purple-500/40 relative overflow-hidden flex items-center justify-center shadow-2xl">
                                 <video
                                     ref={screenVideoRef}
                                     autoPlay
                                     playsInline
                                     className="w-full h-full object-contain"
                                 />
-                                <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-purple-500/30 text-xs font-bold text-purple-300 flex items-center gap-2">
+                                <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-purple-500/30 text-xs font-bold text-purple-300 flex items-center gap-2">
                                     <Monitor size={14} className="text-purple-400" />
                                     <span>You are presenting your screen</span>
                                 </div>
                             </div>
 
                             {/* Floating Camera Strip */}
-                            <div className="h-28 flex items-center gap-3 overflow-x-auto pb-1">
-                                <div className="w-44 h-full bg-[#141C2E] border border-gray-800 rounded-2xl relative overflow-hidden shrink-0 shadow-lg">
+                            <div className="h-24 flex items-center gap-3 overflow-x-auto shrink-0 pb-1">
+                                <div className="w-36 h-full bg-[#141C2E] border border-gray-800 rounded-xl relative overflow-hidden shrink-0 shadow-lg">
                                     <video
                                         ref={localVideoRef}
                                         autoPlay
                                         playsInline
                                         muted
-                                        className={`w-full h-full object-cover ${isVideoOff ? "hidden" : "block"}`}
+                                        className={`w-full h-full object-cover -scale-x-100 ${isVideoOff ? "hidden" : "block"}`}
                                     />
                                     {isVideoOff && (
-                                        <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-400 bg-gray-900">
+                                        <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-400 bg-gray-900">
                                             Camera Off
                                         </div>
                                     )}
-                                    <div className="absolute bottom-1.5 left-2 bg-black/60 px-2 py-0.5 rounded-md text-[10px] font-semibold text-white">
+                                    <div className="absolute bottom-1 left-1.5 bg-black/70 px-1.5 py-0.5 rounded text-[9px] font-semibold text-white">
                                         You (Host)
                                     </div>
                                 </div>
 
-                                <div className="w-44 h-full bg-[#141C2E] border border-gray-800 rounded-2xl relative overflow-hidden shrink-0 shadow-lg flex items-center justify-center bg-gradient-to-br from-[#1E293B] to-[#3B0764]/40">
-                                    <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-xs">
+                                <div className="w-36 h-full bg-[#141C2E] border border-gray-800 rounded-xl relative overflow-hidden shrink-0 shadow-lg flex items-center justify-center bg-gradient-to-br from-[#1E293B] to-[#3B0764]/40">
+                                    <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold text-xs">
                                         CP
                                     </div>
-                                    <div className="absolute bottom-1.5 left-2 bg-black/60 px-2 py-0.5 rounded-md text-[10px] font-semibold text-white">
+                                    <div className="absolute bottom-1 left-1.5 bg-black/70 px-1.5 py-0.5 rounded text-[9px] font-semibold text-white">
                                         Client Partner
                                     </div>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        /* STANDARD DUAL / MULTI GRID VIEW */
-                        <div className="w-full h-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-4 transition-all">
+                        /* STANDARD DUAL GRID VIEW - AUTO FITTING VIEWPORT */
+                        <div className="w-full h-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-stretch justify-center min-h-0 max-h-full">
                             {/* LOCAL HOST VIDEO TILE (LIVE WEBCAM) */}
-                            <div className="bg-[#141C2E] border border-gray-800 hover:border-gray-700 rounded-3xl relative overflow-hidden flex flex-col justify-between shadow-2xl group min-h-[260px] md:min-h-[380px]">
-                                {/* Real Video Stream Element */}
+                            <div className="bg-[#141C2E] border border-gray-800 hover:border-gray-700 rounded-2xl md:rounded-3xl relative overflow-hidden flex flex-col justify-between shadow-2xl group w-full h-full min-h-0 max-h-full">
+                                {/* Real Video Stream Element (Mirrored via -scale-x-100) */}
                                 <video
                                     ref={localVideoRef}
                                     autoPlay
                                     playsInline
                                     muted
-                                    className={`w-full h-full object-cover absolute inset-0 ${
+                                    className={`w-full h-full object-cover object-center absolute inset-0 -scale-x-100 ${
                                         isVideoOff || !hasMediaPermission ? "hidden" : "block"
                                     }`}
                                 />
@@ -625,7 +618,7 @@ export default function InSystemVideoMeetPage() {
                                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.15)_0,transparent_70%)]" />
                                         <div className="relative z-10 flex flex-col items-center gap-3">
                                             <div className="relative">
-                                                <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white shadow-2xl border-2 border-indigo-400/40">
+                                                <div className="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white shadow-2xl border-2 border-indigo-400/40">
                                                     SG
                                                 </div>
                                                 <span className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-[#141C2E] flex items-center justify-center ${
@@ -649,9 +642,9 @@ export default function InSystemVideoMeetPage() {
                                     </div>
                                 )}
 
-                                {/* Live Microphone Waveform / Voice Activity */}
+                                {/* Live Microphone Waveform */}
                                 {!isMuted && (
-                                    <div className="absolute bottom-4 left-4 z-10 flex items-end gap-1 h-5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/10">
+                                    <div className="absolute bottom-3 left-3 z-10 flex items-end gap-1 h-5 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/10">
                                         <span className="w-1 bg-emerald-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, audioLevel * 0.2)}px` }} />
                                         <span className="w-1 bg-emerald-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, audioLevel * 0.35)}px` }} />
                                         <span className="w-1 bg-emerald-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, audioLevel * 0.25)}px` }} />
@@ -659,7 +652,7 @@ export default function InSystemVideoMeetPage() {
                                     </div>
                                 )}
 
-                                {/* Tile Header / Hand Raise */}
+                                {/* Hand Raise Badge */}
                                 {isHandRaised && (
                                     <div className="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-lg shadow-amber-500/30 animate-bounce z-10">
                                         <Hand size={13} />
@@ -675,12 +668,12 @@ export default function InSystemVideoMeetPage() {
                             </div>
 
                             {/* REMOTE CLIENT VIDEO TILE */}
-                            <div className="bg-[#141C2E] border border-gray-800 hover:border-gray-700 rounded-3xl relative overflow-hidden flex flex-col justify-between shadow-2xl group min-h-[260px] md:min-h-[380px]">
+                            <div className="bg-[#141C2E] border border-gray-800 hover:border-gray-700 rounded-2xl md:rounded-3xl relative overflow-hidden flex flex-col justify-between shadow-2xl group w-full h-full min-h-0 max-h-full">
                                 <div className="flex-1 relative bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#3B0764]/40 flex flex-col items-center justify-center overflow-hidden">
                                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15)_0,transparent_70%)]" />
                                     <div className="relative z-10 flex flex-col items-center gap-3">
                                         <div className="relative">
-                                            <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center text-2xl font-bold text-white shadow-2xl border-2 border-purple-400/40">
+                                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center text-2xl font-bold text-white shadow-2xl border-2 border-purple-400/40">
                                                 CP
                                             </div>
                                             <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-[#141C2E] flex items-center justify-center">
@@ -704,9 +697,9 @@ export default function InSystemVideoMeetPage() {
 
                 {/* Right Side Drawer (Chat / Participants / Invite / Settings) */}
                 {activeDrawer && (
-                    <aside className="w-80 md:w-96 bg-[#0F172A] border-l border-gray-800 flex flex-col shadow-2xl z-30 animate-in slide-in-from-right duration-200">
+                    <aside className="w-80 md:w-96 bg-[#0F172A] border-l border-gray-800 flex flex-col shadow-2xl z-30 animate-in slide-in-from-right duration-200 h-full min-h-0">
                         {/* Drawer Header */}
-                        <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+                        <div className="p-4 border-b border-gray-800 flex items-center justify-between shrink-0">
                             <h3 className="font-bold text-white text-sm capitalize flex items-center gap-2">
                                 {activeDrawer === "chat" && <><MessageSquare size={16} className="text-purple-400" /> In-Meeting Chat</>}
                                 {activeDrawer === "participants" && <><Users size={16} className="text-purple-400" /> Participants ({participants.length})</>}
@@ -722,7 +715,7 @@ export default function InSystemVideoMeetPage() {
                         </div>
 
                         {/* Drawer Content */}
-                        <div className="flex-1 overflow-y-auto p-4">
+                        <div className="flex-1 overflow-y-auto p-4 min-h-0">
                             {/* CHAT DRAWER */}
                             {activeDrawer === "chat" && (
                                 <div className="h-full flex flex-col justify-between">
@@ -742,7 +735,7 @@ export default function InSystemVideoMeetPage() {
                                         ))}
                                     </div>
 
-                                    <form onSubmit={handleSendMessage} className="pt-3 border-t border-gray-800 flex gap-2">
+                                    <form onSubmit={handleSendMessage} className="pt-3 border-t border-gray-800 flex gap-2 shrink-0">
                                         <input
                                             type="text"
                                             value={chatInput}
@@ -897,7 +890,7 @@ export default function InSystemVideoMeetPage() {
             </div>
 
             {/* Bottom Control Bar */}
-            <footer className="h-20 bg-[#0F172A] border-t border-gray-800/80 px-4 md:px-8 flex items-center justify-between shrink-0 z-20">
+            <footer className="h-16 md:h-18 bg-[#0F172A] border-t border-gray-800 px-4 md:px-8 flex items-center justify-between shrink-0 z-20">
                 {/* Left Info & Recorder Button */}
                 <div className="hidden md:flex items-center gap-3">
                     <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -920,44 +913,44 @@ export default function InSystemVideoMeetPage() {
                 </div>
 
                 {/* Center Call Actions */}
-                <div className="flex items-center gap-2.5 sm:gap-3 mx-auto">
+                <div className="flex items-center gap-2 sm:gap-3 mx-auto">
                     {/* Mic Toggle */}
                     <button
                         onClick={toggleMic}
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
+                        className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
                             isMuted
                                 ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
                                 : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
                         }`}
                         title={isMuted ? "Unmute Mic" : "Mute Mic"}
                     >
-                        {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
+                        {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
                     </button>
 
                     {/* Camera Toggle */}
                     <button
                         onClick={toggleVideo}
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
+                        className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
                             isVideoOff
                                 ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
                                 : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
                         }`}
                         title={isVideoOff ? "Turn Camera On" : "Turn Camera Off"}
                     >
-                        {isVideoOff ? <VideoOff size={20} /> : <VideoIcon size={20} />}
+                        {isVideoOff ? <VideoOff size={18} /> : <VideoIcon size={18} />}
                     </button>
 
                     {/* Real Screen Share */}
                     <button
                         onClick={toggleScreenShare}
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
+                        className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
                             isScreenSharing
                                 ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30 animate-pulse"
                                 : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
                         }`}
                         title={isScreenSharing ? "Stop Sharing Screen" : "Share Screen"}
                     >
-                        <Monitor size={20} />
+                        <Monitor size={18} />
                     </button>
 
                     {/* Raise Hand */}
@@ -966,63 +959,63 @@ export default function InSystemVideoMeetPage() {
                             setIsHandRaised(!isHandRaised);
                             showToast(isHandRaised ? "Hand lowered" : "Hand raised ✋");
                         }}
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
+                        className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
                             isHandRaised
                                 ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30"
                                 : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
                         }`}
                         title="Raise Hand"
                     >
-                        <Hand size={20} />
+                        <Hand size={18} />
                     </button>
 
                     {/* End Call Button */}
                     <button
                         onClick={() => setIsCallEnded(true)}
-                        className="h-12 px-5 sm:px-6 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-2 shadow-xl shadow-rose-600/30 transition-all cursor-pointer active:scale-95 ml-1"
+                        className="h-11 sm:h-12 px-4 sm:px-6 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-2 shadow-xl shadow-rose-600/30 transition-all cursor-pointer active:scale-95 ml-1"
                         title="Leave / End Meeting"
                     >
-                        <PhoneOff size={18} />
+                        <PhoneOff size={16} />
                         <span className="hidden sm:inline">End Call</span>
                     </button>
                 </div>
 
                 {/* Right Drawer & Settings Toggles */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                     <button
                         onClick={() => setActiveDrawer(activeDrawer === "chat" ? null : "chat")}
-                        className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                        className={`p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer ${
                             activeDrawer === "chat"
                                 ? "bg-purple-600 border-purple-500 text-white"
                                 : "bg-[#1E293B] hover:bg-[#2E3B52] border-white/10 text-gray-300"
                         }`}
                         title="Chat"
                     >
-                        <MessageSquare size={18} />
+                        <MessageSquare size={16} />
                     </button>
 
                     <button
                         onClick={() => setActiveDrawer(activeDrawer === "participants" ? null : "participants")}
-                        className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                        className={`p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer ${
                             activeDrawer === "participants"
                                 ? "bg-purple-600 border-purple-500 text-white"
                                 : "bg-[#1E293B] hover:bg-[#2E3B52] border-white/10 text-gray-300"
                         }`}
                         title="Participants"
                     >
-                        <Users size={18} />
+                        <Users size={16} />
                     </button>
 
                     <button
                         onClick={() => setActiveDrawer(activeDrawer === "settings" ? null : "settings")}
-                        className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                        className={`p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer ${
                             activeDrawer === "settings"
                                 ? "bg-purple-600 border-purple-500 text-white"
                                 : "bg-[#1E293B] hover:bg-[#2E3B52] border-white/10 text-gray-300"
                         }`}
                         title="Settings"
                     >
-                        <Settings size={18} />
+                        <Settings size={16} />
                     </button>
                 </div>
             </footer>
