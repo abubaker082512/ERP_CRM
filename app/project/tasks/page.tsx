@@ -13,7 +13,19 @@ import {
     X,
     CheckCircle2,
     AlertCircle,
-    Flag
+    Flag,
+    Mail,
+    Send,
+    Shield,
+    Sliders,
+    ListTodo,
+    Check,
+    Edit3,
+    Sparkles,
+    Trash2,
+    Copy,
+    Share2,
+    FileText
 } from "lucide-react";
 
 const MENU_ITEMS = [
@@ -24,6 +36,12 @@ const MENU_ITEMS = [
     { name: "Configuration", href: "/project/configuration" },
 ];
 
+export type ChecklistItem = {
+    id: string;
+    text: string;
+    completed: boolean;
+};
+
 export type Task = {
     id: string;
     title: string;
@@ -32,23 +50,123 @@ export type Task = {
     status: "todo" | "in_progress" | "review" | "done";
     priority: "low" | "medium" | "high" | "urgent";
     deadline: string;
+    progress: number;
     description?: string;
+    checklist: ChecklistItem[];
+    notes?: string;
+    adminOverride?: boolean;
 };
 
 const INITIAL_TASKS: Task[] = [
-    { id: "TSK/001", title: "Design Homepage & Layout System", project: "Enterprise Website & ERP Portal Redesign", assignee: "Sarah Vance", status: "in_progress", priority: "high", deadline: "2026-03-10", description: "Design responsive grid, topbars, and dark mode palette." },
-    { id: "TSK/002", title: "Setup Database & JWT Auth Middleware", project: "Enterprise Website & ERP Portal Redesign", assignee: "Salim Ghauri", status: "done", priority: "urgent", deadline: "2026-02-15", description: "Configure multi-tenant RLS policies." },
-    { id: "TSK/003", title: "Offline Lead Sync Engine", project: "Mobile CRM & Field Agent iOS/Android App", assignee: "Jane Smith", status: "todo", priority: "medium", deadline: "2026-04-15", description: "SQLite local cache with conflict resolution." },
-    { id: "TSK/004", title: "RFID Warehouse Barcode Integration", project: "Supply Chain & Multi-Warehouse Automation", assignee: "Bob Wilson", status: "done", priority: "high", deadline: "2026-02-28", description: "Connect Zebra scanner API to stock picking." },
-    { id: "TSK/005", title: "AI Speech-to-Text Meeting Summarizer", project: "AI Business Intelligence & Sales Copilot", assignee: "Alexander Hayes", status: "in_progress", priority: "urgent", deadline: "2026-03-25", description: "Whisper API transcription with action item extraction." },
-    { id: "TSK/006", title: "Tax Settlement & P&L Export Engine", project: "Enterprise Website & ERP Portal Redesign", assignee: "Bilal Mahmood", status: "todo", priority: "medium", deadline: "2026-04-01", description: "Generate trial balance and tax breakdown spreadsheets." }
+    {
+        id: "TSK/001",
+        title: "Design Homepage & Layout System",
+        project: "Enterprise Website & ERP Portal Redesign",
+        assignee: "Sarah Vance",
+        status: "in_progress",
+        priority: "high",
+        deadline: "2026-03-10",
+        progress: 65,
+        description: "Design responsive grid, topbars, and dark mode palette for Beraxis Suite.",
+        checklist: [
+            { id: "c1", text: "Wireframe standard module headers & breadcrumbs", completed: true },
+            { id: "c2", text: "Create dark mode color tokens & CSS variables", completed: true },
+            { id: "c3", text: "Mobile responsive drawer navigation test", completed: false },
+            { id: "c4", text: "Cross-browser Safari & Chrome QA pass", completed: false }
+        ],
+        notes: "Design tokens synced with Tailwind palette. Ready for mobile breakpoint QA."
+    },
+    {
+        id: "TSK/002",
+        title: "Setup Database & JWT Auth Middleware",
+        project: "Enterprise Website & ERP Portal Redesign",
+        assignee: "Salim Ghauri",
+        status: "done",
+        priority: "urgent",
+        deadline: "2026-02-15",
+        progress: 100,
+        description: "Configure multi-tenant RLS policies and secure session token rotation.",
+        checklist: [
+            { id: "c1", text: "PostgreSQL multi-schema tenant isolation", completed: true },
+            { id: "c2", text: "FastAPI JWT bearer token authentication", completed: true },
+            { id: "c3", text: "Role-based access control (RBAC) middleware", completed: true }
+        ],
+        notes: "Security audit passed with zero vulnerabilities."
+    },
+    {
+        id: "TSK/003",
+        title: "Offline Lead Sync Engine",
+        project: "Mobile CRM & Field Agent iOS/Android App",
+        assignee: "Jane Smith",
+        status: "todo",
+        priority: "medium",
+        deadline: "2026-04-15",
+        progress: 10,
+        description: "SQLite local cache with two-way conflict resolution engine.",
+        checklist: [
+            { id: "c1", text: "Design offline delta sync protocol", completed: true },
+            { id: "c2", text: "SQLite local database indexed schema", completed: false },
+            { id: "c3", text: "Network reconnect background dispatcher", completed: false }
+        ],
+        notes: "Architecture draft submitted for senior engineering signoff."
+    },
+    {
+        id: "TSK/004",
+        title: "RFID Warehouse Barcode Integration",
+        project: "Supply Chain & Multi-Warehouse Automation",
+        assignee: "Bob Wilson",
+        status: "done",
+        priority: "high",
+        deadline: "2026-02-28",
+        progress: 100,
+        description: "Connect Zebra RFID scanner SDK to inventory picking & packing flow.",
+        checklist: [
+            { id: "c1", text: "Zebra Handheld Scanner SDK integration", completed: true },
+            { id: "c2", text: "Real-time stock ledger deduction hook", completed: true }
+        ],
+        notes: "Production firmware tested on 50 handheld scanners across Karachi warehouse."
+    },
+    {
+        id: "TSK/005",
+        title: "AI Speech-to-Text Meeting Summarizer",
+        project: "AI Business Intelligence & Sales Copilot",
+        assignee: "Alexander Hayes",
+        status: "in_progress",
+        priority: "urgent",
+        deadline: "2026-03-25",
+        progress: 45,
+        description: "Whisper API transcription with action item extraction & CRM deal auto-tagging.",
+        checklist: [
+            { id: "c1", text: "Audio streaming WebSocket ingestion pipeline", completed: true },
+            { id: "c2", text: "Action item & decision extractor model prompt", completed: true },
+            { id: "c3", text: "CRM Opportunity timeline auto-append", completed: false }
+        ],
+        notes: "Latency benchmarked at <1.2s per 30s audio segment."
+    },
+    {
+        id: "TSK/006",
+        title: "Tax Settlement & P&L Export Engine",
+        project: "Enterprise Website & ERP Portal Redesign",
+        assignee: "Bilal Mahmood",
+        status: "todo",
+        priority: "medium",
+        deadline: "2026-04-01",
+        progress: 0,
+        description: "Generate trial balance, tax breakdown spreadsheets, and FBR audit exports.",
+        checklist: [
+            { id: "c1", text: "FBR tax bracket calculation logic", completed: false },
+            { id: "c2", text: "Excel & PDF statement streaming generator", completed: false }
+        ],
+        notes: "Awaiting final tax advisory regulation updates for 2026."
+    }
 ];
 
 export default function ProjectTasksPage() {
     const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
     const [currentView, setCurrentView] = useState<ViewType>("kanban");
+    const [isAdminMode, setIsAdminMode] = useState(true);
 
-    // Modal state
+    // Create Task Modal
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newTitle, setNewTitle] = useState("");
     const [newProject, setNewProject] = useState("Enterprise Website & ERP Portal Redesign");
@@ -57,7 +175,23 @@ export default function ProjectTasksPage() {
     const [newStatus, setNewStatus] = useState<"todo" | "in_progress" | "review" | "done">("todo");
     const [newDeadline, setNewDeadline] = useState(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
     const [newDesc, setNewDesc] = useState("");
-    const [successMsg, setSuccessMsg] = useState("");
+
+    // Task Detail / Edit Drawer
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [newChecklistText, setNewChecklistText] = useState("");
+
+    // Email Progress Report Modal
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [emailRecipient, setEmailRecipient] = useState("director@beraxis.online");
+    const [emailSubject, setEmailSubject] = useState("Beraxis ERP - Executive Project & Task Progress Report");
+    const [emailSuccessMsg, setEmailSuccessMsg] = useState("");
+
+    const [notification, setNotification] = useState("");
+
+    const showToast = (msg: string) => {
+        setNotification(msg);
+        setTimeout(() => setNotification(""), 6000);
+    };
 
     const handleCreateTask = (e: React.FormEvent) => {
         e.preventDefault();
@@ -71,31 +205,192 @@ export default function ProjectTasksPage() {
             priority: newPriority,
             status: newStatus,
             deadline: newDeadline,
-            description: newDesc.trim()
+            progress: newStatus === "done" ? 100 : newStatus === "in_progress" ? 40 : 0,
+            description: newDesc.trim(),
+            checklist: [
+                { id: "c1", text: "Initial requirement analysis & architecture", completed: true },
+                { id: "c2", text: "Implementation of core components", completed: false },
+                { id: "c3", text: "Peer review & QA sign-off", completed: false }
+            ],
+            notes: "Created via Beraxis Project Hub."
         };
 
         setTasks([newTask, ...tasks]);
-        setSuccessMsg(`🎉 Task "${newTask.title}" created successfully!`);
-        setTimeout(() => setSuccessMsg(""), 6000);
-
+        showToast(`🎉 Task "${newTask.title}" created successfully!`);
         setShowCreateModal(false);
         setNewTitle("");
         setNewDesc("");
     };
 
-    const toggleTaskStatus = (id: string) => {
+    const toggleTaskStatus = (id: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
         setTasks(tasks.map(t => {
             if (t.id === id) {
                 const nextStatus: Record<string, "todo" | "in_progress" | "review" | "done"> = {
                     todo: "in_progress",
-                    in_progress: "done",
+                    in_progress: "review",
                     review: "done",
                     done: "todo"
                 };
-                return { ...t, status: nextStatus[t.status] || "done" };
+                const updatedStatus = nextStatus[t.status] || "done";
+                const updatedProgress = updatedStatus === "done" ? 100 : updatedStatus === "review" ? 85 : updatedStatus === "in_progress" ? 50 : 0;
+                return { ...t, status: updatedStatus, progress: updatedProgress };
             }
             return t;
         }));
+    };
+
+    // Checklist toggling inside Task Detail Modal
+    const toggleChecklistItem = (taskId: string, checkId: string) => {
+        setTasks(tasks.map(t => {
+            if (t.id === taskId) {
+                const updatedChecklist = t.checklist.map(item =>
+                    item.id === checkId ? { ...item, completed: !item.completed } : item
+                );
+                const doneCount = updatedChecklist.filter(i => i.completed).length;
+                const progressPct = updatedChecklist.length > 0 ? Math.round((doneCount / updatedChecklist.length) * 100) : t.progress;
+                const updatedStatus: "todo" | "in_progress" | "review" | "done" =
+                    progressPct === 100 ? "done" : progressPct > 0 ? "in_progress" : "todo";
+
+                const updated = {
+                    ...t,
+                    checklist: updatedChecklist,
+                    progress: progressPct,
+                    status: updatedStatus
+                };
+                setSelectedTask(updated);
+                return updated;
+            }
+            return t;
+        }));
+    };
+
+    const addChecklistItem = (taskId: string) => {
+        if (!newChecklistText.trim()) return;
+        setTasks(tasks.map(t => {
+            if (t.id === taskId) {
+                const updatedChecklist = [
+                    ...t.checklist,
+                    { id: `c_${Date.now()}`, text: newChecklistText.trim(), completed: false }
+                ];
+                const doneCount = updatedChecklist.filter(i => i.completed).length;
+                const progressPct = Math.round((doneCount / updatedChecklist.length) * 100);
+                const updated = { ...t, checklist: updatedChecklist, progress: progressPct };
+                setSelectedTask(updated);
+                return updated;
+            }
+            return t;
+        }));
+        setNewChecklistText("");
+    };
+
+    const deleteChecklistItem = (taskId: string, checkId: string) => {
+        setTasks(tasks.map(t => {
+            if (t.id === taskId) {
+                const updatedChecklist = t.checklist.filter(i => i.id !== checkId);
+                const doneCount = updatedChecklist.filter(i => i.completed).length;
+                const progressPct = updatedChecklist.length > 0 ? Math.round((doneCount / updatedChecklist.length) * 100) : 0;
+                const updated = { ...t, checklist: updatedChecklist, progress: progressPct };
+                setSelectedTask(updated);
+                return updated;
+            }
+            return t;
+        }));
+    };
+
+    const updateTaskProgressDirectly = (taskId: string, progressVal: number) => {
+        setTasks(tasks.map(t => {
+            if (t.id === taskId) {
+                const status: "todo" | "in_progress" | "review" | "done" =
+                    progressVal === 100 ? "done" : progressVal > 75 ? "review" : progressVal > 0 ? "in_progress" : "todo";
+                const updated = { ...t, progress: progressVal, status, adminOverride: true };
+                setSelectedTask(updated);
+                return updated;
+            }
+            return t;
+        }));
+    };
+
+    const updateTaskStatusDirectly = (taskId: string, newStatusVal: "todo" | "in_progress" | "review" | "done") => {
+        setTasks(tasks.map(t => {
+            if (t.id === taskId) {
+                const progressVal = newStatusVal === "done" ? 100 : newStatusVal === "review" ? 80 : newStatusVal === "in_progress" ? 50 : 0;
+                const updated = { ...t, status: newStatusVal, progress: progressVal, adminOverride: true };
+                setSelectedTask(updated);
+                return updated;
+            }
+            return t;
+        }));
+    };
+
+    const updateTaskNotes = (taskId: string, notesText: string) => {
+        setTasks(tasks.map(t => {
+            if (t.id === taskId) {
+                const updated = { ...t, notes: notesText };
+                setSelectedTask(updated);
+                return updated;
+            }
+            return t;
+        }));
+    };
+
+    // Forward Progress Report
+    const generateProgressSummary = () => {
+        const total = tasks.length;
+        const done = tasks.filter(t => t.status === "done").length;
+        const inProg = tasks.filter(t => t.status === "in_progress").length;
+        const review = tasks.filter(t => t.status === "review").length;
+        const todo = tasks.filter(t => t.status === "todo").length;
+        const overallPct = Math.round((done / total) * 100);
+
+        let report = `====================================================\n`;
+        report += `BERAXIS ERP — EXECUTIVE SPRINT PROGRESS REPORT\n`;
+        report += `Generated On: ${new Date().toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\n`;
+        report += `Overall Sprint Completion: ${overallPct}% (${done}/${total} Deliverables Complete)\n`;
+        report += `====================================================\n\n`;
+
+        report += `SUMMARY METRICS:\n`;
+        report += `• Completed Tasks: ${done}\n`;
+        report += `• In Progress: ${inProg}\n`;
+        report += `• In Code/QA Review: ${review}\n`;
+        report += `• Pending To-Do: ${todo}\n\n`;
+
+        report += `DETAILED TASK BREAKDOWN:\n`;
+        tasks.forEach((t, i) => {
+            report += `${i + 1}. [${t.id}] ${t.title}\n`;
+            report += `   • Project: ${t.project}\n`;
+            report += `   • Assignee: ${t.assignee} | Priority: ${t.priority.toUpperCase()} | Deadline: ${t.deadline}\n`;
+            report += `   • Status: ${t.status.toUpperCase()} (${t.progress}% complete)\n`;
+            if (t.checklist && t.checklist.length > 0) {
+                const doneItems = t.checklist.filter(c => c.completed).length;
+                report += `   • Deliverables: ${doneItems}/${t.checklist.length} items complete\n`;
+                t.checklist.forEach(c => {
+                    report += `     [${c.completed ? "x" : " "}] ${c.text}\n`;
+                });
+            }
+            if (t.notes) {
+                report += `   • Notes: ${t.notes}\n`;
+            }
+            report += `\n`;
+        });
+
+        report += `Forwarded directly from Beraxis ERP Workstation.`;
+        return report;
+    };
+
+    const handleSendEmailReport = (e: React.FormEvent) => {
+        e.preventDefault();
+        setEmailSuccessMsg(`🚀 Executive progress report successfully dispatched to ${emailRecipient}!`);
+        setTimeout(() => {
+            setEmailSuccessMsg("");
+            setShowEmailModal(false);
+        }, 3000);
+    };
+
+    const copyReportToClipboard = () => {
+        const text = generateProgressSummary();
+        navigator.clipboard.writeText(text);
+        showToast("📋 Formatted executive report copied to clipboard!");
     };
 
     return (
@@ -110,21 +405,49 @@ export default function ProjectTasksPage() {
             />
 
             <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6">
-                {/* Header Actions */}
-                <div className="flex items-center justify-between flex-wrap gap-4">
+                {/* Header Actions & Admin Controls */}
+                <div className="flex items-center justify-between flex-wrap gap-4 bg-[#1E293B]/70 border border-gray-700/80 p-5 rounded-2xl">
                     <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                             <h2 className="text-2xl font-bold text-white tracking-tight">Project Tasks & Sprints</h2>
                             <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold">
                                 {tasks.length} Active Tasks
                             </span>
+                            {isAdminMode && (
+                                <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                    <Shield size={12} /> Admin Override Active
+                                </span>
+                            )}
                         </div>
                         <p className="text-xs md:text-sm text-gray-400 mt-1">
-                            Manage task assignments, priorities, deadlines, and milestone deliverables across all projects.
+                            Assignees and Admins can manually update task checklists, progress status, and forward progress reports via email.
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
+                        {/* Admin / Assignee Mode Switch */}
+                        <button
+                            onClick={() => setIsAdminMode(!isAdminMode)}
+                            className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
+                                isAdminMode
+                                    ? "bg-amber-500/20 border-amber-500/40 text-amber-300 hover:bg-amber-500/30"
+                                    : "bg-white/5 border-white/10 text-gray-400 hover:text-white"
+                            }`}
+                            title="Toggle Admin Supervisor Mode for editing all tasks"
+                        >
+                            <Shield size={14} />
+                            <span>{isAdminMode ? "Admin Mode" : "Assignee Mode"}</span>
+                        </button>
+
+                        {/* Forward Email Progress Report */}
+                        <button
+                            onClick={() => setShowEmailModal(true)}
+                            className="bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-cyan-600/10"
+                        >
+                            <Mail size={14} />
+                            <span>Forward Progress Report</span>
+                        </button>
+
                         <ViewSwitcher
                             currentView={currentView}
                             availableViews={["kanban", "list"]}
@@ -141,14 +464,14 @@ export default function ProjectTasksPage() {
                     </div>
                 </div>
 
-                {/* Success Notification */}
-                {successMsg && (
-                    <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-2xl text-xs md:text-sm font-semibold flex items-center justify-between shadow-lg backdrop-blur-md">
+                {/* Toast Notification */}
+                {notification && (
+                    <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-2xl text-xs md:text-sm font-semibold flex items-center justify-between shadow-lg backdrop-blur-md animate-in fade-in">
                         <div className="flex items-center gap-2">
                             <CheckCircle2 size={18} />
-                            <span>{successMsg}</span>
+                            <span>{notification}</span>
                         </div>
-                        <button onClick={() => setSuccessMsg("")} className="text-gray-400 hover:text-white cursor-pointer">
+                        <button onClick={() => setNotification("")} className="text-gray-400 hover:text-white cursor-pointer">
                             ✕
                         </button>
                     </div>
@@ -178,67 +501,105 @@ export default function ProjectTasksPage() {
                                         </span>
                                     </div>
 
-                                    <div className="space-y-3 flex-1 overflow-y-auto max-h-[calc(100vh-280px)] pr-1">
+                                    <div className="space-y-3 flex-1 overflow-y-auto max-h-[calc(100vh-320px)] pr-1">
                                         {colTasks.length === 0 ? (
-                                            <div className="text-center py-8 text-xs text-gray-500 border border-dashed border-gray-700/50 rounded-xl">
+                                             <div className="text-center py-8 text-xs text-gray-500 border border-dashed border-gray-700/50 rounded-xl">
                                                 No tasks in {column.title}
                                             </div>
                                         ) : (
-                                            colTasks.map(task => (
-                                                <div
-                                                    key={task.id}
-                                                    className="bg-[#1E293B] border border-gray-700/80 hover:border-purple-500/50 rounded-xl p-4 shadow-md transition-all space-y-2 group"
-                                                >
-                                                    <div className="flex justify-between items-start gap-2">
-                                                        <span className="font-mono text-[10px] text-gray-400">{task.id}</span>
-                                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
-                                                            task.priority === "urgent"
-                                                                ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
-                                                                : task.priority === "high"
-                                                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                                                                : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                                                        }`}>
-                                                            {task.priority}
-                                                        </span>
-                                                    </div>
-
-                                                    <h4 className="font-bold text-white text-xs group-hover:text-purple-300 transition-colors">
-                                                        {task.title}
-                                                    </h4>
-
-                                                    <div className="text-[11px] text-cyan-400 font-medium truncate">
-                                                        {task.project}
-                                                    </div>
-
-                                                    {task.description && (
-                                                        <p className="text-[11px] text-gray-400 line-clamp-2">
-                                                            {task.description}
-                                                        </p>
-                                                    )}
-
-                                                    <div className="flex items-center justify-between pt-2 border-t border-gray-800 text-[11px] text-gray-400">
-                                                        <div className="flex items-center gap-1.5 font-medium text-gray-300">
-                                                            <div className="w-5 h-5 rounded-full bg-purple-600 text-white font-bold text-[9px] flex items-center justify-center">
-                                                                {task.assignee.charAt(0)}
-                                                            </div>
-                                                            <span>{task.assignee.split(" ")[0]}</span>
-                                                        </div>
-
-                                                        <div className="flex items-center gap-1">
-                                                            <Calendar size={11} className="text-purple-400" />
-                                                            <span>{new Date(task.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Quick State Toggle */}
-                                                    <button
-                                                        onClick={() => toggleTaskStatus(task.id)}
-                                                        className="w-full text-center text-[10px] text-gray-400 hover:text-white py-1 bg-white/5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer mt-1 font-semibold"
+                                            colTasks.map(task => {
+                                                const completedChecklistCount = task.checklist.filter(c => c.completed).length;
+                                                return (
+                                                    <div
+                                                        key={task.id}
+                                                        onClick={() => setSelectedTask(task)}
+                                                        className="bg-[#1E293B] border border-gray-700/80 hover:border-purple-500/60 rounded-xl p-4 shadow-md hover:shadow-xl transition-all space-y-2.5 group cursor-pointer"
                                                     >
-                                                        {task.status === "done" ? "↺ Move to Todo" : "✓ Advance Stage"}
-                                                    </button>
-                                                </div>
-                                            ))
+                                                        <div className="flex justify-between items-start gap-2">
+                                                            <span className="font-mono text-[10px] text-gray-400 font-semibold">{task.id}</span>
+                                                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                                                                task.priority === "urgent"
+                                                                    ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                                                                    : task.priority === "high"
+                                                                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                                                    : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                                                            }`}>
+                                                                {task.priority}
+                                                            </span>
+                                                        </div>
+
+                                                        <h4 className="font-bold text-white text-xs md:text-sm group-hover:text-purple-300 transition-colors">
+                                                            {task.title}
+                                                        </h4>
+
+                                                        <div className="text-[11px] text-cyan-400 font-medium truncate">
+                                                            {task.project}
+                                                        </div>
+
+                                                        {/* Progress bar */}
+                                                        <div className="space-y-1">
+                                                            <div className="flex justify-between text-[10px] text-gray-400">
+                                                                <span>Progress</span>
+                                                                <span className="font-bold text-purple-300">{task.progress}%</span>
+                                                            </div>
+                                                            <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className={`h-full rounded-full transition-all ${
+                                                                        task.progress === 100
+                                                                            ? "bg-emerald-500"
+                                                                            : task.progress > 50
+                                                                            ? "bg-purple-500"
+                                                                            : "bg-blue-500"
+                                                                    }`}
+                                                                    style={{ width: `${task.progress}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Checklist Mini Summary */}
+                                                        {task.checklist.length > 0 && (
+                                                            <div className="flex items-center gap-1.5 text-[11px] text-gray-400 bg-white/5 px-2 py-1 rounded-lg">
+                                                                <ListTodo size={12} className="text-purple-400" />
+                                                                <span>Checklist: {completedChecklistCount}/{task.checklist.length} done</span>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="flex items-center justify-between pt-2 border-t border-gray-800 text-[11px] text-gray-400">
+                                                            <div className="flex items-center gap-1.5 font-medium text-gray-300">
+                                                                <div className="w-5 h-5 rounded-full bg-purple-600 text-white font-bold text-[9px] flex items-center justify-center">
+                                                                    {task.assignee.charAt(0)}
+                                                                </div>
+                                                                <span>{task.assignee.split(" ")[0]}</span>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-1">
+                                                                <Calendar size={11} className="text-purple-400" />
+                                                                <span>{new Date(task.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Quick State Actions */}
+                                                        <div className="flex gap-1.5 pt-1">
+                                                            <button
+                                                                onClick={(e) => toggleTaskStatus(task.id, e)}
+                                                                className="flex-1 text-center text-[10px] text-purple-300 hover:text-white py-1 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg transition-colors cursor-pointer font-semibold"
+                                                            >
+                                                                {task.status === "done" ? "↺ Reopen" : "✓ Advance Stage"}
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setSelectedTask(task);
+                                                                }}
+                                                                className="px-2 py-1 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg text-[10px] font-semibold cursor-pointer"
+                                                                title="Open Checklist & Notes"
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
                                         )}
                                     </div>
                                 </div>
@@ -259,67 +620,388 @@ export default function ProjectTasksPage() {
                                     <th className="px-4 py-3.5">Project</th>
                                     <th className="px-4 py-3.5">Assignee</th>
                                     <th className="px-4 py-3.5">Deadline</th>
+                                    <th className="px-4 py-3.5">Checklist</th>
+                                    <th className="px-4 py-3.5">Progress</th>
                                     <th className="px-4 py-3.5">Priority</th>
                                     <th className="px-4 py-3.5">Status</th>
-                                    <th className="px-4 py-3.5 text-right">Action</th>
+                                    <th className="px-4 py-3.5 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {tasks.map(task => (
-                                    <tr key={task.id} className="border-b border-gray-800 hover:bg-white/5 transition-colors">
-                                        <td className="px-4 py-3.5 font-bold text-white">
-                                            <div>{task.title}</div>
-                                            <div className="text-[10px] text-gray-500 font-mono">{task.id}</div>
-                                        </td>
-                                        <td className="px-4 py-3.5 text-cyan-400 font-medium">{task.project}</td>
-                                        <td className="px-4 py-3.5">
-                                            <div className="flex items-center gap-1.5 text-gray-300 font-medium">
-                                                <div className="w-5 h-5 rounded-full bg-purple-600 text-white font-bold text-[9px] flex items-center justify-center">
-                                                    {task.assignee.charAt(0)}
+                                {tasks.map(task => {
+                                    const doneItems = task.checklist.filter(c => c.completed).length;
+                                    return (
+                                        <tr
+                                            key={task.id}
+                                            onClick={() => setSelectedTask(task)}
+                                            className="border-b border-gray-800 hover:bg-white/5 transition-colors cursor-pointer"
+                                        >
+                                            <td className="px-4 py-3.5 font-bold text-white">
+                                                <div className="hover:text-purple-300 transition-colors">{task.title}</div>
+                                                <div className="text-[10px] text-gray-500 font-mono">{task.id}</div>
+                                            </td>
+                                            <td className="px-4 py-3.5 text-cyan-400 font-medium">{task.project}</td>
+                                            <td className="px-4 py-3.5">
+                                                <div className="flex items-center gap-1.5 text-gray-300 font-medium">
+                                                    <div className="w-5 h-5 rounded-full bg-purple-600 text-white font-bold text-[9px] flex items-center justify-center">
+                                                        {task.assignee.charAt(0)}
+                                                    </div>
+                                                    <span>{task.assignee}</span>
                                                 </div>
-                                                <span>{task.assignee}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3.5 text-gray-300">{new Date(task.deadline).toLocaleDateString()}</td>
-                                        <td className="px-4 py-3.5">
-                                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase ${
-                                                task.priority === "urgent"
-                                                    ? "bg-rose-500/20 text-rose-300"
-                                                    : task.priority === "high"
-                                                    ? "bg-amber-500/20 text-amber-300"
-                                                    : "bg-blue-500/20 text-blue-300"
-                                            }`}>
-                                                {task.priority}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3.5">
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold capitalize ${
-                                                task.status === "done"
-                                                    ? "bg-emerald-500/20 text-emerald-400"
-                                                    : task.status === "in_progress"
-                                                    ? "bg-blue-500/20 text-blue-400"
-                                                    : "bg-amber-500/20 text-amber-400"
-                                            }`}>
-                                                {task.status.replace("_", " ")}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3.5 text-right">
-                                            <button
-                                                onClick={() => toggleTaskStatus(task.id)}
-                                                className="text-xs text-purple-400 hover:text-purple-300 font-bold cursor-pointer"
-                                            >
-                                                Advance →
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                            <td className="px-4 py-3.5 text-gray-300">{new Date(task.deadline).toLocaleDateString()}</td>
+                                            <td className="px-4 py-3.5 text-gray-400">
+                                                <span className="bg-white/5 px-2 py-1 rounded text-xs">
+                                                    {doneItems}/{task.checklist.length} done
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3.5">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-16 bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full rounded-full ${task.progress === 100 ? "bg-emerald-500" : "bg-purple-500"}`}
+                                                            style={{ width: `${task.progress}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-[11px] font-bold text-gray-300">{task.progress}%</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3.5">
+                                                <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase ${
+                                                    task.priority === "urgent"
+                                                        ? "bg-rose-500/20 text-rose-300"
+                                                        : task.priority === "high"
+                                                        ? "bg-amber-500/20 text-amber-300"
+                                                        : "bg-blue-500/20 text-blue-300"
+                                                }`}>
+                                                    {task.priority}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3.5">
+                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold capitalize ${
+                                                    task.status === "done"
+                                                        ? "bg-emerald-500/20 text-emerald-400"
+                                                        : task.status === "in_progress"
+                                                        ? "bg-blue-500/20 text-blue-400"
+                                                        : "bg-amber-500/20 text-amber-400"
+                                                }`}>
+                                                    {task.status.replace("_", " ")}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3.5 text-right">
+                                                <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                                                    <button
+                                                        onClick={() => setSelectedTask(task)}
+                                                        className="text-xs text-purple-400 hover:text-purple-300 font-bold cursor-pointer"
+                                                    >
+                                                        Details
+                                                    </button>
+                                                    <button
+                                                        onClick={() => toggleTaskStatus(task.id)}
+                                                        className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 hover:bg-white/10 cursor-pointer"
+                                                    >
+                                                        Advance →
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
                 )}
             </div>
 
-            {/* Create Task Modal */}
+            {/* ========================================================================= */}
+            {/* TASK DETAIL & ADMIN CHECKLIST DRAWER / MODAL                              */}
+            {/* ========================================================================= */}
+            {selectedTask && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+                        {/* Drawer Header */}
+                        <div className="flex items-start justify-between border-b border-gray-800 pb-4">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono text-xs text-purple-400 font-bold">{selectedTask.id}</span>
+                                    <span className="text-xs text-gray-500">•</span>
+                                    <span className="text-xs text-cyan-400 font-semibold">{selectedTask.project}</span>
+                                    {isAdminMode && (
+                                        <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded-md font-bold">
+                                            Admin Edit
+                                        </span>
+                                    )}
+                                </div>
+                                <h3 className="text-xl font-bold text-white mt-1">{selectedTask.title}</h3>
+                            </div>
+                            <button
+                                onClick={() => setSelectedTask(null)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Assignee, Deadline & Stage Selectors */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[#1E293B] p-4 rounded-2xl border border-gray-700/60">
+                            <div>
+                                <label className="block text-[11px] text-gray-400 font-semibold mb-1">Assignee</label>
+                                <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                                    <User size={14} className="text-purple-400" />
+                                    <span>{selectedTask.assignee}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[11px] text-gray-400 font-semibold mb-1">Target Deadline</label>
+                                <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                                    <Calendar size={14} className="text-purple-400" />
+                                    <span>{new Date(selectedTask.deadline).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[11px] text-gray-400 font-semibold mb-1">Current Stage</label>
+                                <select
+                                    value={selectedTask.status}
+                                    onChange={(e) => updateTaskStatusDirectly(selectedTask.id, e.target.value as any)}
+                                    className="bg-[#0F172A] border border-gray-600 rounded-lg px-2.5 py-1 text-xs text-white focus:border-purple-500 outline-none w-full font-bold cursor-pointer"
+                                >
+                                    <option value="todo">To Do</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="review">Code & QA Review</option>
+                                    <option value="done">Completed</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Progress Slider */}
+                        <div className="space-y-2 bg-[#1E293B] p-4 rounded-2xl border border-gray-700/60">
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="font-bold text-gray-300 flex items-center gap-1.5">
+                                    <Sliders size={14} className="text-purple-400" /> Overall Task Progress
+                                </span>
+                                <span className="font-mono font-bold text-purple-400 text-sm">{selectedTask.progress}%</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={selectedTask.progress}
+                                onChange={(e) => updateTaskProgressDirectly(selectedTask.id, parseInt(e.target.value))}
+                                className="w-full accent-purple-500 cursor-pointer"
+                            />
+                            <div className="flex justify-between text-[10px] text-gray-500">
+                                <span>0% (Not Started)</span>
+                                <span>50% (In Progress)</span>
+                                <span>100% (Completed & Verified)</span>
+                            </div>
+                        </div>
+
+                        {/* Interactive Checklist (What is Done / What is Not Done) */}
+                        <div className="space-y-3 bg-[#1E293B] p-5 rounded-2xl border border-gray-700/60">
+                            <div className="flex items-center justify-between">
+                                <h4 className="font-bold text-white text-xs md:text-sm flex items-center gap-2">
+                                    <ListTodo size={16} className="text-purple-400" />
+                                    Deliverable Checklist (Done / Not Done)
+                                </h4>
+                                <span className="text-xs text-gray-400 font-semibold">
+                                    {selectedTask.checklist.filter(c => c.completed).length} of {selectedTask.checklist.length} Completed
+                                </span>
+                            </div>
+
+                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                {selectedTask.checklist.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => toggleChecklistItem(selectedTask.id, item.id)}
+                                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
+                                            item.completed
+                                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-200"
+                                                : "bg-[#0F172A] border-gray-700 text-gray-300 hover:border-purple-500/40"
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2.5">
+                                            <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
+                                                item.completed
+                                                    ? "bg-emerald-500 border-emerald-500 text-white"
+                                                    : "border-gray-500 bg-transparent"
+                                            }`}>
+                                                {item.completed && <Check size={12} strokeWidth={3} />}
+                                            </div>
+                                            <span className={`text-xs ${item.completed ? "line-through text-gray-400" : "font-medium"}`}>
+                                                {item.text}
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteChecklistItem(selectedTask.id, item.id);
+                                            }}
+                                            className="text-gray-500 hover:text-rose-400 p-1 rounded hover:bg-white/5 transition-colors cursor-pointer"
+                                            title="Delete deliverable"
+                                        >
+                                            <Trash2 size={13} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Add Checklist Item */}
+                            <div className="flex gap-2 pt-2">
+                                <input
+                                    type="text"
+                                    value={newChecklistText}
+                                    onChange={(e) => setNewChecklistText(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && addChecklistItem(selectedTask.id)}
+                                    placeholder="Add sub-task deliverable (e.g. Write Unit Tests)..."
+                                    className="flex-1 bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                />
+                                <button
+                                    onClick={() => addChecklistItem(selectedTask.id)}
+                                    className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                                >
+                                    + Add Item
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Notes & Activity Log */}
+                        <div className="space-y-2">
+                            <label className="block text-xs font-bold text-gray-300">Notes & Handoff Comments</label>
+                            <textarea
+                                rows={3}
+                                value={selectedTask.notes || ""}
+                                onChange={(e) => updateTaskNotes(selectedTask.id, e.target.value)}
+                                placeholder="Add notes, blockers, or link PRs..."
+                                className="w-full bg-[#1E293B] border border-gray-700 rounded-xl p-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                            />
+                        </div>
+
+                        {/* Footer Drawer Buttons */}
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-800">
+                            <button
+                                onClick={() => {
+                                    setShowEmailModal(true);
+                                }}
+                                className="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1.5 cursor-pointer"
+                            >
+                                <Mail size={14} /> Email Progress for this Task
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    setSelectedTask(null);
+                                    showToast("✅ Task updates saved successfully!");
+                                }}
+                                className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-5 py-2 rounded-xl text-xs shadow-lg shadow-purple-600/30 transition-all cursor-pointer"
+                            >
+                                Save & Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* FORWARD PROGRESS REPORT VIA EMAIL MODAL                                   */}
+            {/* ========================================================================= */}
+            {showEmailModal && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-cyan-500/20 text-cyan-400 rounded-xl">
+                                    <Mail size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-base">Forward Progress Report via Email</h3>
+                                    <p className="text-xs text-gray-400">Send direct sprint deliverables & completion metrics to clients and stakeholders</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowEmailModal(false)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {emailSuccessMsg ? (
+                            <div className="py-8 text-center space-y-3">
+                                <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
+                                    <CheckCircle2 size={28} />
+                                </div>
+                                <h4 className="text-base font-bold text-white">Report Dispatched!</h4>
+                                <p className="text-xs text-gray-400">{emailSuccessMsg}</p>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSendEmailReport} className="space-y-4 text-xs">
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Recipient Email Address *</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={emailRecipient}
+                                        onChange={(e) => setEmailRecipient(e.target.value)}
+                                        placeholder="e.g. client@organization.com, director@beraxis.online"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Email Subject *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={emailSubject}
+                                        onChange={(e) => setEmailSubject(e.target.value)}
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="text-gray-300 font-semibold">Executive Report Body (Live Formatted)</label>
+                                        <button
+                                            type="button"
+                                            onClick={copyReportToClipboard}
+                                            className="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <Copy size={12} /> Copy to Clipboard
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        rows={8}
+                                        readOnly
+                                        value={generateProgressSummary()}
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl p-3 text-white font-mono text-[11px] focus:outline-none select-all"
+                                    />
+                                </div>
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEmailModal(false)}
+                                        className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 py-2.5 rounded-xl font-semibold transition-all cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-cyan-600/30 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+                                    >
+                                        <Send size={14} /> Send Email Report
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* CREATE TASK MODAL                                                         */}
+            {/* ========================================================================= */}
             {showCreateModal && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
                     <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
