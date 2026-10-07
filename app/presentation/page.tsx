@@ -30,8 +30,8 @@ export default function PresentationPage() {
   return (
     <div className="min-h-screen bg-[#0b0f19] text-slate-100 font-sans relative overflow-x-hidden select-none">
       {/* Ambient background glows */}
-      <div className="fixed top-[-10%] left-[-10%] w-[550px] h-[550px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[650px] h-[650px] bg-purple-600/15 rounded-full blur-[160px] pointer-events-none" />
+      <div className="fixed top-[-10%] left-[-10%] w-[550px] h-[550px] bg-blue-600/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[650px] h-[650px] bg-purple-600/20 rounded-full blur-[160px] pointer-events-none" />
 
       {/* Top Navigation Bar */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-between px-6 md:px-12 border-b border-slate-800">
@@ -73,11 +73,11 @@ export default function PresentationPage() {
         </div>
       </header>
 
-      {/* Slide Container */}
+      {/* Slide Container - Centered */}
       <main className="pt-20 min-h-screen flex items-center justify-center p-6 md:p-12">
         {/* SLIDE 1: Cover */}
         {currentSlide === 1 && (
-          <div className="max-w-5xl mx-auto text-center space-y-6 animate-fadeIn">
+          <div className="max-w-4xl w-full text-center space-y-6 animate-fadeIn">
             <div className="flex justify-center mb-2">
               <div className="p-3 bg-slate-900/80 backdrop-blur rounded-2xl border border-purple-500/30 shadow-lg shadow-purple-500/20">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -96,30 +96,30 @@ export default function PresentationPage() {
               </span>
             </h1>
 
-            <p className="text-base md:text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base md:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
               Disrupting legacy ERP complexity with 15-minute setup, 26.6x LTV:CAC unit economics, 84% gross margins, and native outbound revenue generation.
             </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 max-w-4xl mx-auto text-left">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 max-w-3xl mx-auto text-center">
               <div className="bg-slate-900/70 backdrop-blur p-4 rounded-xl border border-sky-500/30 shadow-lg shadow-sky-500/10">
                 <div className="text-2xl font-extrabold text-sky-400">$34.8B</div>
-                <div className="text-xs text-slate-400 mt-0.5">SMB Cloud ERP TAM</div>
+                <div className="text-xs text-slate-400 mt-1">SMB Cloud ERP TAM</div>
               </div>
               <div className="bg-slate-900/70 backdrop-blur p-4 rounded-xl border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
                 <div className="text-2xl font-extrabold text-emerald-400">$62M ARR</div>
-                <div className="text-xs text-slate-400 mt-0.5">Year 5 Target</div>
+                <div className="text-xs text-slate-400 mt-1">Year 5 Target</div>
               </div>
               <div className="bg-slate-900/70 backdrop-blur p-4 rounded-xl border border-purple-500/30 shadow-lg shadow-purple-500/10">
                 <div className="text-2xl font-extrabold text-purple-400">26.6x</div>
-                <div className="text-xs text-slate-400 mt-0.5">LTV : CAC Ratio</div>
+                <div className="text-xs text-slate-400 mt-1">LTV : CAC Ratio</div>
               </div>
               <div className="bg-slate-900/70 backdrop-blur p-4 rounded-xl border border-amber-500/30 shadow-lg shadow-amber-500/10">
                 <div className="text-2xl font-extrabold text-amber-400">84%</div>
-                <div className="text-xs text-slate-400 mt-0.5">SaaS Gross Margin</div>
+                <div className="text-xs text-slate-400 mt-1">SaaS Gross Margin</div>
               </div>
             </div>
 
-            <div className="pt-4 flex justify-center gap-4">
+            <div className="pt-6 flex justify-center gap-4">
               <button
                 onClick={nextSlide}
                 className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 font-bold text-white hover:opacity-95 shadow-xl shadow-purple-500/25 transition text-sm"
@@ -136,68 +136,68 @@ export default function PresentationPage() {
           </div>
         )}
 
-        {/* SLIDE 2: Market TAM Chart */}
+        {/* SLIDE 2: Market TAM */}
         {currentSlide === 2 && (
-          <div className="max-w-6xl mx-auto w-full space-y-4 animate-fadeIn">
-            <div>
+          <div className="max-w-5xl w-full space-y-6 animate-fadeIn">
+            <div className="text-center space-y-1">
               <h2 className="text-3xl font-extrabold">Massive Market Opportunity: $62B → $136B Wave</h2>
               <p className="text-slate-400 text-sm">Enterprise ERP is shifting downmarket to 30M+ SMBs demanding AI over consulting delays</p>
             </div>
 
             <div className="grid md:grid-cols-12 gap-6 items-center">
-              <div className="md:col-span-4 space-y-4 text-xs text-slate-300">
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-sky-500/30 space-y-2">
+              <div className="md:col-span-4 space-y-3 text-xs text-slate-300">
+                <div className="bg-slate-900/70 p-4 rounded-xl border border-sky-500/30 space-y-1.5">
                   <h4 className="font-bold text-sky-400 text-sm">📈 13.8% Industry CAGR</h4>
                   <p>Legacy ERPs are rapidly being replaced by autonomous cloud platforms.</p>
                 </div>
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-purple-500/30 space-y-2">
-                  <h4 className="font-bold text-purple-400 text-sm">🎯 The $34.8B SMB Blindspot</h4>
-                  <p>Odoo and SAP leave growing SMBs frustrated with long setups and high fees.</p>
+                <div className="bg-slate-900/70 p-4 rounded-xl border border-purple-500/30 space-y-1.5">
+                  <h4 className="font-bold text-purple-400 text-sm">🎯 The $34.8B SMB Opportunity</h4>
+                  <p>Odoo charges heavy consulting fees; GoHighLevel lacks true accounting & inventory.</p>
                 </div>
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-emerald-500/30 space-y-2">
+                <div className="bg-slate-900/70 p-4 rounded-xl border border-emerald-500/30 space-y-1.5">
                   <h4 className="font-bold text-emerald-400 text-sm">🚀 Initial Target (SOM)</h4>
                   <p>Capturing just 1.2% of the switchers market represents <b>$98M+ ARR</b>.</p>
                 </div>
               </div>
 
-              <div className="md:col-span-8">
+              <div className="md:col-span-8 flex justify-center">
                 <div className="bg-slate-900/80 p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/deck_assets/chart_market_tam.png" alt="Market TAM Chart" className="w-full h-auto rounded-xl object-contain" />
+                  <img src="/deck_assets/chart_market_tam.png" alt="Market TAM Chart" className="w-full h-auto rounded-xl object-contain max-h-[340px]" />
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* SLIDE 3: Competitor Comparison */}
+        {/* SLIDE 3: Competitors (Odoo, Zoho, GoHighLevel) */}
         {currentSlide === 3 && (
-          <div className="max-w-6xl mx-auto w-full space-y-4 animate-fadeIn">
-            <div>
-              <h2 className="text-3xl font-extrabold">Competitive Disruption: Why Beraxis Wins</h2>
-              <p className="text-slate-400 text-sm">15-minute setup vs. 90-day consulting delays and 75% lower total cost of ownership</p>
+          <div className="max-w-5xl w-full space-y-6 animate-fadeIn">
+            <div className="text-center space-y-1">
+              <h2 className="text-3xl font-extrabold">Competitive Disruption: Beraxis vs. Odoo, Zoho & GoHighLevel</h2>
+              <p className="text-slate-400 text-sm">Why Beraxis wins against CRM-only platforms and bloated legacy ERP suites</p>
             </div>
 
             <div className="grid md:grid-cols-12 gap-6 items-center">
-              <div className="md:col-span-4 space-y-4 text-xs text-slate-300">
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-emerald-500/30 space-y-2">
-                  <h4 className="font-bold text-emerald-400 text-sm">⚡ 15-Min Live Setup</h4>
-                  <p>1-click import & free concierge migration eliminates project failure.</p>
+              <div className="md:col-span-4 space-y-3 text-xs text-slate-300">
+                <div className="bg-slate-900/70 p-3.5 rounded-xl border border-emerald-500/30 space-y-1">
+                  <h4 className="font-bold text-emerald-400 text-sm">⚡ vs. Odoo</h4>
+                  <p>Odoo takes 90 days of expensive consulting; Beraxis deploys in <b>15 minutes</b> with free migration.</p>
                 </div>
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-sky-500/30 space-y-2">
-                  <h4 className="font-bold text-sky-400 text-sm">💰 $199/mo All-in-One</h4>
-                  <p>Replaces $960+/mo fragmented subscriptions across 5+ tools.</p>
+                <div className="bg-slate-900/70 p-3.5 rounded-xl border border-sky-500/30 space-y-1">
+                  <h4 className="font-bold text-sky-400 text-sm">⚡ vs. GoHighLevel (GHL)</h4>
+                  <p>GHL is great for marketing/CRM but has <b>ZERO accounting & inventory</b>. Beraxis is a true end-to-end ERP.</p>
                 </div>
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-purple-500/30 space-y-2">
-                  <h4 className="font-bold text-purple-400 text-sm">🤖 Built-In Outbound Suite</h4>
-                  <p>Native cold email & AI voice calling to generate new client revenue.</p>
+                <div className="bg-slate-900/70 p-3.5 rounded-xl border border-purple-500/30 space-y-1">
+                  <h4 className="font-bold text-purple-400 text-sm">⚡ vs. Zoho One</h4>
+                  <p>Zoho is 40+ stitched apps with sync lag; Beraxis runs on one unified Next.js database.</p>
                 </div>
               </div>
 
-              <div className="md:col-span-8">
+              <div className="md:col-span-8 flex justify-center">
                 <div className="bg-slate-900/80 p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/deck_assets/chart_competitor_comparison.png" alt="Competitor Comparison Chart" className="w-full h-auto rounded-xl object-contain" />
+                  <img src="/deck_assets/chart_competitor_comparison.png" alt="Competitor Comparison Chart" className="w-full h-auto rounded-xl object-contain max-h-[340px]" />
                 </div>
               </div>
             </div>
@@ -206,35 +206,32 @@ export default function PresentationPage() {
 
         {/* SLIDE 4: Dashboard Showcase */}
         {currentSlide === 4 && (
-          <div className="max-w-6xl mx-auto w-full space-y-4 animate-fadeIn">
-            <div className="flex justify-between items-end">
-              <div>
-                <h2 className="text-3xl font-extrabold">Live Product Execution: Next-Gen Core</h2>
-                <p className="text-slate-400 text-sm">High-performance Next.js 14 architecture with 25+ synchronized modules</p>
-              </div>
-              <span className="text-xs bg-purple-900/40 text-purple-300 px-3 py-1 rounded-full border border-purple-500/30">Beraxis Live Workspace</span>
+          <div className="max-w-5xl w-full space-y-6 animate-fadeIn">
+            <div className="text-center space-y-1">
+              <h2 className="text-3xl font-extrabold">Live Product Execution: Next-Gen Core</h2>
+              <p className="text-slate-400 text-sm">High-performance Next.js 14 architecture with 25+ synchronized enterprise modules</p>
             </div>
 
             <div className="grid md:grid-cols-12 gap-6 items-center">
               <div className="md:col-span-4 space-y-3">
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-sky-500/30">
+                <div className="bg-slate-900/70 p-3.5 rounded-xl border border-sky-500/30">
                   <h4 className="font-bold text-sky-400 text-sm">💼 CRM & 94.2% AI Scoring</h4>
                   <p className="text-xs text-slate-300 mt-1">Predicts deal win probability & analyzes email sentiment.</p>
                 </div>
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-emerald-500/30">
+                <div className="bg-slate-900/70 p-3.5 rounded-xl border border-emerald-500/30">
                   <h4 className="font-bold text-emerald-400 text-sm">🧾 3-Sec OCR Accounting</h4>
                   <p className="text-xs text-slate-300 mt-1">Auto-extracts supplier bills into general ledger.</p>
                 </div>
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-purple-500/30">
+                <div className="bg-slate-900/70 p-3.5 rounded-xl border border-purple-500/30">
                   <h4 className="font-bold text-purple-400 text-sm">📦 Predictive Inventory MRP</h4>
                   <p className="text-xs text-slate-300 mt-1">Multi-warehouse stock & automated Bill of Materials.</p>
                 </div>
               </div>
 
-              <div className="md:col-span-8">
+              <div className="md:col-span-8 flex justify-center">
                 <div className="bg-slate-900/80 p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/deck_assets/dashboard_hero.jpg" alt="Live Dashboard" className="w-full h-auto rounded-xl object-cover" />
+                  <img src="/deck_assets/dashboard_hero.jpg" alt="Live Dashboard" className="w-full h-auto rounded-xl object-cover max-h-[340px]" />
                 </div>
               </div>
             </div>
@@ -243,32 +240,32 @@ export default function PresentationPage() {
 
         {/* SLIDE 5: Unit Economics */}
         {currentSlide === 5 && (
-          <div className="max-w-6xl mx-auto w-full space-y-4 animate-fadeIn">
-            <div>
+          <div className="max-w-5xl w-full space-y-6 animate-fadeIn">
+            <div className="text-center space-y-1">
               <h2 className="text-3xl font-extrabold">World-Class Unit Economics: Highly Efficient</h2>
               <p className="text-slate-400 text-sm">26.6x LTV:CAC with 1.1-month payback and 84% Gross Margins</p>
             </div>
 
             <div className="grid md:grid-cols-12 gap-6 items-center">
-              <div className="md:col-span-4 space-y-4 text-xs text-slate-300">
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-emerald-500/30 space-y-2">
+              <div className="md:col-span-4 space-y-3 text-xs text-slate-300">
+                <div className="bg-slate-900/70 p-3.5 rounded-xl border border-emerald-500/30 space-y-1">
                   <h4 className="font-bold text-emerald-400 text-sm">💎 $4,800 LTV vs $180 CAC</h4>
                   <p>Capital-efficient distribution driven by viral partner referrals.</p>
                 </div>
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-sky-500/30 space-y-2">
+                <div className="bg-slate-900/70 p-3.5 rounded-xl border border-sky-500/30 space-y-1">
                   <h4 className="font-bold text-sky-400 text-sm">⚡ 1.1 Month Payback</h4>
                   <p>Recovers customer acquisition costs almost immediately.</p>
                 </div>
-                <div className="bg-slate-900/70 p-4 rounded-xl border border-purple-500/30 space-y-2">
+                <div className="bg-slate-900/70 p-3.5 rounded-xl border border-purple-500/30 space-y-1">
                   <h4 className="font-bold text-purple-400 text-sm">📊 132% NRR Expansion</h4>
                   <p>Accounts expand spend via AI calling minutes and document credits.</p>
                 </div>
               </div>
 
-              <div className="md:col-span-8">
+              <div className="md:col-span-8 flex justify-center">
                 <div className="bg-slate-900/80 p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/deck_assets/chart_unit_economics.png" alt="Unit Economics Chart" className="w-full h-auto rounded-xl object-contain" />
+                  <img src="/deck_assets/chart_unit_economics.png" alt="Unit Economics Chart" className="w-full h-auto rounded-xl object-contain max-h-[340px]" />
                 </div>
               </div>
             </div>
@@ -277,14 +274,14 @@ export default function PresentationPage() {
 
         {/* SLIDE 6: Financial Forecast */}
         {currentSlide === 6 && (
-          <div className="max-w-6xl mx-auto w-full space-y-4 animate-fadeIn">
-            <div>
+          <div className="max-w-5xl w-full space-y-6 animate-fadeIn">
+            <div className="text-center space-y-1">
               <h2 className="text-3xl font-extrabold">5-Year Financial Forecast ($0.8M → $62M ARR)</h2>
               <p className="text-slate-400 text-sm">Data-backed pathway to $62M ARR and 18,000+ active enterprise accounts</p>
             </div>
 
             <div className="grid md:grid-cols-12 gap-6 items-center">
-              <div className="md:col-span-4 space-y-3 text-xs text-slate-300">
+              <div className="md:col-span-4 space-y-2.5 text-xs text-slate-300">
                 <div className="bg-slate-900/70 p-3 rounded-xl border border-sky-500/30">
                   <b className="text-sky-400">Year 1: $835K ARR</b> — 350 SMBs via direct blitz.
                 </div>
@@ -299,20 +296,20 @@ export default function PresentationPage() {
                 </div>
               </div>
 
-              <div className="md:col-span-8">
+              <div className="md:col-span-8 flex justify-center">
                 <div className="bg-slate-900/80 p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/deck_assets/chart_arr_growth.png" alt="ARR Growth Chart" className="w-full h-auto rounded-xl object-contain" />
+                  <img src="/deck_assets/chart_arr_growth.png" alt="ARR Growth Chart" className="w-full h-auto rounded-xl object-contain max-h-[340px]" />
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* SLIDE 7: Future Flywheel */}
+        {/* SLIDE 7: Outbound Flywheel */}
         {currentSlide === 7 && (
-          <div className="max-w-6xl mx-auto w-full space-y-6 animate-fadeIn">
-            <div className="text-center space-y-1">
+          <div className="max-w-5xl w-full space-y-6 text-center animate-fadeIn">
+            <div className="space-y-1">
               <span className="text-xs bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full border border-purple-500/30 font-semibold">
                 Autonomous Revenue Engine
               </span>
@@ -320,7 +317,7 @@ export default function PresentationPage() {
               <p className="text-slate-400 text-sm">Expanding ARPU and driving 132% Net Revenue Retention</p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-6 text-left">
               <div className="bg-slate-900/70 p-6 rounded-2xl space-y-3 border border-sky-500/30 shadow-lg shadow-sky-500/10">
                 <div className="text-2xl">📊</div>
                 <h3 className="font-bold text-sky-400 text-lg">1. Marketing Suite</h3>
@@ -350,8 +347,8 @@ export default function PresentationPage() {
 
         {/* SLIDE 8: GTM */}
         {currentSlide === 8 && (
-          <div className="max-w-6xl mx-auto w-full space-y-6 animate-fadeIn">
-            <div className="text-center space-y-1">
+          <div className="max-w-5xl w-full space-y-6 text-center animate-fadeIn">
+            <div className="space-y-1">
               <h2 className="text-3xl font-extrabold">Go-To-Market: 4 Scalable Distribution Engines</h2>
               <p className="text-slate-400 text-sm">Rapid acquisition roadmap to onboard hundreds of businesses</p>
             </div>
@@ -383,11 +380,11 @@ export default function PresentationPage() {
 
         {/* SLIDE 9: Capital & Vision */}
         {currentSlide === 9 && (
-          <div className="max-w-4xl mx-auto text-center space-y-6 animate-fadeIn">
+          <div className="max-w-4xl w-full text-center space-y-6 animate-fadeIn">
             <h2 className="text-4xl font-extrabold">Building The #1 Autonomous AI ERP & CRM</h2>
-            <p className="text-slate-400 text-sm">Transforming how millions of growing businesses manage operations and generate revenue.</p>
+            <p className="text-slate-400 text-sm max-w-2xl mx-auto">Transforming how millions of growing businesses manage operations and generate revenue.</p>
 
-            <div className="p-8 bg-slate-900/90 rounded-2xl border border-purple-500/40 space-y-4 shadow-2xl">
+            <div className="p-8 bg-slate-900/90 rounded-2xl border border-purple-500/40 space-y-4 shadow-2xl max-w-2xl mx-auto">
               <h3 className="text-2xl font-bold">Explore The Live Platform & Financial Model</h3>
               <div className="flex flex-wrap justify-center gap-4 pt-2">
                 <Link

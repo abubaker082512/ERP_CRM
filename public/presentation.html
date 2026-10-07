@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beraxis AI ERP & CRM - Investor & Growth Pitch Deck</title>
+    <title>Beraxis AI ERP & CRM - Growth & Investor Presentation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0b0f19; color: #f8fafc; overflow-x: hidden; }
-        .slide { display: none; min-height: 100vh; padding: 5rem 3rem 4rem 3rem; }
-        .slide.active { display: flex; flex-direction: column; justify-content: center; }
-        .glass-panel { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .glow-cyan { box-shadow: 0 0 35px rgba(14, 165, 233, 0.18); }
-        .glow-purple { box-shadow: 0 0 35px rgba(168, 85, 247, 0.22); }
+        .slide { display: none; min-height: 100vh; padding: 6rem 2rem 4rem 2rem; }
+        .slide.active { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .glass-panel { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glow-cyan { box-shadow: 0 0 35px rgba(14, 165, 233, 0.2); }
+        .glow-purple { box-shadow: 0 0 35px rgba(168, 85, 247, 0.25); }
         .gradient-text-beraxis { background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
-<body class="relative bg-[#0b0f19] text-slate-100 selection:bg-cyan-500 selection:text-white">
+<body class="relative bg-[#0b0f19] text-slate-100 selection:bg-cyan-500 selection:text-white min-h-screen">
 
     <!-- Ambient Glowing Background Mesh -->
-    <div class="fixed top-[-10%] left-[-10%] w-[550px] h-[550px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none"></div>
-    <div class="fixed bottom-[-10%] right-[-10%] w-[650px] h-[650px] bg-purple-600/15 rounded-full blur-[160px] pointer-events-none"></div>
+    <div class="fixed top-[-10%] left-[-10%] w-[550px] h-[550px] bg-blue-600/15 rounded-full blur-[140px] pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[650px] h-[650px] bg-purple-600/20 rounded-full blur-[160px] pointer-events-none"></div>
 
     <!-- Top Navigation Bar -->
     <header class="fixed top-0 left-0 right-0 h-16 glass-panel z-50 flex items-center justify-between px-6 md:px-12 border-b border-slate-800/80">
@@ -44,9 +44,9 @@
         </div>
     </header>
 
-    <!-- SLIDE 1: Cover -->
+    <!-- SLIDE 1: Centered Cover -->
     <section class="slide active" id="slide-1">
-        <div class="max-w-5xl mx-auto text-center space-y-6">
+        <div class="max-w-4xl w-full text-center space-y-6">
             <div class="flex justify-center mb-2">
                 <div class="p-3 glass-panel rounded-2xl border-purple-500/30 glow-purple">
                     <img src="/logo2.png" alt="Beraxis" class="h-16 w-auto object-contain mx-auto" onerror="this.src='logo2.png'" />
@@ -61,30 +61,30 @@
                 Scaling The Autonomous Operating System <br/><span class="gradient-text-beraxis">$0.8M → $62M ARR</span>
             </h1>
             
-            <p class="text-base md:text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
+            <p class="text-base md:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
                 Disrupting legacy ERP complexity with 15-minute setup, 26.6x LTV:CAC unit economics, 84% gross margins, and native outbound revenue generation.
             </p>
             
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 max-w-4xl mx-auto text-left">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 max-w-3xl mx-auto text-center">
                 <div class="glass-panel p-4 rounded-xl border-sky-500/30 glow-cyan">
                     <div class="text-2xl font-extrabold text-sky-400">$34.8B</div>
-                    <div class="text-xs text-slate-400 mt-0.5">SMB Cloud ERP TAM</div>
+                    <div class="text-xs text-slate-400 mt-1">SMB Cloud ERP TAM</div>
                 </div>
                 <div class="glass-panel p-4 rounded-xl border-emerald-500/30">
                     <div class="text-2xl font-extrabold text-emerald-400">$62M ARR</div>
-                    <div class="text-xs text-slate-400 mt-0.5">Year 5 Scaling Target</div>
+                    <div class="text-xs text-slate-400 mt-1">Year 5 Scaling Target</div>
                 </div>
                 <div class="glass-panel p-4 rounded-xl border-purple-500/30 glow-purple">
                     <div class="text-2xl font-extrabold text-purple-400">26.6x</div>
-                    <div class="text-xs text-slate-400 mt-0.5">LTV : CAC Ratio</div>
+                    <div class="text-xs text-slate-400 mt-1">LTV : CAC Ratio</div>
                 </div>
                 <div class="glass-panel p-4 rounded-xl border-amber-500/30">
                     <div class="text-2xl font-extrabold text-amber-400">84%</div>
-                    <div class="text-xs text-slate-400 mt-0.5">SaaS Gross Margin</div>
+                    <div class="text-xs text-slate-400 mt-1">SaaS Gross Margin</div>
                 </div>
             </div>
 
-            <div class="pt-4 flex justify-center gap-4">
+            <div class="pt-6 flex justify-center gap-4">
                 <button onclick="nextSlide()" class="px-8 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 font-bold text-white hover:opacity-95 shadow-xl shadow-purple-500/20 transition text-sm">
                     Explore Growth Deck →
                 </button>
@@ -95,151 +95,148 @@
         </div>
     </section>
 
-    <!-- SLIDE 2: Market TAM / SAM / SOM with Chart -->
+    <!-- SLIDE 2: Centered Market TAM -->
     <section class="slide" id="slide-2">
-        <div class="max-w-6xl mx-auto w-full space-y-4">
-            <div>
+        <div class="max-w-5xl w-full space-y-6">
+            <div class="text-center space-y-1">
                 <h2 class="text-3xl font-extrabold">Massive Market Opportunity: $62B → $136B Wave</h2>
                 <p class="text-slate-400 text-sm">Enterprise ERP is shifting downmarket to 30M+ SMBs demanding AI over consulting delays</p>
             </div>
 
             <div class="grid md:grid-cols-12 gap-6 items-center">
-                <div class="md:col-span-4 space-y-4 text-xs text-slate-300">
-                    <div class="glass-panel p-4 rounded-xl border-sky-500/30 space-y-2">
+                <div class="md:col-span-4 space-y-3 text-xs text-slate-300">
+                    <div class="glass-panel p-4 rounded-xl border-sky-500/30 space-y-1.5">
                         <h4 class="font-bold text-sky-400 text-sm">📈 13.8% Industry CAGR</h4>
                         <p>Legacy ERPs are rapidly being replaced by autonomous cloud platforms.</p>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl border-purple-500/30 space-y-2">
-                        <h4 class="font-bold text-purple-400 text-sm">🎯 The $34.8B SMB Blindspot</h4>
-                        <p>Odoo and SAP leave growing SMBs frustrated with long setups and high fees.</p>
+                    <div class="glass-panel p-4 rounded-xl border-purple-500/30 space-y-1.5">
+                        <h4 class="font-bold text-purple-400 text-sm">🎯 The $34.8B SMB Opportunity</h4>
+                        <p>Odoo charges heavy consulting fees; GoHighLevel lacks true accounting & inventory.</p>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl border-emerald-500/30 space-y-2">
+                    <div class="glass-panel p-4 rounded-xl border-emerald-500/30 space-y-1.5">
                         <h4 class="font-bold text-emerald-400 text-sm">🚀 Initial Target (SOM)</h4>
                         <p>Capturing just 1.2% of the switchers market represents <b>$98M+ ARR</b>.</p>
                     </div>
                 </div>
 
                 <div class="md:col-span-8">
-                    <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl glow-cyan">
-                        <img src="/deck_assets/chart_market_tam.png" alt="Market TAM Chart" class="w-full h-auto rounded-xl object-contain" onerror="this.src='deck_assets/chart_market_tam.png'">
+                    <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl glow-cyan flex justify-center">
+                        <img src="/deck_assets/chart_market_tam.png" alt="Market TAM Chart" class="w-full h-auto rounded-xl object-contain max-h-[340px]" onerror="this.src='deck_assets/chart_market_tam.png'">
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SLIDE 3: Competitive Disruption Chart -->
+    <!-- SLIDE 3: Centered Competitors (Odoo, Zoho, GoHighLevel) -->
     <section class="slide" id="slide-3">
-        <div class="max-w-6xl mx-auto w-full space-y-4">
-            <div>
-                <h2 class="text-3xl font-extrabold">Competitive Disruption: Why Beraxis Wins</h2>
-                <p class="text-slate-400 text-sm">15-minute setup vs. 90-day consulting delays and 75% lower total cost of ownership</p>
+        <div class="max-w-5xl w-full space-y-6">
+            <div class="text-center space-y-1">
+                <h2 class="text-3xl font-extrabold">Competitive Disruption: Beraxis vs. Odoo, Zoho & GoHighLevel</h2>
+                <p class="text-slate-400 text-sm">Why Beraxis wins against CRM-only platforms and bloated legacy ERP suites</p>
             </div>
 
             <div class="grid md:grid-cols-12 gap-6 items-center">
-                <div class="md:col-span-4 space-y-4 text-xs text-slate-300">
-                    <div class="glass-panel p-4 rounded-xl border-emerald-500/30 space-y-2">
-                        <h4 class="font-bold text-emerald-400 text-sm">⚡ 15-Min Live Setup</h4>
-                        <p>1-click import & free concierge migration eliminates project failure.</p>
+                <div class="md:col-span-4 space-y-3 text-xs text-slate-300">
+                    <div class="glass-panel p-3.5 rounded-xl border-emerald-500/30 space-y-1">
+                        <h4 class="font-bold text-emerald-400 text-sm">⚡ vs. Odoo</h4>
+                        <p>Odoo takes 90 days of expensive consulting; Beraxis deploys in <b>15 minutes</b> with free migration.</p>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl border-sky-500/30 space-y-2">
-                        <h4 class="font-bold text-sky-400 text-sm">💰 $199/mo All-in-One</h4>
-                        <p>Replaces $960+/mo fragmented subscriptions across 5+ tools.</p>
+                    <div class="glass-panel p-3.5 rounded-xl border-sky-500/30 space-y-1">
+                        <h4 class="font-bold text-sky-400 text-sm">⚡ vs. GoHighLevel (GHL)</h4>
+                        <p>GHL is great for marketing/CRM but has <b>ZERO accounting & inventory</b>. Beraxis is a true end-to-end ERP.</p>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl border-purple-500/30 space-y-2">
-                        <h4 class="font-bold text-purple-400 text-sm">🤖 Built-In Outbound Suite</h4>
-                        <p>Native cold email & AI voice calling to generate new client revenue.</p>
+                    <div class="glass-panel p-3.5 rounded-xl border-purple-500/30 space-y-1">
+                        <h4 class="font-bold text-purple-400 text-sm">⚡ vs. Zoho One</h4>
+                        <p>Zoho is 40+ stitched apps with sync lag; Beraxis runs on one unified Next.js database.</p>
                     </div>
                 </div>
 
                 <div class="md:col-span-8">
-                    <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
-                        <img src="/deck_assets/chart_competitor_comparison.png" alt="Competitor Comparison Chart" class="w-full h-auto rounded-xl object-contain" onerror="this.src='deck_assets/chart_competitor_comparison.png'">
+                    <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl flex justify-center">
+                        <img src="/deck_assets/chart_competitor_comparison.png" alt="Competitor Comparison Chart" class="w-full h-auto rounded-xl object-contain max-h-[340px]" onerror="this.src='deck_assets/chart_competitor_comparison.png'">
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SLIDE 4: Live Interface Showcase -->
+    <!-- SLIDE 4: Centered Live Interface Showcase -->
     <section class="slide" id="slide-4">
-        <div class="max-w-6xl mx-auto w-full space-y-4">
-            <div class="flex justify-between items-end">
-                <div>
-                    <h2 class="text-3xl font-extrabold">Live Product Execution: Next-Gen Core</h2>
-                    <p class="text-slate-400 text-sm">High-performance Next.js 14 architecture with 25+ synchronized modules</p>
-                </div>
-                <span class="text-xs bg-purple-900/40 text-purple-300 px-3 py-1 rounded-full border border-purple-500/30">Beraxis Live Workspace</span>
+        <div class="max-w-5xl w-full space-y-6">
+            <div class="text-center space-y-1">
+                <h2 class="text-3xl font-extrabold">Live Product Execution: Next-Gen Core</h2>
+                <p class="text-slate-400 text-sm">High-performance Next.js 14 architecture with 25+ synchronized enterprise modules</p>
             </div>
 
             <div class="grid md:grid-cols-12 gap-6 items-center">
                 <div class="md:col-span-4 space-y-3">
-                    <div class="glass-panel p-4 rounded-xl border-sky-500/30">
+                    <div class="glass-panel p-3.5 rounded-xl border-sky-500/30">
                         <h4 class="font-bold text-sky-400 text-sm">💼 CRM & 94.2% AI Scoring</h4>
                         <p class="text-xs text-slate-300 mt-1">Predicts deal win probability & analyzes email sentiment.</p>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl border-emerald-500/30">
+                    <div class="glass-panel p-3.5 rounded-xl border-emerald-500/30">
                         <h4 class="font-bold text-emerald-400 text-sm">🧾 3-Sec OCR Accounting</h4>
                         <p class="text-xs text-slate-300 mt-1">Auto-extracts supplier bills into general ledger.</p>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl border-purple-500/30">
+                    <div class="glass-panel p-3.5 rounded-xl border-purple-500/30">
                         <h4 class="font-bold text-purple-400 text-sm">📦 Predictive Inventory MRP</h4>
                         <p class="text-xs text-slate-300 mt-1">Multi-warehouse stock & automated Bill of Materials.</p>
                     </div>
                 </div>
 
                 <div class="md:col-span-8">
-                    <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl glow-cyan">
-                        <img src="/deck_assets/dashboard_hero.jpg" alt="Live Dashboard" class="w-full h-auto rounded-xl object-cover" onerror="this.src='deck_assets/dashboard_hero.jpg'">
+                    <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl glow-cyan flex justify-center">
+                        <img src="/deck_assets/dashboard_hero.jpg" alt="Live Dashboard" class="w-full h-auto rounded-xl object-cover max-h-[340px]" onerror="this.src='deck_assets/dashboard_hero.jpg'">
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SLIDE 5: Unit Economics Chart -->
+    <!-- SLIDE 5: Centered Unit Economics -->
     <section class="slide" id="slide-5">
-        <div class="max-w-6xl mx-auto w-full space-y-4">
-            <div>
+        <div class="max-w-5xl w-full space-y-6">
+            <div class="text-center space-y-1">
                 <h2 class="text-3xl font-extrabold">World-Class Unit Economics: Highly Efficient</h2>
                 <p class="text-slate-400 text-sm">26.6x LTV:CAC with 1.1-month payback and 84% Gross Margins</p>
             </div>
 
             <div class="grid md:grid-cols-12 gap-6 items-center">
-                <div class="md:col-span-4 space-y-4 text-xs text-slate-300">
-                    <div class="glass-panel p-4 rounded-xl border-emerald-500/30 space-y-2">
+                <div class="md:col-span-4 space-y-3 text-xs text-slate-300">
+                    <div class="glass-panel p-3.5 rounded-xl border-emerald-500/30 space-y-1">
                         <h4 class="font-bold text-emerald-400 text-sm">💎 $4,800 LTV vs $180 CAC</h4>
                         <p>Capital-efficient distribution driven by viral partner referrals.</p>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl border-sky-500/30 space-y-2">
+                    <div class="glass-panel p-3.5 rounded-xl border-sky-500/30 space-y-1">
                         <h4 class="font-bold text-sky-400 text-sm">⚡ 1.1 Month Payback</h4>
                         <p>Recovers customer acquisition costs almost immediately.</p>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl border-purple-500/30 space-y-2">
+                    <div class="glass-panel p-3.5 rounded-xl border-purple-500/30 space-y-1">
                         <h4 class="font-bold text-purple-400 text-sm">📊 132% NRR Expansion</h4>
                         <p>Accounts expand spend via AI calling minutes and document credits.</p>
                     </div>
                 </div>
 
                 <div class="md:col-span-8">
-                    <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl glow-purple">
-                        <img src="/deck_assets/chart_unit_economics.png" alt="Unit Economics Chart" class="w-full h-auto rounded-xl object-contain" onerror="this.src='deck_assets/chart_unit_economics.png'">
+                    <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl glow-purple flex justify-center">
+                        <img src="/deck_assets/chart_unit_economics.png" alt="Unit Economics Chart" class="w-full h-auto rounded-xl object-contain max-h-[340px]" onerror="this.src='deck_assets/chart_unit_economics.png'">
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SLIDE 6: 5-Year Financial Forecast Chart -->
+    <!-- SLIDE 6: Centered Financial Forecast -->
     <section class="slide" id="slide-6">
-        <div class="max-w-6xl mx-auto w-full space-y-4">
-            <div>
+        <div class="max-w-5xl w-full space-y-6">
+            <div class="text-center space-y-1">
                 <h2 class="text-3xl font-extrabold">5-Year Financial Forecast ($0.8M → $62M ARR)</h2>
                 <p class="text-slate-400 text-sm">Data-backed pathway to $62M ARR and 18,000+ active enterprise accounts</p>
             </div>
 
             <div class="grid md:grid-cols-12 gap-6 items-center">
-                <div class="md:col-span-4 space-y-3 text-xs text-slate-300">
+                <div class="md:col-span-4 space-y-2.5 text-xs text-slate-300">
                     <div class="glass-panel p-3 rounded-xl border-sky-500/30">
                         <b class="text-sky-400">Year 1: $835K ARR</b> — 350 SMBs via direct blitz.
                     </div>
@@ -255,24 +252,24 @@
                 </div>
 
                 <div class="md:col-span-8">
-                    <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
-                        <img src="/deck_assets/chart_arr_growth.png" alt="ARR Growth Chart" class="w-full h-auto rounded-xl object-contain" onerror="this.src='deck_assets/chart_arr_growth.png'">
+                    <div class="glass-panel p-2 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl flex justify-center">
+                        <img src="/deck_assets/chart_arr_growth.png" alt="ARR Growth Chart" class="w-full h-auto rounded-xl object-contain max-h-[340px]" onerror="this.src='deck_assets/chart_arr_growth.png'">
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- SLIDE 7: Future Flywheel -->
+    <!-- SLIDE 7: Centered Outbound Flywheel -->
     <section class="slide" id="slide-7">
-        <div class="max-w-6xl mx-auto w-full space-y-6">
-            <div class="text-center space-y-1">
+        <div class="max-w-5xl w-full space-y-6 text-center">
+            <div class="space-y-1">
                 <span class="text-xs bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full border border-purple-500/30 font-semibold">Autonomous Revenue Engine</span>
                 <h2 class="text-3xl font-extrabold mt-2">The Expansion Flywheel: Marketing & AI Calling</h2>
                 <p class="text-slate-400 text-sm">Expanding ARPU and driving 132% Net Revenue Retention</p>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-6">
+            <div class="grid md:grid-cols-3 gap-6 text-left">
                 <div class="glass-panel p-6 rounded-2xl space-y-3 border-sky-500/30 glow-cyan">
                     <div class="text-2xl">📊</div>
                     <h3 class="font-bold text-sky-400 text-lg">1. Marketing Suite</h3>
@@ -292,10 +289,10 @@
         </div>
     </section>
 
-    <!-- SLIDE 8: Go-To-Market -->
+    <!-- SLIDE 8: Centered GTM Distribution -->
     <section class="slide" id="slide-8">
-        <div class="max-w-6xl mx-auto w-full space-y-6">
-            <div class="text-center space-y-1">
+        <div class="max-w-5xl w-full space-y-6 text-center">
+            <div class="space-y-1">
                 <h2 class="text-3xl font-extrabold">Go-To-Market: 4 Scalable Distribution Engines</h2>
                 <p class="text-slate-400 text-sm">Rapid acquisition roadmap to onboard hundreds of businesses</p>
             </div>
@@ -325,13 +322,13 @@
         </div>
     </section>
 
-    <!-- SLIDE 9: Capital Allocation & Close -->
+    <!-- SLIDE 9: Centered Vision & Close -->
     <section class="slide" id="slide-9">
-        <div class="max-w-4xl mx-auto text-center space-y-6">
+        <div class="max-w-4xl w-full text-center space-y-6">
             <h2 class="text-4xl font-extrabold">Building The #1 Autonomous AI ERP & CRM</h2>
-            <p class="text-slate-400 text-sm">Transforming how millions of growing businesses manage operations and generate revenue.</p>
+            <p class="text-slate-400 text-sm max-w-2xl mx-auto">Transforming how millions of growing businesses manage operations and generate revenue.</p>
 
-            <div class="p-8 glass-panel rounded-2xl border border-purple-500/40 glow-purple space-y-4">
+            <div class="p-8 glass-panel rounded-2xl border border-purple-500/40 glow-purple space-y-4 max-w-2xl mx-auto">
                 <h3 class="text-2xl font-bold">Explore The Live Platform & Financial Model</h3>
                 <div class="flex flex-wrap justify-center gap-4 pt-2">
                     <a href="https://www.beraxis.online" target="_blank" class="px-7 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:opacity-95 font-bold text-white transition shadow-lg shadow-purple-600/30 text-sm">

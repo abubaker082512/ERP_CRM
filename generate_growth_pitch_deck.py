@@ -22,7 +22,7 @@ def draw_growth_deck_bg(canvas_obj, doc):
     canvas_obj.setFillColor(colors.HexColor("#0B0F19"))
     canvas_obj.rect(0, 0, w, h, fill=1, stroke=0)
     
-    # Top glowing gradient accent bar (Sky Blue to Purple to Emerald)
+    # Top glowing gradient accent bar
     canvas_obj.setFillColor(colors.HexColor("#38BDF8"))
     canvas_obj.rect(0, h - 4, w * 0.35, 4, fill=1, stroke=0)
     canvas_obj.setFillColor(colors.HexColor("#818CF8"))
@@ -135,23 +135,6 @@ def generate_growth_pitch_deck():
         leading=10.8,
         textColor=colors.HexColor('#CBD5E1')
     )
-    stat_big = ParagraphStyle(
-        'GSBig',
-        parent=styles['Normal'],
-        fontName='Helvetica-Bold',
-        fontSize=15,
-        leading=17,
-        alignment=1
-    )
-    stat_lbl = ParagraphStyle(
-        'GSLbl',
-        parent=styles['Normal'],
-        fontName='Helvetica',
-        fontSize=7,
-        leading=9.5,
-        textColor=colors.HexColor('#94A3B8'),
-        alignment=1
-    )
     quote_box = ParagraphStyle(
         'GQBox',
         parent=styles['Normal'],
@@ -218,8 +201,8 @@ def generate_growth_pitch_deck():
     col_text_tam = [
         Paragraph("<b>Key Market Growth Drivers:</b>", card_title_cyan),
         Spacer(1, 2),
-        Paragraph("• <b>13.8% Industry CAGR:</b> Legacy on-premise ERPs are being replaced by lightweight cloud solutions.<br/>"
-                  "• <b>The $34.8B SMB Blindspot:</b> SAP and NetSuite ignore sub-100 employee companies; Odoo charges heavy implementation fees.<br/>"
+        Paragraph("• <b>13.8% Industry CAGR:</b> Legacy ERPs are being replaced by lightweight autonomous cloud solutions.<br/>"
+                  "• <b>The $34.8B SMB Opportunity:</b> Odoo charges heavy consultant fees; GoHighLevel only does marketing/CRM without true accounting & inventory.<br/>"
                   "• <b>AI As The Catalyst:</b> 88% of SMB owners cite automated invoice OCR and predictive sales as their #1 software upgrade priority.", card_body),
         Spacer(1, 6),
         Paragraph("<b>Beraxis Market Capture Target:</b>", card_title_green),
@@ -235,10 +218,10 @@ def generate_growth_pitch_deck():
     story.append(PageBreak())
 
     # =========================================================================
-    # SLIDE 3: Competitive Disruption (Speed & Cost vs Odoo/SAP/Zoho)
+    # SLIDE 3: Competitive Disruption vs Odoo, Zoho, GoHighLevel
     # =========================================================================
-    story.append(Paragraph("Competitive Disruption: Why Beraxis Wins Every Time", title_style))
-    story.append(Paragraph("Radically faster time-to-value (15 mins vs 90 days) and 75% lower total cost of ownership", subtitle_style))
+    story.append(Paragraph("Competitive Landscape: Beraxis vs. Odoo, Zoho & GoHighLevel", title_style))
+    story.append(Paragraph("Why Beraxis wins against CRM-only tools and legacy bloated ERP suites", subtitle_style))
 
     chart_comp = os.path.join(DECK_ASSETS, "chart_competitor_comparison.png")
     col_chart_comp = []
@@ -246,12 +229,12 @@ def generate_growth_pitch_deck():
         col_chart_comp.append(RLImage(chart_comp, width=440, height=215))
 
     col_text_comp = [
-        Paragraph("<b>Unfair Competitive Moats:</b>", card_title_purple),
+        Paragraph("<b>Direct Competitor Battlecards:</b>", card_title_purple),
         Spacer(1, 2),
-        Paragraph("• <b>15-Min Zero-Consultant Setup:</b> 1-click data import and free white-glove migration eliminates the #1 reason ERP projects fail.<br/>"
-                  "• <b>Built-in Revenue Engine:</b> Competitors only record transactions; Beraxis generates them via native Cold Email & AI Calling.<br/>"
-                  "• <b>Unified Next.js 14 Architecture:</b> Zero sync lag between CRM, Accounting, Inventory, and HRMS.<br/>"
-                  "• <b>All-in-One $199/mo Pricing:</b> Replaces $960+/mo tool sprawl.", card_body)
+        Paragraph("• <b>vs. Odoo:</b> Odoo takes 3 months of expensive certified consulting; Beraxis deploys in <b>15 minutes</b> with free white-glove data migration.<br/>"
+                  "• <b>vs. GoHighLevel (GHL):</b> GHL is great for marketing/CRM but has <b>ZERO accounting, zero inventory, and zero HRMS</b>. Beraxis is a true end-to-end ERP + Outbound engine.<br/>"
+                  "• <b>vs. Zoho One:</b> Zoho is 40+ disconnected apps with sync lag; Beraxis runs on a single unified Next.js core.<br/>"
+                  "• <b>vs. Tool Sprawl:</b> Replaces HubSpot + QuickBooks + Katana ($960/mo) for only <b>$199/mo</b>.", card_body)
     ]
     t_comp = Table([[col_text_comp, col_chart_comp]], colWidths=[260, 440])
     t_comp.setStyle(TableStyle([
@@ -486,10 +469,8 @@ def generate_growth_pitch_deck():
     story.append(t_fcta)
 
     doc.build(story)
-    
-    # Copy to public folder
     shutil.copy2(pdf_path, os.path.join(PUBLIC_DIR, "Beraxis_Growth_and_Financial_Pitch_Deck.pdf"))
-    print(f"Growth Pitch Deck PDF built successfully: {pdf_path}")
+    print(f"Growth Pitch Deck PDF regenerated: {pdf_path}")
 
 if __name__ == "__main__":
     generate_growth_pitch_deck()
