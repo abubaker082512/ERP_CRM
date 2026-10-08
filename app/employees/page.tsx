@@ -75,9 +75,12 @@ const INITIAL_EMPLOYEES: Employee[] = [
     { id: "EMP006", name: "Bob Wilson", role: "Supply Chain Specialist", department: "Operations", email: "bob.wilson@beraxis.online", phone: "+1 555 0106", location: "Boston, MA", status: "on_leave", manager: "Marcus Jenkins", avatarBg: "bg-amber-600", salary: 95000, joined_date: "2024-06-15" }
 ];
 
+import { useBranchContext } from "@/lib/branchContext";
+
 export default function EmployeesPage() {
-    const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES);
-    const [departments, setDepartments] = useState<DepartmentItem[]>(INITIAL_DEPARTMENTS);
+    const { activeBranch, activeIndustry, getEntityStorageKey } = useBranchContext();
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [departments, setDepartments] = useState<DepartmentItem[]>([]);
     const [currentView, setCurrentView] = useState<ViewType>("kanban");
     const [selectedDept, setSelectedDept] = useState<string>("All Departments");
     const [searchQuery, setSearchQuery] = useState("");
@@ -90,25 +93,55 @@ export default function EmployeesPage() {
     // Onboard Employee Form State
     const [name, setName] = useState("");
     const [role, setRole] = useState("");
-    const [department, setDepartment] = useState("Engineering");
+    const [department, setDepartment] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
-    const [location, setLocation] = useState("San Francisco, CA");
-    const [manager, setManager] = useState("Salim Ghauri");
+    const [location, setLocation] = useState(activeBranch?.location || "Main Location");
+    const [manager, setManager] = useState("Executive Director");
     const [salary, setSalary] = useState(100000);
 
     // New Department Form State
     const [newDeptName, setNewDeptName] = useState("");
     const [newDeptManager, setNewDeptManager] = useState("");
-    const [newDeptLocation, setNewDeptLocation] = useState("San Francisco / Remote");
+    const [newDeptLocation, setNewDeptLocation] = useState("Main Location");
     const [newDeptBudget, setNewDeptBudget] = useState("$200,000");
 
+    // Load entity-scoped data whenever active branch changes
     useEffect(() => {
-        const savedDepts = localStorage.getItem("company_departments");
+        if (!activeBranch) return;
+
+        const deptKey = getEntityStorageKey("departments");
+        const empKey = getEntityStorageKey("employees");
+
+        const savedDepts = localStorage.getItem(deptKey);
         if (savedDepts) {
-            try { setDepartments(JSON.parse(savedDepts)); } catch {}
+            try {
+                const parsed = JSON.parse(savedDepts);
+                setDepartments(parsed);
+                if (parsed.length > 0) setDepartment(parsed[0].name);
+            } catch {}
+        } else {
+            // Initialize with industry's tailored departments
+            const indDepts: DepartmentItem[] = (activeIndustry.defaultDepartments || ["Operations", "Administration"]).map((dName, idx) => ({
+                id: `DEP-0${idx + 1}`,
+                name: dName,
+                manager: "Department Lead",
+                headcountTarget: 5,
+                location: activeBranch.location || "Main Location",
+                budget: "$150,000"
+            }));
+            setDepartments(indDepts);
+            if (indDepts.length > 0) setDepartment(indDepts[0].name);
+            try { localStorage.setItem(deptKey, JSON.stringify(indDepts)); } catch {}
         }
-    }, []);
+
+        const savedEmps = localStorage.getItem(empKey);
+        if (savedEmps) {
+            try { setEmployees(JSON.parse(savedEmps)); } catch {}
+        } else {
+            setEmployees([]);
+        }
+    }, [activeBranch?.id, activeIndustry]);
 
     const showToast = (msg: string) => {
         setToastMsg(msg);

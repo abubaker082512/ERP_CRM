@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import {
     UserCheck,
     LogIn,
@@ -59,67 +60,16 @@ export type BiometricDevice = {
     punchCountToday: number;
 };
 
-const INITIAL_DEVICES: BiometricDevice[] = [
-    {
-        id: "DEV-001",
-        name: "HQ Main Reception (ZKTeco FacePass 7)",
-        location: "Head Office - Level 1",
-        type: "face_ai",
-        ipAddress: "192.168.1.201",
-        port: 4370,
-        status: "online",
-        lastSync: "Just now",
-        punchCountToday: 42
-    },
-    {
-        id: "DEV-002",
-        name: "Engineering Lab (Biometric Thumb Impression)",
-        location: "R&D Wing - Gate B",
-        type: "fingerprint",
-        ipAddress: "192.168.1.202",
-        port: 4370,
-        status: "online",
-        lastSync: "3 mins ago",
-        punchCountToday: 28
-    },
-    {
-        id: "DEV-003",
-        name: "Warehouse & Logistics Gate Terminal",
-        location: "Central Depot Entrance",
-        type: "fingerprint",
-        ipAddress: "192.168.2.15",
-        port: 5005,
-        status: "online",
-        lastSync: "8 mins ago",
-        punchCountToday: 19
-    },
-    {
-        id: "DEV-004",
-        name: "Office Wi-Fi Gateway Auto-Punch",
-        location: "Subnet 192.168.1.0/24",
-        type: "ip_network",
-        ipAddress: "203.0.113.50",
-        port: 443,
-        status: "online",
-        lastSync: "Continuous",
-        punchCountToday: 35
-    }
-];
+const INITIAL_DEVICES: BiometricDevice[] = [];
 
-const INITIAL_ATTENDANCE: AttendanceRecord[] = [
-    { id: "ATT-001", employee_name: "Salim Ghauri", department: "Engineering", check_in: "2026-03-09T08:55:00Z", check_out: null, worked_hours: 6.5, status: "present", source: "face_terminal", avatarBg: "bg-blue-600" },
-    { id: "ATT-002", employee_name: "Sarah Vance", department: "Design", check_in: "2026-03-09T09:15:00Z", check_out: null, worked_hours: 6.2, status: "late", source: "biometric_thumb", avatarBg: "bg-pink-600" },
-    { id: "ATT-003", employee_name: "Bilal Mahmood", department: "Finance", check_in: "2026-03-09T08:45:00Z", check_out: "2026-03-09T17:00:00Z", worked_hours: 8.25, status: "present", source: "office_ip", avatarBg: "bg-emerald-600" },
-    { id: "ATT-004", employee_name: "Jane Smith", department: "Engineering", check_in: "2026-03-09T09:00:00Z", check_out: null, worked_hours: 6.4, status: "present", source: "face_terminal", avatarBg: "bg-purple-600" },
-    { id: "ATT-005", employee_name: "Marcus Jenkins", department: "Operations", check_in: "2026-03-09T08:30:00Z", check_out: null, worked_hours: 6.9, status: "present", source: "biometric_thumb", avatarBg: "bg-cyan-600" },
-    { id: "ATT-006", employee_name: "Bob Wilson", department: "Operations", check_in: "2026-03-08T09:00:00Z", check_out: "2026-03-08T17:00:00Z", worked_hours: 8.0, status: "on_leave", source: "manual", avatarBg: "bg-amber-600" }
-];
+const INITIAL_ATTENDANCE: AttendanceRecord[] = [];
 
 export default function AttendancePage() {
-    const [attendances, setAttendances] = useState<AttendanceRecord[]>(INITIAL_ATTENDANCE);
-    const [devices, setDevices] = useState<BiometricDevice[]>(INITIAL_DEVICES);
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
+    const [devices, setDevices] = useState<BiometricDevice[]>([]);
     const [activeTab, setActiveTab] = useState<"register" | "hardware">("register");
-    const [isCheckedIn, setIsCheckedIn] = useState(true);
+    const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStatus, setSelectedStatus] = useState<string>("all");
     const [toastMsg, setToastMsg] = useState("");
@@ -130,22 +80,60 @@ export default function AttendancePage() {
     const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
 
     // Manual Log State
-    const [manualEmpName, setManualEmpName] = useState("Tariq Mansoor");
-    const [manualDept, setManualDept] = useState("Engineering");
+    const [manualEmpName, setManualEmpName] = useState("Staff Member");
+    const [manualDept, setManualDept] = useState("Operations");
     const [manualCheckIn, setManualCheckIn] = useState("09:00");
     const [manualCheckOut, setManualCheckOut] = useState("17:30");
     const [manualSource, setManualSource] = useState<AttendanceRecord["source"]>("biometric_thumb");
 
     // Add Machine Form State
     const [devName, setDevName] = useState("");
-    const [devLoc, setDevLoc] = useState("Headquarters Main Gate");
+    const [devLoc, setDevLoc] = useState(activeBranch?.location || "Headquarters Main Gate");
     const [devType, setDevType] = useState<BiometricDevice["type"]>("fingerprint");
     const [devIp, setDevIp] = useState("192.168.1.205");
     const [devPort, setDevPort] = useState(4370);
 
+    // Entity-scoped data loading
+    useEffect(() => {
+        if (!activeBranch) return;
+
+        const attKey = getEntityStorageKey("attendances");
+        const devKey = getEntityStorageKey("attendance_devices");
+
+        const savedAtt = localStorage.getItem(attKey);
+        if (savedAtt) {
+            try { setAttendances(JSON.parse(savedAtt)); } catch { setAttendances([]); }
+        } else {
+            setAttendances([]);
+        }
+
+        const savedDev = localStorage.getItem(devKey);
+        if (savedDev) {
+            try { setDevices(JSON.parse(savedDev)); } catch { setDevices([]); }
+        } else {
+            setDevices([]);
+        }
+    }, [activeBranch?.id]);
+
     const showToast = (msg: string) => {
         setToastMsg(msg);
         setTimeout(() => setToastMsg(""), 5000);
+    };
+
+    const persistAttendances = (updated: AttendanceRecord[]) => {
+        setAttendances(updated);
+        try {
+            const key = getEntityStorageKey("attendances");
+            localStorage.setItem(key, JSON.stringify(updated));
+        } catch {}
+    };
+
+    const persistDevices = (updated: BiometricDevice[]) => {
+        setDevices(updated);
+        try {
+            const key = getEntityStorageKey("attendance_devices");
+            localStorage.setItem(key, JSON.stringify(updated));
+        } catch {}
     };
 
     const handleKioskToggle = () => {
@@ -153,7 +141,7 @@ export default function AttendancePage() {
             setIsCheckedIn(true);
             const newAtt: AttendanceRecord = {
                 id: `ATT-${Date.now()}`,
-                employee_name: "Current Administrator",
+                employee_name: "Active Administrator",
                 department: "Executive Management",
                 check_in: new Date().toISOString(),
                 check_out: null,
@@ -162,11 +150,13 @@ export default function AttendancePage() {
                 source: "office_ip",
                 avatarBg: "bg-indigo-600"
             };
-            setAttendances([newAtt, ...attendances]);
+            const updated = [newAtt, ...attendances];
+            persistAttendances(updated);
             showToast("🟢 Successfully Clocked IN via Office IP Network!");
         } else {
             setIsCheckedIn(false);
-            setAttendances(attendances.map((a, idx) => idx === 0 ? { ...a, check_out: new Date().toISOString(), worked_hours: 7.8 } : a));
+            const updated = attendances.map((a, idx) => idx === 0 ? { ...a, check_out: new Date().toISOString(), worked_hours: 7.8 } : a);
+            persistAttendances(updated);
             showToast("🔴 Successfully Clocked OUT for today!");
         }
     };
@@ -175,8 +165,9 @@ export default function AttendancePage() {
         setIsSyncing(true);
         setTimeout(() => {
             setIsSyncing(false);
-            setDevices(devices.map(d => ({ ...d, lastSync: "Just now", status: "online" })));
-            showToast("⚡ Biometric & Face Machine Logs synchronized successfully! 8 new punches ingested.");
+            const updated = devices.map(d => ({ ...d, lastSync: "Just now", status: "online" as const }));
+            persistDevices(updated);
+            showToast("⚡ Biometric & Face Machine Logs synchronized successfully!");
         }, 1200);
     };
 
@@ -196,7 +187,8 @@ export default function AttendancePage() {
             punchCountToday: 0
         };
 
-        setDevices([...devices, newDev]);
+        const updated = [...devices, newDev];
+        persistDevices(updated);
         setIsAddDeviceOpen(false);
         setDevName("");
         showToast(`🔌 Connected new terminal: "${newDev.name}" (${newDev.ipAddress}:${newDev.port})`);
@@ -204,7 +196,8 @@ export default function AttendancePage() {
 
     const handleDeleteDevice = (id: string, name: string) => {
         if (confirm(`Disconnect machine "${name}"?`)) {
-            setDevices(devices.filter(d => d.id !== id));
+            const updated = devices.filter(d => d.id !== id);
+            persistDevices(updated);
             showToast(`🗑️ Disconnected machine "${name}"`);
         }
     };
@@ -422,125 +415,175 @@ export default function AttendancePage() {
 
                 {/* TAB 1: ATTENDANCE REGISTER */}
                 {activeTab === "register" && (
-                    <div className="galaxy-card bg-[#111622] rounded-2xl border border-gray-800 overflow-hidden shadow-2xl">
-                        <table className="w-full text-left text-sm text-gray-300">
-                            <thead className="bg-gray-900/90 text-gray-400 uppercase text-[11px] font-bold border-b border-gray-800 tracking-wider">
-                                <tr>
-                                    <th className="px-4 py-3">Employee</th>
-                                    <th className="px-4 py-3">Department</th>
-                                    <th className="px-4 py-3">Clock In</th>
-                                    <th className="px-4 py-3">Clock Out</th>
-                                    <th className="px-4 py-3">Worked Hours</th>
-                                    <th className="px-4 py-3">Ingestion Channel</th>
-                                    <th className="px-4 py-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-800/60">
-                                {filteredAttendances.map(att => (
-                                    <tr key={att.id} className="hover:bg-gray-800/40">
-                                        <td className="px-4 py-3.5 font-bold text-white flex items-center gap-2.5">
-                                            <div className={`w-8 h-8 rounded-xl ${att.avatarBg} text-white font-bold flex items-center justify-center text-xs`}>
-                                                {att.employee_name.split(" ").map(n => n[0]).join("")}
-                                            </div>
-                                            <span>{att.employee_name}</span>
-                                        </td>
-                                        <td className="px-4 py-3.5 text-xs text-gray-300">{att.department}</td>
-                                        <td className="px-4 py-3.5 text-xs font-mono text-emerald-400">
-                                            {att.check_in.includes("T") ? att.check_in.split("T")[1].slice(0, 5) : att.check_in}
-                                        </td>
-                                        <td className="px-4 py-3.5 text-xs font-mono text-gray-400">
-                                            {att.check_out ? (att.check_out.includes("T") ? att.check_out.split("T")[1].slice(0, 5) : att.check_out) : <span className="text-amber-400 font-bold">Active Shift</span>}
-                                        </td>
-                                        <td className="px-4 py-3.5 text-xs font-mono font-bold text-gray-200">
-                                            {att.worked_hours.toFixed(1)} hrs
-                                        </td>
-                                        <td className="px-4 py-3.5 text-xs">
-                                            {att.source === "face_terminal" && (
-                                                <span className="inline-flex items-center gap-1 text-cyan-400 font-semibold bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
-                                                    <ScanFace size={12} /> Face AI Camera
-                                                </span>
-                                            )}
-                                            {att.source === "biometric_thumb" && (
-                                                <span className="inline-flex items-center gap-1 text-purple-400 font-semibold bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
-                                                    <Fingerprint size={12} /> Thumb Machine
-                                                </span>
-                                            )}
-                                            {att.source === "office_ip" && (
-                                                <span className="inline-flex items-center gap-1 text-blue-400 font-semibold bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                                                    <Wifi size={12} /> Office IP Subnet
-                                                </span>
-                                            )}
-                                            {att.source === "manual" && (
-                                                <span className="text-gray-400 text-xs">Manual HR Entry</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3.5">
-                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                                                att.status === "present" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" :
-                                                att.status === "late" ? "bg-amber-500/10 text-amber-400 border-amber-500/30" : "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                                            }`}>
-                                                {att.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <>
+                        {filteredAttendances.length === 0 ? (
+                            <div className="galaxy-card bg-[#111622]/70 border border-dashed border-gray-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-xl">
+                                <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center shadow-inner">
+                                    <Clock size={32} />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-white">No Attendance Punches Recorded</h3>
+                                    <p className="text-xs text-gray-400 max-w-sm">
+                                        {activeBranch?.name ? `No attendance activity has been clocked for "${activeBranch.name}".` : "Clock in via Kiosk / IP Subnet or add manual attendance logs."}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={handleKioskToggle}
+                                        className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+                                    >
+                                        <LogIn size={16} /> Quick Clock IN
+                                    </button>
+                                    <button
+                                        onClick={() => setIsAddModalOpen(true)}
+                                        className="bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-semibold text-xs px-4 py-2.5 rounded-xl border border-gray-700 flex items-center gap-2 cursor-pointer transition"
+                                    >
+                                        <Plus size={15} /> + Manual Log
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="galaxy-card bg-[#111622] rounded-2xl border border-gray-800 overflow-hidden shadow-2xl">
+                                <table className="w-full text-left text-sm text-gray-300">
+                                    <thead className="bg-gray-900/90 text-gray-400 uppercase text-[11px] font-bold border-b border-gray-800 tracking-wider">
+                                        <tr>
+                                            <th className="px-4 py-3">Employee</th>
+                                            <th className="px-4 py-3">Department</th>
+                                            <th className="px-4 py-3">Clock In</th>
+                                            <th className="px-4 py-3">Clock Out</th>
+                                            <th className="px-4 py-3">Worked Hours</th>
+                                            <th className="px-4 py-3">Ingestion Channel</th>
+                                            <th className="px-4 py-3">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-800/60">
+                                        {filteredAttendances.map(att => (
+                                            <tr key={att.id} className="hover:bg-gray-800/40">
+                                                <td className="px-4 py-3.5 font-bold text-white flex items-center gap-2.5">
+                                                    <div className={`w-8 h-8 rounded-xl ${att.avatarBg} text-white font-bold flex items-center justify-center text-xs`}>
+                                                        {att.employee_name.split(" ").map(n => n[0]).join("")}
+                                                    </div>
+                                                    <span>{att.employee_name}</span>
+                                                </td>
+                                                <td className="px-4 py-3.5 text-xs text-gray-300">{att.department}</td>
+                                                <td className="px-4 py-3.5 text-xs font-mono text-emerald-400">
+                                                    {att.check_in.includes("T") ? att.check_in.split("T")[1].slice(0, 5) : att.check_in}
+                                                </td>
+                                                <td className="px-4 py-3.5 text-xs font-mono text-gray-400">
+                                                    {att.check_out ? (att.check_out.includes("T") ? att.check_out.split("T")[1].slice(0, 5) : att.check_out) : <span className="text-amber-400 font-bold">Active Shift</span>}
+                                                </td>
+                                                <td className="px-4 py-3.5 text-xs font-mono font-bold text-gray-200">
+                                                    {att.worked_hours.toFixed(1)} hrs
+                                                </td>
+                                                <td className="px-4 py-3.5 text-xs">
+                                                    {att.source === "face_terminal" && (
+                                                        <span className="inline-flex items-center gap-1 text-cyan-400 font-semibold bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                                                            <ScanFace size={12} /> Face AI Camera
+                                                        </span>
+                                                    )}
+                                                    {att.source === "biometric_thumb" && (
+                                                        <span className="inline-flex items-center gap-1 text-purple-400 font-semibold bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+                                                            <Fingerprint size={12} /> Thumb Machine
+                                                        </span>
+                                                    )}
+                                                    {att.source === "office_ip" && (
+                                                        <span className="inline-flex items-center gap-1 text-blue-400 font-semibold bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                                                            <Wifi size={12} /> Office IP Subnet
+                                                        </span>
+                                                    )}
+                                                    {att.source === "manual" && (
+                                                        <span className="text-gray-400 text-xs">Manual HR Entry</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3.5">
+                                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                                                        att.status === "present" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" :
+                                                        att.status === "late" ? "bg-amber-500/10 text-amber-400 border-amber-500/30" : "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                                                    }`}>
+                                                        {att.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {/* TAB 2: BIOMETRIC & HARDWARE DEVICES */}
                 {activeTab === "hardware" && (
                     <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                            {devices.map(dev => (
-                                <div key={dev.id} className="galaxy-card p-5 bg-[#111622] rounded-2xl border border-gray-800 hover:border-cyan-500/40 transition space-y-4 shadow-xl">
-                                    <div className="flex items-start justify-between">
-                                        <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
-                                            {dev.type === "face_ai" && <ScanFace size={22} />}
-                                            {dev.type === "fingerprint" && <Fingerprint size={22} />}
-                                            {dev.type === "ip_network" && <Wifi size={22} />}
-                                        </div>
-                                        <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-[10px] font-bold uppercase flex items-center gap-1">
-                                            <Radio size={10} className="animate-pulse" /> {dev.status}
-                                        </span>
-                                    </div>
-
-                                    <div>
-                                        <h3 className="text-base font-bold text-white">{dev.name}</h3>
-                                        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                                            <MapPin size={11} className="text-gray-500" /> {dev.location}
-                                        </p>
-                                    </div>
-
-                                    <div className="bg-gray-900/70 p-3 rounded-xl border border-gray-800 space-y-1.5 text-xs text-gray-300 font-mono">
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-500 font-sans">TCP/IP Address:</span>
-                                            <span className="text-cyan-300 font-bold">{dev.ipAddress}:{dev.port}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-500 font-sans">Today's Punches:</span>
-                                            <span className="text-emerald-400 font-bold">{dev.punchCountToday} punches</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-500 font-sans">Last Hardware Sync:</span>
-                                            <span className="text-gray-400">{dev.lastSync}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between pt-1 text-xs">
-                                        <span className="text-[10px] text-gray-500 font-mono">{dev.id}</span>
-                                        <button
-                                            onClick={() => handleDeleteDevice(dev.id, dev.name)}
-                                            className="p-1 text-gray-500 hover:text-red-400 transition"
-                                            title="Disconnect Device"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
+                        {devices.length === 0 ? (
+                            <div className="galaxy-card bg-[#111622]/70 border border-dashed border-gray-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-xl">
+                                <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shadow-inner">
+                                    <Cpu size={32} />
                                 </div>
-                            ))}
-                        </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-white">No Biometric Terminals Configured</h3>
+                                    <p className="text-xs text-gray-400 max-w-sm">
+                                        Connect physical ZKTeco thumb machines, Hikvision AI face terminals, or local Wi-Fi IP auto-punch gateways for this location.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setIsAddDeviceOpen(true)}
+                                    className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-cyan-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+                                >
+                                    <Plus size={16} /> + Connect First Hardware Machine
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                                {devices.map(dev => (
+                                    <div key={dev.id} className="galaxy-card p-5 bg-[#111622] rounded-2xl border border-gray-800 hover:border-cyan-500/40 transition space-y-4 shadow-xl">
+                                        <div className="flex items-start justify-between">
+                                            <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
+                                                {dev.type === "face_ai" && <ScanFace size={22} />}
+                                                {dev.type === "fingerprint" && <Fingerprint size={22} />}
+                                                {dev.type === "ip_network" && <Wifi size={22} />}
+                                            </div>
+                                            <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-[10px] font-bold uppercase flex items-center gap-1">
+                                                <Radio size={10} className="animate-pulse" /> {dev.status}
+                                            </span>
+                                        </div>
+
+                                        <div>
+                                            <h3 className="text-base font-bold text-white">{dev.name}</h3>
+                                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                                                <MapPin size={11} className="text-gray-500" /> {dev.location}
+                                            </p>
+                                        </div>
+
+                                        <div className="bg-gray-900/70 p-3 rounded-xl border border-gray-800 space-y-1.5 text-xs text-gray-300 font-mono">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500 font-sans">TCP/IP Address:</span>
+                                                <span className="text-cyan-300 font-bold">{dev.ipAddress}:{dev.port}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500 font-sans">Today's Punches:</span>
+                                                <span className="text-emerald-400 font-bold">{dev.punchCountToday} punches</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500 font-sans">Last Hardware Sync:</span>
+                                                <span className="text-gray-400">{dev.lastSync}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between pt-1 text-xs">
+                                            <span className="text-[10px] text-gray-500 font-mono">{dev.id}</span>
+                                            <button
+                                                onClick={() => handleDeleteDevice(dev.id, dev.name)}
+                                                className="p-1 text-gray-500 hover:text-red-400 transition"
+                                                title="Disconnect Device"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

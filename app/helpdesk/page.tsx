@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import { 
   LifeBuoy, 
   Users, 
@@ -62,114 +63,7 @@ const CANNED_RESPONSES = [
   "Our team has deployed a hotfix patch to resolve this unexpected behavior. Kindly let us know if everything is running smoothly."
 ];
 
-const INITIAL_TICKETS: Ticket[] = [
-  {
-    id: "TCK-4001",
-    subject: "Unable to sync POS Barcode Scanner over Bluetooth",
-    customerName: "Robert Miller",
-    customerEmail: "robert.m@retailhub.com",
-    team: "Hardware & POS",
-    assignedTo: "Sarah Tech",
-    priority: "critical",
-    stage: "in_progress",
-    createdAt: "2026-10-06 09:30",
-    slaDeadline: "2026-10-06 13:30",
-    isSlaBreached: false,
-    tags: ["POS", "Hardware", "Bluetooth"],
-    messages: [
-      {
-        sender: "customer",
-        author: "Robert Miller",
-        time: "09:30",
-        text: "Our counter #3 scanner stopped emitting beep confirmation and does not push scanned barcodes to the checkout terminal."
-      },
-      {
-        sender: "agent",
-        author: "Sarah Tech",
-        time: "09:45",
-        text: "Checking Bluetooth driver pairing logs. Please reboot the base station."
-      }
-    ]
-  },
-  {
-    id: "TCK-4002",
-    subject: "Tax calculation discrepancy on EU export invoice #INV-9821",
-    customerName: "Elena Varga",
-    customerEmail: "e.varga@globaltrade.de",
-    team: "Billing & Accounting",
-    assignedTo: "David Vance",
-    priority: "high",
-    stage: "new",
-    createdAt: "2026-10-06 10:15",
-    slaDeadline: "2026-10-06 14:15",
-    isSlaBreached: false,
-    tags: ["Accounting", "VAT", "EU"],
-    messages: [
-      {
-        sender: "customer",
-        author: "Elena Varga",
-        time: "10:15",
-        text: "Reverse charge 0% VAT rate was not applied to our recent cross-border shipment."
-      }
-    ]
-  },
-  {
-    id: "TCK-4003",
-    subject: "Feature request: Custom automated recruitment stage webhooks",
-    customerName: "Michael Chang",
-    customerEmail: "mchang@talentfirst.io",
-    team: "Product & Integrations",
-    assignedTo: "Marcus Vance",
-    priority: "medium",
-    stage: "pending_customer",
-    createdAt: "2026-10-05 14:00",
-    slaDeadline: "2026-10-06 18:00",
-    isSlaBreached: false,
-    tags: ["Webhooks", "API", "Recruitment"],
-    messages: [
-      {
-        sender: "customer",
-        author: "Michael Chang",
-        time: "14:00",
-        text: "Can we receive JSON payloads when a candidate advances from Tech Test to Contract Offer?"
-      },
-      {
-        sender: "agent",
-        author: "Marcus Vance",
-        time: "14:40",
-        text: "Yes! Webhook events for recruitment stages are currently in staging. Would you like early beta access?"
-      }
-    ]
-  },
-  {
-    id: "TCK-4004",
-    subject: "Payroll Payslip PDF generation formatting issue",
-    customerName: "Jessica Lee",
-    customerEmail: "j.lee@enterprise.co",
-    team: "HR & Payroll",
-    assignedTo: "David Vance",
-    priority: "low",
-    stage: "solved",
-    createdAt: "2026-10-04 11:20",
-    slaDeadline: "2026-10-05 11:20",
-    isSlaBreached: false,
-    tags: ["Payroll", "PDF"],
-    messages: [
-      {
-        sender: "customer",
-        author: "Jessica Lee",
-        time: "11:20",
-        text: "Logo was slightly misaligned on the 80mm printable pay receipt."
-      },
-      {
-        sender: "agent",
-        author: "David Vance",
-        time: "11:50",
-        text: "We updated the CSS bounding box. All generated PDFs now render the high-res corporate seal correctly."
-      }
-    ]
-  }
-];
+const INITIAL_TICKETS: Ticket[] = [];
 
 const STAGES: { id: TicketStage; label: string; color: string }[] = [
   { id: "new", label: "New Unassigned", color: "border-blue-500 bg-blue-500/10 text-blue-400" },
@@ -187,7 +81,8 @@ const PRIORITY_BADGES: Record<TicketPriority, { label: string; badge: string }> 
 };
 
 export default function HelpdeskPage() {
-  const [tickets, setTickets] = useState<Ticket[]>(INITIAL_TICKETS);
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [activeView, setActiveView] = useState<"kanban" | "list">("kanban");
   const [searchTerm, setSearchTerm] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
@@ -204,6 +99,30 @@ export default function HelpdeskPage() {
   const [newTeam, setNewTeam] = useState("Hardware & POS");
   const [newPriority, setNewPriority] = useState<TicketPriority>("high");
   const [newDescription, setNewDescription] = useState("");
+
+  // Entity-scoped data loading
+  useEffect(() => {
+    if (!activeBranch) return;
+    const key = getEntityStorageKey("helpdesk_tickets");
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        setTickets(JSON.parse(saved));
+      } catch {
+        setTickets([]);
+      }
+    } else {
+      setTickets([]);
+    }
+  }, [activeBranch?.id]);
+
+  const persistTickets = (updated: Ticket[]) => {
+    setTickets(updated);
+    try {
+      const key = getEntityStorageKey("helpdesk_tickets");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+  };
 
   const handleCreateTicket = (e: React.FormEvent) => {
     e.preventDefault();
@@ -231,7 +150,8 @@ export default function HelpdeskPage() {
       ]
     };
 
-    setTickets([newTicket, ...tickets]);
+    const updated = [newTicket, ...tickets];
+    persistTickets(updated);
     setIsNewTicketModalOpen(false);
     setNewSubject("");
     setNewCustName("");
@@ -255,7 +175,7 @@ export default function HelpdeskPage() {
         : t
     );
 
-    setTickets(updatedTickets);
+    persistTickets(updatedTickets);
     setSelectedTicket(prev => prev ? { ...prev, stage: "pending_customer", messages: [...prev.messages, newMsg] } : null);
     setReplyText("");
   };
@@ -265,7 +185,8 @@ export default function HelpdeskPage() {
   };
 
   const handleUpdateStage = (ticketId: string, stage: TicketStage) => {
-    setTickets(tickets.map(t => t.id === ticketId ? { ...t, stage } : t));
+    const updated = tickets.map(t => t.id === ticketId ? { ...t, stage } : t);
+    persistTickets(updated);
     if (selectedTicket && selectedTicket.id === ticketId) {
       setSelectedTicket(prev => prev ? { ...prev, stage } : null);
     }

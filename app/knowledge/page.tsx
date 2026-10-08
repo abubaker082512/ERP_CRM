@@ -1,7 +1,8 @@
 "use client";
 
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useBranchContext } from "@/lib/branchContext";
 import {
     BookOpen,
     Search,
@@ -47,88 +48,11 @@ export type Article = {
     isStarred?: boolean;
 };
 
-const INITIAL_ARTICLES: Article[] = [
-    {
-        id: "KB/001",
-        title: "Multi-Tenant PostgreSQL Row-Level Security (RLS) Architecture Guide",
-        category: "Engineering & Arch",
-        author: "Salim Ghauri",
-        authorRole: "Principal Architect",
-        readTime: "6 min read",
-        views: 1420,
-        updatedAt: "2026-03-05",
-        summary: "Step-by-step breakdown of how Beraxis isolates company tenant data using PostgreSQL RLS and FastAPI session claims.",
-        content: `### Overview
-Beraxis utilizes PostgreSQL Row-Level Security (RLS) to enforce multi-tenant data boundaries at the database kernel level.
-
-### Key Policies
-1. **Tenant ID Injection**: Every authenticated JWT bearer token contains the 'workspace_id' claim.
-2. **PostgreSQL Session Context**:
-\`\`\`sql
-SET LOCAL app.current_tenant = 'tenant_123';
-SELECT * FROM sales_orders WHERE tenant_id = current_setting('app.current_tenant');
-\`\`\`
-
-3. **Zero Data Leakage**: Even in complex multi-table joins or bulk reporting aggregations, records from external organizations are strictly pruned.`,
-        tags: ["PostgreSQL", "RLS", "Security", "Backend"]
-    },
-    {
-        id: "KB/002",
-        title: "How to Reconcile Bank Statements & FBR Tax Settlements in Beraxis Accounting",
-        category: "ERP & Accounting",
-        author: "Bilal Mahmood",
-        authorRole: "ERP Specialist & Controller",
-        readTime: "8 min read",
-        views: 2150,
-        updatedAt: "2026-03-02",
-        summary: "Standard operating procedure for automatic bank statement reconciliation, vendor 3-way matching, and GST audit logs.",
-        content: `### Accounting SOP
-Follow these steps to complete weekly journal closing and tax settlement in Beraxis:
-
-1. Navigate to **Accounting > Operations > Bank Reconciliation**.
-2. Upload your standard MT940 / CSV banking ledger.
-3. Beraxis will auto-match invoice references against customer payments.
-4. Verify remaining unmatched variances and post to General Operations journal.
-5. Export FBR Tax Breakdown directly to Excel or PDF for audit compliance.`,
-        tags: ["Accounting", "Tax", "Reconciliation", "Finance"]
-    },
-    {
-        id: "KB/003",
-        title: "Live Lead Scraping & Multi-Channel Phone Verification Playbook",
-        category: "Sales & Leads",
-        author: "Sarah Vance",
-        authorRole: "Lead UI/UX Designer",
-        readTime: "5 min read",
-        views: 1890,
-        updatedAt: "2026-02-28",
-        summary: "Best practices for utilizing the Beraxis live scraper, chamber registries, and direct 1-click WhatsApp outreach.",
-        content: `### Lead Conversion Best Practices
-1. **Filter by Sector**: Use the Leads Pool dropdown to filter by target industry (e.g. Textile, IT Exporters, Pharmaceutical).
-2. **Real Phone Verification**: Numbers extracted from Chamber of Commerce & PSEB registries include standard country code (+92).
-3. **1-Click WhatsApp Pitch**: Use the green WhatsApp button to launch an instant tailored discovery message without manual saving.`,
-        tags: ["CRM", "Leads", "Sales", "Playbook"]
-    },
-    {
-        id: "KB/004",
-        title: "Zebra RFID Handheld Scanner Setup for Multi-Warehouse Automation",
-        category: "IT & Security",
-        author: "Bob Wilson",
-        authorRole: "Supply Chain Engineer",
-        readTime: "7 min read",
-        views: 940,
-        updatedAt: "2026-02-25",
-        summary: "Hardware configuration, WebSocket listeners, and batch inventory stock ledger synchronization.",
-        content: `### Hardware Deployment
-Connect Zebra Android / TC52 handheld scanners to Beraxis Inventory:
-1. Configure scanner DataWedge profile to emit JSON payload over TCP Port 8088.
-2. The Beraxis background daemon receives barcode and RFID tag epc events in real-time (<50ms latency).
-3. Stock pickings automatically advance from 'Waiting' to 'Delivered'.`,
-        tags: ["Inventory", "RFID", "Warehouse", "Zebra"]
-    }
-];
+const INITIAL_ARTICLES: Article[] = [];
 
 export default function KnowledgePage() {
-    const [articles, setArticles] = useState<Article[]>(INITIAL_ARTICLES);
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const [articles, setArticles] = useState<Article[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -139,12 +63,36 @@ export default function KnowledgePage() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [newTitle, setNewTitle] = useState("");
     const [newCategory, setNewCategory] = useState<Article["category"]>("Engineering & Arch");
-    const [newAuthor, setNewAuthor] = useState("Salim Ghauri");
+    const [newAuthor, setNewAuthor] = useState("Internal Author");
     const [newSummary, setNewSummary] = useState("");
     const [newContent, setNewContent] = useState("");
     const [newTags, setNewTags] = useState("Guide, SOP");
 
     const [toastMsg, setToastMsg] = useState("");
+
+    // Entity-scoped data loading
+    useEffect(() => {
+        if (!activeBranch) return;
+        const key = getEntityStorageKey("knowledge_articles");
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            try {
+                setArticles(JSON.parse(saved));
+            } catch {
+                setArticles([]);
+            }
+        } else {
+            setArticles([]);
+        }
+    }, [activeBranch?.id]);
+
+    const persistArticles = (updated: Article[]) => {
+        setArticles(updated);
+        try {
+            const key = getEntityStorageKey("knowledge_articles");
+            localStorage.setItem(key, JSON.stringify(updated));
+        } catch {}
+    };
 
     const showToast = (msg: string) => {
         setToastMsg(msg);
@@ -162,7 +110,7 @@ export default function KnowledgePage() {
             title: newTitle.trim(),
             category: newCategory,
             author: newAuthor,
-            authorRole: newAuthor.includes("Salim") ? "Principal Architect" : "ERP Specialist",
+            authorRole: "Technical Author",
             readTime: "4 min read",
             views: 1,
             updatedAt: new Date().toISOString().slice(0, 10),
@@ -171,7 +119,8 @@ export default function KnowledgePage() {
             tags: tagList.length > 0 ? tagList : ["Documentation"]
         };
 
-        setArticles([newArt, ...articles]);
+        const updated = [newArt, ...articles];
+        persistArticles(updated);
         setIsCreateModalOpen(false);
         setNewTitle("");
         setNewSummary("");
@@ -285,13 +234,30 @@ export default function KnowledgePage() {
                 </div>
 
                 {/* Article Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {filteredArticles.map((article) => (
-                        <div
-                            key={article.id}
-                            onClick={() => setSelectedArticle(article)}
-                            className="bg-[#1E293B] border border-gray-700 hover:border-emerald-500/60 rounded-2xl p-6 transition-all group shadow-xl flex flex-col justify-between space-y-4 cursor-pointer hover:shadow-2xl"
+                {filteredArticles.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 px-4 text-center border-2 border-dashed border-gray-700/60 rounded-3xl bg-[#1E293B]/40 max-w-xl mx-auto">
+                        <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4 shadow-lg shadow-emerald-900/20">
+                            <BookOpen size={32} />
+                        </div>
+                        <h3 className="text-lg font-bold text-white mb-2">No Knowledge Articles Yet</h3>
+                        <p className="text-sm text-gray-400 max-w-sm mb-6">
+                            Publish standard operating procedures, policies, training manuals, and engineering guidelines for this company entity.
+                        </p>
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/30 transition-all cursor-pointer active:scale-95"
                         >
+                            + Write First Article
+                        </button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {filteredArticles.map((article) => (
+                            <div
+                                key={article.id}
+                                onClick={() => setSelectedArticle(article)}
+                                className="bg-[#1E293B] border border-gray-700 hover:border-emerald-500/60 rounded-2xl p-6 transition-all group shadow-xl flex flex-col justify-between space-y-4 cursor-pointer hover:shadow-2xl"
+                            >
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between gap-2">
                                     <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -348,6 +314,7 @@ export default function KnowledgePage() {
                         </div>
                     ))}
                 </div>
+                )}
             </div>
 
             {/* ========================================================================= */}

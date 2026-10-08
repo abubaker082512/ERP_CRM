@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import Link from "next/link";
 import {
     Calendar as CalendarIcon,
@@ -91,87 +92,11 @@ const APPOINTMENT_TYPES = [
     }
 ];
 
-const INITIAL_APPOINTMENTS: Appointment[] = [
-    {
-        id: "APT/2026/01",
-        meeting_code: "nexus-solutions-erp",
-        title: "ERP & CRM Product Walkthrough",
-        client_name: "Tariq Mansoor",
-        client_email: "tariq@nexussolutions.pk",
-        client_phone: "+92 300 8472910",
-        company: "Nexus Solutions Ltd",
-        host_name: "Salim Ghauri",
-        host_slug: "salim-ghauri",
-        host_role: "Principal Architect",
-        date: "2026-03-10",
-        start_time: "10:00 AM",
-        end_time: "10:30 AM",
-        duration_min: 30,
-        type: "erp_demo",
-        status: "confirmed",
-        notes: "Interested in custom warehouse RFID scanner sync and Pakistan live leads pool."
-    },
-    {
-        id: "APT/2026/02",
-        meeting_code: "shifa-tech-review",
-        title: "Technical Architecture & API Review",
-        client_name: "Dr. Ayesha Malik",
-        client_email: "ayesha.malik@shifa.org.pk",
-        client_phone: "+92 321 4458921",
-        company: "Shifa Healthcare Systems",
-        host_name: "Sarah Vance",
-        host_slug: "sarah-vance",
-        host_role: "Lead UI/UX Designer",
-        date: "2026-03-11",
-        start_time: "02:00 PM",
-        end_time: "02:45 PM",
-        duration_min: 45,
-        type: "architecture_review",
-        status: "confirmed",
-        notes: "Review patient ledger integration and HIPAA/FBR compliant data storage."
-    },
-    {
-        id: "APT/2026/03",
-        meeting_code: "albaraka-onboard",
-        title: "Enterprise Customer Onboarding",
-        client_name: "Kamran Akram",
-        client_email: "kamran@albaraka.com.pk",
-        client_phone: "+92 333 7182930",
-        company: "Al Baraka Logistics",
-        host_name: "Bilal Mahmood",
-        host_slug: "bilal-mahmood",
-        host_role: "ERP Specialist",
-        date: "2026-03-12",
-        start_time: "11:00 AM",
-        end_time: "12:00 PM",
-        duration_min: 60,
-        type: "onboarding",
-        status: "pending",
-        notes: "Initial setup of 4 warehouse hubs across Lahore and Karachi."
-    },
-    {
-        id: "APT/2026/04",
-        meeting_code: "crest-checkin",
-        title: "Executive Sprint Check-in",
-        client_name: "Zubair Hashmi",
-        client_email: "zubair@crestholding.com",
-        client_phone: "+92 301 9823411",
-        company: "Crest Holdings",
-        host_name: "Salim Ghauri",
-        host_slug: "salim-ghauri",
-        host_role: "Principal Architect",
-        date: "2026-03-08",
-        start_time: "04:30 PM",
-        end_time: "04:45 PM",
-        duration_min: 15,
-        type: "client_checkin",
-        status: "completed",
-        notes: "Sprint 4 milestone approved by stakeholders."
-    }
-];
+const INITIAL_APPOINTMENTS: Appointment[] = [];
 
 export default function AppointmentsPage() {
-    const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [statusFilter, setStatusFilter] = useState<string>("all");
 
     // Book Modal State
@@ -180,7 +105,7 @@ export default function AppointmentsPage() {
     const [clientEmail, setClientEmail] = useState("");
     const [clientPhone, setClientPhone] = useState("");
     const [companyName, setCompanyName] = useState("");
-    const [hostName, setHostName] = useState("Salim Ghauri");
+    const [hostName, setHostName] = useState("Meeting Host");
     const [apptType, setApptType] = useState<Appointment["type"]>("erp_demo");
     const [apptDate, setApptDate] = useState("2026-03-12");
     const [apptTime, setApptTime] = useState("11:00 AM");
@@ -188,7 +113,7 @@ export default function AppointmentsPage() {
 
     // Share Booking Link Modal
     const [showLinkModal, setShowLinkModal] = useState(false);
-    const [selectedHostSlug, setSelectedHostSlug] = useState("salim-ghauri");
+    const [selectedHostSlug, setSelectedHostSlug] = useState("host");
 
     // Instant Meeting Modal State
     const [showInstantModal, setShowInstantModal] = useState(false);
@@ -201,9 +126,30 @@ export default function AppointmentsPage() {
 
     const [toastMsg, setToastMsg] = useState("");
 
+    // Entity-scoped data loading
+    useEffect(() => {
+        if (!activeBranch) return;
+
+        const key = getEntityStorageKey("appointments");
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            try { setAppointments(JSON.parse(saved)); } catch { setAppointments([]); }
+        } else {
+            setAppointments([]);
+        }
+    }, [activeBranch?.id]);
+
     const showToast = (msg: string) => {
         setToastMsg(msg);
         setTimeout(() => setToastMsg(""), 5000);
+    };
+
+    const persistAppointments = (updated: Appointment[]) => {
+        setAppointments(updated);
+        try {
+            const key = getEntityStorageKey("appointments");
+            localStorage.setItem(key, JSON.stringify(updated));
+        } catch {}
     };
 
     const handleCreateInstantMeeting = () => {

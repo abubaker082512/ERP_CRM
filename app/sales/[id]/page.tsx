@@ -1,7 +1,7 @@
 "use client";
 import { fetchAPI } from "@/lib/api";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Plus, Trash2, Edit2, Save, X, CheckCircle,
@@ -17,8 +17,10 @@ const STATE_STYLES: Record<string, string> = {
   cancel: "bg-red-500/20 text-red-400",
 };
 
-export default function SalesOrderDetailPage({ params }: { params: { id: string } }) {
+export default function SalesOrderDetailPage() {
   const router = useRouter();
+  const rawParams = useParams();
+  const id = rawParams?.id as string;
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -27,7 +29,7 @@ export default function SalesOrderDetailPage({ params }: { params: { id: string 
   const [confirming, setConfirming] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
 
-  useEffect(() => { fetchOrder(); }, [params.id]);
+  useEffect(() => { if (id) fetchOrder(); }, [id]);
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
@@ -36,7 +38,7 @@ export default function SalesOrderDetailPage({ params }: { params: { id: string 
 
   const fetchOrder = async () => {
     try {
-      const res = await fetchAPI(`/sales/${params.id}`);
+      const res = await fetchAPI(`/sales/${id}`);
       if (res.ok) {
         const data = await res.json();
         setOrder(data);

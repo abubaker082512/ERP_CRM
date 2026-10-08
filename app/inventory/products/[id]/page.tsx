@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { fetchAPI } from '@/lib/api';
 import { Package, ArrowLeft, Clock, MapPin, Activity, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -31,8 +31,10 @@ type StockQuant = {
     location_id: string;
 };
 
-export default function ProductAuditPage({ params }: { params: { id: string } }) {
+export default function ProductAuditPage() {
     const router = useRouter();
+    const rawParams = useParams();
+    const id = rawParams?.id as string;
     const [product, setProduct] = useState<Product | null>(null);
     const [moves, setMoves] = useState<StockMove[]>([]);
     const [quants, setQuants] = useState<StockQuant[]>([]);
@@ -41,15 +43,15 @@ export default function ProductAuditPage({ params }: { params: { id: string } })
     const [generatingBarcode, setGeneratingBarcode] = useState(false);
 
     useEffect(() => {
-        fetchData();
-    }, [params.id]);
+        if (id) fetchData();
+    }, [id]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const [prodRes, stockRes] = await Promise.all([
-                fetchAPI(`/products/${params.id}`),
-                fetchAPI(`/products/${params.id}/stock`)
+                fetchAPI(`/products/${id}`),
+                fetchAPI(`/products/${id}/stock`)
             ]);
 
             if (prodRes.ok && stockRes.ok) {

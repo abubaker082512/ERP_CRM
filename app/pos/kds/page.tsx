@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import {
   Flame,
   Clock,
@@ -48,74 +49,37 @@ type KitchenTicket = {
   urgent?: boolean;
 };
 
-const INITIAL_TICKETS: KitchenTicket[] = [
-  {
-    id: "KOT-101",
-    orderNumber: "#1042",
-    tableNumber: "Table 04",
-    orderType: "Dine-In",
-    server: "Michael B.",
-    placedAt: "11:42 AM",
-    elapsedMinutes: 4,
-    status: "preparing",
-    items: [
-      { name: "Artisan Truffle Beef Burger", qty: 2, course: "Main", modifiers: ["Medium-Rare", "Extra Aged Cheddar", "No Pickles"] },
-      { name: "Rustic Rosemary Fries", qty: 2, course: "Main", modifiers: ["Garlic Aioli on side"] },
-      { name: "Iced Caramel Macchiato", qty: 2, course: "Beverage", modifiers: ["Oat Milk", "Half Sweet"] }
-    ]
-  },
-  {
-    id: "KOT-102",
-    orderNumber: "#1043",
-    tableNumber: "Counter (Buzzer 07)",
-    orderType: "Takeaway",
-    server: "Sarah L.",
-    placedAt: "11:36 AM",
-    elapsedMinutes: 10,
-    status: "preparing",
-    urgent: true,
-    items: [
-      { name: "Avocado & Sourdough Toast", qty: 1, course: "Main", modifiers: ["Poached Egg", "Chili Flakes"] },
-      { name: "Butter Croissant", qty: 2, course: "Starter", modifiers: ["Warm / Toasted"] },
-      { name: "Double Shot Flat White", qty: 1, course: "Beverage", modifiers: ["Almond Milk"] }
-    ]
-  },
-  {
-    id: "KOT-103",
-    orderNumber: "#1044",
-    tableNumber: "Table 09 (VIP Patio)",
-    orderType: "Dine-In",
-    server: "Alex D.",
-    placedAt: "11:45 AM",
-    elapsedMinutes: 1,
-    status: "queued",
-    items: [
-      { name: "Wild Mushroom Risotto", qty: 1, course: "Main", modifiers: ["Parmigiano Reggiano"] },
-      { name: "Grilled Salmon Fillet", qty: 1, course: "Main", modifiers: ["Lemon Caper Butter"] },
-      { name: "Tiramisu della Nonna", qty: 2, course: "Dessert", modifiers: ["Serve after mains"] }
-    ]
-  },
-  {
-    id: "KOT-104",
-    orderNumber: "#1040",
-    tableNumber: "Delivery (UberEats)",
-    orderType: "Delivery",
-    server: "Online Dispatch",
-    placedAt: "11:30 AM",
-    elapsedMinutes: 16,
-    status: "ready",
-    items: [
-      { name: "Crispy Fried Chicken Sandwich", qty: 3, course: "Main", modifiers: ["Spicy Mayo"] },
-      { name: "Sweet Potato Fries", qty: 3, course: "Main" },
-      { name: "Cold Brew Coffee", qty: 3, course: "Beverage" }
-    ]
-  }
-];
+const INITIAL_TICKETS: KitchenTicket[] = [];
 
 export default function KitchenDisplaySystemPage() {
-  const [tickets, setTickets] = useState<KitchenTicket[]>(INITIAL_TICKETS);
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const [tickets, setTickets] = useState<KitchenTicket[]>([]);
   const [filterType, setFilterType] = useState<string>("ALL");
   const [soundAlert, setSoundAlert] = useState(true);
+
+  // Entity-scoped data loading
+  useEffect(() => {
+    if (!activeBranch) return;
+    const key = getEntityStorageKey("kds_tickets");
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        setTickets(JSON.parse(saved));
+      } catch {
+        setTickets([]);
+      }
+    } else {
+      setTickets([]);
+    }
+  }, [activeBranch?.id]);
+
+  const persistTickets = (updated: KitchenTicket[]) => {
+    setTickets(updated);
+    try {
+      const key = getEntityStorageKey("kds_tickets");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+  };
 
   // Live Timer increment simulation
   useEffect(() => {
@@ -128,16 +92,15 @@ export default function KitchenDisplaySystemPage() {
   }, []);
 
   const handleBumpStatus = (ticketId: string) => {
-    setTickets(prev =>
-      prev.map(t => {
-        if (t.id === ticketId) {
-          if (t.status === "queued") return { ...t, status: "preparing" };
-          if (t.status === "preparing") return { ...t, status: "ready" };
-          if (t.status === "ready") return { ...t, status: "served" };
-        }
-        return t;
-      })
-    );
+    const updated = tickets.map(t => {
+      if (t.id === ticketId) {
+        if (t.status === "queued") return { ...t, status: "preparing" as const };
+        if (t.status === "preparing") return { ...t, status: "ready" as const };
+        if (t.status === "ready") return { ...t, status: "served" as const };
+      }
+      return t;
+    });
+    persistTickets(updated);
   };
 
   const handleToggleItemDone = (ticketId: string, itemIdx: number) => {
@@ -227,20 +190,37 @@ export default function KitchenDisplaySystemPage() {
 
       {/* KDS Order Cards Grid */}
       <div className="flex-1 overflow-auto p-4 sm:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
-          {filteredTickets.map(ticket => {
-            const isLate = ticket.elapsedMinutes >= 12;
-            return (
-              <div
-                key={ticket.id}
-                className={`rounded-2xl border flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-200 ${
-                  isLate
-                    ? "bg-[#181115] border-red-500/80 ring-1 ring-red-500/50"
-                    : ticket.status === "ready"
-                    ? "bg-[#0f1a18] border-emerald-500/80"
-                    : "bg-[#111624] border-gray-800 hover:border-purple-500/60"
-                }`}
-              >
+        {filteredTickets.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center border-2 border-dashed border-gray-800 rounded-2xl bg-[#0e121d]/40 max-w-xl mx-auto mt-10">
+            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-4 shadow-lg shadow-purple-900/20">
+              <ChefHat size={32} />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">Kitchen Queue is Clear</h3>
+            <p className="text-sm text-gray-400 max-w-sm mb-6">
+              There are currently no active orders waiting in this queue. New orders punched in the POS or mobile apps will automatically arrive here.
+            </p>
+            <Link
+              href="/pos"
+              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95"
+            >
+              Open Point of Sale Terminal
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
+            {filteredTickets.map(ticket => {
+              const isLate = ticket.elapsedMinutes >= 12;
+              return (
+                <div
+                  key={ticket.id}
+                  className={`rounded-2xl border flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-200 ${
+                    isLate
+                      ? "bg-[#181115] border-red-500/80 ring-1 ring-red-500/50"
+                      : ticket.status === "ready"
+                      ? "bg-[#0f1a18] border-emerald-500/80"
+                      : "bg-[#111624] border-gray-800 hover:border-purple-500/60"
+                  }`}
+                >
                 {/* Ticket Top Header */}
                 <div className={`p-3.5 flex items-center justify-between border-b ${
                   isLate
@@ -338,6 +318,7 @@ export default function KitchenDisplaySystemPage() {
             );
           })}
         </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 import { fetchAPI } from "@/lib/api";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Star, Trophy, XCircle, Trash2, Edit2, Save, X,
@@ -12,8 +12,10 @@ import ActivityHistory from "@/components/shared/ActivityHistory";
 
 const STAGES = ["New", "Qualified", "Proposition", "Won", "Lost"];
 
-export default function OpportunityDetailPage({ params }: { params: { id: string } }) {
+export default function OpportunityDetailPage() {
   const router = useRouter();
+  const rawParams = useParams();
+  const id = rawParams?.id as string;
   const [opp, setOpp] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -22,12 +24,12 @@ export default function OpportunityDetailPage({ params }: { params: { id: string
   const [activityRefresh, setActivityRefresh] = useState(0);
 
   useEffect(() => {
-    fetchOpp();
-  }, [params.id]);
+    if (id) fetchOpp();
+  }, [id]);
 
   const fetchOpp = async () => {
     try {
-      const res = await fetchAPI(`/opportunities/${params.id}`);
+      const res = await fetchAPI(`/opportunities/${id}`);
       if (res.ok) {
         const data = await res.json();
         setOpp(data);

@@ -137,6 +137,7 @@ export type BranchContextType = {
   resetToIndustrySelection: () => void;
   toggleModuleForActiveBranch: (moduleHref: string) => void;
   isModuleActive: (moduleHref: string) => boolean;
+  getEntityStorageKey: (resourceType: string) => string;
 };
 
 const BranchContext = createContext<BranchContextType | undefined>(undefined);
@@ -248,6 +249,11 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
     return activeBranch.enabledModules.includes(moduleHref);
   };
 
+  const getEntityStorageKey = (resourceType: string): string => {
+    const branchId = activeBranch?.id || "default_entity";
+    return `beraxis_${branchId}_${resourceType}`;
+  };
+
   return (
     <BranchContext.Provider
       value={{
@@ -261,7 +267,8 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         deleteBranch,
         resetToIndustrySelection,
         toggleModuleForActiveBranch,
-        isModuleActive
+        isModuleActive,
+        getEntityStorageKey
       }}
     >
       {children}

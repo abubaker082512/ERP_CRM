@@ -30,6 +30,7 @@ const GLOBAL_SEARCH_ROUTES: SearchSuggestion[] = [
 ];
 
 interface UniversalModuleSearchProps {
+  moduleName?: string;
   placeholder?: string;
   value?: string;
   onChange?: (val: string) => void;

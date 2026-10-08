@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import {
     DollarSign,
     Plus,
@@ -63,54 +64,14 @@ export type Payslip = {
     bank_account?: string;
 };
 
-const INITIAL_RUNS: PayrollRun[] = [
-    {
-        id: "PAY-2026-03",
-        name: "March 2026 Regular Company Payroll",
-        period: "March 2026",
-        total_gross: 61500,
-        total_deductions: 9225,
-        total_net: 52275,
-        employee_count: 6,
-        status: "disbursed",
-        created_at: "2026-03-01"
-    },
-    {
-        id: "PAY-2026-02",
-        name: "February 2026 Executive & Staff Payroll",
-        period: "February 2026",
-        total_gross: 61500,
-        total_deductions: 9225,
-        total_net: 52275,
-        employee_count: 6,
-        status: "disbursed",
-        created_at: "2026-02-01"
-    },
-    {
-        id: "PAY-2026-04",
-        name: "April 2026 Projected Sprint Payroll Run",
-        period: "April 2026",
-        total_gross: 68000,
-        total_deductions: 10200,
-        total_net: 57800,
-        employee_count: 7,
-        status: "draft",
-        created_at: "2026-03-08"
-    }
-];
+const INITIAL_RUNS: PayrollRun[] = [];
 
-const INITIAL_PAYSLIPS: Payslip[] = [
-    { id: "PS-001", run_id: "PAY-2026-03", emp_code: "EMP-001", employee_name: "Salim Ghauri", employee_role: "Principal Architect", department: "Engineering", base_salary: 12000, allowances: 1500, tax_deduction: 2025, net_pay: 11475, status: "paid", payment_date: "2026-03-05", bank_account: "•••• 8912 (Chase Direct Deposit)" },
-    { id: "PS-002", run_id: "PAY-2026-03", emp_code: "EMP-002", employee_name: "Sarah Vance", employee_role: "Lead UI/UX Designer", department: "Design", base_salary: 10000, allowances: 1000, tax_deduction: 1650, net_pay: 9350, status: "paid", payment_date: "2026-03-05", bank_account: "•••• 4410 (Wells Fargo Direct)" },
-    { id: "PS-003", run_id: "PAY-2026-03", emp_code: "EMP-003", employee_name: "Bilal Mahmood", employee_role: "ERP Specialist & Controller", department: "Finance", base_salary: 10800, allowances: 1200, tax_deduction: 1800, net_pay: 10200, status: "paid", payment_date: "2026-03-05", bank_account: "•••• 9021 (Bank of America)" },
-    { id: "PS-004", run_id: "PAY-2026-03", emp_code: "EMP-004", employee_name: "Jane Smith", employee_role: "Mobile Engineering Lead", department: "Engineering", base_salary: 10600, allowances: 1100, tax_deduction: 1755, net_pay: 9945, status: "paid", payment_date: "2026-03-05", bank_account: "•••• 1184 (Citibank Wire)" },
-    { id: "PS-005", run_id: "PAY-2026-03", emp_code: "EMP-005", employee_name: "Marcus Jenkins", employee_role: "DevOps & Cloud Engineer", department: "Operations", base_salary: 9800, allowances: 900, tax_deduction: 1605, net_pay: 9095, status: "paid", payment_date: "2026-03-05", bank_account: "•••• 6732 (HSBC Direct)" },
-    { id: "PS-006", run_id: "PAY-2026-03", emp_code: "EMP-006", employee_name: "Bob Wilson", employee_role: "Supply Chain Specialist", department: "Operations", base_salary: 7900, allowances: 800, tax_deduction: 1305, net_pay: 7395, status: "paid", payment_date: "2026-03-05", bank_account: "•••• 5520 (Chase Wire)" }
-];
+const INITIAL_PAYSLIPS: Payslip[] = [];
 
 export default function PayrollPage() {
-    const [runs, setRuns] = useState<PayrollRun[]>(INITIAL_RUNS);
-    const [payslips, setPayslips] = useState<Payslip[]>(INITIAL_PAYSLIPS);
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const [runs, setRuns] = useState<PayrollRun[]>([]);
+    const [payslips, setPayslips] = useState<Payslip[]>([]);
     const [activeTab, setActiveTab] = useState<"batches" | "payslips">("batches");
     const [searchQuery, setSearchQuery] = useState("");
     const [toastMsg, setToastMsg] = useState("");
@@ -120,42 +81,147 @@ export default function PayrollPage() {
     const [selectedPayslipPreview, setSelectedPayslipPreview] = useState<Payslip | null>(null);
     const [newRunName, setNewRunName] = useState("");
     const [newPeriod, setNewPeriod] = useState("May 2026");
-    const [companyName, setCompanyName] = useState("Barexis Technologies Inc.");
+    const [companyName, setCompanyName] = useState("BERAXIS Entity");
 
+    // Entity-scoped data loading
     useEffect(() => {
-        const savedCompany = localStorage.getItem("settings_company_name");
-        if (savedCompany) setCompanyName(savedCompany);
-    }, []);
+        if (!activeBranch) return;
+
+        setCompanyName(activeBranch.name || "BERAXIS Entity");
+
+        const runsKey = getEntityStorageKey("payroll_runs");
+        const slipsKey = getEntityStorageKey("payroll_payslips");
+
+        const savedRuns = localStorage.getItem(runsKey);
+        if (savedRuns) {
+            try { setRuns(JSON.parse(savedRuns)); } catch { setRuns([]); }
+        } else {
+            setRuns([]);
+        }
+
+        const savedSlips = localStorage.getItem(slipsKey);
+        if (savedSlips) {
+            try { setPayslips(JSON.parse(savedSlips)); } catch { setPayslips([]); }
+        } else {
+            setPayslips([]);
+        }
+    }, [activeBranch?.id, activeBranch?.name]);
 
     const showToast = (msg: string) => {
         setToastMsg(msg);
         setTimeout(() => setToastMsg(""), 5000);
     };
 
+    const persistRuns = (updatedRuns: PayrollRun[], updatedSlips?: Payslip[]) => {
+        setRuns(updatedRuns);
+        try {
+            const key = getEntityStorageKey("payroll_runs");
+            localStorage.setItem(key, JSON.stringify(updatedRuns));
+        } catch {}
+
+        if (updatedSlips) {
+            setPayslips(updatedSlips);
+            try {
+                const key = getEntityStorageKey("payroll_payslips");
+                localStorage.setItem(key, JSON.stringify(updatedSlips));
+            } catch {}
+        }
+    };
+
     const handleCreateRun = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newRunName.trim()) return;
 
+        // Fetch current entity's employees if any
+        const empKey = getEntityStorageKey("employees");
+        let activeEmps: any[] = [];
+        try {
+            const raw = localStorage.getItem(empKey);
+            if (raw) activeEmps = JSON.parse(raw);
+        } catch {}
+
+        const runId = `PAY-2026-${Math.floor(10 + Math.random() * 90)}`;
+        const empCount = activeEmps.length > 0 ? activeEmps.length : 1;
+
+        let totalGross = 0;
+        let totalDeductions = 0;
+        let totalNet = 0;
+
+        const newSlips: Payslip[] = [];
+
+        if (activeEmps.length > 0) {
+            activeEmps.forEach((emp, idx) => {
+                const base = Number(emp.salary) || 85000;
+                const monthlyBase = Math.round(base / 12);
+                const allow = Math.round(monthlyBase * 0.1);
+                const tax = Math.round((monthlyBase + allow) * 0.15);
+                const net = (monthlyBase + allow) - tax;
+
+                totalGross += (monthlyBase + allow);
+                totalDeductions += tax;
+                totalNet += net;
+
+                newSlips.push({
+                    id: `PS-${runId}-${idx + 1}`,
+                    run_id: runId,
+                    emp_code: emp.id || `EMP-0${idx + 1}`,
+                    employee_name: emp.name,
+                    employee_role: emp.role,
+                    department: emp.department,
+                    base_salary: monthlyBase,
+                    allowances: allow,
+                    tax_deduction: tax,
+                    net_pay: net,
+                    status: "paid",
+                    payment_date: new Date().toISOString().slice(0, 10),
+                    bank_account: "Direct Bank Wire"
+                });
+            });
+        } else {
+            totalGross = 12500;
+            totalDeductions = 1875;
+            totalNet = 10625;
+            newSlips.push({
+                id: `PS-${runId}-01`,
+                run_id: runId,
+                emp_code: "EMP-001",
+                employee_name: "Lead Executive",
+                employee_role: "Managing Director",
+                department: "Executive",
+                base_salary: 11000,
+                allowances: 1500,
+                tax_deduction: 1875,
+                net_pay: 10625,
+                status: "paid",
+                payment_date: new Date().toISOString().slice(0, 10),
+                bank_account: "Primary Corporate Account"
+            });
+        }
+
         const newRun: PayrollRun = {
-            id: `PAY-2026-${Math.floor(10 + Math.random() * 90)}`,
+            id: runId,
             name: newRunName.trim(),
             period: newPeriod,
-            total_gross: 63500,
-            total_deductions: 9525,
-            total_net: 53975,
-            employee_count: 6,
+            total_gross: totalGross,
+            total_deductions: totalDeductions,
+            total_net: totalNet,
+            employee_count: empCount,
             status: "draft",
             created_at: new Date().toISOString().slice(0, 10)
         };
 
-        setRuns([newRun, ...runs]);
+        const updatedRuns = [newRun, ...runs];
+        const updatedSlips = [...newSlips, ...payslips];
+        persistRuns(updatedRuns, updatedSlips);
+
         setIsCreateModalOpen(false);
         setNewRunName("");
-        showToast(`💼 Created Payroll Batch "${newRun.name}"!`);
+        showToast(`💼 Created Payroll Batch "${newRun.name}" for ${empCount} employees!`);
     };
 
     const handleDisburseBatch = (id: string) => {
-        setRuns(runs.map(r => r.id === id ? { ...r, status: "disbursed" } : r));
+        const updated = runs.map(r => r.id === id ? { ...r, status: "disbursed" as const } : r);
+        persistRuns(updated);
         showToast(`✅ Disbursed salaries for Batch ${id} across all employee accounts!`);
     };
 
@@ -310,105 +376,149 @@ export default function PayrollPage() {
 
                 {/* TAB 1: BATCHES */}
                 {activeTab === "batches" && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        {runs.map(run => (
-                            <div
-                                key={run.id}
-                                className="galaxy-card p-5 border border-gray-800 hover:border-emerald-500/40 bg-[#111622] rounded-2xl transition space-y-4 shadow-xl"
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider">{run.id} • {run.period}</span>
-                                        <h3 className="text-base font-bold text-white mt-1">{run.name}</h3>
-                                        <p className="text-xs text-gray-400">{run.employee_count} Employee Accounts Enrolled</p>
-                                    </div>
-                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
-                                        run.status === "disbursed" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                                    }`}>
-                                        {run.status}
-                                    </span>
+                    <>
+                        {runs.length === 0 ? (
+                            <div className="galaxy-card bg-[#111622]/70 border border-dashed border-gray-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-xl">
+                                <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-inner">
+                                    <Calendar size={32} />
                                 </div>
-
-                                <div className="bg-gray-900/70 p-3 rounded-xl border border-gray-800 space-y-1.5 text-xs text-gray-300">
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">Gross Payroll:</span>
-                                        <span className="font-semibold text-white">${run.total_gross.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">Tax Deductions:</span>
-                                        <span className="text-rose-400">-${run.total_deductions.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between font-bold text-sm pt-1 border-t border-gray-800">
-                                        <span className="text-emerald-400">Net Disbursed:</span>
-                                        <span className="text-emerald-400 font-mono">${run.total_net.toLocaleString()}</span>
-                                    </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-white">No Payroll Runs Generated Yet</h3>
+                                    <p className="text-xs text-gray-400 max-w-sm">
+                                        {activeBranch?.name ? `No salary cycles have been disbursed for "${activeBranch.name}".` : "Create your first monthly payroll batch to calculate allowances, tax withholdings, and net salaries."}
+                                    </p>
                                 </div>
-
-                                <div className="flex items-center justify-between pt-1 text-xs">
-                                    <span className="text-gray-500 text-[11px]">Run Date: {run.created_at}</span>
-                                    {run.status === "draft" ? (
-                                        <button
-                                            onClick={() => handleDisburseBatch(run.id)}
-                                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold flex items-center gap-1 text-xs shadow-md shadow-emerald-600/30"
-                                        >
-                                            <Play size={12} /> Disburse Salaries
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => setActiveTab("payslips")}
-                                            className="text-emerald-400 hover:underline font-bold text-xs flex items-center gap-1"
-                                        >
-                                            View Payslips →
-                                        </button>
-                                    )}
-                                </div>
+                                <button
+                                    onClick={() => setIsCreateModalOpen(true)}
+                                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+                                >
+                                    <Plus size={16} /> + Issue First Payroll Batch
+                                </button>
                             </div>
-                        ))}
-                    </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                {runs.map(run => (
+                                    <div
+                                        key={run.id}
+                                        className="galaxy-card p-5 border border-gray-800 hover:border-emerald-500/40 bg-[#111622] rounded-2xl transition space-y-4 shadow-xl"
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider">{run.id} • {run.period}</span>
+                                                <h3 className="text-base font-bold text-white mt-1">{run.name}</h3>
+                                                <p className="text-xs text-gray-400">{run.employee_count} Employee Accounts Enrolled</p>
+                                            </div>
+                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
+                                                run.status === "disbursed" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                                            }`}>
+                                                {run.status}
+                                            </span>
+                                        </div>
+
+                                        <div className="bg-gray-900/70 p-3 rounded-xl border border-gray-800 space-y-1.5 text-xs text-gray-300">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500">Gross Payroll:</span>
+                                                <span className="font-semibold text-white">${run.total_gross.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500">Tax Deductions:</span>
+                                                <span className="text-rose-400">-${run.total_deductions.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between font-bold text-sm pt-1 border-t border-gray-800">
+                                                <span className="text-emerald-400">Net Disbursed:</span>
+                                                <span className="text-emerald-400 font-mono">${run.total_net.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between pt-1 text-xs">
+                                            <span className="text-gray-500 text-[11px]">Run Date: {run.created_at}</span>
+                                            {run.status === "draft" ? (
+                                                <button
+                                                    onClick={() => handleDisburseBatch(run.id)}
+                                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold flex items-center gap-1 text-xs shadow-md shadow-emerald-600/30"
+                                                >
+                                                    <Play size={12} /> Disburse Salaries
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => setActiveTab("payslips")}
+                                                    className="text-emerald-400 hover:underline font-bold text-xs flex items-center gap-1"
+                                                >
+                                                    View Payslips →
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {/* TAB 2: PAYSLIPS ROSTER */}
                 {activeTab === "payslips" && (
-                    <div className="galaxy-card bg-[#111622] rounded-2xl border border-gray-800 overflow-hidden shadow-2xl">
-                        <table className="w-full text-left text-sm text-gray-300">
-                            <thead className="bg-gray-900/90 text-gray-400 uppercase text-[11px] font-bold border-b border-gray-800 tracking-wider">
-                                <tr>
-                                    <th className="px-4 py-3">Payslip Ref</th>
-                                    <th className="px-4 py-3">Employee Name</th>
-                                    <th className="px-4 py-3">Department</th>
-                                    <th className="px-4 py-3">Base Pay</th>
-                                    <th className="px-4 py-3">Allowances</th>
-                                    <th className="px-4 py-3">Tax Deduction</th>
-                                    <th className="px-4 py-3">Net Take-Home</th>
-                                    <th className="px-4 py-3 text-right">Enterprise Payslip</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-800/60">
-                                {filteredPayslips.map(ps => (
-                                    <tr key={ps.id} className="hover:bg-gray-800/40 transition">
-                                        <td className="px-4 py-3.5 font-mono text-xs font-bold text-emerald-400">{ps.id}</td>
-                                        <td className="px-4 py-3.5">
-                                            <div className="font-bold text-white">{ps.employee_name}</div>
-                                            <div className="text-xs text-gray-400">{ps.employee_role}</div>
-                                        </td>
-                                        <td className="px-4 py-3.5 text-xs text-gray-300">{ps.department}</td>
-                                        <td className="px-4 py-3.5 font-mono text-xs text-gray-200">${ps.base_salary.toLocaleString()}</td>
-                                        <td className="px-4 py-3.5 font-mono text-xs text-emerald-400">+${ps.allowances.toLocaleString()}</td>
-                                        <td className="px-4 py-3.5 font-mono text-xs text-rose-400">-${ps.tax_deduction.toLocaleString()}</td>
-                                        <td className="px-4 py-3.5 font-mono font-bold text-sm text-emerald-400">${ps.net_pay.toLocaleString()}</td>
-                                        <td className="px-4 py-3.5 text-right">
-                                            <button
-                                                onClick={() => printPayslipVoucher(ps)}
-                                                className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold shadow-md shadow-emerald-600/30 inline-flex items-center gap-1.5"
-                                            >
-                                                <Printer size={13} /> Official Voucher
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <>
+                        {filteredPayslips.length === 0 ? (
+                            <div className="galaxy-card bg-[#111622]/70 border border-dashed border-gray-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-xl">
+                                <div className="w-16 h-16 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center shadow-inner">
+                                    <FileText size={32} />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-white">No Payslips Issued</h3>
+                                    <p className="text-xs text-gray-400 max-w-sm">
+                                        Payslips will be automatically generated as soon as you create a payroll batch for your active branch staff.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => { setActiveTab("batches"); setIsCreateModalOpen(true); }}
+                                    className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-teal-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+                                >
+                                    <Plus size={16} /> Create Payroll Batch
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="galaxy-card bg-[#111622] rounded-2xl border border-gray-800 overflow-hidden shadow-2xl">
+                                <table className="w-full text-left text-sm text-gray-300">
+                                    <thead className="bg-gray-900/90 text-gray-400 uppercase text-[11px] font-bold border-b border-gray-800 tracking-wider">
+                                        <tr>
+                                            <th className="px-4 py-3">Payslip Ref</th>
+                                            <th className="px-4 py-3">Employee Name</th>
+                                            <th className="px-4 py-3">Department</th>
+                                            <th className="px-4 py-3">Base Pay</th>
+                                            <th className="px-4 py-3">Allowances</th>
+                                            <th className="px-4 py-3">Tax Deduction</th>
+                                            <th className="px-4 py-3">Net Take-Home</th>
+                                            <th className="px-4 py-3 text-right">Enterprise Payslip</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-800/60">
+                                        {filteredPayslips.map(ps => (
+                                            <tr key={ps.id} className="hover:bg-gray-800/40 transition">
+                                                <td className="px-4 py-3.5 font-mono text-xs font-bold text-emerald-400">{ps.id}</td>
+                                                <td className="px-4 py-3.5">
+                                                    <div className="font-bold text-white">{ps.employee_name}</div>
+                                                    <div className="text-xs text-gray-400">{ps.employee_role}</div>
+                                                </td>
+                                                <td className="px-4 py-3.5 text-xs text-gray-300">{ps.department}</td>
+                                                <td className="px-4 py-3.5 font-mono text-xs text-gray-200">${ps.base_salary.toLocaleString()}</td>
+                                                <td className="px-4 py-3.5 font-mono text-xs text-emerald-400">+${ps.allowances.toLocaleString()}</td>
+                                                <td className="px-4 py-3.5 font-mono text-xs text-rose-400">-${ps.tax_deduction.toLocaleString()}</td>
+                                                <td className="px-4 py-3.5 font-mono font-bold text-sm text-emerald-400">${ps.net_pay.toLocaleString()}</td>
+                                                <td className="px-4 py-3.5 text-right">
+                                                    <button
+                                                        onClick={() => printPayslipVoucher(ps)}
+                                                        className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold shadow-md shadow-emerald-600/30 inline-flex items-center gap-1.5"
+                                                    >
+                                                        <Printer size={13} /> Official Voucher
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import {
   Building2,
   Plus,
@@ -45,74 +46,52 @@ type PropertyUnit = {
   depositHeld?: number;
 };
 
-const INITIAL_UNITS: PropertyUnit[] = [
-  {
-    id: "UNT-101",
-    propertyName: "Montgomery Financial Tower",
-    unitNumber: "Suite 1400",
-    unitType: "Commercial Office",
-    sqft: 4500,
-    monthlyRent: 18500,
-    status: "occupied",
-    tenantName: "Apex Venture Partners LLC",
-    tenantPhone: "+1 (415) 555-0810",
-    leaseStart: "2024-01-01",
-    leaseEnd: "2027-12-31",
-    depositHeld: 37000
-  },
-  {
-    id: "UNT-102",
-    propertyName: "Montgomery Financial Tower",
-    unitNumber: "Suite 1410",
-    unitType: "Commercial Office",
-    sqft: 2800,
-    monthlyRent: 11200,
-    status: "vacant",
-    depositHeld: 0
-  },
-  {
-    id: "UNT-103",
-    propertyName: "SoHo Retail Arcade",
-    unitNumber: "Storefront #03",
-    unitType: "Retail Storefront",
-    sqft: 1850,
-    monthlyRent: 14500,
-    status: "occupied",
-    tenantName: "Maison de SoHo Boutique",
-    tenantPhone: "+1 (212) 555-0144",
-    leaseStart: "2023-06-01",
-    leaseEnd: "2026-05-31",
-    depositHeld: 29000
-  },
-  {
-    id: "UNT-104",
-    propertyName: "Marina Bay Residences",
-    unitNumber: "Penthouse 42B",
-    unitType: "Luxury Apartment",
-    sqft: 3200,
-    monthlyRent: 9800,
-    status: "occupied",
-    tenantName: "Alexander Vance",
-    tenantPhone: "+1 (415) 555-0199",
-    leaseStart: "2024-03-15",
-    leaseEnd: "2026-03-14",
-    depositHeld: 19600
-  }
-];
+const INITIAL_UNITS: PropertyUnit[] = [];
 
 export default function RealEstatePropertyPage() {
-  const [units, setUnits] = useState<PropertyUnit[]>(INITIAL_UNITS);
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const [units, setUnits] = useState<PropertyUnit[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedUnit, setSelectedUnit] = useState<PropertyUnit | null>(units[0]);
+  const [selectedUnit, setSelectedUnit] = useState<PropertyUnit | null>(null);
   const [isNewUnitModalOpen, setIsNewUnitModalOpen] = useState(false);
 
   // Form State
-  const [propName, setPropName] = useState("Montgomery Financial Tower");
+  const [propName, setPropName] = useState("Corporate Tower");
   const [unitNum, setUnitNum] = useState("");
   const [unitType, setUnitType] = useState<any>("Commercial Office");
   const [sqft, setSqft] = useState(2500);
   const [rent, setRent] = useState(8500);
+
+  // Entity-scoped data loading
+  useEffect(() => {
+    if (!activeBranch) return;
+
+    const key = getEntityStorageKey("real_estate_units");
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setUnits(parsed);
+        if (parsed.length > 0) setSelectedUnit(parsed[0]);
+        else setSelectedUnit(null);
+      } catch {
+        setUnits([]);
+        setSelectedUnit(null);
+      }
+    } else {
+      setUnits([]);
+      setSelectedUnit(null);
+    }
+  }, [activeBranch?.id]);
+
+  const persistUnits = (updated: PropertyUnit[]) => {
+    setUnits(updated);
+    try {
+      const key = getEntityStorageKey("real_estate_units");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+  };
 
   const filteredUnits = units.filter(u => {
     const matchesSearch =
@@ -141,9 +120,11 @@ export default function RealEstatePropertyPage() {
       status: "vacant"
     };
 
-    setUnits([newUnit, ...units]);
+    const updated = [newUnit, ...units];
+    persistUnits(updated);
     setSelectedUnit(newUnit);
     setIsNewUnitModalOpen(false);
+    setUnitNum("");
   };
 
   return (
@@ -258,9 +239,28 @@ export default function RealEstatePropertyPage() {
         </div>
 
         {/* Units Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left: Unit Cards (5 cols) */}
-          <div className="lg:col-span-5 space-y-3">
+        {filteredUnits.length === 0 ? (
+          <div className="bg-[#101422]/70 border border-dashed border-gray-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-xl">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shadow-inner">
+              <Building2 size={32} />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-white">No Property Units Registered</h3>
+              <p className="text-xs text-gray-400 max-w-sm">
+                {activeBranch?.name ? `No properties or lease units recorded for "${activeBranch.name}".` : "Add commercial suites, apartments, or retail stores to manage rent collection & leases."}
+              </p>
+            </div>
+            <button
+              onClick={() => setIsNewUnitModalOpen(true)}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+            >
+              <Plus size={16} /> + Add First Property Unit
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left: Unit Cards (5 cols) */}
+            <div className="lg:col-span-5 space-y-3">
             {filteredUnits.map(unit => {
               const isSelected = selectedUnit?.id === unit.id;
               return (
@@ -364,6 +364,7 @@ export default function RealEstatePropertyPage() {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* NEW UNIT MODAL */}

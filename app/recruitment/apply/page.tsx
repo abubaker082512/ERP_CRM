@@ -61,7 +61,7 @@ export type Job = {
   form_config: JobFormConfig;
 };
 
-export const DEFAULT_JOBS: Job[] = [
+const DEFAULT_JOBS: Job[] = [
   {
     id: "JOB-001",
     name: "Senior Full Stack Engineer",

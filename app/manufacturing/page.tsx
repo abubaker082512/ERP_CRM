@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import { 
   Wrench, 
   Settings, 
@@ -59,98 +60,9 @@ const MENU_ITEMS = [
   { name: "Work Centers", href: "/manufacturing" },
 ];
 
-const INITIAL_BOMS: BOM[] = [
-  {
-    id: "BOM-001",
-    product: "Ergonomic Gaming & Office Chair",
-    sku: "FURN-CHR-01",
-    estProductionTimeHours: 1.5,
-    items: [
-      { material: "Steel Base Frame", qtyPerUnit: 1, unit: "pcs", unitCost: 35.0 },
-      { material: "Hydraulic Gas Lift Cylinder", qtyPerUnit: 1, unit: "pcs", unitCost: 18.5 },
-      { material: "Memory Foam Cushion", qtyPerUnit: 1, unit: "pcs", unitCost: 22.0 },
-      { material: "3D Adjustable Armrests", qtyPerUnit: 2, unit: "pcs", unitCost: 12.0 },
-      { material: "Smooth Nylon Wheels", qtyPerUnit: 5, unit: "pcs", unitCost: 2.5 },
-      { material: "Hex Assembly Bolt Kit", qtyPerUnit: 1, unit: "kit", unitCost: 4.0 },
-    ]
-  },
-  {
-    id: "BOM-002",
-    product: "Electric Standing Smart Desk",
-    sku: "FURN-DSK-02",
-    estProductionTimeHours: 2.2,
-    items: [
-      { material: "Dual Electric Motor Kit", qtyPerUnit: 1, unit: "set", unitCost: 85.0 },
-      { material: "Solid Walnut Tabletop (140x70cm)", qtyPerUnit: 1, unit: "pcs", unitCost: 110.0 },
-      { material: "Telescopic Steel Legs", qtyPerUnit: 2, unit: "pcs", unitCost: 45.0 },
-      { material: "Digital Memory Controller", qtyPerUnit: 1, unit: "pcs", unitCost: 25.0 },
-      { material: "Cable Management Tray", qtyPerUnit: 1, unit: "pcs", unitCost: 12.0 },
-    ]
-  },
-  {
-    id: "BOM-003",
-    product: "Industrial Acoustic Soundproof Booth",
-    sku: "OFF-BOOTH-03",
-    estProductionTimeHours: 4.0,
-    items: [
-      { material: "Acoustic Glass Door Panel", qtyPerUnit: 1, unit: "pcs", unitCost: 240.0 },
-      { material: "High-Density PET Acoustic Felt", qtyPerUnit: 6, unit: "sqm", unitCost: 30.0 },
-      { material: "Aluminum Structural Frame", qtyPerUnit: 1, unit: "set", unitCost: 310.0 },
-      { material: "Silent Ventilation Fan & LED", qtyPerUnit: 1, unit: "kit", unitCost: 75.0 },
-    ]
-  }
-];
+const INITIAL_BOMS: BOM[] = [];
 
-const INITIAL_ORDERS: ManufacturingOrder[] = [
-  {
-    id: "MO-2026-001",
-    product: "Ergonomic Gaming & Office Chair",
-    bomId: "BOM-001",
-    quantity: 45,
-    status: "in_progress",
-    deadline: "2026-10-12",
-    supervisor: "Alex Vance",
-    workCenter: "Assembly Line 1",
-    createdAt: "2026-10-04",
-    notes: "Priority client delivery for TechCorp HQ order."
-  },
-  {
-    id: "MO-2026-002",
-    product: "Electric Standing Smart Desk",
-    bomId: "BOM-002",
-    quantity: 20,
-    status: "confirmed",
-    deadline: "2026-10-15",
-    supervisor: "Elena Rostova",
-    workCenter: "CNC Woodworking Station",
-    createdAt: "2026-10-05",
-    notes: "Walnut slabs inspected and conditioned."
-  },
-  {
-    id: "MO-2026-003",
-    product: "Industrial Acoustic Soundproof Booth",
-    bomId: "BOM-003",
-    quantity: 6,
-    status: "quality",
-    deadline: "2026-10-08",
-    supervisor: "Marcus Vance",
-    workCenter: "Clean Room & Sound Bench",
-    createdAt: "2026-10-01",
-    notes: "Decibel attenuation test undergoing at 35dB noise floor."
-  },
-  {
-    id: "MO-2026-004",
-    product: "Ergonomic Gaming & Office Chair",
-    bomId: "BOM-001",
-    quantity: 30,
-    status: "done",
-    deadline: "2026-10-02",
-    supervisor: "Alex Vance",
-    workCenter: "Assembly Line 1",
-    createdAt: "2026-09-28",
-    notes: "Passed all QA standards. Transferred to Central Warehouse."
-  }
-];
+const INITIAL_ORDERS: ManufacturingOrder[] = [];
 
 const STAGES: { id: MOStatus; label: string; color: string }[] = [
   { id: "draft", label: "Draft Orders", color: "bg-gray-500/10 text-gray-400 border-gray-600" },
@@ -161,8 +73,9 @@ const STAGES: { id: MOStatus; label: string; color: string }[] = [
 ];
 
 export default function ManufacturingPage() {
-  const [orders, setOrders] = useState<ManufacturingOrder[]>(INITIAL_ORDERS);
-  const [boms, setBoms] = useState<BOM[]>(INITIAL_BOMS);
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const [orders, setOrders] = useState<ManufacturingOrder[]>([]);
+  const [boms, setBoms] = useState<BOM[]>([]);
   const [activeTab, setActiveTab] = useState<"orders" | "bom" | "workcenters">("orders");
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [searchTerm, setSearchTerm] = useState("");
@@ -173,16 +86,60 @@ export default function ManufacturingPage() {
   const [selectedMo, setSelectedMo] = useState<ManufacturingOrder | null>(null);
 
   // New MO Form state
-  const [selectedBomId, setSelectedBomId] = useState(INITIAL_BOMS[0].id);
+  const [selectedBomId, setSelectedBomId] = useState("");
   const [moQuantity, setMoQuantity] = useState(10);
   const [moDeadline, setMoDeadline] = useState("2026-10-20");
-  const [moSupervisor, setMoSupervisor] = useState("Alex Vance");
+  const [moSupervisor, setMoSupervisor] = useState("Production Lead");
   const [moWorkCenter, setMoWorkCenter] = useState("Assembly Line 1");
   const [moNotes, setMoNotes] = useState("");
 
+  // Entity-scoped data loading
+  useEffect(() => {
+    if (!activeBranch) return;
+
+    const ordersKey = getEntityStorageKey("mrp_orders");
+    const bomsKey = getEntityStorageKey("mrp_boms");
+
+    const savedOrders = localStorage.getItem(ordersKey);
+    if (savedOrders) {
+      try { setOrders(JSON.parse(savedOrders)); } catch { setOrders([]); }
+    } else {
+      setOrders([]);
+    }
+
+    const savedBoms = localStorage.getItem(bomsKey);
+    if (savedBoms) {
+      try {
+        const parsed = JSON.parse(savedBoms);
+        setBoms(parsed);
+        if (parsed.length > 0) setSelectedBomId(parsed[0].id);
+      } catch {
+        setBoms([]);
+      }
+    } else {
+      setBoms([]);
+    }
+  }, [activeBranch?.id]);
+
+  const persistOrders = (updated: ManufacturingOrder[]) => {
+    setOrders(updated);
+    try {
+      const key = getEntityStorageKey("mrp_orders");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+  };
+
+  const persistBoms = (updated: BOM[]) => {
+    setBoms(updated);
+    try {
+      const key = getEntityStorageKey("mrp_boms");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+  };
+
   const handleCreateMo = (e: React.FormEvent) => {
     e.preventDefault();
-    const bom = boms.find(b => b.id === selectedBomId) || boms[0];
+    const bom = boms.find(b => b.id === selectedBomId) || { product: "Custom Assembly", id: "BOM-CUSTOM" };
     const newMo: ManufacturingOrder = {
       id: `MO-2026-${(orders.length + 1).toString().padStart(3, "0")}`,
       product: bom.product,
@@ -196,7 +153,8 @@ export default function ManufacturingPage() {
       notes: moNotes
     };
 
-    setOrders([newMo, ...orders]);
+    const updated = [newMo, ...orders];
+    persistOrders(updated);
     setIsMoModalOpen(false);
     setMoNotes("");
   };

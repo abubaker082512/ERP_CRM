@@ -3,6 +3,7 @@
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
 import { useEffect, useState } from "react";
+import { useBranchContext } from "@/lib/branchContext";
 import {
     Plus,
     Package,
@@ -191,7 +192,8 @@ const UOM_OPTIONS = [
 ];
 
 export default function InventoryPage() {
-    const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const [products, setProducts] = useState<Product[]>([]);
     const [currentView, setCurrentView] = useState<ViewType>("list");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [selectedCategory, setSelectedCategory] = useState<string>("All Categories");
@@ -220,7 +222,7 @@ export default function InventoryPage() {
     const [newProdCost, setNewProdCost] = useState(110.00);
 
     // Fast Track Stock Adjuster State
-    const [adjustProdId, setAdjustProdId] = useState(INITIAL_PRODUCTS[0].id);
+    const [adjustProdId, setAdjustProdId] = useState("");
     const [adjustType, setAdjustType] = useState<"add" | "subtract" | "damaged" | "set_exact">("add");
     const [adjustQty, setAdjustQty] = useState(1);
     const [adjustReason, setAdjustReason] = useState("Routine Stock Adjustment");
@@ -229,9 +231,36 @@ export default function InventoryPage() {
     const [rawCsvText, setRawCsvText] = useState("");
     const [parsedCsvProducts, setParsedCsvProducts] = useState<Partial<Product>[]>([]);
 
+    // Entity-scoped data loading
+    useEffect(() => {
+        if (!activeBranch) return;
+        const key = getEntityStorageKey("inventory_products");
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                setProducts(parsed);
+                if (parsed.length > 0) setAdjustProdId(parsed[0].id);
+            } catch {
+                setProducts([]);
+            }
+        } else {
+            // Fresh isolated company starts empty
+            setProducts([]);
+        }
+    }, [activeBranch?.id]);
+
     const showToast = (msg: string) => {
         setToastMsg(msg);
         setTimeout(() => setToastMsg(""), 5000);
+    };
+
+    const persistProducts = (updated: Product[]) => {
+        setProducts(updated);
+        try {
+            const key = getEntityStorageKey("inventory_products");
+            localStorage.setItem(key, JSON.stringify(updated));
+        } catch {}
     };
 
     const handleCreateProduct = (e: React.FormEvent) => {
@@ -258,7 +287,8 @@ export default function InventoryPage() {
             status: status
         };
 
-        setProducts([newProduct, ...products]);
+        const updated = [newProduct, ...products];
+        persistProducts(updated);
         setIsAddModalOpen(false);
         showToast(`✅ Registered SKU "${newProdName}" (${newProdQty} ${cleanUom}) into inventory!`);
 
@@ -270,7 +300,7 @@ export default function InventoryPage() {
 
     // Fast Track Single Action (Inline + / - / Damaged)
     const handleQuickStockStep = (product: Product, delta: number, type: "add" | "subtract" | "damaged") => {
-        setProducts(products.map(p => {
+        const updated = products.map(p => {
             if (p.id === product.id) {
                 const newQty = Math.max(0, p.quantity + delta);
                 const status: "in_stock" | "low_stock" | "out_of_stock" =
@@ -282,7 +312,8 @@ export default function InventoryPage() {
                 };
             }
             return p;
-        }));
+        });
+        persistProducts(updated);
 
         if (type === "add") {
             showToast(`📈 Added +${Math.abs(delta)} ${product.uom} to "${product.name}" (Now: ${Math.max(0, product.quantity + delta)} ${product.uom})`);
@@ -299,7 +330,7 @@ export default function InventoryPage() {
         if (!target) return;
 
         const manualQty = Math.max(0, Number(editingQtyVal) || 0);
-        setProducts(products.map(p => {
+        const updated = products.map(p => {
             if (p.id === productId) {
                 const status: "in_stock" | "low_stock" | "out_of_stock" =
                     manualQty <= 0 ? "out_of_stock" : manualQty <= p.min_quantity ? "low_stock" : "in_stock";
@@ -310,7 +341,8 @@ export default function InventoryPage() {
                 };
             }
             return p;
-        }));
+        });
+        persistProducts(updated);
 
         setEditingQtyId(null);
         showToast(`✏️ Updated "${target.name}" stock manually to ${manualQty} ${target.uom}!`);
@@ -330,7 +362,7 @@ export default function InventoryPage() {
             newQty = Math.max(0, targetProd.quantity - adjustQty);
         }
 
-        setProducts(products.map(p => {
+        const updated = products.map(p => {
             if (p.id === adjustProdId) {
                 const status: "in_stock" | "low_stock" | "out_of_stock" =
                     newQty <= 0 ? "out_of_stock" : newQty <= p.min_quantity ? "low_stock" : "in_stock";
@@ -341,7 +373,8 @@ export default function InventoryPage() {
                 };
             }
             return p;
-        }));
+        });
+        persistProducts(updated);
 
         setIsAdjustModalOpen(false);
         showToast(`⚡ Stock Adjusted for "${targetProd.name}": Set to ${newQty} ${targetProd.uom} (${adjustReason})`);
@@ -411,7 +444,8 @@ export default function InventoryPage() {
             };
         });
 
-        setProducts([...newItems, ...products]);
+        const updated = [...newItems, ...products];
+        persistProducts(updated);
         setIsBulkCsvModalOpen(false);
         setRawCsvText("");
         setParsedCsvProducts([]);
@@ -928,6 +962,35 @@ export default function InventoryPage() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Clean Empty State */}
+                {filteredProducts.length === 0 && (
+                    <div className="bg-gray-900/60 border border-dashed border-gray-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shadow-inner">
+                            <Boxes size={32} />
+                        </div>
+                        <div className="space-y-1">
+                            <h3 className="text-lg font-bold text-white">No Inventory Items in This Entity</h3>
+                            <p className="text-xs text-gray-400 max-w-sm">
+                                {activeBranch?.name ? `Your stock ledger for "${activeBranch.name}" is completely isolated and starting clean.` : "Start by registering your first SKU or importing items from CSV."}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-purple-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+                            >
+                                <Plus size={16} /> Register First SKU
+                            </button>
+                            <button
+                                onClick={() => setIsBulkCsvModalOpen(true)}
+                                className="bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-semibold text-xs px-4 py-2.5 rounded-xl border border-gray-700 flex items-center gap-2 cursor-pointer transition"
+                            >
+                                <Upload size={15} /> Upload CSV
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

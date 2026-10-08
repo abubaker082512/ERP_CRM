@@ -1,7 +1,7 @@
 "use client";
 import { fetchAPI } from "@/lib/api";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Send, Trash2, Clock, CheckCircle, AlertTriangle,
@@ -19,8 +19,10 @@ const PRIORITY_LABELS: Record<string, { label: string; color: string }> = {
   "3": { label: "Urgent", color: "text-red-400" },
 };
 
-export default function TicketDetailPage({ params }: { params: { id: string } }) {
+export default function TicketDetailPage() {
   const router = useRouter();
+  const rawParams = useParams();
+  const id = rawParams?.id as string;
   const [ticket, setTicket] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,13 +30,13 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  useEffect(() => { fetchTicket(); }, [params.id]);
+  useEffect(() => { if (id) fetchTicket(); }, [id]);
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
   const fetchTicket = async () => {
     try {
-      const res = await fetchAPI(`/helpdesk/tickets/${params.id}`);
+      const res = await fetchAPI(`/helpdesk/tickets/${id}`);
       if (res.ok) {
         const data = await res.json();
         setTicket(data);

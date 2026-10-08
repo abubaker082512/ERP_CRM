@@ -2,7 +2,8 @@
 
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useBranchContext } from "@/lib/branchContext";
 import {
     Users,
     Building2,
@@ -155,7 +156,8 @@ const INITIAL_CONTACTS: Contact[] = [
 ];
 
 export default function ContactsPage() {
-    const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const [contacts, setContacts] = useState<Contact[]>([]);
     const [currentView, setCurrentView] = useState<ViewType>("kanban");
     const [filterType, setFilterType] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
@@ -169,9 +171,9 @@ export default function ContactsPage() {
     const [newTitle, setNewTitle] = useState("");
     const [newCompany, setNewCompany] = useState("");
     const [newEmail, setNewEmail] = useState("");
-    const [newPhone, setNewPhone] = useState("+92 ");
-    const [newCity, setNewCity] = useState("Lahore");
-    const [newCountry, setNewCountry] = useState("Pakistan");
+    const [newPhone, setNewPhone] = useState("+1 ");
+    const [newCity, setNewCity] = useState(activeBranch?.location || "Main Office");
+    const [newCountry, setNewCountry] = useState("USA");
     const [newType, setNewType] = useState<Contact["type"]>("customer");
     const [newIsCompany, setNewIsCompany] = useState(false);
     const [newTags, setNewTags] = useState("Verified");
@@ -183,9 +185,34 @@ export default function ContactsPage() {
 
     const [toastMsg, setToastMsg] = useState("");
 
+    // Entity-scoped data loading
+    useEffect(() => {
+        if (!activeBranch) return;
+        const key = getEntityStorageKey("contacts");
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            try {
+                setContacts(JSON.parse(saved));
+            } catch {
+                setContacts([]);
+            }
+        } else {
+            // Newly created entity starts empty
+            setContacts([]);
+        }
+    }, [activeBranch?.id]);
+
     const showToast = (msg: string) => {
         setToastMsg(msg);
         setTimeout(() => setToastMsg(""), 5000);
+    };
+
+    const persistContacts = (updated: Contact[]) => {
+        setContacts(updated);
+        try {
+            const key = getEntityStorageKey("contacts");
+            localStorage.setItem(key, JSON.stringify(updated));
+        } catch {}
     };
 
     const handleCreateContact = (e: React.FormEvent) => {
@@ -215,19 +242,21 @@ export default function ContactsPage() {
             avatarBg: randomColor
         };
 
-        setContacts([newC, ...contacts]);
+        const updated = [newC, ...contacts];
+        persistContacts(updated);
         setIsCreateModalOpen(false);
         setNewName("");
         setNewTitle("");
         setNewCompany("");
         setNewEmail("");
-        setNewPhone("+92 ");
+        setNewPhone("+1 ");
         showToast(`🎉 Contact "${newC.name}" added to directory!`);
     };
 
     const toggleStar = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        setContacts(contacts.map(c => c.id === id ? { ...c, starred: !c.starred } : c));
+        const updated = contacts.map(c => c.id === id ? { ...c, starred: !c.starred } : c);
+        persistContacts(updated);
     };
 
     const handleSendEmail = (e: React.FormEvent) => {
@@ -492,6 +521,27 @@ export default function ContactsPage() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {/* Empty State */}
+                {filteredContacts.length === 0 && (
+                    <div className="bg-[#1E293B]/60 border border-dashed border-gray-700/80 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-xl">
+                        <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shadow-inner">
+                            <Users size={32} />
+                        </div>
+                        <div className="space-y-1">
+                            <h3 className="text-lg font-bold text-white">No Contacts in This Entity Yet</h3>
+                            <p className="text-xs text-gray-400 max-w-sm">
+                                {activeBranch?.name ? `Your directory for "${activeBranch.name}" is currently clean with zero cross-tenant records.` : "Start by adding your first business contact, partner, or customer."}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-purple-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+                        >
+                            <Plus size={16} /> Add First Contact
+                        </button>
                     </div>
                 )}
             </div>

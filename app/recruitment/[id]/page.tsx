@@ -1,7 +1,7 @@
 "use client";
 import { fetchAPI } from "@/lib/api";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Plus, Mail, Phone, Calendar, UserPlus, FileText, Settings, User
@@ -15,8 +15,10 @@ const STAGES = [
   { id: "contract", name: "Contract Proposal" },
 ];
 
-export default function JobApplicantsPage({ params }: { params: { id: string } }) {
+export default function JobApplicantsPage() {
   const router = useRouter();
+  const rawParams = useParams();
+  const id = rawParams?.id as string;
   const [job, setJob] = useState<any>(null);
   const [applicants, setApplicants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +27,7 @@ export default function JobApplicantsPage({ params }: { params: { id: string } }
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [hiring, setHiring] = useState<string | null>(null); // applicant id
 
-  useEffect(() => { loadData(); }, [params.id]);
+  useEffect(() => { if (id) loadData(); }, [id]);
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
@@ -35,8 +37,8 @@ export default function JobApplicantsPage({ params }: { params: { id: string } }
   const loadData = async () => {
     try {
       const [jobRes, appRes] = await Promise.all([
-        fetchAPI(`/recruitment/jobs/${params.id}`),
-        fetchAPI(`/recruitment/applicants?job_id=${params.id}`),
+        fetchAPI(`/recruitment/jobs/${id}`),
+        fetchAPI(`/recruitment/applicants?job_id=${id}`),
       ]);
       if (jobRes.ok) setJob(await jobRes.json());
       else router.push("/recruitment");

@@ -204,7 +204,7 @@ export default function InSystemVideoMeetPage() {
     }, [isMuted, isVideoOff]);
 
     useEffect(() => {
-        if (typeof window !== "undefined" && navigator?.mediaDevices?.getUserMedia) {
+        if (typeof window !== "undefined" && Boolean(navigator?.mediaDevices?.getUserMedia)) {
             startLocalStream();
         }
 

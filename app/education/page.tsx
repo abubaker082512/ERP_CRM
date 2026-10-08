@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import {
   GraduationCap,
   Plus,
@@ -38,59 +39,53 @@ type Student = {
   enrolledDate: string;
 };
 
-const INITIAL_STUDENTS: Student[] = [
-  {
-    id: "STU-2026-01",
-    name: "Alexander Kim",
-    email: "a.kim@example.com",
-    phone: "+1 (415) 555-0199",
-    course: "Full Stack Next.js & Cloud Engineering Bootcamp",
-    batch: "Cohort 2026-Fall (12 Weeks)",
-    tuitionFee: 4800,
-    paymentStatus: "paid",
-    attendanceRate: 98,
-    enrolledDate: "2026-09-01"
-  },
-  {
-    id: "STU-2026-02",
-    name: "Jessica Martinez",
-    email: "jessica.m@example.com",
-    phone: "+1 (512) 555-0144",
-    course: "Specialty Coffee Roasting & Barista Masterclass",
-    batch: "Weekend Intensive Batch 4",
-    tuitionFee: 1250,
-    paymentStatus: "paid",
-    attendanceRate: 100,
-    enrolledDate: "2026-09-15"
-  },
-  {
-    id: "STU-2026-03",
-    name: "David O'Connor",
-    email: "doconnor@example.com",
-    phone: "+44 20 7946 0912",
-    course: "Enterprise ERP Architecture & Data Engineering",
-    batch: "Executive Weekend Program",
-    tuitionFee: 6200,
-    paymentStatus: "partial",
-    attendanceRate: 92,
-    enrolledDate: "2026-09-20"
-  }
-];
+const INITIAL_STUDENTS: Student[] = [];
 
 export default function EducationAcademyPage() {
-  const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const [students, setStudents] = useState<Student[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(students[0]);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
 
   // Form State
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [course, setCourse] = useState("Full Stack Next.js & Cloud Engineering Bootcamp");
+  const [course, setCourse] = useState("Software & Cloud Engineering Bootcamp");
   const [batch, setBatch] = useState("Cohort 2026-Fall (12 Weeks)");
   const [tuition, setTuition] = useState(4800);
+
+  // Entity-scoped data loading
+  useEffect(() => {
+    if (!activeBranch) return;
+
+    const key = getEntityStorageKey("education_students");
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setStudents(parsed);
+        if (parsed.length > 0) setSelectedStudent(parsed[0]);
+        else setSelectedStudent(null);
+      } catch {
+        setStudents([]);
+        setSelectedStudent(null);
+      }
+    } else {
+      setStudents([]);
+      setSelectedStudent(null);
+    }
+  }, [activeBranch?.id]);
+
+  const persistStudents = (updated: Student[]) => {
+    setStudents(updated);
+    try {
+      const key = getEntityStorageKey("education_students");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+  };
 
   const filteredStudents = students.filter(s => {
     const matchesSearch =
@@ -123,9 +118,13 @@ export default function EducationAcademyPage() {
       enrolledDate: new Date().toISOString().slice(0, 10)
     };
 
-    setStudents([newStudent, ...students]);
+    const updated = [newStudent, ...students];
+    persistStudents(updated);
     setSelectedStudent(newStudent);
     setIsEnrollModalOpen(false);
+    setName("");
+    setEmail("");
+    setPhone("");
   };
 
   return (
@@ -228,9 +227,28 @@ export default function EducationAcademyPage() {
         </div>
 
         {/* Student Directory & Details Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Student List (5 cols) */}
-          <div className="lg:col-span-5 space-y-3">
+        {filteredStudents.length === 0 ? (
+          <div className="bg-[#101422]/70 border border-dashed border-gray-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-xl">
+            <div className="w-16 h-16 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center shadow-inner">
+              <GraduationCap size={32} />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-white">No Students Enrolled in This Entity</h3>
+              <p className="text-xs text-gray-400 max-w-sm">
+                {activeBranch?.name ? `Student registry for "${activeBranch.name}" is clean with zero cross-tenant student data.` : "Enroll your first student into a cohort program to manage fees & attendance."}
+              </p>
+            </div>
+            <button
+              onClick={() => setIsEnrollModalOpen(true)}
+              className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-teal-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+            >
+              <Plus size={16} /> + Enroll First Student
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Student List (5 cols) */}
+            <div className="lg:col-span-5 space-y-3">
             {filteredStudents.map(student => {
               const isSelected = selectedStudent?.id === student.id;
               return (
@@ -310,7 +328,8 @@ export default function EducationAcademyPage() {
             </div>
           )}
         </div>
-      </div>
+      )}
+    </div>
 
       {/* ENROLL STUDENT MODAL */}
       {isEnrollModalOpen && (

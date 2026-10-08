@@ -129,7 +129,7 @@ const WORLD_LOCALE_DATA = [
   { country: "Uzbekistan", code: "UZ", currency: "UZS", currencyName: "Uzbekistani Som", timezone: "Asia/Tashkent" },
   { country: "Venezuela", code: "VE", currency: "VES", currencyName: "Venezuelan Bolívar", timezone: "America/Caracas" },
   { country: "Vietnam", code: "VN", currency: "VND", currencyName: "Vietnamese Dong", timezone: "Asia/Ho_Chi_Minh" },
-  { country: "Yemen", code: "YE", currency: "YER", timezone: "Yemeni Rial", timezone: "Asia/Aden" },
+  { country: "Yemen", code: "YE", currency: "YER", currencyName: "Yemeni Rial", timezone: "Asia/Aden" },
   { country: "Zimbabwe", code: "ZW", currency: "ZWL", currencyName: "Zimbabwean Dollar", timezone: "Africa/Harare" }
 ];
 

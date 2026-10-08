@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppHeader from "@/components/layout/AppHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import { 
   Folder, 
   FileText, 
@@ -50,91 +51,19 @@ type FolderItem = {
   color: string;
 };
 
-const INITIAL_FOLDERS: FolderItem[] = [
-  { id: "f-all", name: "All Enterprise Files", category: "all", filesCount: 12, color: "text-purple-400 bg-purple-500/10" },
-  { id: "f-finance", name: "Financial & Invoices", category: "finance", filesCount: 4, color: "text-emerald-400 bg-emerald-500/10" },
-  { id: "f-hr", name: "HR & Signed Contracts", category: "hr", filesCount: 3, color: "text-blue-400 bg-blue-500/10" },
-  { id: "f-product", name: "Product Specs & BOM", category: "product", filesCount: 2, color: "text-amber-400 bg-amber-500/10" },
-  { id: "f-legal", name: "Corporate Legal & NDA", category: "legal", filesCount: 2, color: "text-red-400 bg-red-500/10" },
-  { id: "f-marketing", name: "Brand & Pitch Decks", category: "marketing", filesCount: 1, color: "text-cyan-400 bg-cyan-500/10" },
-];
-
-const INITIAL_DOCS: DocumentItem[] = [
-  {
-    id: "DOC-1001",
-    name: "FY2026_Q3_Financial_Audit_Report.pdf",
-    folderId: "f-finance",
-    category: "finance",
-    extension: "pdf",
-    sizeMB: 3.4,
-    uploadedBy: "Elena Rostova",
-    uploadedAt: "2026-10-04",
-    version: "v2.1",
-    isEncrypted: true,
-    tags: ["Audit", "Q3", "Financial"],
-    sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-  },
-  {
-    id: "DOC-1002",
-    name: "Master_Service_Agreement_Template.docx",
-    folderId: "f-legal",
-    category: "legal",
-    extension: "docx",
-    sizeMB: 1.2,
-    uploadedBy: "Legal Counsel",
-    uploadedAt: "2026-09-28",
-    version: "v1.4",
-    isEncrypted: true,
-    tags: ["MSA", "Contract", "Standard"],
-    sha256: "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0"
-  },
-  {
-    id: "DOC-1003",
-    name: "Employee_Offer_Letter_Marcus_Vance.pdf",
-    folderId: "f-hr",
-    category: "hr",
-    extension: "pdf",
-    sizeMB: 0.8,
-    uploadedBy: "HR Department",
-    uploadedAt: "2026-10-02",
-    version: "v1.0",
-    isEncrypted: true,
-    tags: ["Recruitment", "Offer", "Signed"],
-    sha256: "7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069"
-  },
-  {
-    id: "DOC-1004",
-    name: "BOM_Specification_Gaming_Chair_v3.xlsx",
-    folderId: "f-product",
-    category: "product",
-    extension: "xlsx",
-    sizeMB: 2.1,
-    uploadedBy: "Alex Vance",
-    uploadedAt: "2026-10-05",
-    version: "v3.0",
-    isEncrypted: false,
-    tags: ["BOM", "Manufacturing", "Costing"],
-    sha256: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
-  },
-  {
-    id: "DOC-1005",
-    name: "Enterprise_Brand_Guidelines_2026.pdf",
-    folderId: "f-marketing",
-    category: "marketing",
-    extension: "pdf",
-    sizeMB: 14.5,
-    uploadedBy: "Creative Director",
-    uploadedAt: "2026-09-15",
-    version: "v1.0",
-    isEncrypted: false,
-    tags: ["Brand", "Design", "Media"],
-    sha256: "4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a"
-  }
+const DEFAULT_FOLDERS: FolderItem[] = [
+  { id: "f-all", name: "All Enterprise Files", category: "all", filesCount: 0, color: "text-purple-400 bg-purple-500/10" },
+  { id: "f-finance", name: "Financial & Invoices", category: "finance", filesCount: 0, color: "text-emerald-400 bg-emerald-500/10" },
+  { id: "f-hr", name: "HR & Signed Contracts", category: "hr", filesCount: 0, color: "text-blue-400 bg-blue-500/10" },
+  { id: "f-product", name: "Product Specs & BOM", category: "product", filesCount: 0, color: "text-amber-400 bg-amber-500/10" },
+  { id: "f-legal", name: "Corporate Legal & NDA", category: "legal", filesCount: 0, color: "text-red-400 bg-red-500/10" },
+  { id: "f-marketing", name: "Brand & Pitch Decks", category: "marketing", filesCount: 0, color: "text-cyan-400 bg-cyan-500/10" },
 ];
 
 export default function DocumentsPage() {
-  const [folders, setFolders] = useState<FolderItem[]>(INITIAL_FOLDERS);
-  const [documents, setDocuments] = useState<DocumentItem[]>(INITIAL_DOCS);
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const [folders, setFolders] = useState<FolderItem[]>(DEFAULT_FOLDERS);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<string>("f-all");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -154,6 +83,30 @@ export default function DocumentsPage() {
 
   // New Folder Form
   const [newFolderName, setNewFolderName] = useState("");
+
+  // Entity-scoped data loading
+  useEffect(() => {
+    if (!activeBranch) return;
+    const key = getEntityStorageKey("documents_items");
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        setDocuments(JSON.parse(saved));
+      } catch {
+        setDocuments([]);
+      }
+    } else {
+      setDocuments([]);
+    }
+  }, [activeBranch?.id]);
+
+  const persistDocuments = (updated: DocumentItem[]) => {
+    setDocuments(updated);
+    try {
+      const key = getEntityStorageKey("documents_items");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+  };
 
   const handleUploadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,7 +130,8 @@ export default function DocumentsPage() {
       sha256: Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")
     };
 
-    setDocuments([newDoc, ...documents]);
+    const updated = [newDoc, ...documents];
+    persistDocuments(updated);
     setFolders(folders.map(f => f.id === targetFolder.id ? { ...f, filesCount: f.filesCount + 1 } : f));
     setIsUploadModalOpen(false);
     setUploadFileName("");

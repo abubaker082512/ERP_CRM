@@ -65,8 +65,9 @@ export default function MeetLandingPage() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#0B0F19] via-[#0F172A] to-[#070B14] text-white flex flex-col font-sans">
             <StandardModuleHeader
-                title="Beraxis Meet"
-                subtitle="In-system encrypted video conferencing & instant virtual meeting rooms"
+                moduleName="Meet"
+                moduleIcon={<Video size={20} />}
+                searchPlaceholder="Search meetings..."
                 menuItems={[
                     { name: "Meet Hub", href: "/meet" },
                     { name: "Appointments", href: "/appointments" },

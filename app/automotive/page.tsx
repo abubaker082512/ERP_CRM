@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import {
   Wrench,
   Plus,
@@ -46,65 +47,14 @@ type JobCard = {
   openedDate: string;
 };
 
-const INITIAL_JOB_CARDS: JobCard[] = [
-  {
-    id: "JOB-2026-081",
-    vehicle: "2023 Porsche 911 Carrera 4S",
-    licensePlate: "CA-9XTR88",
-    vin: "WP0AB2A99PS248102",
-    customer: "David Richardson",
-    customerPhone: "+1 (415) 555-0199",
-    mechanic: "Alex Mercer (Master Tech)",
-    bay: "Bay 01 (Performance Lift)",
-    serviceRequested: "Annual Major Service, Spark Plugs, PDK Transmission Flush & Ceramic Brake Inspection",
-    estimatedLaborHours: 5.5,
-    actualLaborHours: 4.0,
-    partsTotal: 840.00,
-    laborTotal: 720.00,
-    status: "in_repair",
-    openedDate: "2026-10-07"
-  },
-  {
-    id: "JOB-2026-082",
-    vehicle: "2021 Toyota Land Cruiser V8",
-    licensePlate: "TX-44B910",
-    vin: "JTMCY7AJ4M4091244",
-    customer: "Elena Rostova",
-    customerPhone: "+1 (512) 555-0144",
-    mechanic: "Marcus Chen",
-    bay: "Bay 03 (Heavy Duty)",
-    serviceRequested: "Suspension Bushings Replacement, Front Wheel Alignment & AC Evaporator Service",
-    estimatedLaborHours: 4.0,
-    actualLaborHours: 3.5,
-    partsTotal: 395.00,
-    laborTotal: 480.00,
-    status: "ready_pickup",
-    openedDate: "2026-10-06"
-  },
-  {
-    id: "JOB-2026-083",
-    vehicle: "2024 Mercedes-Benz E350",
-    licensePlate: "NY-789XYZ",
-    vin: "W1KZF8DB8PA109822",
-    customer: "Marcus Vance",
-    customerPhone: "+1 (212) 555-0811",
-    mechanic: "Sam K.",
-    bay: "Bay 02 (Diagnostics)",
-    serviceRequested: "Check Engine Light Diagnosis: O2 Sensor bank 1 error code P0135",
-    estimatedLaborHours: 2.0,
-    actualLaborHours: 1.0,
-    partsTotal: 185.00,
-    laborTotal: 220.00,
-    status: "waiting_parts",
-    openedDate: "2026-10-08"
-  }
-];
+const INITIAL_JOB_CARDS: JobCard[] = [];
 
 export default function AutomotiveWorkshopPage() {
-  const [jobCards, setJobCards] = useState<JobCard[]>(INITIAL_JOB_CARDS);
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const [jobCards, setJobCards] = useState<JobCard[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [selectedJob, setSelectedJob] = useState<JobCard | null>(jobCards[0]);
+  const [selectedJob, setSelectedJob] = useState<JobCard | null>(null);
   const [isNewJobModalOpen, setIsNewJobModalOpen] = useState(false);
 
   // New Job Form State
@@ -118,6 +68,36 @@ export default function AutomotiveWorkshopPage() {
   const [bay, setBay] = useState("Bay 01");
   const [laborEst, setLaborEst] = useState(3.0);
   const [partsEst, setPartsEst] = useState(250.0);
+
+  // Entity-scoped data loading
+  useEffect(() => {
+    if (!activeBranch) return;
+
+    const key = getEntityStorageKey("automotive_jobs");
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setJobCards(parsed);
+        if (parsed.length > 0) setSelectedJob(parsed[0]);
+        else setSelectedJob(null);
+      } catch {
+        setJobCards([]);
+        setSelectedJob(null);
+      }
+    } else {
+      setJobCards([]);
+      setSelectedJob(null);
+    }
+  }, [activeBranch?.id]);
+
+  const persistJobCards = (updated: JobCard[]) => {
+    setJobCards(updated);
+    try {
+      const key = getEntityStorageKey("automotive_jobs");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+  };
 
   const filteredJobs = jobCards.filter(j => {
     const matchesSearch =
@@ -155,15 +135,23 @@ export default function AutomotiveWorkshopPage() {
       openedDate: new Date().toISOString().slice(0, 10)
     };
 
-    setJobCards([newJob, ...jobCards]);
+    const updated = [newJob, ...jobCards];
+    persistJobCards(updated);
     setSelectedJob(newJob);
     setIsNewJobModalOpen(false);
+
+    // Reset Form
+    setVehicle("");
+    setPlate("");
+    setVin("");
+    setCustomer("");
+    setPhone("");
+    setService("");
   };
 
   const handleAdvanceStatus = (jobId: string, nextStatus: JobCardStatus) => {
-    setJobCards(prev =>
-      prev.map(j => (j.id === jobId ? { ...j, status: nextStatus } : j))
-    );
+    const updated = jobCards.map(j => (j.id === jobId ? { ...j, status: nextStatus } : j));
+    persistJobCards(updated);
     if (selectedJob && selectedJob.id === jobId) {
       setSelectedJob({ ...selectedJob, status: nextStatus });
     }
@@ -277,9 +265,28 @@ export default function AutomotiveWorkshopPage() {
         </div>
 
         {/* Job Cards & Details Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Job Cards List (5 cols) */}
-          <div className="lg:col-span-5 space-y-3">
+        {filteredJobs.length === 0 ? (
+          <div className="bg-[#101422]/70 border border-dashed border-gray-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-xl">
+            <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center shadow-inner">
+              <Car size={32} />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-white">No Automotive Job Cards Open</h3>
+              <p className="text-xs text-gray-400 max-w-sm">
+                {activeBranch?.name ? `No active vehicle repair jobs found for "${activeBranch.name}".` : "Open a vehicle job card to assign repair bays, mechanics, and track parts & labor."}
+              </p>
+            </div>
+            <button
+              onClick={() => setIsNewJobModalOpen(true)}
+              className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-red-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+            >
+              <Plus size={16} /> + Open First Vehicle Job Card
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Job Cards List (5 cols) */}
+            <div className="lg:col-span-5 space-y-3">
             {filteredJobs.map(job => {
               const isSelected = selectedJob?.id === job.id;
               return (
@@ -400,7 +407,8 @@ export default function AutomotiveWorkshopPage() {
             </div>
           )}
         </div>
-      </div>
+      )}
+    </div>
 
       {/* NEW JOB MODAL */}
       {isNewJobModalOpen && (

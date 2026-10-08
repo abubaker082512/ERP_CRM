@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import {
   Grid3x3,
   Plus,
@@ -40,29 +41,48 @@ type RestaurantTable = {
   activeOrderTotal?: number;
 };
 
-const INITIAL_TABLES: RestaurantTable[] = [
-  { id: "tbl-01", number: "Table 01", zone: "Main Dining Hall", capacity: 4, currentGuests: 3, status: "occupied", server: "Michael B.", seatedSince: "11:15 AM", activeOrderTotal: 64.50 },
-  { id: "tbl-02", number: "Table 02", zone: "Main Dining Hall", capacity: 2, status: "available" },
-  { id: "tbl-03", number: "Table 03", zone: "Main Dining Hall", capacity: 4, currentGuests: 4, status: "billed", server: "Sarah L.", seatedSince: "10:45 AM", activeOrderTotal: 118.00 },
-  { id: "tbl-04", number: "Table 04", zone: "Main Dining Hall", capacity: 6, currentGuests: 5, status: "occupied", server: "Michael B.", seatedSince: "11:30 AM", activeOrderTotal: 142.20 },
-  { id: "tbl-05", number: "Patio P1", zone: "Outdoor Patio", capacity: 4, status: "available" },
-  { id: "tbl-06", number: "Patio P2", zone: "Outdoor Patio", capacity: 4, currentGuests: 2, status: "occupied", server: "Alex D.", seatedSince: "11:40 AM", activeOrderTotal: 38.00 },
-  { id: "tbl-07", number: "Patio P3", zone: "Outdoor Patio", capacity: 2, status: "reserved", server: "Hostess" },
-  { id: "tbl-08", number: "Bar Stool 01", zone: "Espresso Bar", capacity: 1, currentGuests: 1, status: "occupied", server: "Barista Sam", seatedSince: "11:48 AM", activeOrderTotal: 12.50 },
-  { id: "tbl-09", number: "Bar Stool 02", zone: "Espresso Bar", capacity: 1, status: "available" },
-  { id: "tbl-10", number: "VIP Room A", zone: "VIP Private Lounge", capacity: 12, currentGuests: 10, status: "occupied", server: "Maitre D'", seatedSince: "11:00 AM", activeOrderTotal: 385.00 }
-];
+const INITIAL_TABLES: RestaurantTable[] = [];
 
 export default function FloorPlanTablesPage() {
-  const [tables, setTables] = useState<RestaurantTable[]>(INITIAL_TABLES);
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [selectedZone, setSelectedZone] = useState<string>("ALL");
-  const [selectedTable, setSelectedTable] = useState<RestaurantTable | null>(tables[0]);
+  const [selectedTable, setSelectedTable] = useState<RestaurantTable | null>(null);
   const [isAddTableOpen, setIsAddTableOpen] = useState(false);
 
   // Add Table Form
   const [newTblNum, setNewTblNum] = useState("");
   const [newTblZone, setNewTblZone] = useState<any>("Main Dining Hall");
   const [newTblCap, setNewTblCap] = useState(4);
+
+  // Entity-scoped data loading
+  useEffect(() => {
+    if (!activeBranch) return;
+    const key = getEntityStorageKey("pos_tables");
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setTables(parsed);
+        if (parsed.length > 0) setSelectedTable(parsed[0]);
+        else setSelectedTable(null);
+      } catch {
+        setTables([]);
+        setSelectedTable(null);
+      }
+    } else {
+      setTables([]);
+      setSelectedTable(null);
+    }
+  }, [activeBranch?.id]);
+
+  const persistTables = (updated: RestaurantTable[]) => {
+    setTables(updated);
+    try {
+      const key = getEntityStorageKey("pos_tables");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+  };
 
   const zones = ["ALL", "Main Dining Hall", "Outdoor Patio", "Espresso Bar", "VIP Private Lounge"];
 
@@ -85,15 +105,16 @@ export default function FloorPlanTablesPage() {
       status: "available"
     };
 
-    setTables([...tables, newTbl]);
+    const updated = [...tables, newTbl];
+    persistTables(updated);
+    setSelectedTable(newTbl);
     setIsAddTableOpen(false);
     setNewTblNum("");
   };
 
   const handleUpdateStatus = (tableId: string, status: TableStatus) => {
-    setTables(prev =>
-      prev.map(t => (t.id === tableId ? { ...t, status, currentGuests: status === "available" ? undefined : t.currentGuests } : t))
-    );
+    const updated = tables.map(t => (t.id === tableId ? { ...t, status, currentGuests: status === "available" ? undefined : t.currentGuests } : t));
+    persistTables(updated);
     if (selectedTable && selectedTable.id === tableId) {
       setSelectedTable({ ...selectedTable, status });
     }
@@ -191,25 +212,42 @@ export default function FloorPlanTablesPage() {
         </div>
 
         {/* Interactive Floor Plan Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {filteredTables.map(tbl => {
-            const isSelected = selectedTable?.id === tbl.id;
-            return (
-              <div
-                key={tbl.id}
-                onClick={() => setSelectedTable(tbl)}
-                className={`p-4 rounded-3xl border cursor-pointer transition-all flex flex-col justify-between min-h-[160px] shadow-lg ${
-                  isSelected
-                    ? "bg-[#182035] border-purple-500 ring-2 ring-purple-500 shadow-purple-950/70"
-                    : tbl.status === "available"
-                    ? "bg-[#0d141e] border-emerald-500/30 hover:border-emerald-500/60"
-                    : tbl.status === "billed"
-                    ? "bg-[#181410] border-amber-500/40 hover:border-amber-500/70"
-                    : tbl.status === "reserved"
-                    ? "bg-[#14121a] border-blue-500/30"
-                    : "bg-[#141824] border-purple-500/40 hover:border-purple-500/70"
-                }`}
-              >
+        {filteredTables.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center border-2 border-dashed border-gray-800 rounded-3xl bg-[#0e121d]/40 max-w-xl mx-auto">
+            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-4 shadow-lg shadow-purple-900/20">
+              <Grid3x3 size={32} />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">No Dining Tables Configured</h3>
+            <p className="text-sm text-gray-400 max-w-sm mb-6">
+              Create dining tables, bar seating, patio spaces, or private rooms to manage floor layouts, seating capacity, and active tabs.
+            </p>
+            <button
+              onClick={() => setIsAddTableOpen(true)}
+              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95"
+            >
+              + Add First Table
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {filteredTables.map(tbl => {
+              const isSelected = selectedTable?.id === tbl.id;
+              return (
+                <div
+                  key={tbl.id}
+                  onClick={() => setSelectedTable(tbl)}
+                  className={`p-4 rounded-3xl border cursor-pointer transition-all flex flex-col justify-between min-h-[160px] shadow-lg ${
+                    isSelected
+                      ? "bg-[#182035] border-purple-500 ring-2 ring-purple-500 shadow-purple-950/70"
+                      : tbl.status === "available"
+                      ? "bg-[#0d141e] border-emerald-500/30 hover:border-emerald-500/60"
+                      : tbl.status === "billed"
+                      ? "bg-[#181410] border-amber-500/40 hover:border-amber-500/70"
+                      : tbl.status === "reserved"
+                      ? "bg-[#14121a] border-blue-500/30"
+                      : "bg-[#141824] border-purple-500/40 hover:border-purple-500/70"
+                  }`}
+                >
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="text-[10px] text-gray-400 font-bold uppercase">{tbl.zone}</span>
@@ -258,6 +296,7 @@ export default function FloorPlanTablesPage() {
             );
           })}
         </div>
+        )}
       </div>
 
       {/* ADD TABLE MODAL */}

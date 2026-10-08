@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import {
   BookOpen,
   Plus,
@@ -57,68 +58,17 @@ type WasteRecord = {
   loggedBy: string;
 };
 
-const INITIAL_RECIPES: Recipe[] = [
-  {
-    id: "REC-001",
-    name: "Artisan French Butter Croissant (Batch of 12)",
-    category: "Bakery",
-    sellingPrice: 4.50, // per piece = $54 batch
-    yieldCount: 12,
-    prepTimeMinutes: 180,
-    notes: "Laminated dough with 84% European dry butter. Rest 12 hours in proofer.",
-    ingredients: [
-      { id: "ing-1", name: "High-Protein T55 Flour", unit: "kg", quantity: 1.0, costPerUnit: 1.80 },
-      { id: "ing-2", name: "Beurre d'Isigny Butter", unit: "g", quantity: 500, costPerUnit: 0.018 },
-      { id: "ing-3", name: "Whole Milk", unit: "ml", quantity: 300, costPerUnit: 0.002 },
-      { id: "ing-4", name: "Active Dry Yeast", unit: "g", quantity: 20, costPerUnit: 0.03 },
-      { id: "ing-5", name: "Organic Brown Cane Sugar", unit: "g", quantity: 120, costPerUnit: 0.004 }
-    ]
-  },
-  {
-    id: "REC-002",
-    name: "Artisan Truffle Beef Burger",
-    category: "Mains",
-    sellingPrice: 16.50,
-    yieldCount: 1,
-    prepTimeMinutes: 12,
-    notes: "Sear patty on flat-top 3 mins per side for medium-rare.",
-    ingredients: [
-      { id: "ing-6", name: "Wagyu / Angus Beef Blend Patty", unit: "pcs", quantity: 1, costPerUnit: 3.20 },
-      { id: "ing-7", name: "Brioche Sesame Bun", unit: "pcs", quantity: 1, costPerUnit: 0.85 },
-      { id: "ing-8", name: "Black Truffle Aioli Sauce", unit: "ml", quantity: 30, costPerUnit: 0.025 },
-      { id: "ing-9", name: "Aged White Cheddar", unit: "slices", quantity: 2, costPerUnit: 0.40 },
-      { id: "ing-10", name: "Caramelized Shallots & Arugula", unit: "g", quantity: 40, costPerUnit: 0.015 }
-    ]
-  },
-  {
-    id: "REC-003",
-    name: "Double Shot Oat Milk Flat White",
-    category: "Coffee & Drinks",
-    sellingPrice: 5.50,
-    yieldCount: 1,
-    prepTimeMinutes: 3,
-    notes: "Double ristretto extraction with microfoam latte art.",
-    ingredients: [
-      { id: "ing-11", name: "Single-Origin Specialty Beans", unit: "g", quantity: 18, costPerUnit: 0.035 },
-      { id: "ing-12", name: "Barista Edition Oat Milk", unit: "ml", quantity: 220, costPerUnit: 0.004 },
-      { id: "ing-13", name: "Eco Compostable Cup & Lid", unit: "pcs", quantity: 1, costPerUnit: 0.22 }
-    ]
-  }
-];
-
-const INITIAL_WASTE: WasteRecord[] = [
-  { id: "WST-01", date: "2026-10-07", item: "Croissant Batch (Burnt)", qty: "6 pcs", reason: "Burnt / Overcooked", estimatedLoss: 14.50, loggedBy: "Chef Jean" },
-  { id: "WST-02", date: "2026-10-06", item: "Oat Milk (Open past 5 days)", qty: "2 Liters", reason: "Expired", estimatedLoss: 7.20, loggedBy: "Barista Sam" },
-  { id: "WST-03", date: "2026-10-05", item: "Brioche Buns (Crushed in box)", qty: "8 pcs", reason: "Dropped / Damaged", estimatedLoss: 6.80, loggedBy: "Sous Chef Maria" }
-];
+const INITIAL_RECIPES: Recipe[] = [];
+const INITIAL_WASTE: WasteRecord[] = [];
 
 export default function RecipeBOMPage() {
-  const [recipes, setRecipes] = useState<Recipe[]>(INITIAL_RECIPES);
-  const [wasteLogs, setWasteLogs] = useState<WasteRecord[]>(INITIAL_WASTE);
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [wasteLogs, setWasteLogs] = useState<WasteRecord[]>([]);
   const [activeTab, setActiveTab] = useState<"recipes" | "waste">("recipes");
   const [searchQuery, setSearchQuery] = useState("");
   const [isNewRecipeModalOpen, setIsNewRecipeModalOpen] = useState(false);
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(recipes[0]);
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   // Form State
   const [newRecName, setNewRecName] = useState("");
@@ -127,6 +77,48 @@ export default function RecipeBOMPage() {
   const [newRecYield, setNewRecYield] = useState(1);
   const [newRecTime, setNewRecTime] = useState(15);
   const [newRecNotes, setNewRecNotes] = useState("");
+
+  // Entity-scoped data loading
+  useEffect(() => {
+    if (!activeBranch) return;
+    const recKey = getEntityStorageKey("pos_recipes");
+    const wasteKey = getEntityStorageKey("pos_waste_logs");
+
+    const savedRec = localStorage.getItem(recKey);
+    if (savedRec) {
+      try {
+        const parsed = JSON.parse(savedRec);
+        setRecipes(parsed);
+        if (parsed.length > 0) setSelectedRecipe(parsed[0]);
+        else setSelectedRecipe(null);
+      } catch {
+        setRecipes([]);
+        setSelectedRecipe(null);
+      }
+    } else {
+      setRecipes([]);
+      setSelectedRecipe(null);
+    }
+
+    const savedWaste = localStorage.getItem(wasteKey);
+    if (savedWaste) {
+      try {
+        setWasteLogs(JSON.parse(savedWaste));
+      } catch {
+        setWasteLogs([]);
+      }
+    } else {
+      setWasteLogs([]);
+    }
+  }, [activeBranch?.id]);
+
+  const persistRecipes = (updated: Recipe[]) => {
+    setRecipes(updated);
+    try {
+      const key = getEntityStorageKey("pos_recipes");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+  };
 
   const calculateTotalCost = (recipe: Recipe) => {
     return recipe.ingredients.reduce((acc, ing) => acc + (ing.quantity * ing.costPerUnit), 0);
@@ -155,7 +147,8 @@ export default function RecipeBOMPage() {
       ]
     };
 
-    setRecipes([newRec, ...recipes]);
+    const updated = [newRec, ...recipes];
+    persistRecipes(updated);
     setSelectedRecipe(newRec);
     setIsNewRecipeModalOpen(false);
     setNewRecName("");
@@ -251,127 +244,145 @@ export default function RecipeBOMPage() {
 
         {/* TAB 1: RECIPES EXPLORER */}
         {activeTab === "recipes" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column: Recipe List (5 cols) */}
-            <div className="lg:col-span-5 space-y-3">
-              {recipes.map(rec => {
-                const totalCost = calculateTotalCost(rec);
-                const costPerPiece = calculateCostPerPiece(rec);
-                const foodCostPct = ((costPerPiece / rec.sellingPrice) * 100).toFixed(1);
-                const isSelected = selectedRecipe?.id === rec.id;
-
-                return (
-                  <div
-                    key={rec.id}
-                    onClick={() => setSelectedRecipe(rec)}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-3 ${
-                      isSelected
-                        ? "bg-[#151b2c] border-purple-500 shadow-xl shadow-purple-950/60 ring-1 ring-purple-500"
-                        : "bg-[#101422] border-gray-800 hover:border-gray-700"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 block">{rec.category}</span>
-                        <h4 className="font-bold text-white text-sm mt-0.5">{rec.name}</h4>
-                      </div>
-                      <span className="font-bold text-emerald-400 text-sm">${rec.sellingPrice.toFixed(2)}</span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 bg-gray-900/70 p-2.5 rounded-xl border border-gray-800 text-[11px]">
-                      <div>
-                        <span className="text-gray-500 block text-[9px] uppercase">Yield</span>
-                        <span className="font-semibold text-white">{rec.yieldCount} {rec.yieldCount > 1 ? "pcs" : "portion"}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500 block text-[9px] uppercase">Ingredient Cost</span>
-                        <span className="font-bold text-amber-400">${costPerPiece.toFixed(2)} / pc</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500 block text-[9px] uppercase">Food Cost %</span>
-                        <span className={`font-bold ${Number(foodCostPct) <= 30 ? "text-emerald-400" : "text-red-400"}`}>
-                          {foodCostPct}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+          recipes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 px-4 text-center border-2 border-dashed border-gray-800 rounded-3xl bg-[#0e121d]/40 max-w-xl mx-auto">
+              <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-4 shadow-lg shadow-purple-900/20">
+                <BookOpen size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">No Recipes Formulated Yet</h3>
+              <p className="text-sm text-gray-400 max-w-sm mb-6">
+                Create Bill of Materials (BOM) for dishes, beverages, and bakery items to enable automated raw material deduction on checkout.
+              </p>
+              <button
+                onClick={() => setIsNewRecipeModalOpen(true)}
+                className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95"
+              >
+                + Formulate First Recipe
+              </button>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Recipe List (5 cols) */}
+              <div className="lg:col-span-5 space-y-3">
+                {recipes.map(rec => {
+                  const totalCost = calculateTotalCost(rec);
+                  const costPerPiece = calculateCostPerPiece(rec);
+                  const foodCostPct = ((costPerPiece / rec.sellingPrice) * 100).toFixed(1);
+                  const isSelected = selectedRecipe?.id === rec.id;
 
-            {/* Right Column: Detailed Recipe Breakdown (7 cols) */}
-            {selectedRecipe && (
-              <div className="lg:col-span-7 bg-[#101422] rounded-3xl border border-gray-800 p-6 space-y-6 shadow-2xl">
-                <div className="border-b border-gray-800 pb-4 flex items-start justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">{selectedRecipe.id}</span>
-                    <h3 className="text-xl font-extrabold text-white mt-0.5">{selectedRecipe.name}</h3>
-                    <p className="text-xs text-gray-400">{selectedRecipe.notes}</p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                    Prep Time: {selectedRecipe.prepTimeMinutes} mins
-                  </span>
-                </div>
+                  return (
+                    <div
+                      key={rec.id}
+                      onClick={() => setSelectedRecipe(rec)}
+                      className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-3 ${
+                        isSelected
+                          ? "bg-[#151b2c] border-purple-500 shadow-xl shadow-purple-950/60 ring-1 ring-purple-500"
+                          : "bg-[#101422] border-gray-800 hover:border-gray-700"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 block">{rec.category}</span>
+                          <h4 className="font-bold text-white text-sm mt-0.5">{rec.name}</h4>
+                        </div>
+                        <span className="font-bold text-emerald-400 text-sm">${rec.sellingPrice.toFixed(2)}</span>
+                      </div>
 
-                {/* Ingredient Formulation Table */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-white text-xs uppercase tracking-wider flex items-center gap-1.5">
-                      <Layers size={14} className="text-purple-400" /> Raw Material Ingredients ({selectedRecipe.ingredients.length})
-                    </h4>
-                    <span className="text-xs text-gray-400">Directly deduces from stock upon checkout</span>
-                  </div>
+                      <div className="grid grid-cols-3 gap-2 bg-gray-900/70 p-2.5 rounded-xl border border-gray-800 text-[11px]">
+                        <div>
+                          <span className="text-gray-500 block text-[9px] uppercase">Yield</span>
+                          <span className="font-semibold text-white">{rec.yieldCount} {rec.yieldCount > 1 ? "pcs" : "portion"}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 block text-[9px] uppercase">Ingredient Cost</span>
+                          <span className="font-bold text-amber-400">${costPerPiece.toFixed(2)} / pc</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 block text-[9px] uppercase">Food Cost %</span>
+                          <span className={`font-bold ${Number(foodCostPct) <= 30 ? "text-emerald-400" : "text-red-400"}`}>
+                            {foodCostPct}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-                  <div className="bg-gray-950/70 rounded-2xl border border-gray-800/80 overflow-hidden">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-gray-900 text-gray-400 font-bold border-b border-gray-800 text-[10px] uppercase">
-                        <tr>
-                          <th className="px-3.5 py-2.5">Raw Material / Stock Item</th>
-                          <th className="px-3.5 py-2.5">Portion Quantity</th>
-                          <th className="px-3.5 py-2.5">Unit Cost</th>
-                          <th className="px-3.5 py-2.5 text-right">Extended Cost</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-800/60 text-gray-200">
-                        {selectedRecipe.ingredients.map(ing => (
-                          <tr key={ing.id} className="hover:bg-gray-900/40">
-                            <td className="px-3.5 py-2.5 font-semibold text-white">{ing.name}</td>
-                            <td className="px-3.5 py-2.5 font-mono text-purple-300">{ing.quantity} {ing.unit}</td>
-                            <td className="px-3.5 py-2.5 text-gray-400">${ing.costPerUnit.toFixed(3)}</td>
-                            <td className="px-3.5 py-2.5 text-right font-bold text-emerald-400">
-                              ${(ing.quantity * ing.costPerUnit).toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Commercial Financials Summary */}
-                <div className="bg-gradient-to-r from-purple-950/30 via-indigo-950/30 to-purple-950/30 p-4 rounded-2xl border border-purple-500/20 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase">Total Batch COGS</span>
-                    <span className="font-bold text-white text-base">${calculateTotalCost(selectedRecipe).toFixed(2)}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase">Per Serving Cost</span>
-                    <span className="font-bold text-amber-400 text-base">${calculateCostPerPiece(selectedRecipe).toFixed(2)}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase">Menu Retail Price</span>
-                    <span className="font-bold text-emerald-400 text-base">${selectedRecipe.sellingPrice.toFixed(2)}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase">Gross Profit Margin</span>
-                    <span className="font-bold text-purple-300 text-base">
-                      {(((selectedRecipe.sellingPrice - calculateCostPerPiece(selectedRecipe)) / selectedRecipe.sellingPrice) * 100).toFixed(1)}%
+              {/* Right Column: Detailed Recipe Breakdown (7 cols) */}
+              {selectedRecipe && (
+                <div className="lg:col-span-7 bg-[#101422] rounded-3xl border border-gray-800 p-6 space-y-6 shadow-2xl">
+                  <div className="border-b border-gray-800 pb-4 flex items-start justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">{selectedRecipe.id}</span>
+                      <h3 className="text-xl font-extrabold text-white mt-0.5">{selectedRecipe.name}</h3>
+                      <p className="text-xs text-gray-400">{selectedRecipe.notes}</p>
+                    </div>
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      Prep Time: {selectedRecipe.prepTimeMinutes} mins
                     </span>
                   </div>
+
+                  {/* Ingredient Formulation Table */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-white text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <Layers size={14} className="text-purple-400" /> Raw Material Ingredients ({selectedRecipe.ingredients.length})
+                      </h4>
+                      <span className="text-xs text-gray-400">Directly deduces from stock upon checkout</span>
+                    </div>
+
+                    <div className="bg-gray-950/70 rounded-2xl border border-gray-800/80 overflow-hidden">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-gray-900 text-gray-400 font-bold border-b border-gray-800 text-[10px] uppercase">
+                          <tr>
+                            <th className="px-3.5 py-2.5">Raw Material / Stock Item</th>
+                            <th className="px-3.5 py-2.5">Portion Quantity</th>
+                            <th className="px-3.5 py-2.5">Unit Cost</th>
+                            <th className="px-3.5 py-2.5 text-right">Extended Cost</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-800/60 text-gray-200">
+                          {selectedRecipe.ingredients.map(ing => (
+                            <tr key={ing.id} className="hover:bg-gray-900/40">
+                              <td className="px-3.5 py-2.5 font-semibold text-white">{ing.name}</td>
+                              <td className="px-3.5 py-2.5 font-mono text-purple-300">{ing.quantity} {ing.unit}</td>
+                              <td className="px-3.5 py-2.5 text-gray-400">${ing.costPerUnit.toFixed(3)}</td>
+                              <td className="px-3.5 py-2.5 text-right font-bold text-emerald-400">
+                                ${(ing.quantity * ing.costPerUnit).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Commercial Financials Summary */}
+                  <div className="bg-gradient-to-r from-purple-950/30 via-indigo-950/30 to-purple-950/30 p-4 rounded-2xl border border-purple-500/20 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <span className="text-gray-400 block text-[10px] uppercase">Total Batch COGS</span>
+                      <span className="font-bold text-white text-base">${calculateTotalCost(selectedRecipe).toFixed(2)}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block text-[10px] uppercase">Per Serving Cost</span>
+                      <span className="font-bold text-amber-400 text-base">${calculateCostPerPiece(selectedRecipe).toFixed(2)}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block text-[10px] uppercase">Menu Retail Price</span>
+                      <span className="font-bold text-emerald-400 text-base">${selectedRecipe.sellingPrice.toFixed(2)}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block text-[10px] uppercase">Gross Profit Margin</span>
+                      <span className="font-bold text-purple-300 text-base">
+                        {(((selectedRecipe.sellingPrice - calculateCostPerPiece(selectedRecipe)) / selectedRecipe.sellingPrice) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )
         )}
 
         {/* TAB 2: KITCHEN WASTE & SPOILAGE LOG */}
@@ -384,36 +395,42 @@ export default function RecipeBOMPage() {
               </div>
             </div>
 
-            <div className="bg-gray-950/70 rounded-2xl border border-gray-800/80 overflow-hidden">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-gray-900 text-gray-400 font-bold border-b border-gray-800 text-[10px] uppercase">
-                  <tr>
-                    <th className="px-4 py-3">Log ID</th>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Wasted Item & Quantity</th>
-                    <th className="px-4 py-3">Cause / Reason</th>
-                    <th className="px-4 py-3">Estimated Loss</th>
-                    <th className="px-4 py-3 text-right">Logged By</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800/60 text-gray-200">
-                  {wasteLogs.map(log => (
-                    <tr key={log.id} className="hover:bg-gray-900/40">
-                      <td className="px-4 py-3 font-mono font-bold text-purple-400">{log.id}</td>
-                      <td className="px-4 py-3 text-gray-400">{log.date}</td>
-                      <td className="px-4 py-3 font-semibold text-white">{log.item} ({log.qty})</td>
-                      <td className="px-4 py-3">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20">
-                          {log.reason}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-bold text-red-400">${log.estimatedLoss.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-right text-gray-400">{log.loggedBy}</td>
+            {wasteLogs.length === 0 ? (
+              <div className="py-12 text-center border-2 border-dashed border-gray-800 rounded-2xl">
+                <p className="text-xs text-gray-500">No spoilage or waste incidents logged for this entity.</p>
+              </div>
+            ) : (
+              <div className="bg-gray-950/70 rounded-2xl border border-gray-800/80 overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-gray-900 text-gray-400 font-bold border-b border-gray-800 text-[10px] uppercase">
+                    <tr>
+                      <th className="px-4 py-3">Log ID</th>
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Wasted Item & Quantity</th>
+                      <th className="px-4 py-3">Cause / Reason</th>
+                      <th className="px-4 py-3">Estimated Loss</th>
+                      <th className="px-4 py-3 text-right">Logged By</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800/60 text-gray-200">
+                    {wasteLogs.map(log => (
+                      <tr key={log.id} className="hover:bg-gray-900/40">
+                        <td className="px-4 py-3 font-mono font-bold text-purple-400">{log.id}</td>
+                        <td className="px-4 py-3 text-gray-400">{log.date}</td>
+                        <td className="px-4 py-3 font-semibold text-white">{log.item} ({log.qty})</td>
+                        <td className="px-4 py-3">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20">
+                            {log.reason}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 font-bold text-red-400">${log.estimatedLoss.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right text-gray-400">{log.loggedBy}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>

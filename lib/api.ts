@@ -18,7 +18,7 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
         headers['Content-Type'] = 'application/json';
     }
 
-    // Retrieve token from localStorage if in browser environment
+    // Retrieve token & active branch from localStorage if in browser environment
     if (typeof window !== 'undefined') {
         const directToken = localStorage.getItem('token');
         if (directToken && directToken !== 'null' && directToken !== 'undefined' && directToken.length > 10) {
@@ -35,6 +35,12 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
                     // silent fail
                 }
             }
+        }
+
+        const activeBranchId = localStorage.getItem('beraxis_active_branch_id');
+        if (activeBranchId) {
+            headers['X-Company-Id'] = activeBranchId;
+            headers['X-Branch-Id'] = activeBranchId;
         }
     }
 
