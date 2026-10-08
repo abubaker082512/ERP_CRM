@@ -8,7 +8,8 @@ export type GlobalIndustryId =
   | "real_estate"
   | "automotive_workshop"
   | "construction_contracting"
-  | "education_academies";
+  | "education_academies"
+  | "fitness_sports_club";
 
 export type OperationMode = {
   id: string;
@@ -419,6 +420,49 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
     ],
     defaultDepartments: ["Site Engineering", "Project Management", "Subcontractor Sourcing", "Safety & Compliance"],
     defaultRoles: ["Project Executive", "Site Superintendent", "Quantity Surveyor", "Safety Inspector"]
+  },
+  {
+    id: "fitness_sports_club",
+    name: "Gyms, Fitness & Sports / Padel Clubs",
+    tagline: "Padel Clubs, Fitness Gyms, Martial Arts & Sports Arenas",
+    description: "Court & arena bookings, membership tiers & pass renewals, biometric turnstile check-in, class schedules, and pro-shop POS.",
+    iconName: "Dumbbell",
+    themeColor: "bg-emerald-600",
+    accentColor: "text-emerald-400",
+    borderColor: "border-emerald-500/30",
+    subSectors: [
+      "Padel & Racquet Club (Indoor/Outdoor)",
+      "Fitness Gym & Strength Center",
+      "CrossFit, Boxing & Martial Arts Dojo",
+      "Yoga, Pilates & Wellness Studio",
+      "Swimming Pool & Aquatic Club",
+      "Multi-Sport & Turf Arena",
+      "Golf Simulator & Country Club"
+    ],
+    operationModes: [
+      { id: "court_facility_booking", name: "Court & Arena Booking", description: "60/90-min court reservations with racket & ball rental add-ons.", badge: "🎾 Court Booking" },
+      { id: "membership_tiers", name: "Tiered Memberships & Passes", description: "Monthly/annual memberships with RFID & turnstile check-in.", badge: "🎟️ Membership" },
+      { id: "class_personal_training", name: "Group Classes & PT Sessions", description: "Class schedules, trainer rosters, and punch-card packages.", badge: "🏋️ Group & PT" }
+    ],
+    defaultModules: [
+      "/club",
+      "/pos",
+      "/appointments",
+      "/calendar",
+      "/attendances",
+      "/accounting",
+      "/contacts",
+      "/employees",
+      "/planning",
+      "/sign"
+    ],
+    specializedRoutes: [
+      { name: "Club & Facility Hub", href: "/club", icon: "Dumbbell" },
+      { name: "Court & Bay Matrix", href: "/club", icon: "Calendar" },
+      { name: "Membership Passes", href: "/club", icon: "CreditCard" }
+    ],
+    defaultDepartments: ["Front Desk & Court Operations", "Fitness Coaching & Personal Trainers", "Pro Shop & Clubhouse Cafe", "Facility & Court Maintenance", "Member Relations & Sales"],
+    defaultRoles: ["Club Operations Director", "Head Padel / Tennis Coach", "Head Fitness Trainer", "Front Desk Concierge", "Court Maintenance Lead", "Membership Sales Lead"]
   }
 ];
 

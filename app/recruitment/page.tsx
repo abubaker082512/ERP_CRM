@@ -40,7 +40,7 @@ import {
   CustomQuestion, 
   JobFormConfig, 
   DEFAULT_JOBS 
-} from "./apply/page";
+} from "@/lib/recruitmentTypes";
 
 type Stage = "initial" | "interview1" | "tech_test" | "offer" | "hired" | "rejected";
 

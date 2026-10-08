@@ -22,44 +22,11 @@ import {
   Check
 } from "lucide-react";
 
-export type CustomQuestion = {
-  id: string;
-  question: string;
-  type: "text" | "select" | "yes_no" | "number";
-  options?: string[];
-  required: boolean;
-};
-
-export type JobFormConfig = {
-  require_phone: boolean;
-  require_resume: boolean;
-  require_linkedin: boolean;
-  require_portfolio: boolean;
-  require_cover_letter: boolean;
-  require_notice_period: boolean;
-  require_expected_salary: boolean;
-  custom_questions: CustomQuestion[];
-};
-
-export type Job = {
-  id: string;
-  name: string;
-  department: string;
-  no_of_recruitment: number;
-  applicants_count: number;
-  state: "open" | "closed" | "draft";
-  salary_range: string;
-  location: string;
-  work_policy: "Remote" | "Hybrid" | "On-site";
-  employment_type: "Full-time" | "Contract" | "Part-time" | "Internship";
-  experience_level: "Entry" | "Mid" | "Senior" | "Lead" | "Executive";
-  description: string;
-  responsibilities: string[];
-  requirements: string[];
-  benefits: string[];
-  closing_date: string;
-  form_config: JobFormConfig;
-};
+import {
+  Job,
+  CustomQuestion,
+  JobFormConfig
+} from "@/lib/recruitmentTypes";
 
 const DEFAULT_JOBS: Job[] = [
   {

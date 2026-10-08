@@ -29,7 +29,8 @@ import {
   Wrench,
   UtensilsCrossed,
   HelpCircle,
-  Plus
+  Plus,
+  Dumbbell
 } from "lucide-react";
 
 // Icon mapping
@@ -43,11 +44,13 @@ const ICON_MAP: Record<string, any> = {
   Building: Building2,
   Wrench,
   HardHat,
-  GraduationCap
+  GraduationCap,
+  Dumbbell
 };
 
 // All available 30+ Enterprise Modules
 const ALL_SYSTEM_MODULES = [
+  { name: "Club & Fitness Hub", href: "/club", category: "Sports & Fitness", icon: Dumbbell, color: "bg-emerald-600" },
   { name: "Point of Sale (POS)", href: "/pos", category: "Commerce", icon: ShoppingBag, color: "bg-amber-600" },
   { name: "Kitchen Display (KDS)", href: "/pos/kds", category: "Food & Beverage", icon: UtensilsCrossed, color: "bg-red-600" },
   { name: "Recipe & BOM Costing", href: "/pos/recipes", category: "Food & Beverage", icon: Layers, color: "bg-orange-600" },

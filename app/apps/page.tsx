@@ -40,7 +40,8 @@ import {
     Check,
     ChevronRight,
     Sliders,
-    X
+    X,
+    Dumbbell
 } from "lucide-react";
 import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
 import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
@@ -59,11 +60,15 @@ const INDUSTRY_ICON_MAP: Record<string, any> = {
     Building: Building2,
     Wrench,
     HardHat,
-    GraduationCap
+    GraduationCap,
+    Dumbbell
 };
 
 // All 30+ Enterprise apps with vibrant colors matching Screenshot 1
 const allApps = [
+    // Specialized Industry & Sports Hubs
+    { name: "Club & Fitness", icon: Dumbbell, color: "bg-emerald-600", href: "/club" },
+    
     // Commerce & POS
     { name: "Point of Sale", icon: ShoppingCart, color: "bg-amber-600", href: "/pos" },
     { name: "Kitchen Display", icon: UtensilsCrossed, color: "bg-red-600", href: "/pos/kds" },
