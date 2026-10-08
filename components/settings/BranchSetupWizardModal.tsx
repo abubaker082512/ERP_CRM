@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   GLOBAL_INDUSTRIES,
   GlobalIndustryId,
@@ -129,7 +130,12 @@ export default function BranchSetupWizardModal({
     editingBranch?.enabledModules || getIndustryById(selectedIndustryId).defaultModules
   );
 
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const currentIndustry = getIndustryById(selectedIndustryId);
 
@@ -236,9 +242,9 @@ export default function BranchSetupWizardModal({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto selection:bg-purple-500 selection:text-white">
-      <div className="bg-[#0b0e17] border border-gray-700/80 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl relative text-white">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto selection:bg-purple-500 selection:text-white">
+      <div className="bg-[#0b0e17] border border-gray-700/80 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl relative text-white my-auto">
         {/* Wizard Header */}
         <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-[#101524] rounded-t-3xl shrink-0">
           <div className="flex items-center gap-3">
@@ -694,6 +700,7 @@ export default function BranchSetupWizardModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
