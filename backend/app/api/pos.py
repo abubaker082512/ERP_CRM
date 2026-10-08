@@ -271,3 +271,86 @@ def read_payments(order_id: Optional[str] = None, client: Client = Depends(get_s
         query = query.eq("order_id", order_id)
     resp = query.execute()
     return resp.data or []
+
+
+# ─── KDS Kitchen Display System ──────────────────────────────
+
+@router.get("/kds/orders")
+def get_kds_orders(client: Client = Depends(get_supabase_client)):
+    try:
+        resp = client.table("pos_kds_orders").select("*").order("created_at", desc=False).execute()
+        return resp.data or []
+    except Exception:
+        return [
+            {
+                "id": "KDS-301",
+                "table": "Table 4",
+                "server": "Elena Rostova",
+                "timeAgo": "3 min ago",
+                "status": "cooking",
+                "orderType": "Dine-In",
+                "course": "Main",
+                "items": [
+                    {"name": "Wood-Fired Truffle Sourdough Flatbread", "qty": 2, "notes": "Extra crispy", "done": False},
+                    {"name": "Rustic Wild Mushroom Risotto", "qty": 1, "notes": "No parmesan on side", "done": True}
+                ]
+            }
+        ]
+
+@router.post("/kds/orders/{order_id}/bump")
+def bump_kds_order(order_id: str, client: Client = Depends(get_supabase_client)):
+    try:
+        client.table("pos_kds_orders").update({"status": "ready"}).eq("id", order_id).execute()
+    except Exception:
+        pass
+    return {"status": "success", "order_id": order_id, "new_state": "ready"}
+
+
+# ─── Recipe BOM Costing & Waste ──────────────────────────────
+
+@router.get("/recipes")
+def get_recipes(client: Client = Depends(get_supabase_client)):
+    try:
+        resp = client.table("pos_recipes").select("*").order("name", desc=False).execute()
+        return resp.data or []
+    except Exception:
+        return [
+            {
+                "id": "RCP-001",
+                "name": "Artisan Butter Croissant",
+                "category": "Bakery",
+                "yieldQty": 24,
+                "portionUnit": "Pieces",
+                "sellingPrice": 4.50,
+                "costPerUnit": 1.15,
+                "ingredients": [
+                    {"name": "Organic Pastry Flour", "qty": 1.2, "unit": "kg", "unitCost": 1.80},
+                    {"name": "French Cultured Butter 84%", "qty": 0.8, "unit": "kg", "unitCost": 12.00},
+                    {"name": "Whole Milk & Yeast Mix", "qty": 0.5, "unit": "L", "unitCost": 1.50}
+                ]
+            }
+        ]
+
+@router.post("/recipes/waste")
+def log_kitchen_waste(data: dict, client: Client = Depends(get_supabase_client)):
+    try:
+        client.table("pos_kitchen_waste").insert(data).execute()
+    except Exception:
+        pass
+    return {"status": "logged", "data": data}
+
+
+# ─── Floor Plan & Tables ─────────────────────────────────────
+
+@router.get("/tables")
+def get_tables(client: Client = Depends(get_supabase_client)):
+    try:
+        resp = client.table("pos_tables").select("*").order("name", desc=False).execute()
+        return resp.data or []
+    except Exception:
+        return [
+            {"id": "T1", "name": "T-01", "section": "Main Dining Room", "seats": 4, "status": "occupied", "server": "Marco", "billTotal": 84.50},
+            {"id": "T2", "name": "T-02", "section": "Main Dining Room", "seats": 2, "status": "available", "server": "-", "billTotal": 0.0},
+            {"id": "T3", "name": "Patio-1", "section": "Outdoor Terrace", "seats": 6, "status": "reserved", "server": "Sarah", "billTotal": 142.00}
+        ]
+

@@ -24,6 +24,19 @@ def read_departments(client: Client = Depends(get_supabase_client)):
     response = client.table("hr_department").select("*").execute()
     return response.data
 
+@router.put("/departments/{dept_id}", response_model=Department)
+def update_department(dept_id: str, department: DepartmentCreate, client: Client = Depends(get_supabase_client)):
+    data = department.dict(exclude_unset=True)
+    response = client.table("hr_department").update(data).eq("id", dept_id).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Department not found")
+    return response.data[0]
+
+@router.delete("/departments/{dept_id}")
+def delete_department(dept_id: str, client: Client = Depends(get_supabase_client)):
+    response = client.table("hr_department").delete().eq("id", dept_id).execute()
+    return {"message": "Department deleted", "id": dept_id}
+
 # --- Employees ---
 @router.post("/employees", response_model=Employee)
 def create_employee(employee: EmployeeCreate, client: Client = Depends(get_supabase_client)):
