@@ -52,6 +52,25 @@ export default function UniversalBranchSwitcher() {
     setIsOpen(false);
   };
 
+  if (!activeBranch) {
+    return (
+      <>
+        <button
+          onClick={handleOpenNewBranch}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white transition-all shadow-md active:scale-95 shrink-0"
+        >
+          <Plus size={14} />
+          <span>+ Add Company</span>
+        </button>
+        <BranchSetupWizardModal
+          isOpen={isWizardOpen}
+          onClose={() => setIsWizardOpen(false)}
+          editingBranch={editingBranch}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="relative inline-block text-left" ref={dropdownRef}>
       {/* Trigger Button */}
@@ -61,7 +80,7 @@ export default function UniversalBranchSwitcher() {
         title="Switch Business Entity / Branch"
       >
         <div className={`w-5 h-5 rounded-md ${activeIndustry.themeColor} flex items-center justify-center text-white text-[10px] font-extrabold shadow-sm shrink-0`}>
-          {activeBranch.code.split("-")[0] || "HQ"}
+          {activeBranch.code ? activeBranch.code.split("-")[0] : "HQ"}
         </div>
         <div className="text-left hidden sm:block max-w-[150px] md:max-w-[200px] truncate">
           <div className="font-bold text-white truncate text-xs flex items-center gap-1">

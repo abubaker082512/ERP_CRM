@@ -125,14 +125,16 @@ const DEFAULT_BRANCHES: BusinessBranch[] = [
   }
 ];
 
-type BranchContextType = {
+export type BranchContextType = {
   branches: BusinessBranch[];
-  activeBranch: BusinessBranch;
+  activeBranch: BusinessBranch | null;
   activeIndustry: IndustryArchetype;
+  hasSelectedIndustry: boolean;
   setActiveBranchId: (id: string) => void;
   createBranch: (newBranch: Omit<BusinessBranch, "id" | "createdAt">) => BusinessBranch;
   updateBranch: (id: string, updates: Partial<BusinessBranch>) => void;
   deleteBranch: (id: string) => void;
+  resetToIndustrySelection: () => void;
   toggleModuleForActiveBranch: (moduleHref: string) => void;
   isModuleActive: (moduleHref: string) => boolean;
 };
@@ -140,8 +142,8 @@ type BranchContextType = {
 const BranchContext = createContext<BranchContextType | undefined>(undefined);
 
 export function BranchProvider({ children }: { children: React.ReactNode }) {
-  const [branches, setBranches] = useState<BusinessBranch[]>(DEFAULT_BRANCHES);
-  const [activeBranchId, setActiveBranchIdState] = useState<string>("BRN-001");
+  const [branches, setBranches] = useState<BusinessBranch[]>([]);
+  const [activeBranchId, setActiveBranchIdState] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Load from LocalStorage
@@ -152,14 +154,16 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(savedBranches);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setBranches(parsed);
+          const savedActiveId = localStorage.getItem("beraxis_active_branch_id");
+          if (savedActiveId && parsed.some(b => b.id === savedActiveId)) {
+            setActiveBranchIdState(savedActiveId);
+          } else {
+            setActiveBranchIdState(parsed[0].id);
+          }
         }
       }
-      const savedActiveId = localStorage.getItem("beraxis_active_branch_id");
-      if (savedActiveId) {
-        setActiveBranchIdState(savedActiveId);
-      }
     } catch {
-      // fallback to defaults
+      // fallback
     } finally {
       setIsInitialized(true);
     }
@@ -180,8 +184,14 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   };
 
-  const activeBranch = branches.find(b => b.id === activeBranchId) || branches[0] || DEFAULT_BRANCHES[0];
-  const activeIndustry = getIndustryById(activeBranch.industryId);
+  const activeBranch: BusinessBranch | null =
+    branches.find(b => b.id === activeBranchId) || (branches.length > 0 ? branches[0] : null);
+
+  const activeIndustry = activeBranch
+    ? getIndustryById(activeBranch.industryId)
+    : GLOBAL_INDUSTRIES[0];
+
+  const hasSelectedIndustry = Boolean(activeBranch && branches.length > 0);
 
   const createBranch = (data: Omit<BusinessBranch, "id" | "createdAt">): BusinessBranch => {
     const newId = `BRN-${Date.now().toString().slice(-4)}`;
@@ -203,15 +213,27 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteBranch = (id: string) => {
-    if (branches.length <= 1) return; // Prevent deleting last branch
     const updated = branches.filter(b => b.id !== id);
     saveBranches(updated);
-    if (activeBranchId === id) {
+    if (activeBranchId === id && updated.length > 0) {
       setActiveBranchId(updated[0].id);
+    } else if (updated.length === 0) {
+      setActiveBranchIdState(null);
+      localStorage.removeItem("beraxis_active_branch_id");
     }
   };
 
+  const resetToIndustrySelection = () => {
+    setBranches([]);
+    setActiveBranchIdState(null);
+    try {
+      localStorage.removeItem("beraxis_branches");
+      localStorage.removeItem("beraxis_active_branch_id");
+    } catch {}
+  };
+
   const toggleModuleForActiveBranch = (moduleHref: string) => {
+    if (!activeBranch) return;
     const currentModules = activeBranch.enabledModules || [];
     const isPresent = currentModules.includes(moduleHref);
     const updatedModules = isPresent
@@ -232,10 +254,12 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         branches,
         activeBranch,
         activeIndustry,
+        hasSelectedIndustry,
         setActiveBranchId,
         createBranch,
         updateBranch,
         deleteBranch,
+        resetToIndustrySelection,
         toggleModuleForActiveBranch,
         isModuleActive
       }}
