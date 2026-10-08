@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import UniversalModuleSearch from "./UniversalModuleSearch";
 import UserProfileDropdown from "./UserProfileDropdown";
+import UniversalBranchSwitcher from "./UniversalBranchSwitcher";
 
 export type MenuItem = {
     name: string;
@@ -149,8 +150,9 @@ export default function StandardModuleHeader({
                     />
                 </div>
 
-                {/* Right Action Icons & User Profile Dropdown */}
+                {/* Right Action Icons, Branch Switcher & User Profile Dropdown */}
                 <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                    <UniversalBranchSwitcher />
                     <Link
                         href="/ai"
                         title="AI Business Assistant"

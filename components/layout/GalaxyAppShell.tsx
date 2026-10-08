@@ -12,6 +12,7 @@ import GalaxyTopBar from './GalaxyTopBar';
 import CommandOverlay from '../antigravity/CommandOverlay';
 import BeraxisSupportWidgets from '../support/BeraxisSupportWidgets';
 import InactivitySessionTracker from '../auth/InactivitySessionTracker';
+import { BranchProvider } from '@/lib/branchContext';
 
 const navItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -111,10 +112,11 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
     const isLandingPage = pathname === '/about' || pathname === '/contact' || pathname === '/' || pathname === '/pricing';
     const isExcludedPage = pathname === '/apps' || pathname === '/dashboard' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || pathname.startsWith('/shop/') || pathname === '/meet' || pathname.startsWith('/meet/') || pathname.startsWith('/appointments/book/') || isLandingPage;
     
-    if (isExcludedPage) return <>{children}</>;
+    if (isExcludedPage) return <BranchProvider>{children}</BranchProvider>;
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[#020205] flex-col">
+        <BranchProvider>
+            <div className="flex h-screen overflow-hidden bg-[#020205] flex-col">
             {/* Backend Connection Banner */}
             {backendStatus === 'waking' && (
                 <div className="w-full bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-center gap-2 text-xs text-amber-400 shrink-0 z-[100]">
@@ -225,8 +227,9 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
             {/* Antigravity Cockpit Overlay */}
             <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />
-            </div>{/* end flex-1 overflow-hidden */}
-        </div>
+                </div>{/* end flex-1 overflow-hidden */}
+            </div>
+        </BranchProvider>
     );
 }
 

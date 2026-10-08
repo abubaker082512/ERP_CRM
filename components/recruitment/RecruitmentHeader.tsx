@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Target, Bot, MessageSquare, Settings as SettingsIcon, ArrowLeft, LayoutGrid, Globe, Plus } from 'lucide-react';
 import UniversalModuleSearch from "../shared/UniversalModuleSearch";
 import UserProfileDropdown from "../shared/UserProfileDropdown";
+import UniversalBranchSwitcher from "../shared/UniversalBranchSwitcher";
 
 interface RecruitmentHeaderProps {
     searchTerm?: string;
@@ -116,8 +117,9 @@ export default function RecruitmentHeader({
                     />
                 </div>
 
-                {/* Actions & User Profile Dropdown */}
+                {/* Actions, Branch Switcher & User Profile Dropdown */}
                 <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                    <UniversalBranchSwitcher />
                     <button
                         onClick={() => router.push("/ai")}
                         title="AI Search & Assistant"

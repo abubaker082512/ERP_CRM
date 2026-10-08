@@ -45,6 +45,16 @@ export type POSProduct = {
 };
 
 const SEEDED_PRODUCTS: POSProduct[] = [
+  // Bakery & Cafe F&B
+  { id: "prod_bak_1", name: "Artisan French Butter Croissant", list_price: 4.50, cost_price: 1.10, sku: "BAK-CRS-01", category: "Bakery & Pastry", icon: "🥐" },
+  { id: "prod_bak_2", name: "Pain au Chocolat (Dark Chocolate)", list_price: 5.25, cost_price: 1.35, sku: "BAK-PAC-02", category: "Bakery & Pastry", icon: "🍫" },
+  { id: "prod_bak_3", name: "Artisan Truffle Beef Burger", list_price: 16.50, cost_price: 4.80, sku: "FNB-BGR-03", category: "Kitchen & Meals", icon: "🍔" },
+  { id: "prod_bak_4", name: "Avocado & Sourdough Toast", list_price: 12.00, cost_price: 3.20, sku: "FNB-AVO-04", category: "Kitchen & Meals", icon: "🥑" },
+  { id: "prod_bak_5", name: "Double Shot Oat Milk Flat White", list_price: 5.50, cost_price: 1.20, sku: "BEV-FLT-05", category: "Coffee & Drinks", icon: "☕" },
+  { id: "prod_bak_6", name: "Iced Salted Caramel Macchiato", list_price: 6.25, cost_price: 1.45, sku: "BEV-MAC-06", category: "Coffee & Drinks", icon: "🧋" },
+  { id: "prod_bak_7", name: "Traditional Tiramisu della Nonna", list_price: 8.50, cost_price: 2.10, sku: "DST-TRM-07", category: "Desserts", icon: "🍰" },
+  
+  // Tech, Retail & Hardware
   { id: "prod_1", name: "ERP Enterprise License (Annual)", list_price: 499.00, cost_price: 150.00, sku: "LIC-ERP-ENT", category: "Software & Licenses", icon: "💎" },
   { id: "prod_2", name: "Zebra RFID Handheld Scanner", list_price: 380.00, cost_price: 240.00, sku: "HW-ZEB-RFID", category: "Hardware & Devices", icon: "📟" },
   { id: "prod_3", name: "AI Sentiment Copilot Addon", list_price: 99.00, cost_price: 20.00, sku: "AI-SENT-MOD", category: "Software & Licenses", icon: "🧠" },
@@ -57,6 +67,10 @@ const SEEDED_PRODUCTS: POSProduct[] = [
 
 const CATEGORIES = [
   "All Items",
+  "Bakery & Pastry",
+  "Coffee & Drinks",
+  "Kitchen & Meals",
+  "Desserts",
   "Software & Licenses",
   "Hardware & Devices",
   "Consulting & Services",
@@ -294,6 +308,9 @@ export default function POSPage() {
 
   const POS_MENU_ITEMS = [
     { name: "POS Terminal", href: "/pos" },
+    { name: "Kitchen (KDS)", href: "/pos/kds" },
+    { name: "Recipe BOM", href: "/pos/recipes" },
+    { name: "Floor Plan & Tables", href: "/pos/tables" },
     { name: "Orders & Sessions", href: "/pos/orders" },
     { name: "Products & Pricing", href: "/pos/products" },
     { name: "Reporting", href: "/pos/reporting" },
