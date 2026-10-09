@@ -31,7 +31,8 @@ import {
   UtensilsCrossed,
   HelpCircle,
   Plus,
-  Dumbbell
+  Dumbbell,
+  Globe
 } from "lucide-react";
 
 // Icon mapping
@@ -46,11 +47,13 @@ const ICON_MAP: Record<string, any> = {
   Wrench,
   HardHat,
   GraduationCap,
-  Dumbbell
+  Dumbbell,
+  Globe
 };
 
 // All available 30+ Enterprise Modules
 const ALL_SYSTEM_MODULES = [
+  { name: "Leads Pool (25.8M+ B2B Contacts)", href: "/crm/leads-pool", category: "Sales & CRM", icon: Globe, color: "bg-cyan-500" },
   { name: "Club & Fitness Hub", href: "/club", category: "Sports & Fitness", icon: Dumbbell, color: "bg-emerald-600" },
   { name: "Point of Sale (POS)", href: "/pos", category: "Commerce", icon: ShoppingBag, color: "bg-amber-600" },
   { name: "Kitchen Display (KDS)", href: "/pos/kds", category: "Food & Beverage", icon: UtensilsCrossed, color: "bg-red-600" },

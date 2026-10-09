@@ -206,7 +206,7 @@ export default function AppsDashboardPage() {
 
     // Filter apps based on active industry/branch
     const displayedApps = activeBranch
-        ? allApps.filter(app => isModuleActive(app.href) || app.href === "/settings" || app.href === "/dashboard")
+        ? allApps.filter(app => isModuleActive(app.href) || app.href === "/settings" || app.href === "/dashboard" || app.href === "/crm/leads-pool")
         : allApps;
 
     const chosenInd = getIndustryById(selectedIndId);

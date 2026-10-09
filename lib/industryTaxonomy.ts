@@ -71,7 +71,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/planning",
       "/employees",
       "/timesheets",
-      "/attendances"
+      "/attendances",
+      "/crm/leads-pool"
     ],
     specializedRoutes: [
       { name: "Kitchen Display (KDS)", href: "/pos/kds", icon: "Flame" },
@@ -111,6 +112,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/sales",
       "/accounting",
       "/crm",
+      "/crm/leads-pool",
       "/contacts",
       "/employees",
       "/attendances"
@@ -148,6 +150,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/project",
       "/timesheets",
       "/crm",
+      "/crm/leads-pool",
       "/sales",
       "/accounting",
       "/documents",
@@ -193,7 +196,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/accounting",
       "/employees",
       "/attendances",
-      "/barcode"
+      "/barcode",
+      "/crm/leads-pool"
     ],
     specializedRoutes: [
       { name: "Production Work Orders", href: "/manufacturing", icon: "Cog" },
@@ -230,7 +234,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/accounting",
       "/employees",
       "/planning",
-      "/documents"
+      "/documents",
+      "/crm/leads-pool"
     ],
     specializedRoutes: [
       { name: "Appointment Booking", href: "/appointments", icon: "Calendar" },
@@ -266,6 +271,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/purchase",
       "/accounting",
       "/crm",
+      "/crm/leads-pool",
       "/employees",
       "/timesheets"
     ],
@@ -299,6 +305,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
     defaultModules: [
       "/real-estate",
       "/crm",
+      "/crm/leads-pool",
       "/accounting",
       "/documents",
       "/sign",
@@ -340,7 +347,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/accounting",
       "/employees",
       "/surveys",
-      "/knowledge"
+      "/knowledge",
+      "/crm/leads-pool"
     ],
     specializedRoutes: [
       { name: "Course & Academy Hub", href: "/education", icon: "GraduationCap" },
@@ -374,6 +382,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/sales",
       "/accounting",
       "/crm",
+      "/crm/leads-pool",
       "/contacts",
       "/employees",
       "/barcode"
@@ -412,7 +421,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/documents",
       "/team",
       "/employees",
-      "/sign"
+      "/sign",
+      "/crm/leads-pool"
     ],
     specializedRoutes: [
       { name: "Site Projects & Gantt", href: "/project", icon: "CheckSquare" },
@@ -454,7 +464,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/contacts",
       "/employees",
       "/planning",
-      "/sign"
+      "/sign",
+      "/crm/leads-pool"
     ],
     specializedRoutes: [
       { name: "Club & Facility Hub", href: "/club", icon: "Dumbbell" },

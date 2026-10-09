@@ -47,7 +47,8 @@ const DEFAULT_BRANCHES: BusinessBranch[] = [
       "/planning",
       "/employees",
       "/timesheets",
-      "/attendances"
+      "/attendances",
+      "/crm/leads-pool"
     ],
     sharingRules: {
       shareEmployees: true,
@@ -80,7 +81,8 @@ const DEFAULT_BRANCHES: BusinessBranch[] = [
       "/payroll",
       "/meet",
       "/sign",
-      "/recruitment"
+      "/recruitment",
+      "/crm/leads-pool"
     ],
     sharingRules: {
       shareEmployees: true,
@@ -111,7 +113,8 @@ const DEFAULT_BRANCHES: BusinessBranch[] = [
       "/crm",
       "/contacts",
       "/employees",
-      "/attendances"
+      "/attendances",
+      "/crm/leads-pool"
     ],
     sharingRules: {
       shareEmployees: true,
@@ -246,6 +249,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
 
   const isModuleActive = (moduleHref: string): boolean => {
     if (!activeBranch || !activeBranch.enabledModules) return true;
+    if (moduleHref === "/crm/leads-pool" || moduleHref === "/crm/lead-bank") return true;
     return activeBranch.enabledModules.includes(moduleHref);
   };
 
