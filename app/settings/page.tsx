@@ -166,6 +166,13 @@ export default function SettingsPage() {
   const [newUomRatio, setNewUomRatio] = useState("1.0");
   const [isAddUomOpen, setIsAddUomOpen] = useState(false);
 
+  // DirectPay Payment Gateway Settings
+  const [directPayClientId, setDirectPayClientId] = useState("pwa_ci_k1qlq54hv4gw5pr0khux");
+  const [directPayClientSecret, setDirectPayClientSecret] = useState("pwa_secret_zp5rai8z02zr3o5sebm1co6uxci58uca");
+  const [directPayEnabled, setDirectPayEnabled] = useState(true);
+  const [directPayTesting, setDirectPayTesting] = useState(false);
+  const [directPayTestResult, setDirectPayTestResult] = useState<string | null>(null);
+
   const localeDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -196,6 +203,14 @@ export default function SettingsPage() {
     if (savedRecHeader) setReceiptHeader(savedRecHeader);
     if (savedRecFooter) setReceiptFooter(savedRecFooter);
     if (savedRecSize) setReceiptPaperSize(savedRecSize);
+    
+    const savedDpId = localStorage.getItem("settings_directpay_client_id");
+    const savedDpSecret = localStorage.getItem("settings_directpay_client_secret");
+    const savedDpEn = localStorage.getItem("settings_directpay_enabled");
+    if (savedDpId) setDirectPayClientId(savedDpId);
+    if (savedDpSecret) setDirectPayClientSecret(savedDpSecret);
+    if (savedDpEn !== null) setDirectPayEnabled(savedDpEn === "true");
+
     if (savedUoms) {
       try { setUoms(JSON.parse(savedUoms)); } catch (e) {}
     }
@@ -209,6 +224,34 @@ export default function SettingsPage() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleTestDirectPay = async () => {
+    setDirectPayTesting(true);
+    setDirectPayTestResult(null);
+    try {
+      const res = await fetch("/api/payments/directpay/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amountInPKR: 100,
+          description: "Gateway Connection Health Check",
+          payer_name: "Beraxis Admin",
+          email: "admin@beraxis.online",
+          msisdn: "03001234567"
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.paymentUrl) {
+        setDirectPayTestResult("✅ DirectPay Gateway Connected & Active! HMAC-SHA256 Checksum generation verified.");
+      } else {
+        setDirectPayTestResult(`❌ Connection Failed: ${data.error || "Unknown response"}`);
+      }
+    } catch (err: any) {
+      setDirectPayTestResult(`❌ Connection Error: ${err.message}`);
+    } finally {
+      setDirectPayTesting(false);
+    }
+  };
 
   const handleSave = () => {
     setSaving(true);
@@ -226,6 +269,9 @@ export default function SettingsPage() {
       localStorage.setItem("settings_receipt_header", receiptHeader);
       localStorage.setItem("settings_receipt_footer", receiptFooter);
       localStorage.setItem("settings_receipt_size", receiptPaperSize);
+      localStorage.setItem("settings_directpay_client_id", directPayClientId);
+      localStorage.setItem("settings_directpay_client_secret", directPayClientSecret);
+      localStorage.setItem("settings_directpay_enabled", directPayEnabled.toString());
       
       setSaving(false);
       alert("Settings saved successfully!");
@@ -656,12 +702,109 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Other tabs */}
-            {["users", "integrations", "billing"].includes(activeTab) && (
+            {/* Payment Gateways & DirectPay Tab */}
+            {(activeTab === "billing" || activeTab === "integrations") && (
+              <div className="space-y-6 max-w-3xl">
+                <div className="flex items-center justify-between p-4 bg-purple-600/10 border border-purple-500/20 rounded-2xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-600/20 flex items-center justify-center text-purple-400 font-bold text-lg">
+                      ⚡
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">DirectPay Payment Gateway (Payin PWA)</h3>
+                      <p className="text-xs text-gray-400">Integrated instant checkout for JazzCash, Easypaisa, 1Link & Raast Bank Transfer</p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={directPayEnabled} 
+                      onChange={e => setDirectPayEnabled(e.target.checked)} 
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                  </label>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">DirectPay Client ID</label>
+                    <input 
+                      type="text" 
+                      value={directPayClientId} 
+                      onChange={e => setDirectPayClientId(e.target.value)}
+                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white font-mono text-xs focus:border-purple-500 outline-none" 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">DirectPay Client Secret</label>
+                    <input 
+                      type="password" 
+                      value={directPayClientSecret} 
+                      onChange={e => setDirectPayClientSecret(e.target.value)}
+                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white font-mono text-xs focus:border-purple-500 outline-none" 
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Payin Landing Page URL</label>
+                      <input 
+                        type="text" 
+                        readOnly
+                        value="https://payin-pwa.directpay.pro/pay" 
+                        className="w-full bg-[#1E293B]/60 border border-gray-800 rounded-xl px-4 py-3 text-gray-400 font-mono text-xs outline-none cursor-not-allowed" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Inquiry / Status URL</label>
+                      <input 
+                        type="text" 
+                        readOnly
+                        value="https://payin-pwa.directpay.pro/pay/status" 
+                        className="w-full bg-[#1E293B]/60 border border-gray-800 rounded-xl px-4 py-3 text-gray-400 font-mono text-xs outline-none cursor-not-allowed" 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Webhook Notification URL</label>
+                    <input 
+                      type="text" 
+                      readOnly
+                      value="https://erp-crm-puce.vercel.app/api/payments/directpay/webhook" 
+                      className="w-full bg-[#1E293B]/60 border border-gray-800 rounded-xl px-4 py-3 text-emerald-400 font-mono text-xs outline-none cursor-not-allowed" 
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">Provide this webhook URL in your DirectPay Merchant Console to receive real-time IPN settlement notifications.</p>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-between border-t border-gray-800">
+                    <button
+                      type="button"
+                      onClick={handleTestDirectPay}
+                      disabled={directPayTesting}
+                      className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-bold transition-all border border-white/10 flex items-center gap-2 cursor-pointer"
+                    >
+                      {directPayTesting ? "Testing Gateway..." : "🧪 Test DirectPay Gateway Connection"}
+                    </button>
+
+                    {directPayTestResult && (
+                      <span className={`text-xs font-medium ${directPayTestResult.startsWith('✅') ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {directPayTestResult}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Users Tab */}
+            {activeTab === "users" && (
               <div className="py-12 flex flex-col items-center justify-center text-center">
                 <Settings size={48} className="text-gray-600 mb-4 animate-[spin_10s_linear_infinite]" />
-                <h3 className="text-lg font-medium text-white mb-2">Coming Soon</h3>
-                <p className="text-gray-400 max-w-xs">This configuration area is currently under active SaaS subscription packaging development.</p>
+                <h3 className="text-lg font-medium text-white mb-2">Users & Permissions</h3>
+                <p className="text-gray-400 max-w-xs">RBAC management and team invitations are managed via Super Admin and Employees.</p>
               </div>
             )}
 

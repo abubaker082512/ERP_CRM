@@ -100,7 +100,7 @@ export default function POSPage() {
 
   // Checkout States
   const [checkoutMode, setCheckoutMode] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "qr" | "account">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "qr" | "account" | "directpay">("cash");
   const [amountPaid, setAmountPaid] = useState("");
   const [processing, setProcessing] = useState(false);
 
@@ -655,7 +655,7 @@ export default function POSPage() {
             {checkoutMode ? (
               <div className="space-y-3 pt-2 animate-in slide-in-from-bottom-2">
                 {/* Payment Method Tabs */}
-                <div className="grid grid-cols-4 gap-1.5 bg-[#1E293B] p-1 rounded-xl border border-gray-800 text-[11px] font-bold text-center">
+                <div className="grid grid-cols-5 gap-1 bg-[#1E293B] p-1 rounded-xl border border-gray-800 text-[10px] font-bold text-center">
                   <button
                     onClick={() => setPaymentMethod("cash")}
                     className={`py-1.5 rounded-lg transition-all cursor-pointer ${
@@ -673,12 +673,20 @@ export default function POSPage() {
                     💳 Card
                   </button>
                   <button
+                    onClick={() => setPaymentMethod("directpay")}
+                    className={`py-1.5 rounded-lg transition-all cursor-pointer ${
+                      paymentMethod === "directpay" ? "bg-pink-600 text-white shadow-md" : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    ⚡ DirectPay
+                  </button>
+                  <button
                     onClick={() => setPaymentMethod("qr")}
                     className={`py-1.5 rounded-lg transition-all cursor-pointer ${
                       paymentMethod === "qr" ? "bg-cyan-600 text-white" : "text-gray-400 hover:text-white"
                     }`}
                   >
-                    📱 QR Pay
+                    📱 QR
                   </button>
                   <button
                     onClick={() => setPaymentMethod("account")}
