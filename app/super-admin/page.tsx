@@ -1,6 +1,6 @@
 "use client";
 import { fetchAPI } from '@/lib/api';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ShieldCheck, Users, Building2, TrendingUp, Search,
     RefreshCw, ExternalLink, CreditCard, Calendar,
@@ -9,7 +9,7 @@ import {
     Percent, Sparkles, X, Check, Copy, ToggleLeft, ToggleRight,
     Edit3, Activity, Server, Database, Globe, Megaphone, Lock,
     Key, Download, Cpu, HardDrive, Bell, CheckSquare, Play,
-    Sliders, LogIn
+    Sliders, LogIn, ChevronRight
 } from 'lucide-react';
 
 export type Workspace = { 
@@ -217,20 +217,52 @@ export default function SuperAdminPage() {
                 fetchAPI("/super-admin/announcement").catch(() => null),
             ]);
 
-            if (wsRes?.ok)       setWorkspaces(await wsRes.json());
-            if (statsRes?.ok)    setStats(await statsRes.json());
-            if (usersRes?.ok)    setUsers(await usersRes.json());
-            if (salesRes?.ok)    setSales(await salesRes.json());
-            if (tenantsRes?.ok)  setTenants(await tenantsRes.json());
-            if (paymentsRes?.ok) setPayments(await paymentsRes.json());
-            if (healthRes?.ok)   setHealth(await healthRes.json());
-            if (flagsRes?.ok)    setFeatureFlags(await flagsRes.json());
-            if (auditRes?.ok)    setAuditLogs(await auditRes.json());
-            if (annRes?.ok)      setAnnouncement(await annRes.json());
+            if (wsRes?.ok) {
+                const data = await wsRes.json();
+                if (Array.isArray(data)) setWorkspaces(data);
+            }
+            if (statsRes?.ok) {
+                const data = await statsRes.json();
+                if (data && typeof data === 'object') setStats(data);
+            }
+            if (usersRes?.ok) {
+                const data = await usersRes.json();
+                if (Array.isArray(data)) setUsers(data);
+            }
+            if (salesRes?.ok) {
+                const data = await salesRes.json();
+                if (Array.isArray(data)) setSales(data);
+            }
+            if (tenantsRes?.ok) {
+                const data = await tenantsRes.json();
+                if (Array.isArray(data)) setTenants(data);
+            }
+            if (paymentsRes?.ok) {
+                const data = await paymentsRes.json();
+                if (Array.isArray(data)) setPayments(data);
+            }
+            if (healthRes?.ok) {
+                const data = await healthRes.json();
+                if (data && typeof data === 'object') setHealth(data);
+            }
+            if (flagsRes?.ok) {
+                const data = await flagsRes.json();
+                if (data && typeof data === 'object') setFeatureFlags(data);
+            }
+            if (auditRes?.ok) {
+                const data = await auditRes.json();
+                if (Array.isArray(data)) setAuditLogs(data);
+            }
+            if (annRes?.ok) {
+                const data = await annRes.json();
+                if (data && typeof data === 'object') {
+                    setAnnouncement(data.announcement || data);
+                }
+            }
             
             await fetchPromos();
         } catch (err: any) {
-            setError(err.message || "Failed to load command center data.");
+            console.error("Super Admin fetch error:", err);
         } finally {
             setLoading(false);
         }
@@ -241,7 +273,7 @@ export default function SuperAdminPage() {
             const res = await fetch("/api/admin/promocodes");
             if (res.ok) {
                 const data = await res.json();
-                if (data.promocodes) {
+                if (data && Array.isArray(data.promocodes)) {
                     setPromocodes(data.promocodes);
                 }
             }
@@ -261,7 +293,7 @@ export default function SuperAdminPage() {
             });
             const data = await res.json();
             if (res.ok && data.success) {
-                showToast(`🎉 Promo code '${data.promo.code}' deployed successfully!`);
+                showToast(`🎉 Promo code '${data.promo?.code || promoForm.code}' deployed successfully!`);
                 setIsCreatePromoOpen(false);
                 setPromoForm({
                     code: "",
@@ -336,7 +368,6 @@ export default function SuperAdminPage() {
                 setWsForm({ name: "", owner_email: "", plan: "Standard Plan", member_count: 5 });
                 fetchAllData();
             } else {
-                // Fallback local update
                 const newWs: Workspace = {
                     id: `ws_${Date.now()}`,
                     name: wsForm.name.trim(),
@@ -386,7 +417,6 @@ export default function SuperAdminPage() {
                 setIsChangePlanOpen(null);
                 fetchAllData();
             } else {
-                // local update
                 setWorkspaces(workspaces.map(w => w.id === isChangePlanOpen.id ? { ...w, plan: selectedPlanInput } : w));
                 setIsChangePlanOpen(null);
                 showToast(`⭐ Workspace plan updated.`);
@@ -542,19 +572,19 @@ export default function SuperAdminPage() {
 
         if (type === "workspaces") {
             headers = ["ID", "Company Name", "Owner Email", "Plan", "Seats", "Created Date"];
-            rows = workspaces.map(w => [w.id, `"${w.name}"`, w.owner_email, `"${w.plan || 'Standard'}"`, String(w.member_count), w.created_at]);
+            rows = (workspaces || []).map(w => [w.id || "", `"${w.name || ""}"`, w.owner_email || "", `"${w.plan || 'Standard'}"`, String(w.member_count || 1), w.created_at || ""]);
         } else if (type === "users") {
             headers = ["ID", "Email", "Workspace", "Status", "Created Date"];
-            rows = users.map(u => [u.id, u.email, `"${u.workspace_name || 'N/A'}"`, u.subscription_status || 'new', u.created_at]);
+            rows = (users || []).map(u => [u.id || "", u.email || "", `"${u.workspace_name || 'N/A'}"`, u.subscription_status || 'new', u.created_at || ""]);
         } else if (type === "promos") {
             headers = ["Code", "Discount Type", "Value", "Package", "Used Count", "Max Uses", "Status", "Expiry"];
-            rows = promocodes.map(p => [p.code, p.discount_type, String(p.discount_value), p.target_package, String(p.used_count), String(p.max_uses), p.status, p.expiry_date || 'Never']);
+            rows = (promocodes || []).map(p => [p.code || "", p.discount_type || "", String(p.discount_value || 0), p.target_package || "", String(p.used_count || 0), String(p.max_uses || 0), p.status || "", p.expiry_date || 'Never']);
         } else if (type === "sales") {
             headers = ["Order Ref", "Customer Name", "Amount Total", "State", "Date"];
-            rows = sales.map(s => [s.name, `"${s.customer_name}"`, String(s.amount_total), s.state, s.created_at]);
+            rows = (sales || []).map(s => [s.name || "", `"${s.customer_name || ""}"`, String(s.amount_total || 0), s.state || "", s.created_at || ""]);
         } else if (type === "payments") {
             headers = ["Tenant ID", "Email", "Plan", "Amount USD", "Method", "Status", "Registered At"];
-            rows = payments.map(p => [p.tenant_id, p.email, `"${p.plan}"`, String(p.amount_usd), p.currency, p.payment_status, p.registered_at]);
+            rows = (payments || []).map(p => [p.tenant_id || "", p.email || "", `"${p.plan || ""}"`, String(p.amount_usd || 0), p.currency || "", p.payment_status || "", p.registered_at || ""]);
         }
 
         const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
@@ -568,38 +598,51 @@ export default function SuperAdminPage() {
         showToast(`📥 Exported ${filename} successfully.`);
     };
 
-    // Filtered lists
-    const filteredWorkspaces = workspaces.filter(ws =>
-        ws.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ws.owner_email.toLowerCase().includes(searchTerm.toLowerCase()));
-    const filteredPromocodes = promocodes.filter(p =>
-        p.code.toLowerCase().includes(promoSearchTerm.toLowerCase()) ||
-        p.description.toLowerCase().includes(promoSearchTerm.toLowerCase()) ||
-        p.target_package.toLowerCase().includes(promoSearchTerm.toLowerCase()));
-    const filteredUsers = users.filter(u => u.email.toLowerCase().includes(userSearchTerm.toLowerCase()));
-    const filteredSales = sales.filter(s =>
-        s.name.toLowerCase().includes(salesSearchTerm.toLowerCase()) ||
-        s.customer_name.toLowerCase().includes(salesSearchTerm.toLowerCase()));
-    const filteredTenants = tenants.filter(t =>
-        t.email.toLowerCase().includes(billingSearchTerm.toLowerCase()) ||
-        t.subscription_status.toLowerCase().includes(billingSearchTerm.toLowerCase()));
-    const filteredPayments = payments.filter(p =>
-        p.email.toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
-        p.payment_status.toLowerCase().includes(paymentSearchTerm.toLowerCase()));
+    // Safe filtered lists
+    const safeWorkspaces = Array.isArray(workspaces) ? workspaces : [];
+    const safePromocodes = Array.isArray(promocodes) ? promocodes : [];
+    const safeUsers = Array.isArray(users) ? users : [];
+    const safeSales = Array.isArray(sales) ? sales : [];
+    const safeTenants = Array.isArray(tenants) ? tenants : [];
+    const safePayments = Array.isArray(payments) ? payments : [];
+    const safeAuditLogs = Array.isArray(auditLogs) ? auditLogs : [];
+
+    const filteredWorkspaces = safeWorkspaces.filter(ws =>
+        (ws?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (ws?.owner_email || "").toLowerCase().includes(searchTerm.toLowerCase()));
+        
+    const filteredPromocodes = safePromocodes.filter(p =>
+        (p?.code || "").toLowerCase().includes(promoSearchTerm.toLowerCase()) ||
+        (p?.description || "").toLowerCase().includes(promoSearchTerm.toLowerCase()) ||
+        (p?.target_package || "").toLowerCase().includes(promoSearchTerm.toLowerCase()));
+        
+    const filteredUsers = safeUsers.filter(u => (u?.email || "").toLowerCase().includes(userSearchTerm.toLowerCase()));
+    
+    const filteredSales = safeSales.filter(s =>
+        (s?.name || "").toLowerCase().includes(salesSearchTerm.toLowerCase()) ||
+        (s?.customer_name || "").toLowerCase().includes(salesSearchTerm.toLowerCase()));
+        
+    const filteredTenants = safeTenants.filter(t =>
+        (t?.email || "").toLowerCase().includes(billingSearchTerm.toLowerCase()) ||
+        (t?.subscription_status || "").toLowerCase().includes(billingSearchTerm.toLowerCase()));
+        
+    const filteredPayments = safePayments.filter(p =>
+        (p?.email || "").toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
+        (p?.payment_status || "").toLowerCase().includes(paymentSearchTerm.toLowerCase()));
 
     const paidPayments = filteredPayments.filter(p => p.payment_status === "active");
     const pendingPayments = filteredPayments.filter(p => p.payment_status !== "active");
-    const monthlySaaSRevenue = paidPayments.reduce((acc, p) => acc + (p.amount_usd || 0), 0);
+    const monthlySaaSRevenue = paidPayments.reduce((acc, p) => acc + (Number(p.amount_usd) || 0), 0);
 
     return (
-        <div className="space-y-8 pb-20 text-slate-100">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="space-y-8 pb-20 text-slate-100 min-h-screen bg-[#0A0E17]">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
 
                 {/* ── TOP PLATFORM BANNER (IF ACTIVE) ── */}
-                {announcement.is_active && announcement.message && (
+                {announcement?.is_active && announcement?.message && (
                     <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-purple-900/40 via-blue-900/40 to-indigo-900/40 border border-purple-500/30 flex items-center justify-between shadow-lg shadow-purple-900/20">
                         <div className="flex items-center gap-3">
-                            <Megaphone className="text-purple-400 shrink-0 animate-bounce" size={20} />
+                            <Megaphone className="text-purple-400 shrink-0" size={20} />
                             <div>
                                 <span className="text-xs uppercase font-extrabold tracking-wider bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-md mr-2 border border-purple-500/30">
                                     Global Broadcast
@@ -671,9 +714,9 @@ export default function SuperAdminPage() {
 
                 {/* ── STATS RIBBON (8 ENTERPRISE METRIC CARDS) ── */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3.5 mb-8">
-                    <StatCard label="Companies"       value={stats?.total_workspaces ?? workspaces.length}                             icon={<Building2 size={18}/>}   color="text-blue-400"   bg="bg-blue-500/10" />
-                    <StatCard label="Total Users"     value={stats?.total_users ?? users.length}                                        icon={<Users size={18}/>}       color="text-purple-400" bg="bg-purple-500/10" />
-                    <StatCard label="Active Promos"   value={promocodes.filter(p => p.status === 'active').length}                      icon={<Tag size={18}/>}         color="text-pink-400"   bg="bg-pink-500/10" />
+                    <StatCard label="Companies"       value={stats?.total_workspaces ?? safeWorkspaces.length}                             icon={<Building2 size={18}/>}   color="text-blue-400"   bg="bg-blue-500/10" />
+                    <StatCard label="Total Users"     value={stats?.total_users ?? safeUsers.length}                                        icon={<Users size={18}/>}       color="text-purple-400" bg="bg-purple-500/10" />
+                    <StatCard label="Active Promos"   value={safePromocodes.filter(p => p?.status === 'active').length}                      icon={<Tag size={18}/>}         color="text-pink-400"   bg="bg-pink-500/10" />
                     <StatCard label="Paid Subs"       value={stats?.paid_subscribers ?? paidPayments.length}                           icon={<CheckCircle size={18}/>} color="text-emerald-400" bg="bg-emerald-500/10" />
                     <StatCard label="DirectPay Card"  value={`$${(stats?.cc_revenue ?? monthlySaaSRevenue).toLocaleString()}`}         icon={<CreditCard size={18}/>}  color="text-cyan-400"    bg="bg-cyan-500/10" />
                     <StatCard label="Monthly MRR"     value={`$${(stats?.total_saas_revenue ?? monthlySaaSRevenue).toLocaleString()}`}  icon={<TrendingUp size={18}/>}  color="text-amber-400"  bg="bg-amber-500/10" />
@@ -683,15 +726,15 @@ export default function SuperAdminPage() {
 
                 {/* ── NAVIGATION TABS ── */}
                 <div className="flex border-b border-gray-800 mb-6 overflow-x-auto whitespace-nowrap scrollbar-none gap-1 bg-[#111827]/40 p-1.5 rounded-2xl border">
-                    <TabBtn active={activeTab === "overview"}    onClick={() => setActiveTab("overview")}    label="🏢 Companies" count={workspaces.length} />
-                    <TabBtn active={activeTab === "promocodes"}  onClick={() => setActiveTab("promocodes")}  label="🎟️ Promo Codes" count={promocodes.length} />
-                    <TabBtn active={activeTab === "payments"}    onClick={() => setActiveTab("payments")}    label="💳 DirectPay Subscriptions" count={payments.length} />
-                    <TabBtn active={activeTab === "billing"}     onClick={() => setActiveTab("billing")}     label="⚖️ Billing Ctrl" count={tenants.length} />
-                    <TabBtn active={activeTab === "users"}       onClick={() => setActiveTab("users")}       label="👥 Users" count={users.length} />
-                    <TabBtn active={activeTab === "sales"}       onClick={() => setActiveTab("sales")}       label="🛒 ERP Sales" count={sales.length} />
+                    <TabBtn active={activeTab === "overview"}    onClick={() => setActiveTab("overview")}    label="🏢 Companies" count={safeWorkspaces.length} />
+                    <TabBtn active={activeTab === "promocodes"}  onClick={() => setActiveTab("promocodes")}  label="🎟️ Promo Codes" count={safePromocodes.length} />
+                    <TabBtn active={activeTab === "payments"}    onClick={() => setActiveTab("payments")}    label="💳 DirectPay Subscriptions" count={safePayments.length} />
+                    <TabBtn active={activeTab === "billing"}     onClick={() => setActiveTab("billing")}     label="⚖️ Billing Ctrl" count={safeTenants.length} />
+                    <TabBtn active={activeTab === "users"}       onClick={() => setActiveTab("users")}       label="👥 Users" count={safeUsers.length} />
+                    <TabBtn active={activeTab === "sales"}       onClick={() => setActiveTab("sales")}       label="🛒 ERP Sales" count={safeSales.length} />
                     <TabBtn active={activeTab === "flags"}       onClick={() => setActiveTab("flags")}       label="⚙️ Feature Flags" />
                     <TabBtn active={activeTab === "broadcast"}   onClick={() => setActiveTab("broadcast")}   label="📢 Broadcast" />
-                    <TabBtn active={activeTab === "audit"}       onClick={() => setActiveTab("audit")}       label="🛡️ Audit Logs" count={auditLogs.length} />
+                    <TabBtn active={activeTab === "audit"}       onClick={() => setActiveTab("audit")}       label="🛡️ Audit Logs" count={safeAuditLogs.length} />
                     <TabBtn active={activeTab === "diagnostics"} onClick={() => setActiveTab("diagnostics")} label="🩺 System Health" />
                 </div>
 
@@ -728,15 +771,15 @@ export default function SuperAdminPage() {
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-purple-400 font-black border border-purple-500/30 shadow-inner">
-                                                            {ws.name.charAt(0).toUpperCase()}
+                                                            {(ws.name || "W").charAt(0).toUpperCase()}
                                                         </div>
                                                         <div>
-                                                            <span className="font-bold text-gray-100 block text-sm">{ws.name}</span>
-                                                            <span className="text-[10px] text-gray-500 font-mono">ID: {ws.id.slice(0, 18)}...</span>
+                                                            <span className="font-bold text-gray-100 block text-sm">{ws.name || "Workspace"}</span>
+                                                            <span className="text-[10px] text-gray-500 font-mono">ID: {(ws.id || "").slice(0, 18)}...</span>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-gray-300 text-sm font-medium">{ws.owner_email}</td>
+                                                <td className="px-6 py-4 text-gray-300 text-sm font-medium">{ws.owner_email || "Unknown"}</td>
                                                 <td className="px-6 py-4">
                                                     <button
                                                         onClick={() => {
@@ -753,7 +796,7 @@ export default function SuperAdminPage() {
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
                                                     <span className="bg-purple-950/40 text-purple-300 px-3 py-1 rounded-full text-xs font-bold border border-purple-500/20 font-mono">
-                                                        {ws.member_count} seats
+                                                        {ws.member_count || 1} seats
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-xs text-gray-400 font-mono">{fmtDate(ws.created_at)}</td>
@@ -857,7 +900,7 @@ export default function SuperAdminPage() {
 
                                                         <td className="px-6 py-4 text-center">
                                                             <span className="text-xs font-mono font-bold text-gray-300 bg-gray-800/60 px-2.5 py-1 rounded-lg border border-gray-700">
-                                                                {promo.used_count} / {promo.max_uses > 0 ? promo.max_uses : "∞"}
+                                                                {promo.used_count || 0} / {promo.max_uses > 0 ? promo.max_uses : "∞"}
                                                             </span>
                                                         </td>
 
@@ -950,20 +993,20 @@ export default function SuperAdminPage() {
                                                         <td className="px-6 py-4">
                                                             <div className="flex items-center gap-3">
                                                                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold border text-sm ${isPaid ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-gray-700/30 text-gray-400 border-gray-700"}`}>
-                                                                    {p.email.charAt(0).toUpperCase()}
+                                                                    {(p.email || "U").charAt(0).toUpperCase()}
                                                                 </div>
                                                                 <div>
-                                                                    <span className="font-semibold text-gray-200 block text-sm">{p.email}</span>
-                                                                    <span className="text-[10px] text-gray-600 font-mono">{p.tenant_id?.slice(0, 16)}...</span>
+                                                                    <span className="font-semibold text-gray-200 block text-sm">{p.email || "Unknown"}</span>
+                                                                    <span className="text-[10px] text-gray-600 font-mono">{(p.tenant_id || "").slice(0, 16)}...</span>
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <span className="text-sm font-semibold text-gray-300">{p.plan}</span>
+                                                            <span className="text-sm font-semibold text-gray-300">{p.plan || "Standard"}</span>
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <span className={`font-mono font-bold text-base ${isPaid ? "text-emerald-400" : "text-gray-600"}`}>
-                                                                {isPaid ? `$${p.amount_usd.toFixed(2)}` : "—"}
+                                                                {isPaid ? `$${Number(p.amount_usd || 0).toFixed(2)}` : "—"}
                                                             </span>
                                                         </td>
                                                         <td className="px-6 py-4">
@@ -1097,11 +1140,11 @@ export default function SuperAdminPage() {
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center text-blue-400 font-bold border border-blue-500/30 text-sm">
-                                                            {u.email.charAt(0).toUpperCase()}
+                                                            {(u.email || "U").charAt(0).toUpperCase()}
                                                         </div>
                                                         <div>
                                                             <span className="font-semibold text-gray-200 block text-sm">{u.email}</span>
-                                                            <span className="text-[10px] text-gray-500 font-mono">ID: {u.id?.slice(0, 16)}...</span>
+                                                            <span className="text-[10px] text-gray-500 font-mono">ID: {(u.id || "").slice(0, 16)}...</span>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -1176,7 +1219,7 @@ export default function SuperAdminPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-gray-300 text-sm font-semibold">{order.customer_name}</td>
-                                                <td className="px-6 py-4 font-mono font-bold text-emerald-400">${order.amount_total.toFixed(2)}</td>
+                                                <td className="px-6 py-4 font-mono font-bold text-emerald-400">${Number(order.amount_total || 0).toFixed(2)}</td>
                                                 <td className="px-6 py-4 text-xs text-gray-500 font-mono">{order.created_at ? fmtDate(order.created_at) : "N/A"}</td>
                                                 <td className="px-6 py-4 text-right">
                                                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${order.state === "sale" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}>
@@ -1206,49 +1249,49 @@ export default function SuperAdminPage() {
                                 <FlagToggle 
                                     label="AI Agentic Copilot & Lead Automation" 
                                     desc="DeepMind/Gemini powered automated CRM lead generator and assistant" 
-                                    enabled={featureFlags.ai_copilot} 
+                                    enabled={Boolean(featureFlags?.ai_copilot)} 
                                     onToggle={() => handleToggleFlag("ai_copilot")} 
                                 />
                                 <FlagToggle 
                                     label="DirectPay Card Processing Gateway" 
                                     desc="Live DirectPay Card PWA gateway for SaaS subscription checkouts" 
-                                    enabled={featureFlags.directpay_card} 
+                                    enabled={Boolean(featureFlags?.directpay_card)} 
                                     onToggle={() => handleToggleFlag("directpay_card")} 
                                 />
                                 <FlagToggle 
                                     label="Retail Point-of-Sale (Touch Cashier)" 
                                     desc="Barcode scanner, offline sync cashier, receipt printing terminal" 
-                                    enabled={featureFlags.pos_terminal} 
+                                    enabled={Boolean(featureFlags?.pos_terminal)} 
                                     onToggle={() => handleToggleFlag("pos_terminal")} 
                                 />
                                 <FlagToggle 
                                     label="Manufacturing & MRP Work Orders" 
                                     desc="Bill of materials, routing stages, production planning" 
-                                    enabled={featureFlags.mrp_manufacturing} 
+                                    enabled={Boolean(featureFlags?.mrp_manufacturing)} 
                                     onToggle={() => handleToggleFlag("mrp_manufacturing")} 
                                 />
                                 <FlagToggle 
                                     label="Automated HR & Multi-Tier Payroll" 
                                     desc="Salary slips, tax allowances, biometric attendance integration" 
-                                    enabled={featureFlags.hr_payroll} 
+                                    enabled={Boolean(featureFlags?.hr_payroll)} 
                                     onToggle={() => handleToggleFlag("hr_payroll")} 
                                 />
                                 <FlagToggle 
                                     label="WhatsApp Auto-Bot Notifications" 
                                     desc="Transactional invoice dispatch & customer OTPs via Meta API" 
-                                    enabled={featureFlags.whatsapp_bot} 
+                                    enabled={Boolean(featureFlags?.whatsapp_bot)} 
                                     onToggle={() => handleToggleFlag("whatsapp_bot")} 
                                 />
                                 <FlagToggle 
                                     label="Fleet Logistics & GPS Dispatch" 
                                     desc="Vehicle route tracking, fuel consumption, driver manifests" 
-                                    enabled={featureFlags.fleet_logistics} 
+                                    enabled={Boolean(featureFlags?.fleet_logistics)} 
                                     onToggle={() => handleToggleFlag("fleet_logistics")} 
                                 />
                                 <FlagToggle 
                                     label="Strict 2-Factor Authentication (2FA)" 
                                     desc="Enforce TOTP / authenticator verification for all tenant logins" 
-                                    enabled={featureFlags.strict_2fa} 
+                                    enabled={Boolean(featureFlags?.strict_2fa)} 
                                     onToggle={() => handleToggleFlag("strict_2fa")} 
                                 />
                             </div>
@@ -1272,7 +1315,7 @@ export default function SuperAdminPage() {
                                 <textarea
                                     required
                                     rows={3}
-                                    value={announcement.message}
+                                    value={announcement?.message || ""}
                                     onChange={e => setAnnouncement({ ...announcement, message: e.target.value })}
                                     placeholder="e.g. Scheduled database maintenance on Sunday at 02:00 AM UTC."
                                     className="w-full bg-[#0F172A] border border-gray-700 rounded-2xl p-4 text-white text-sm focus:border-purple-500 outline-none"
@@ -1283,7 +1326,7 @@ export default function SuperAdminPage() {
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Banner Style</label>
                                     <select
-                                        value={announcement.banner_type}
+                                        value={announcement?.banner_type || "info"}
                                         onChange={e => setAnnouncement({ ...announcement, banner_type: e.target.value })}
                                         className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-4 py-2.5 text-white text-xs font-semibold focus:border-purple-500 outline-none"
                                     >
@@ -1298,7 +1341,7 @@ export default function SuperAdminPage() {
                                     <input
                                         type="checkbox"
                                         id="active_banner_toggle"
-                                        checked={announcement.is_active}
+                                        checked={Boolean(announcement?.is_active)}
                                         onChange={e => setAnnouncement({ ...announcement, is_active: e.target.checked })}
                                         className="w-5 h-5 rounded bg-gray-800 border-gray-700 text-purple-600 focus:ring-purple-500"
                                     />
@@ -1322,8 +1365,8 @@ export default function SuperAdminPage() {
                     <div className="bg-[#111827] rounded-3xl border border-gray-800 overflow-hidden shadow-2xl">
                         <TableHeader title="Security Audit & Platform Event Stream" subtitle="Cryptographic log of administrative actions, authentication attempts, and billing events" />
                         <div className="divide-y divide-gray-800/50">
-                            {auditLogs.length === 0 ? <p className="p-8 text-center text-gray-500 text-sm">No recent events recorded.</p> :
-                                auditLogs.map(log => (
+                            {safeAuditLogs.length === 0 ? <p className="p-8 text-center text-gray-500 text-sm">No recent events recorded.</p> :
+                                safeAuditLogs.map(log => (
                                     <div key={log.id} className="p-5 flex items-start justify-between gap-4 hover:bg-white/2 transition-colors">
                                         <div className="flex items-start gap-3">
                                             <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0 mt-0.5">
@@ -1587,7 +1630,7 @@ export default function SuperAdminPage() {
                                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Workspace</label>
                                     <select value={userForm.workspace_id} onChange={e => setUserForm({...userForm, workspace_id: e.target.value})} className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-4 py-2.5 text-white text-xs focus:border-purple-500 outline-none">
                                         <option value="">Auto-Create Dedicated</option>
-                                        {workspaces.map(w => (
+                                        {safeWorkspaces.map(w => (
                                             <option key={w.id} value={w.id}>{w.name}</option>
                                         ))}
                                     </select>
