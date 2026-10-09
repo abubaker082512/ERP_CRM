@@ -93,7 +93,7 @@ const odooComparison = [
     },
     {
         feature: "Crypto & Card Payments",
-        beraxis: "Plisio Crypto + Stripe + Freemius Built-in",
+        beraxis: "DirectPay Card + 30+ Cryptos Built-in",
         odoo: "Requires Third-Party Addons",
         winner: "beraxis"
     },
