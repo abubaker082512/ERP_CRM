@@ -15,61 +15,9 @@ export interface PromoCode {
   created_at: string;
 }
 
-// In-memory / server-side seeded promo store
-let GLOBAL_PROMOCODES: PromoCode[] = [
-  {
-    id: "promo_1",
-    code: "BERAXIS100",
-    description: "100% Full Access Launch Promo",
-    discount_type: "percentage",
-    discount_value: 100,
-    target_package: "all",
-    max_uses: 1000,
-    used_count: 42,
-    expiry_date: "2026-12-31",
-    status: "active",
-    created_at: "2026-01-01T00:00:00Z"
-  },
-  {
-    id: "promo_2",
-    code: "LAUNCH50",
-    description: "50% Off Early Adopter Special",
-    discount_type: "percentage",
-    discount_value: 50,
-    target_package: "all",
-    max_uses: 500,
-    used_count: 89,
-    expiry_date: "2026-11-30",
-    status: "active",
-    created_at: "2026-02-01T00:00:00Z"
-  },
-  {
-    id: "promo_3",
-    code: "ENTERPRISE200",
-    description: "$200 Flat Discount on Custom Enterprise",
-    discount_type: "fixed_amount",
-    discount_value: 200,
-    target_package: "custom",
-    max_uses: 100,
-    used_count: 14,
-    expiry_date: "2026-12-31",
-    status: "active",
-    created_at: "2026-03-01T00:00:00Z"
-  },
-  {
-    id: "promo_4",
-    code: "STANDARD25",
-    description: "25% Off Standard Business Plan",
-    discount_type: "percentage",
-    discount_value: 25,
-    target_package: "standard",
-    max_uses: 250,
-    used_count: 31,
-    expiry_date: "2026-10-31",
-    status: "active",
-    created_at: "2026-04-01T00:00:00Z"
-  }
-];
+// Server-side promo store — starts completely clean from Zero
+let GLOBAL_PROMOCODES: PromoCode[] = [];
+
 
 // GET: List all promo codes OR validate a specific promo code for checkout
 export async function GET(req: NextRequest) {
