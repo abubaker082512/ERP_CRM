@@ -458,11 +458,27 @@ function BillingPageContent() {
         e.preventDefault();
         setPromoError(""); setPromoSuccess("");
         const code = promoCode.trim().toUpperCase();
-        if (["FREE100", "BERAXIS100", "BERAXIS"].includes(code)) { setPromoDiscount(1.0); setPromoSuccess("🎉 100% Discount Applied!"); }
-        else if (code === "LAUNCH50") { setPromoDiscount(0.5); setPromoSuccess("🎉 50% off applied!"); }
-        else if (code === "LAUNCH20") { setPromoDiscount(0.2); setPromoSuccess("🎉 20% off applied!"); }
-        else if (!code) { setPromoError("Enter a promo code first."); }
-        else { setPromoError("Invalid promo code."); setPromoDiscount(0); }
+        if (["FREE100", "BERAXIS100", "BERAXIS"].includes(code)) { 
+            setPromoDiscount(1.0); 
+            setPromoSuccess("🎉 100% Lifetime Discount Applied!"); 
+        } else if (["LAUNCH9", "BERAXIS9"].includes(code)) { 
+            setPromoDiscount(0.68); // Drops $31.10 down to $9.99
+            setPromoSuccess("🚀 Launch Special: Standard Package for $9.99 applied!"); 
+        } else if (["EARLYBIRD15", "BERAXIS15"].includes(code)) { 
+            setPromoDiscount(0.66); // Drops $46.80 down to $15.99
+            setPromoSuccess("🔥 Early Bird: Custom Package for $15.99/mo applied!"); 
+        } else if (code === "LAUNCH50") { 
+            setPromoDiscount(0.5); 
+            setPromoSuccess("🎉 50% off applied!"); 
+        } else if (code === "LAUNCH20") { 
+            setPromoDiscount(0.2); 
+            setPromoSuccess("🎉 20% off applied!"); 
+        } else if (!code) { 
+            setPromoError("Enter a promo code first."); 
+        } else { 
+            setPromoError("Invalid promo code."); 
+            setPromoDiscount(0); 
+        }
     };
 
     const handleManualActivate = async (e: React.FormEvent) => {
