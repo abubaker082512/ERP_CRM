@@ -96,36 +96,61 @@ export default function CheckoutPage() {
         setForm({...form, [e.target.name]: e.target.value});
     };
 
-    const handleApplyPromo = (e: React.MouseEvent) => {
+    const [discountAmountUSD, setDiscountAmountUSD] = useState(0.0);
+    const [appliedPromoDetails, setAppliedPromoDetails] = useState<any>(null);
+
+    const handleApplyPromo = async (e: React.MouseEvent) => {
         e.preventDefault();
         setPromoError("");
         setPromoSuccess("");
 
         const code = promoCode.trim().toUpperCase();
-        if (["FREE100", "BERAXIS100", "BERAXIS"].includes(code)) {
-            setDiscount(1.0);
-            setPromoSuccess("🎉 100% Promo applied! Order is free.");
-        } else if (code === "LAUNCH50") {
-            setDiscount(0.5);
-            setPromoSuccess("🎉 50% Promo applied!");
-        } else if (code === "LAUNCH20") {
-            setDiscount(0.2);
-            setPromoSuccess("🎉 20% Promo applied!");
-        } else if (code === "") {
-            setPromoError("Enter a promo code.");
-        } else {
-            setPromoError("Invalid code.");
-            setDiscount(0.0);
+        if (!code) {
+            setPromoError("Please enter a promo code.");
+            return;
+        }
+
+        try {
+            const pkg = subscriptionPlan?.tier || "all";
+            const res = await fetch(`/api/admin/promocodes?validate=${encodeURIComponent(code)}&package=${pkg}&amount=${subtotal}`);
+            const data = await res.json();
+
+            if (res.ok && data.valid) {
+                const disc = data.promo.calculatedDiscountUSD;
+                setDiscountAmountUSD(disc);
+                setAppliedPromoDetails(data.promo);
+                if (data.promo.discount_type === "percentage") {
+                    setPromoSuccess(`🎉 ${data.promo.discount_value}% Discount applied! (-$${disc.toFixed(2)})`);
+                } else {
+                    setPromoSuccess(`🎉 $${data.promo.discount_value} Flat Discount applied! (-$${disc.toFixed(2)})`);
+                }
+            } else {
+                setPromoError(data.error || "Invalid promo code for this package.");
+                setDiscountAmountUSD(0);
+                setAppliedPromoDetails(null);
+            }
+        } catch (err) {
+            // Fallback for offline/mock
+            if (["FREE100", "BERAXIS100", "BERAXIS"].includes(code)) {
+                setDiscountAmountUSD(subtotal);
+                setPromoSuccess("🎉 100% Promo applied! Plan is $0.00.");
+            } else if (code === "LAUNCH50") {
+                setDiscountAmountUSD(subtotal * 0.5);
+                setPromoSuccess("🎉 50% Promo applied!");
+            } else {
+                setPromoError("Invalid code.");
+                setDiscountAmountUSD(0);
+            }
         }
     };
 
     // Calculate subtotal from cart or subscription plan
     const cartSubtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const subtotal = subscriptionPlan ? subscriptionPlan.price : cartSubtotal;
-    const discountAmount = subtotal * discount;
-    const tax = (subtotal - discountAmount) * 0.1; // 10% tax
-    const total = (subtotal - discountAmount) + tax;
-    const totalPKR = Math.max(10, Math.round(total * PKR_RATE));
+    const discountAmount = Math.min(subtotal, discountAmountUSD);
+    const tax = Math.max(0, (subtotal - discountAmount) * 0.1); // 10% tax
+    const total = Math.max(0, (subtotal - discountAmount) + tax);
+    const totalPKR = Math.max(0, Math.round(total * PKR_RATE));
 
     const handleCheckout = async (e: React.FormEvent) => {
         e.preventDefault();
