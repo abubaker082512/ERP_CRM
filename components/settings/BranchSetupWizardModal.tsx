@@ -32,7 +32,9 @@ import {
   HelpCircle,
   Plus,
   Dumbbell,
-  Globe
+  Globe,
+  Search,
+  Filter
 } from "lucide-react";
 
 // Icon mapping
@@ -54,11 +56,11 @@ const ICON_MAP: Record<string, any> = {
 // All available 30+ Enterprise Modules
 const ALL_SYSTEM_MODULES = [
   { name: "Leads Pool (25.8M+ B2B Contacts)", href: "/crm/leads-pool", category: "Sales & CRM", icon: Globe, color: "bg-cyan-500" },
-  { name: "Club & Fitness Hub", href: "/club", category: "Sports & Fitness", icon: Dumbbell, color: "bg-emerald-600" },
   { name: "Point of Sale (POS)", href: "/pos", category: "Commerce", icon: ShoppingBag, color: "bg-amber-600" },
   { name: "Kitchen Display (KDS)", href: "/pos/kds", category: "Food & Beverage", icon: UtensilsCrossed, color: "bg-red-600" },
   { name: "Recipe & BOM Costing", href: "/pos/recipes", category: "Food & Beverage", icon: Layers, color: "bg-orange-600" },
   { name: "Floor Plan & Tables", href: "/pos/tables", category: "Food & Beverage", icon: Building2, color: "bg-amber-700" },
+  { name: "Club & Fitness Hub", href: "/club", category: "Sports & Fitness", icon: Dumbbell, color: "bg-emerald-600" },
   { name: "Inventory Management", href: "/inventory", category: "Supply Chain", icon: Package, color: "bg-purple-600" },
   { name: "Barcode Generator", href: "/barcode", category: "Commerce", icon: Package, color: "bg-pink-600" },
   { name: "Purchase & Vendors", href: "/purchase", category: "Supply Chain", icon: ShoppingBag, color: "bg-pink-600" },
@@ -106,6 +108,10 @@ export default function BranchSetupWizardModal({
   const [aiPrompt, setAiPrompt] = useState("");
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
 
+  // Search & Filter in Module selection
+  const [moduleSearch, setModuleSearch] = useState("");
+  const [moduleCategoryFilter, setModuleCategoryFilter] = useState("ALL");
+
   // Wizard state
   const [selectedIndustryId, setSelectedIndustryId] = useState<GlobalIndustryId>(
     editingBranch?.industryId || "food_beverage"
@@ -130,8 +136,44 @@ export default function BranchSetupWizardModal({
 
   // Selected Modules Checklist
   const [selectedModules, setSelectedModules] = useState<string[]>(
-    editingBranch?.enabledModules || getIndustryById(selectedIndustryId).defaultModules
+    editingBranch?.enabledModules || getIndustryById("food_beverage").defaultModules
   );
+
+  // Synchronize state when opening modal or changing editingBranch
+  useEffect(() => {
+    if (isOpen) {
+      if (editingBranch) {
+        setSelectedIndustryId(editingBranch.industryId || "food_beverage");
+        setBranchName(editingBranch.name || "");
+        setBranchCode(editingBranch.code || "");
+        setSubSector(editingBranch.subSector || "");
+        setOperationMode(editingBranch.operationMode || "");
+        setLocation(editingBranch.location || "Main Facility");
+        setCurrency(editingBranch.currency || "$ USD");
+        setSharingRules(editingBranch.sharingRules || {
+          shareEmployees: true,
+          shareCustomers: true,
+          shareInventory: false,
+          shareAccounting: true,
+          shareVendors: true
+        });
+        setSelectedModules(editingBranch.enabledModules || getIndustryById(editingBranch.industryId).defaultModules);
+        setStep(4); // Open straight to Module Manager for instant app adding/removing!
+      } else {
+        setSelectedIndustryId("food_beverage");
+        setBranchName("");
+        setBranchCode("");
+        setSubSector(getIndustryById("food_beverage").subSectors[0]);
+        setOperationMode(getIndustryById("food_beverage").operationModes[0]?.id || "");
+        setLocation("Main Facility");
+        setCurrency("$ USD");
+        setSelectedModules(getIndustryById("food_beverage").defaultModules);
+        setStep(1);
+      }
+      setModuleSearch("");
+      setModuleCategoryFilter("ALL");
+    }
+  }, [isOpen, editingBranch]);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -572,49 +614,105 @@ export default function BranchSetupWizardModal({
           {/* STEP 4: PRE-FINALIZATION REVIEW & MODULE TOGGLES */}
           {step === 4 && (
             <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-purple-950/40 border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
                 <div>
-                  <span className="text-[10px] font-bold uppercase text-emerald-400">Ready to Activate</span>
-                  <h4 className="font-bold text-white text-sm">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">
+                    {editingBranch ? "Company & Apps Configuration" : "Ready to Activate"}
+                  </span>
+                  <h4 className="font-bold text-white text-base mt-0.5">
                     {branchName || "New Branch"} • {currentIndustry.name}
                   </h4>
                   <p className="text-[11px] text-gray-300 mt-0.5">
-                    Mode: <strong className="text-white">{operationMode}</strong> • {selectedModules.length} Modules Active
+                    Industry Mode: <strong className="text-white">{operationMode}</strong> • {selectedModules.length} Apps Enabled
                   </p>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs bg-purple-600 text-white font-bold px-3 py-1 rounded-full">
-                    {selectedModules.length} Apps Enabled
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-purple-600 text-white font-bold px-3.5 py-1.5 rounded-full shadow-md shadow-purple-900/40">
+                    {selectedModules.length} Active Modules
                   </span>
                 </div>
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                    Review & Customize Active Modules (1-Click Add or Remove Any App):
-                  </span>
-                  <div className="flex gap-2 text-[10px]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-300 block">
+                      Install / Manage Modules (Click to Add or Remove Any App):
+                    </span>
+                    <span className="text-[10px] text-gray-400">
+                      Enable specialized modules like Point of Sale, Leads Pool, Club Hub, Vehicles, etc.
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px]">
                     <button
                       type="button"
                       onClick={() => setSelectedModules(currentIndustry.defaultModules)}
-                      className="text-purple-400 hover:underline font-bold"
+                      className="text-purple-400 hover:text-purple-300 hover:underline font-bold"
                     >
-                      Reset to Industry Defaults
+                      Reset Defaults
                     </button>
-                    <span>•</span>
+                    <span className="text-gray-600">•</span>
                     <button
                       type="button"
                       onClick={() => setSelectedModules(ALL_SYSTEM_MODULES.map(m => m.href))}
-                      className="text-blue-400 hover:underline font-bold"
+                      className="text-blue-400 hover:text-blue-300 hover:underline font-bold"
                     >
-                      Enable All Apps
+                      Enable All (30+ Apps)
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-[360px] overflow-y-auto p-1 border border-gray-800/80 rounded-2xl bg-gray-950/50">
-                  {ALL_SYSTEM_MODULES.map(module => {
+                {/* Module Search & Category Bar */}
+                <div className="space-y-2 mb-3">
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      value={moduleSearch}
+                      onChange={e => setModuleSearch(e.target.value)}
+                      placeholder="Search apps by name (e.g. Leads Pool, POS, Club, KDS, Invoicing, Inventory...)"
+                      className="w-full bg-gray-950/80 border border-gray-700/80 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar text-[10px]">
+                    {[
+                      "ALL",
+                      "Commerce",
+                      "Food & Beverage",
+                      "Sales & CRM",
+                      "Supply Chain",
+                      "Finance",
+                      "Operations",
+                      "Human Resources",
+                      "Sports & Fitness",
+                      "Services",
+                      "Real Estate",
+                      "Automotive",
+                      "Education"
+                    ].map(cat => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setModuleCategoryFilter(cat)}
+                        className={`px-2.5 py-1 rounded-lg font-medium transition-all shrink-0 cursor-pointer ${
+                          moduleCategoryFilter === cat
+                            ? "bg-purple-600 text-white font-bold shadow-sm"
+                            : "bg-gray-900 text-gray-400 hover:text-white border border-gray-800"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-[360px] overflow-y-auto p-1.5 border border-gray-800/80 rounded-2xl bg-gray-950/50">
+                  {ALL_SYSTEM_MODULES.filter(mod => {
+                    const matchesSearch = mod.name.toLowerCase().includes(moduleSearch.toLowerCase()) || mod.category.toLowerCase().includes(moduleSearch.toLowerCase()) || mod.href.toLowerCase().includes(moduleSearch.toLowerCase());
+                    const matchesCat = moduleCategoryFilter === "ALL" || mod.category === moduleCategoryFilter;
+                    return matchesSearch && matchesCat;
+                  }).map(module => {
                     const isEnabled = selectedModules.includes(module.href);
                     const isRecommended = currentIndustry.defaultModules.includes(module.href);
                     const ModIcon = module.icon;
@@ -625,31 +723,31 @@ export default function BranchSetupWizardModal({
                         onClick={() => toggleModule(module.href)}
                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
                           isEnabled
-                            ? "bg-[#141926] border-purple-500/80 text-white shadow-sm"
-                            : "bg-gray-900/40 border-gray-800 text-gray-400 hover:border-gray-700"
+                            ? "bg-[#161d2d] border-purple-500 text-white shadow-sm ring-1 ring-purple-500/50"
+                            : "bg-gray-900/40 border-gray-800/80 text-gray-400 hover:border-gray-700 hover:bg-gray-850"
                         }`}
                       >
-                        <div className="flex items-center gap-2.5">
-                          <div className={`w-8 h-8 rounded-lg ${module.color} flex items-center justify-center text-white shrink-0`}>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`w-8 h-8 rounded-lg ${module.color} flex items-center justify-center text-white shrink-0 shadow-sm`}>
                             <ModIcon size={16} />
                           </div>
-                          <div>
-                            <div className="font-bold text-xs flex items-center gap-1.5">
-                              <span>{module.name}</span>
+                          <div className="min-w-0">
+                            <div className="font-bold text-xs flex items-center gap-1.5 truncate">
+                              <span className="truncate">{module.name}</span>
                               {isRecommended && (
-                                <span className="text-[8px] bg-purple-500/20 text-purple-300 px-1.5 py-0.2 rounded font-mono">
-                                  Recommended
+                                <span className="text-[8px] bg-purple-500/20 text-purple-300 px-1.5 py-0.2 rounded font-mono shrink-0">
+                                  Default
                                 </span>
                               )}
                             </div>
-                            <span className="text-[10px] text-gray-500">{module.category}</span>
+                            <span className="text-[10px] text-gray-500 block truncate">{module.category}</span>
                           </div>
                         </div>
 
-                        <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
-                          isEnabled ? "bg-purple-600 border-purple-500 text-white" : "border-gray-700 bg-gray-900"
+                        <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all shrink-0 ml-2 ${
+                          isEnabled ? "bg-purple-600 border-purple-500 text-white" : "border-gray-700 bg-gray-900 text-transparent"
                         }`}>
-                          {isEnabled && <Check size={12} />}
+                          <Check size={12} />
                         </div>
                       </div>
                     );

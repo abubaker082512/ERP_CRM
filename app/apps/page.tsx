@@ -41,13 +41,15 @@ import {
     ChevronRight,
     Sliders,
     X,
-    Dumbbell
+    Dumbbell,
+    Settings
 } from "lucide-react";
 import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
 import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
 import { useBranchContext } from "@/lib/branchContext";
 import { GLOBAL_INDUSTRIES, GlobalIndustryId, getIndustryById } from "@/lib/industryTaxonomy";
 import UniversalBranchSwitcher from "@/components/shared/UniversalBranchSwitcher";
+import BranchSetupWizardModal from "@/components/settings/BranchSetupWizardModal";
 
 // Icon mapping for 10 global industries
 const INDUSTRY_ICON_MAP: Record<string, any> = {
@@ -137,6 +139,7 @@ export default function AppsDashboardPage() {
 
     // Industry Selection Mode
     const [isSelectingIndustry, setIsSelectingIndustry] = useState(false);
+    const [isManageAppsModalOpen, setIsManageAppsModalOpen] = useState(false);
     const [selectedIndId, setSelectedIndId] = useState<GlobalIndustryId>("food_beverage");
     const [selectedSubSector, setSelectedSubSector] = useState("");
     const [selectedOpMode, setSelectedOpMode] = useState("");
@@ -235,6 +238,14 @@ export default function AppsDashboardPage() {
                     {hasSelectedIndustry && activeBranch && (
                         <>
                             <UniversalBranchSwitcher />
+                            <button
+                                onClick={() => setIsManageAppsModalOpen(true)}
+                                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-[#141b2c] hover:bg-[#1c243a] border border-purple-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                                title="Install or manage apps for active company"
+                            >
+                                <Settings size={13} className="text-purple-400" />
+                                <span>+ Manage Apps</span>
+                            </button>
                             <button
                                 onClick={handleOpenIndustrySelection}
                                 className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95 cursor-pointer"
@@ -402,6 +413,21 @@ export default function AppsDashboardPage() {
                                     </Link>
                                 );
                             })}
+
+                            {/* + Add / Install More Apps Tile */}
+                            <button
+                                type="button"
+                                onClick={() => setIsManageAppsModalOpen(true)}
+                                className="group flex flex-col items-center gap-3.5 focus:outline-none cursor-pointer"
+                                title="Add or remove modules from active company"
+                            >
+                                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-3xl bg-gradient-to-br from-purple-900/30 via-[#141b2c] to-indigo-950/30 border-2 border-dashed border-purple-500/50 hover:border-purple-400 flex items-center justify-center text-purple-300 hover:text-white shadow-xl shadow-black/40 group-hover:scale-110 transition-transform duration-200 ease-out">
+                                    <Plus className="w-9 h-9" strokeWidth={2} />
+                                </div>
+                                <span className="text-xs sm:text-sm font-semibold text-purple-400 group-hover:text-purple-300 transition-colors text-center tracking-tight">
+                                    + Add Apps
+                                </span>
+                            </button>
                         </div>
                     </div>
                 )}
@@ -409,6 +435,13 @@ export default function AppsDashboardPage() {
 
             {/* Persistent Support Widgets */}
             <BeraxisSupportWidgets />
+
+            {/* Manage Apps & Entity Configuration Modal */}
+            <BranchSetupWizardModal
+                isOpen={isManageAppsModalOpen}
+                onClose={() => setIsManageAppsModalOpen(false)}
+                editingBranch={activeBranch}
+            />
         </div>
     );
 }

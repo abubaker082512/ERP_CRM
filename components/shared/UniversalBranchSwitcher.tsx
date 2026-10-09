@@ -111,11 +111,11 @@ export default function UniversalBranchSwitcher() {
             </div>
             <button
               onClick={handleEditActive}
-              className="p-1.5 rounded-lg bg-gray-800 hover:bg-purple-600 text-gray-300 hover:text-white transition-all text-[11px] flex items-center gap-1"
-              title="Configure Active Branch Settings"
+              className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-all text-xs flex items-center gap-1.5 shadow-md shadow-purple-900/40 active:scale-95 cursor-pointer"
+              title="Configure Active Company Apps & Modules"
             >
               <Settings size={13} />
-              <span>Configure</span>
+              <span>Configure Apps</span>
             </button>
           </div>
 

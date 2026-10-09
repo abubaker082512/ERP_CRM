@@ -13,7 +13,7 @@ export const metadata: Metadata = {
         default: "Beraxis ERP - #1 Next-Gen AI ERP & Odoo Alternative for Business Automation",
         template: "%s | Beraxis AI ERP & Odoo Alternative"
     },
-    description: "Beraxis is the premier AI-driven open-source Odoo alternative. Unify CRM, Sales, Inventory, Accounting, HRMS, Manufacturing, and POS with Voice Assistant technology. Migrate from Odoo to Beraxis today for 10x faster business growth.",
+    description: "Beraxis is the premier AI-driven open-source Odoo alternative & multi-industry ERP. Unify CRM, 25.8M+ B2B Leads Pool, Point of Sale, Gym & Padel Club Hub, Automotive Workshop, Real Estate, Inventory, Accounting, HRMS, and Voice Assistant automation.",
     keywords: [
         "Beraxis",
         "Beraxis ERP",
@@ -27,6 +27,23 @@ export const metadata: Metadata = {
         "Open Source ERP",
         "Cloud ERP software",
         "AI ERP System",
+        "B2B Leads Pool",
+        "25M verified B2B leads database",
+        "Gym management software",
+        "Fitness club ERP",
+        "Padel club court booking software",
+        "Sports club membership software",
+        "Automotive garage workshop ERP",
+        "Car repair job card software",
+        "Restaurant POS and Kitchen Display System KDS",
+        "Food and beverage recipe BOM ERP",
+        "Real estate property lease management ERP",
+        "Healthcare clinic patient EMR EHR software",
+        "Construction contractor project costing ERP",
+        "Retail omnichannel multi-store POS",
+        "School academy student LMS billing software",
+        "Hotel resort PMS front desk ERP",
+        "Professional services billable hours agency ERP",
         "ERP CRM software",
         "Accounting software",
         "Inventory management software",
@@ -106,7 +123,7 @@ export default function RootLayout({
                     "priceCurrency": "USD",
                     "description": "Free One App Forever or $199 Pro Unlimited Plan"
                 },
-                "description": "Beraxis is the premier AI-driven open-source Odoo alternative unifying CRM, Sales, Inventory, Accounting, HRMS, Manufacturing, and POS.",
+                "description": "Beraxis is the premier AI-driven open-source Odoo alternative & multi-industry ERP unifying CRM, 25.8M+ B2B Leads Pool, POS, Gym & Club Hub, Automotive, Real Estate, Inventory, Accounting, HRMS, and Voice Assistant automation.",
                 "url": "https://erp-crm-puce.vercel.app"
             },
             {
