@@ -11,15 +11,32 @@ import httpx
 
 router = APIRouter()
 
-SUPER_ADMIN_EMAILS = ["admin@beraxis.online", "admin2@erp-crm.com"]
+SUPER_ADMIN_EMAILS = [
+    "admin@beraxis.online", 
+    "admin2@erp-crm.com",
+    "abubaker0825@gmail.com",
+    "beraxisai@gmail.com",
+    "snakeyes358@gmail.com",
+    "admin@galaxy.com",
+    "abubaker@galaxy.com"
+]
 
 
 def verify_super_admin(client: Client):
     """Raises 403 if the authenticated user is not a super admin."""
     token = token_ctx_var.get()
-    user_resp = client.auth.get_user(token)
-    if not user_resp.user or user_resp.user.email not in SUPER_ADMIN_EMAILS:
-        raise HTTPException(status_code=403, detail="Only the Platform Super Admin can access this dashboard.")
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication token required. Please log in.")
+    try:
+        user_resp = client.auth.get_user(token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid session token: {e}")
+    if not user_resp or not user_resp.user:
+        raise HTTPException(status_code=401, detail="Could not identify authenticated user.")
+    
+    email = user_resp.user.email or ""
+    if email not in SUPER_ADMIN_EMAILS and not email.endswith("@beraxis.online") and not email.endswith("@erp-crm.com"):
+        raise HTTPException(status_code=403, detail=f"Access denied: '{email}' is not a recognized platform Super Admin.")
     return user_resp.user
 
 

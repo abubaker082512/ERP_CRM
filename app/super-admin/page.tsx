@@ -191,7 +191,18 @@ export default function SuperAdminPage() {
     const [newPasswordInput, setNewPasswordInput] = useState("");
     const [selectedPlanInput, setSelectedPlanInput] = useState("Standard Plan ($199/mo)");
 
+    const [authChecked, setAuthChecked] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(true);
+    const [isColdStarting, setIsColdStarting] = useState(false);
+
     useEffect(() => { 
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setIsLoggedIn(false);
+                setError("Authentication required: Please log in with your Super Admin account to load platform metrics.");
+            }
+        }
         fetchAllData();
     }, []);
 
@@ -200,9 +211,10 @@ export default function SuperAdminPage() {
         setTimeout(() => setToastMessage(null), 4000);
     };
 
-    const fetchAllData = async () => {
+    const fetchAllData = async (retryCount = 0) => {
         setLoading(true);
-        setError(null);
+        if (retryCount === 0) setError(null);
+        
         try {
             const [wsRes, statsRes, usersRes, salesRes, tenantsRes, paymentsRes, healthRes, flagsRes, auditRes, annRes] = await Promise.all([
                 fetchAPI("/super-admin/workspaces").catch(() => null),
@@ -216,6 +228,31 @@ export default function SuperAdminPage() {
                 fetchAPI("/super-admin/audit-logs").catch(() => null),
                 fetchAPI("/super-admin/announcement").catch(() => null),
             ]);
+
+            // Check for auth failure
+            if (wsRes?.status === 401 || wsRes?.status === 403) {
+                let detail = "Session expired or unauthorized. Please sign in as Super Admin.";
+                try {
+                    const errData = await wsRes.json();
+                    if (errData?.detail) detail = errData.detail;
+                } catch (e) {}
+                setError(detail);
+                setIsLoggedIn(false);
+                setLoading(false);
+                return;
+            }
+
+            // Check for cold start
+            if (wsRes?.status === 502 || wsRes?.status === 503 || wsRes?.status === 504 || (!wsRes && retryCount < 3)) {
+                setIsColdStarting(true);
+                if (retryCount < 4) {
+                    setTimeout(() => fetchAllData(retryCount + 1), 3500);
+                    return;
+                }
+            }
+
+            setIsColdStarting(false);
+            setIsLoggedIn(true);
 
             if (wsRes?.ok) {
                 const data = await wsRes.json();
@@ -263,8 +300,10 @@ export default function SuperAdminPage() {
             await fetchPromos();
         } catch (err: any) {
             console.error("Super Admin fetch error:", err);
+            setError("Server connection issue. Please ensure the backend is active or try syncing again.");
         } finally {
             setLoading(false);
+            setAuthChecked(true);
         }
     };
 
@@ -697,6 +736,25 @@ export default function SuperAdminPage() {
                     </div>
                 </div>
 
+                {/* ── AUTHENTICATION REQUIRED PROMPT (IF NOT LOGGED IN) ── */}
+                {!isLoggedIn && (
+                    <div className="mb-8 p-5 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-blue-500/10 border border-amber-500/30 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+                        <div className="flex items-center gap-3">
+                            <Lock className="text-amber-400 shrink-0" size={24} />
+                            <div>
+                                <h3 className="font-bold text-white text-sm">Super Admin Session Required</h3>
+                                <p className="text-xs text-gray-400 mt-0.5">Please sign in with your Super Admin account (<span className="text-purple-300 font-mono">admin@beraxis.online</span>) to unlock real-time database feeds, tenant controls, and billing metrics.</p>
+                            </div>
+                        </div>
+                        <a
+                            href="/login"
+                            className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-purple-600/30 shrink-0 flex items-center gap-1.5"
+                        >
+                            <LogIn size={15} /> Sign In to Super Admin
+                        </a>
+                    </div>
+                )}
+
                 {/* Toast Notification */}
                 {toastMessage && (
                     <div className="mb-6 bg-purple-600/20 border border-purple-500/40 text-purple-300 p-4 rounded-2xl flex items-center gap-3 shadow-lg shadow-purple-600/10 animate-in fade-in">
@@ -708,7 +766,7 @@ export default function SuperAdminPage() {
                 {error && (
                     <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl flex items-center gap-3">
                         <ShieldAlert size={20} />
-                        <div><p className="font-bold text-sm">Connection Warning</p><p className="text-xs">{error}</p></div>
+                        <div><p className="font-bold text-sm">Connection Notice</p><p className="text-xs">{error}</p></div>
                     </div>
                 )}
 
@@ -720,7 +778,7 @@ export default function SuperAdminPage() {
                     <StatCard label="Paid Subs"       value={stats?.paid_subscribers ?? paidPayments.length}                           icon={<CheckCircle size={18}/>} color="text-emerald-400" bg="bg-emerald-500/10" />
                     <StatCard label="DirectPay Card"  value={`$${(stats?.cc_revenue ?? monthlySaaSRevenue).toLocaleString()}`}         icon={<CreditCard size={18}/>}  color="text-cyan-400"    bg="bg-cyan-500/10" />
                     <StatCard label="Monthly MRR"     value={`$${(stats?.total_saas_revenue ?? monthlySaaSRevenue).toLocaleString()}`}  icon={<TrendingUp size={18}/>}  color="text-amber-400"  bg="bg-amber-500/10" />
-                    <StatCard label="ERP Volume"      value={`$${(stats?.platform_revenue ?? 48290).toLocaleString(undefined,{minimumFractionDigits:0})}`} icon={<DollarSign size={18}/>} color="text-green-400" bg="bg-green-500/10" />
+                    <StatCard label="ERP Volume"      value={`$${(stats?.platform_revenue ?? 0).toLocaleString(undefined,{minimumFractionDigits:0})}`} icon={<DollarSign size={18}/>} color="text-green-400" bg="bg-green-500/10" title="Total gross sales invoiced and transacted by all tenant businesses inside their ERP modules" />
                     <StatCard label="API Latency"     value={`${health?.services?.api_server?.latency_ms ?? 18}ms`}                    icon={<Activity size={18}/>}    color="text-indigo-400" bg="bg-indigo-500/10" />
                 </div>
 
