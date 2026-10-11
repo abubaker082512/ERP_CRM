@@ -580,10 +580,10 @@ export default function SuperAdminPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    amount: 199.00,
-                    order_id: `DIAG_${Date.now()}`,
-                    customer_email: "diagnostics@beraxis.online",
-                    plan: "standard"
+                    amountInPKR: 100.00,
+                    description: "Beraxis Diagnostics Test",
+                    payer_name: "Super Admin",
+                    email: "diagnostics@beraxis.online"
                 })
             });
             const data = await res.json();

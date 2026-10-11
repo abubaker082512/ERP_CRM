@@ -156,9 +156,15 @@ export default function CheckoutPage() {
         e.preventDefault();
         setProcessing(true);
 
-        const orderTitle = subscriptionPlan 
-            ? `${subscriptionPlan.name} (${subscriptionPlan.users} seats - ${subscriptionPlan.billingCycle})`
-            : cartItems.map(i => i.name).join(', ').substring(0, 80);
+        const planDesc = subscriptionPlan 
+            ? `${subscriptionPlan.name} ${subscriptionPlan.users} seats ${subscriptionPlan.billingCycle}`
+            : cartItems.map(i => i.name).join(' ');
+
+        const safeDescription = `Beraxis Subscription ${planDesc}`
+            .replace(/[^a-zA-Z0-9 ]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .substring(0, 80);
 
         try {
             // Initiate DirectPay Card payment session
@@ -167,8 +173,8 @@ export default function CheckoutPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     amountInPKR: totalPKR,
-                    description: `Beraxis Subscription: ${orderTitle}`,
-                    payer_name: form.cardHolder || form.name || 'Beraxis Subscriber',
+                    description: safeDescription,
+                    payer_name: (form.cardHolder || form.name || 'Beraxis Subscriber').replace(/[^a-zA-Z0-9 ]/g, ' ').trim(),
                     email: form.email || 'subscriber@beraxis.online',
                     msisdn: form.phone || '03001234567',
                     currency: 'PKR',

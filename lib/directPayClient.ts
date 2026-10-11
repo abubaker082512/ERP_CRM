@@ -73,6 +73,20 @@ export function normalizeDirectPayPhone(phone: string): string {
 }
 
 /**
+ * Sanitizes description and text fields for DirectPay:
+ * DirectPay PWA explicitly rejects special characters like colons, dashes, brackets, etc.
+ * Only alphanumeric characters [a-zA-Z0-9] and spaces are permitted.
+ */
+export function sanitizeDirectPayText(text: string, fallback = 'Beraxis Subscription'): string {
+  if (!text) return fallback;
+  const cleaned = text
+    .replace(/[^a-zA-Z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return (cleaned.substring(0, 100)) || fallback;
+}
+
+/**
  * Builds the secure DirectPay PWA checkout URL
  */
 export function buildDirectPayUrl({
@@ -100,7 +114,9 @@ export function buildDirectPayUrl({
     throw new Error('DirectPay amount must be between 10.00 and 50,000.00 PKR');
   }
 
-  const cleanDescription = (description || 'Beraxis Enterprise Service').substring(0, 500);
+  // Strictly sanitize description and payerName to prevent DirectPay special characters error
+  const cleanDescription = sanitizeDirectPayText(description, 'Beraxis Subscription');
+  const cleanPayerName = sanitizeDirectPayText(payerName, 'Beraxis Customer');
 
   // Generate cryptographic checksum
   const checksum = generateDirectPayChecksum(
@@ -115,7 +131,7 @@ export function buildDirectPayUrl({
   url.searchParams.set('client_transaction_id', clientTransactionId);
   url.searchParams.set('amount', amountInPaisas);
   url.searchParams.set('description', cleanDescription);
-  url.searchParams.set('payer_name', (payerName || 'Beraxis Customer').trim());
+  url.searchParams.set('payer_name', cleanPayerName);
   url.searchParams.set('email', (email || 'billing@beraxis.online').trim());
   url.searchParams.set('msisdn', cleanPhone);
   url.searchParams.set('checksum', checksum);
