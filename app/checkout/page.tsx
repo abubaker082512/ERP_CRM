@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ShopHeader from '@/components/shop/ShopHeader';
 import { CartItem } from '@/components/shop/CartModal';
-import { CreditCard, CheckCircle, ArrowLeft, ShieldCheck, Lock, Zap, Shield, Sparkles, Building2, Check } from 'lucide-react';
+import { CreditCard, CheckCircle, ArrowLeft, ShieldCheck, Lock, Zap, Shield, Sparkles, Building2, Check, Flame } from 'lucide-react';
 import Link from 'next/link';
+import { DEFAULT_PRICING_CONFIG, PricingConfig } from '@/lib/pricingConfig';
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -23,6 +24,8 @@ export default function CheckoutPage() {
         users: number;
         billingCycle: string;
         price: number;
+        rate?: number;
+        isEarlyBird?: boolean;
     } | null>(null);
 
     // Promo code states
@@ -67,21 +70,43 @@ export default function CheckoutPage() {
         const usersParam = parseInt(searchParams?.get('users') || '5', 10);
         const billingParam = searchParams?.get('billing') || 'annually';
 
-        if (planParam === 'standard' || planParam === 'custom') {
-            const isAnnual = billingParam === 'annually';
-            const rate = planParam === 'standard' 
-                ? (isAnnual ? 24.90 : 31.10)
-                : (isAnnual ? 37.40 : 46.80);
-            const planTotal = usersParam * rate;
+        const applyPlanDetails = (pricingData: PricingConfig) => {
+            if (planParam === 'standard' || planParam === 'custom') {
+                const isAnnual = billingParam === 'annually';
+                const planConfig = planParam === 'standard' ? pricingData.standard : pricingData.custom;
+                const rate = isAnnual ? planConfig.annual_monthly_rate : planConfig.monthly_rate;
+                const billUpfront = isAnnual && planConfig.bill_annual_upfront !== false;
+                const planTotal = billUpfront ? (usersParam * rate * 12) : (usersParam * rate);
 
-            setSubscriptionPlan({
-                name: planParam === 'standard' ? 'Beraxis Standard Plan' : 'Beraxis Custom Enterprise',
-                tier: planParam,
-                users: usersParam,
-                billingCycle: isAnnual ? 'Annual (Save ~20%)' : 'Monthly',
-                price: parseFloat(planTotal.toFixed(2))
+                setSubscriptionPlan({
+                    name: planParam === 'standard' 
+                        ? (planConfig.is_early_bird ? 'Standard Plan (Early Bird)' : 'Beraxis Standard Plan') 
+                        : 'Beraxis Custom Enterprise',
+                    tier: planParam,
+                    users: usersParam,
+                    billingCycle: isAnnual 
+                        ? `Annual ($${rate.toFixed(2)}/seat/mo billed annually)` 
+                        : `Monthly ($${rate.toFixed(2)}/seat/mo)`,
+                    price: parseFloat(planTotal.toFixed(2)),
+                    rate: rate,
+                    isEarlyBird: planConfig.is_early_bird
+                });
+            }
+        };
+
+        // Try fetching dynamic pricing config, fallback to default immediately
+        fetch('/api/admin/pricing')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.standard) {
+                    applyPlanDetails(data);
+                } else {
+                    applyPlanDetails(DEFAULT_PRICING_CONFIG);
+                }
+            })
+            .catch(() => {
+                applyPlanDetails(DEFAULT_PRICING_CONFIG);
             });
-        }
 
         const savedCart = localStorage.getItem('erp_cart');
         if (savedCart) {
@@ -386,13 +411,14 @@ export default function CheckoutPage() {
 
                             {/* Plan Pill */}
                             {subscriptionPlan ? (
-                                <div className="p-4 bg-purple-600/10 border border-purple-500/20 rounded-2xl space-y-2">
+                                <div className="p-4 bg-purple-600/10 border border-purple-500/20 rounded-2xl space-y-2.5">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
+                                        <span className="text-xs font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                                            {subscriptionPlan.isEarlyBird && <Flame size={13} className="text-amber-400 animate-pulse" />}
                                             {subscriptionPlan.name}
                                         </span>
                                         <span className="text-xs font-mono font-bold text-white">
-                                            ${subscriptionPlan.price.toFixed(2)} / mo
+                                            ${subscriptionPlan.price.toFixed(2)} {subscriptionPlan.billingCycle.toLowerCase().includes('annual') ? 'total / yr' : '/ mo'}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -400,7 +426,13 @@ export default function CheckoutPage() {
                                         <span>•</span>
                                         <span>📅 {subscriptionPlan.billingCycle}</span>
                                     </div>
-                                    <ul className="text-[11px] text-gray-300 space-y-1 pt-2 border-t border-white/5">
+                                    {subscriptionPlan.rate !== undefined && (
+                                        <div className="text-[11px] text-purple-300 font-semibold bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/20 flex items-center justify-between">
+                                            <span>Effective Rate:</span>
+                                            <span className="font-mono text-white font-bold">${subscriptionPlan.rate.toFixed(2)} / seat / month</span>
+                                        </div>
+                                    )}
+                                    <ul className="text-[11px] text-gray-300 space-y-1 pt-1.5 border-t border-white/5">
                                         <li className="flex items-center gap-1.5">
                                             <Check size={12} className="text-purple-400" /> All 28 enterprise modules included
                                         </li>

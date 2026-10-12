@@ -516,6 +516,47 @@ GLOBAL_ANNOUNCEMENT = {
     "updated_at": datetime.now(timezone.utc).isoformat()
 }
 
+class PricingPlanPayload(BaseModel):
+    name: Optional[str] = "Standard"
+    annual_monthly_rate: float = 1.00
+    monthly_rate: float = 5.00
+    original_annual_rate: Optional[float] = 24.90
+    original_monthly_rate: Optional[float] = 31.10
+    is_early_bird: Optional[bool] = True
+    badge_text: Optional[str] = "Early Bird Special (Limited Time)"
+    bill_annual_upfront: Optional[bool] = True
+
+class PricingPayload(BaseModel):
+    standard: PricingPlanPayload
+    custom: Optional[PricingPlanPayload] = None
+    updated_by: Optional[str] = "Super Admin"
+
+GLOBAL_PRICING = {
+    "standard": {
+        "name": "Standard",
+        "annual_monthly_rate": 1.00,
+        "monthly_rate": 5.00,
+        "original_annual_rate": 24.90,
+        "original_monthly_rate": 31.10,
+        "is_early_bird": True,
+        "badge_text": "Early Bird Special (Limited Time)",
+        "bill_annual_upfront": True
+    },
+    "custom": {
+        "name": "Custom Enterprise",
+        "annual_monthly_rate": 37.40,
+        "monthly_rate": 46.80,
+        "original_annual_rate": 37.40,
+        "original_monthly_rate": 46.80,
+        "is_early_bird": False,
+        "badge_text": "Custom Enterprise",
+        "bill_annual_upfront": True
+    },
+    "updated_at": datetime.now(timezone.utc).isoformat(),
+    "updated_by": "Super Admin"
+}
+
+
 
 @router.post("/users/create")
 def create_user_as_admin(payload: CreateUserPayload, client: Client = Depends(get_supabase_client)):
@@ -714,6 +755,50 @@ def set_announcement(payload: AnnouncementPayload, client: Client = Depends(get_
     GLOBAL_ANNOUNCEMENT["is_active"] = payload.is_active
     GLOBAL_ANNOUNCEMENT["updated_at"] = datetime.now(timezone.utc).isoformat()
     return {"status": "success", "announcement": GLOBAL_ANNOUNCEMENT}
+
+
+@router.get("/pricing")
+def get_pricing():
+    """Public / Admin: Get active SaaS pricing matrix."""
+    return GLOBAL_PRICING
+
+
+@router.post("/pricing")
+def set_pricing(payload: PricingPayload, client: Client = Depends(get_supabase_client)):
+    """SUPER ADMIN: Update SaaS plan pricing on the fly."""
+    verify_super_admin(client)
+    
+    GLOBAL_PRICING["standard"]["annual_monthly_rate"] = payload.standard.annual_monthly_rate
+    GLOBAL_PRICING["standard"]["monthly_rate"] = payload.standard.monthly_rate
+    if payload.standard.original_annual_rate is not None:
+        GLOBAL_PRICING["standard"]["original_annual_rate"] = payload.standard.original_annual_rate
+    if payload.standard.original_monthly_rate is not None:
+        GLOBAL_PRICING["standard"]["original_monthly_rate"] = payload.standard.original_monthly_rate
+    if payload.standard.is_early_bird is not None:
+        GLOBAL_PRICING["standard"]["is_early_bird"] = payload.standard.is_early_bird
+    if payload.standard.badge_text:
+        GLOBAL_PRICING["standard"]["badge_text"] = payload.standard.badge_text
+    if payload.standard.bill_annual_upfront is not None:
+        GLOBAL_PRICING["standard"]["bill_annual_upfront"] = payload.standard.bill_annual_upfront
+
+    if payload.custom:
+        GLOBAL_PRICING["custom"]["annual_monthly_rate"] = payload.custom.annual_monthly_rate
+        GLOBAL_PRICING["custom"]["monthly_rate"] = payload.custom.monthly_rate
+        if payload.custom.original_annual_rate is not None:
+            GLOBAL_PRICING["custom"]["original_annual_rate"] = payload.custom.original_annual_rate
+        if payload.custom.original_monthly_rate is not None:
+            GLOBAL_PRICING["custom"]["original_monthly_rate"] = payload.custom.original_monthly_rate
+        if payload.custom.is_early_bird is not None:
+            GLOBAL_PRICING["custom"]["is_early_bird"] = payload.custom.is_early_bird
+        if payload.custom.badge_text:
+            GLOBAL_PRICING["custom"]["badge_text"] = payload.custom.badge_text
+        if payload.custom.bill_annual_upfront is not None:
+            GLOBAL_PRICING["custom"]["bill_annual_upfront"] = payload.custom.bill_annual_upfront
+
+    GLOBAL_PRICING["updated_at"] = datetime.now(timezone.utc).isoformat()
+    GLOBAL_PRICING["updated_by"] = payload.updated_by or "Super Admin"
+    return {"status": "success", "pricing": GLOBAL_PRICING}
+
 
 
 @router.get("/audit-logs")

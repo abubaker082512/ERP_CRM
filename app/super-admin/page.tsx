@@ -9,8 +9,9 @@ import {
     Percent, Sparkles, X, Check, Copy, ToggleLeft, ToggleRight,
     Edit3, Activity, Server, Database, Globe, Megaphone, Lock,
     Key, Download, Cpu, HardDrive, Bell, CheckSquare, Play,
-    Sliders, LogIn, ChevronRight
+    Sliders, LogIn, ChevronRight, Flame, Save
 } from 'lucide-react';
+import { DEFAULT_PRICING_CONFIG, PricingConfig } from '@/lib/pricingConfig';
 
 export type Workspace = { 
     id: string; 
@@ -138,8 +139,25 @@ export default function SuperAdminPage() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<
-        "overview" | "promocodes" | "payments" | "billing" | "users" | "sales" | "flags" | "broadcast" | "audit" | "diagnostics"
+        "overview" | "pricing" | "promocodes" | "payments" | "billing" | "users" | "sales" | "flags" | "broadcast" | "audit" | "diagnostics"
     >("overview");
+
+    // Dynamic SaaS Plan Pricing state
+    const [pricingConfig, setPricingConfig] = useState<PricingConfig>(DEFAULT_PRICING_CONFIG);
+    const [pricingForm, setPricingForm] = useState({
+        standard_annual_monthly_rate: "1.00",
+        standard_monthly_rate: "5.00",
+        standard_original_annual_rate: "24.90",
+        standard_original_monthly_rate: "31.10",
+        standard_is_early_bird: true,
+        standard_badge_text: "Early Bird Special (96% OFF)",
+        standard_bill_annual_upfront: true,
+        custom_annual_monthly_rate: "37.40",
+        custom_monthly_rate: "46.80",
+        custom_badge_text: "Custom Enterprise",
+        custom_is_early_bird: false
+    });
+    const [savingPricing, setSavingPricing] = useState(false);
 
     // Search filters
     const [searchTerm, setSearchTerm] = useState("");
@@ -298,6 +316,7 @@ export default function SuperAdminPage() {
             }
             
             await fetchPromos();
+            await fetchPricing();
         } catch (err: any) {
             console.error("Super Admin fetch error:", err);
             setError("Server connection issue. Please ensure the backend is active or try syncing again.");
@@ -305,6 +324,105 @@ export default function SuperAdminPage() {
             setLoading(false);
             setAuthChecked(true);
         }
+    };
+
+    const fetchPricing = async () => {
+        try {
+            const res = await fetch("/api/admin/pricing");
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.standard) {
+                    setPricingConfig(data);
+                    setPricingForm({
+                        standard_annual_monthly_rate: String(data.standard.annual_monthly_rate ?? "1.00"),
+                        standard_monthly_rate: String(data.standard.monthly_rate ?? "5.00"),
+                        standard_original_annual_rate: String(data.standard.original_annual_rate ?? "24.90"),
+                        standard_original_monthly_rate: String(data.standard.original_monthly_rate ?? "31.10"),
+                        standard_is_early_bird: data.standard.is_early_bird !== false,
+                        standard_badge_text: data.standard.badge_text || "Early Bird Special (96% OFF)",
+                        standard_bill_annual_upfront: data.standard.bill_annual_upfront !== false,
+                        custom_annual_monthly_rate: String(data.custom?.annual_monthly_rate ?? "37.40"),
+                        custom_monthly_rate: String(data.custom?.monthly_rate ?? "46.80"),
+                        custom_badge_text: data.custom?.badge_text || "Custom Enterprise",
+                        custom_is_early_bird: Boolean(data.custom?.is_early_bird)
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Failed to fetch pricing config", err);
+        }
+    };
+
+    const handleSavePricing = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        setSavingPricing(true);
+        try {
+            const payload: PricingConfig = {
+                standard: {
+                    name: "Standard",
+                    annual_monthly_rate: parseFloat(pricingForm.standard_annual_monthly_rate) || 1.00,
+                    monthly_rate: parseFloat(pricingForm.standard_monthly_rate) || 5.00,
+                    original_annual_rate: parseFloat(pricingForm.standard_original_annual_rate) || 24.90,
+                    original_monthly_rate: parseFloat(pricingForm.standard_original_monthly_rate) || 31.10,
+                    is_early_bird: pricingForm.standard_is_early_bird,
+                    badge_text: pricingForm.standard_badge_text,
+                    bill_annual_upfront: pricingForm.standard_bill_annual_upfront
+                },
+                custom: {
+                    name: "Custom Enterprise",
+                    annual_monthly_rate: parseFloat(pricingForm.custom_annual_monthly_rate) || 37.40,
+                    monthly_rate: parseFloat(pricingForm.custom_monthly_rate) || 46.80,
+                    original_annual_rate: 37.40,
+                    original_monthly_rate: 46.80,
+                    is_early_bird: pricingForm.custom_is_early_bird,
+                    badge_text: pricingForm.custom_badge_text,
+                    bill_annual_upfront: true
+                },
+                updated_at: new Date().toISOString(),
+                updated_by: "Super Admin"
+            };
+
+            const res = await fetch("/api/admin/pricing", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            // Sync with backend if available
+            fetchAPI("/super-admin/pricing", {
+                method: "POST",
+                body: JSON.stringify(payload)
+            }).catch(() => null);
+
+            if (res.ok) {
+                setPricingConfig(payload);
+                showToast("🚀 Plan Pricing updated and published live!");
+            } else {
+                showToast("⚠️ Failed to update pricing. Please check logs.");
+            }
+        } catch (err) {
+            console.error("Save pricing error:", err);
+            showToast("⚠️ Network error while updating pricing.");
+        } finally {
+            setSavingPricing(false);
+        }
+    };
+
+    const handleResetPricingDefaults = () => {
+        setPricingForm({
+            standard_annual_monthly_rate: "1.00",
+            standard_monthly_rate: "5.00",
+            standard_original_annual_rate: "24.90",
+            standard_original_monthly_rate: "31.10",
+            standard_is_early_bird: true,
+            standard_badge_text: "Early Bird Special (96% OFF)",
+            standard_bill_annual_upfront: true,
+            custom_annual_monthly_rate: "37.40",
+            custom_monthly_rate: "46.80",
+            custom_badge_text: "Custom Enterprise",
+            custom_is_early_bird: false
+        });
+        showToast("↺ Pricing form reset to $1 Early Bird defaults (click Save to publish)");
     };
 
     const fetchPromos = async () => {
@@ -785,6 +903,7 @@ export default function SuperAdminPage() {
                 {/* ── NAVIGATION TABS ── */}
                 <div className="flex border-b border-gray-800 mb-6 overflow-x-auto whitespace-nowrap scrollbar-none gap-1 bg-[#111827]/40 p-1.5 rounded-2xl border">
                     <TabBtn active={activeTab === "overview"}    onClick={() => setActiveTab("overview")}    label="🏢 Companies" count={safeWorkspaces.length} />
+                    <TabBtn active={activeTab === "pricing"}     onClick={() => setActiveTab("pricing")}     label="💰 Plan Pricing ($1 Early Bird)" />
                     <TabBtn active={activeTab === "promocodes"}  onClick={() => setActiveTab("promocodes")}  label="🎟️ Promo Codes" count={safePromocodes.length} />
                     <TabBtn active={activeTab === "payments"}    onClick={() => setActiveTab("payments")}    label="💳 DirectPay Subscriptions" count={safePayments.length} />
                     <TabBtn active={activeTab === "billing"}     onClick={() => setActiveTab("billing")}     label="⚖️ Billing Ctrl" count={safeTenants.length} />
@@ -881,6 +1000,334 @@ export default function SuperAdminPage() {
                                     }
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── TAB: PLAN PRICING & EARLY BIRD CONTROLLER ── */}
+                {activeTab === "pricing" && (
+                    <div className="space-y-6">
+                        <div className="bg-[#111827] rounded-3xl border border-gray-800 overflow-hidden shadow-2xl">
+                            <TableHeader 
+                                title="SaaS Plan Pricing & Early Bird Rate Controller" 
+                                subtitle="Super Admin command center for live plan rates. Standard Plan Early Bird rates are set to $1/mo Annual and $5/mo Monthly."
+                            >
+                                <div className="flex items-center gap-3 w-full md:w-auto">
+                                    <button
+                                        type="button"
+                                        onClick={handleResetPricingDefaults}
+                                        className="bg-[#1E293B] hover:bg-gray-800 text-gray-300 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-gray-700 transition-all flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                        <RefreshCw size={14} /> Reset $1 Early Bird Defaults
+                                    </button>
+                                    <a
+                                        href="/pricing"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-purple-500/30 transition-all flex items-center gap-1.5"
+                                    >
+                                        <ExternalLink size={14} /> View Live Pricing Page
+                                    </a>
+                                </div>
+                            </TableHeader>
+
+                            {/* Active Status Ribbon */}
+                            <div className="px-6 py-4 bg-[#0B0F19] border-b border-gray-800 flex flex-wrap items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <span className="flex h-3 w-3 relative">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                    </span>
+                                    <span className="text-xs font-bold text-gray-300">
+                                        Live Rates Active: Standard Annual <span className="text-emerald-400 font-black">${pricingConfig.standard.annual_monthly_rate.toFixed(2)}/mo</span> • Standard Monthly <span className="text-purple-400 font-black">${pricingConfig.standard.monthly_rate.toFixed(2)}/mo</span>
+                                    </span>
+                                </div>
+                                <div className="text-[11px] text-gray-500">
+                                    Last synchronized: {pricingConfig.updated_at ? new Date(pricingConfig.updated_at).toLocaleTimeString() : "Just now"}
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleSavePricing} className="p-6 md:p-8 space-y-8">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    
+                                    {/* ── CARD 1: STANDARD PLAN SETTINGS ── */}
+                                    <div className="bg-[#0D1322] border border-purple-500/30 rounded-2xl p-6 space-y-6 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600/30 to-transparent px-4 py-1 text-[10px] font-extrabold text-purple-300 uppercase tracking-widest">
+                                            Standard Tier
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                                                <Flame size={20} className="text-amber-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                                    Standard Plan (Early Bird)
+                                                </h3>
+                                                <p className="text-xs text-gray-400">Controls rates displayed on /pricing and billed on /checkout</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Early Bird Mode Toggle */}
+                                        <div className="p-4 bg-purple-950/20 border border-purple-500/20 rounded-xl flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                                                    <Sparkles size={14} className="text-yellow-400" /> Early Bird Promotional Status
+                                                </p>
+                                                <p className="text-[11px] text-gray-400">Displays Early Bird badges, flame animations, and strikethrough comparison</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setPricingForm(f => ({ ...f, standard_is_early_bird: !f.standard_is_early_bird }))}
+                                                className="cursor-pointer text-purple-400 hover:text-purple-300 transition-colors"
+                                            >
+                                                {pricingForm.standard_is_early_bird ? (
+                                                    <ToggleRight size={34} className="text-emerald-400" />
+                                                ) : (
+                                                    <ToggleLeft size={34} className="text-gray-600" />
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        {/* Rates Grid */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1.5">
+                                                    Annual Plan Rate ($ / user / mo) *
+                                                </label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3.5 top-2.5 text-gray-400 font-mono text-sm">$</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0.10"
+                                                        required
+                                                        value={pricingForm.standard_annual_monthly_rate}
+                                                        onChange={(e) => setPricingForm(f => ({ ...f, standard_annual_monthly_rate: e.target.value }))}
+                                                        className="w-full bg-[#070B16] border border-emerald-500/40 rounded-xl pl-8 pr-4 py-2.5 text-white font-mono font-bold text-sm outline-none focus:border-emerald-400"
+                                                    />
+                                                </div>
+                                                <p className="text-[10px] text-gray-400 mt-1">Target: $1.00 / month (billed $12/user/yr)</p>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-bold text-purple-400 uppercase tracking-wider mb-1.5">
+                                                    Monthly Plan Rate ($ / user / mo) *
+                                                </label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3.5 top-2.5 text-gray-400 font-mono text-sm">$</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0.10"
+                                                        required
+                                                        value={pricingForm.standard_monthly_rate}
+                                                        onChange={(e) => setPricingForm(f => ({ ...f, standard_monthly_rate: e.target.value }))}
+                                                        className="w-full bg-[#070B16] border border-purple-500/40 rounded-xl pl-8 pr-4 py-2.5 text-white font-mono font-bold text-sm outline-none focus:border-purple-400"
+                                                    />
+                                                </div>
+                                                <p className="text-[10px] text-gray-400 mt-1">Target: $5.00 / month (month-to-month)</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Strikethrough Reference Rates */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/5">
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-400 mb-1">
+                                                    Original Reference Annual Rate ($)
+                                                </label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3.5 top-2 text-gray-500 font-mono text-xs">$</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={pricingForm.standard_original_annual_rate}
+                                                        onChange={(e) => setPricingForm(f => ({ ...f, standard_original_annual_rate: e.target.value }))}
+                                                        className="w-full bg-[#070B16] border border-white/10 rounded-xl pl-7 pr-3 py-2 text-gray-300 font-mono text-xs outline-none focus:border-purple-500"
+                                                    />
+                                                </div>
+                                                <p className="text-[10px] text-gray-500 mt-1">Shows struck-through e.g. ~~$24.90~~</p>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-400 mb-1">
+                                                    Original Reference Monthly Rate ($)
+                                                </label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3.5 top-2 text-gray-500 font-mono text-xs">$</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={pricingForm.standard_original_monthly_rate}
+                                                        onChange={(e) => setPricingForm(f => ({ ...f, standard_original_monthly_rate: e.target.value }))}
+                                                        className="w-full bg-[#070B16] border border-white/10 rounded-xl pl-7 pr-3 py-2 text-gray-300 font-mono text-xs outline-none focus:border-purple-500"
+                                                    />
+                                                </div>
+                                                <p className="text-[10px] text-gray-500 mt-1">Shows struck-through e.g. ~~$31.10~~</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Promo Badge Text */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                                                Promotional Card Badge Text
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={pricingForm.standard_badge_text}
+                                                onChange={(e) => setPricingForm(f => ({ ...f, standard_badge_text: e.target.value }))}
+                                                placeholder="Early Bird Special (96% OFF)"
+                                                className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs outline-none focus:border-purple-500"
+                                            />
+                                        </div>
+
+                                        {/* Bill Upfront Option */}
+                                        <label className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={pricingForm.standard_bill_annual_upfront}
+                                                onChange={(e) => setPricingForm(f => ({ ...f, standard_bill_annual_upfront: e.target.checked }))}
+                                                className="rounded border-gray-700 text-purple-600 focus:ring-purple-500 w-4 h-4"
+                                            />
+                                            <div className="text-xs">
+                                                <p className="font-semibold text-white">Bill Annual Subscriptions 12 Months Upfront</p>
+                                                <p className="text-[11px] text-gray-400">Charges $12/user for the entire 1-year period upfront at checkout</p>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    {/* ── CARD 2: CUSTOM ENTERPRISE SETTINGS & PREVIEW ── */}
+                                    <div className="space-y-6">
+                                        <div className="bg-[#0D1322] border border-pink-500/20 rounded-2xl p-6 space-y-6 relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 bg-gradient-to-l from-pink-600/30 to-transparent px-4 py-1 text-[10px] font-extrabold text-pink-300 uppercase tracking-widest">
+                                                Enterprise Tier
+                                            </div>
+
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-pink-600/20 border border-pink-500/30 flex items-center justify-center text-pink-400">
+                                                    <Building2 size={20} />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-base font-bold text-white">Custom Enterprise Plan</h3>
+                                                    <p className="text-xs text-gray-400">Developer studio, custom database, and multi-company plan rates</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                                                        Annual Rate ($ / user / mo)
+                                                    </label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3.5 top-2.5 text-gray-400 font-mono text-sm">$</span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={pricingForm.custom_annual_monthly_rate}
+                                                            onChange={(e) => setPricingForm(f => ({ ...f, custom_annual_monthly_rate: e.target.value }))}
+                                                            className="w-full bg-[#070B16] border border-white/10 rounded-xl pl-8 pr-4 py-2.5 text-white font-mono text-sm outline-none focus:border-pink-500"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                                                        Monthly Rate ($ / user / mo)
+                                                    </label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3.5 top-2.5 text-gray-400 font-mono text-sm">$</span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={pricingForm.custom_monthly_rate}
+                                                            onChange={(e) => setPricingForm(f => ({ ...f, custom_monthly_rate: e.target.value }))}
+                                                            className="w-full bg-[#070B16] border border-white/10 rounded-xl pl-8 pr-4 py-2.5 text-white font-mono text-sm outline-none focus:border-pink-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                                                    Enterprise Badge Text
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={pricingForm.custom_badge_text}
+                                                    onChange={(e) => setPricingForm(f => ({ ...f, custom_badge_text: e.target.value }))}
+                                                    className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs outline-none focus:border-pink-500"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* ── LIVE SIMULATOR PREVIEW ── */}
+                                        <div className="bg-[#0B0F19] border border-gray-800 rounded-2xl p-6 space-y-4">
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                                                <TrendingUp size={15} className="text-purple-400" /> Live Standard Plan Customer Pricing Simulator
+                                            </h4>
+
+                                            <div className="grid grid-cols-3 gap-3 text-center">
+                                                {[1, 5, 20].map(seats => {
+                                                    const annualRateNum = parseFloat(pricingForm.standard_annual_monthly_rate) || 1.00;
+                                                    const monthlyRateNum = parseFloat(pricingForm.standard_monthly_rate) || 5.00;
+                                                    const annualTotalMo = (seats * annualRateNum).toFixed(2);
+                                                    const annualTotalYr = (seats * annualRateNum * 12).toFixed(2);
+                                                    const monthlyTotalMo = (seats * monthlyRateNum).toFixed(2);
+                                                    const savingsYr = ((seats * monthlyRateNum * 12) - (seats * annualRateNum * 12)).toFixed(0);
+
+                                                    return (
+                                                        <div key={seats} className="p-3 bg-white/5 rounded-xl border border-white/5 text-left">
+                                                            <div className="text-xs font-black text-purple-300 mb-1.5">{seats} {seats === 1 ? 'Seat' : 'Seats'}</div>
+                                                            <div className="text-[11px] text-gray-400">
+                                                                Monthly: <span className="font-mono text-white font-bold">${monthlyTotalMo}/mo</span>
+                                                            </div>
+                                                            <div className="text-[11px] text-emerald-400">
+                                                                Annual: <span className="font-mono text-white font-bold">${annualTotalMo}/mo</span> (${annualTotalYr}/yr)
+                                                            </div>
+                                                            <div className="text-[10px] text-amber-400 font-bold mt-1">
+                                                                Save ${savingsYr}/yr!
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Save Bar */}
+                                <div className="pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="text-xs text-gray-400 flex items-center gap-2">
+                                        <CheckCircle size={16} className="text-emerald-400" />
+                                        <span>Saving automatically updates public pricing & checkout endpoints in real-time.</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                                        <button
+                                            type="button"
+                                            onClick={handleResetPricingDefaults}
+                                            className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer"
+                                        >
+                                            Reset Defaults
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={savingPricing}
+                                            className="w-full sm:w-auto bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-black px-8 py-3 rounded-xl shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                                        >
+                                            {savingPricing ? (
+                                                <>
+                                                    <RefreshCw size={15} className="animate-spin" /> Publishing...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Save size={15} /> Save & Publish Live Rates
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}
