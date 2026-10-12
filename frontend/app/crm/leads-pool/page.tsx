@@ -38,7 +38,9 @@ import {
     MessageCircle,
     Star,
     CheckCircle2,
-    Building
+    Building,
+    X,
+    CreditCard
 } from "lucide-react";
 
 export type LeadRecord = {
@@ -489,6 +491,39 @@ export default function LeadsPoolPage() {
                 });
             }
         } catch {}
+    };
+
+    const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
+    const [buyingCredits, setBuyingCredits] = useState(false);
+    const [buyCreditsSuccess, setBuyCreditsSuccess] = useState<string | null>(null);
+
+    const handleBuyCredits = async (packCredits: number, priceUSD: number) => {
+        setBuyingCredits(true);
+        try {
+            const res = await fetchAPI("/lead-bank/credits/adjust", {
+                method: "POST",
+                body: JSON.stringify({ bonus_add: packCredits })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setCreditsInfo({
+                    remaining: data.remaining_credits ?? (creditsInfo.remaining + packCredits),
+                    total: data.total_quota ?? (creditsInfo.total + packCredits),
+                    plan: data.plan || "Standard",
+                    userSeats: data.user_seats || 1,
+                    isExhausted: false
+                });
+                setBuyCreditsSuccess(`🎉 Successfully added ${packCredits.toLocaleString()} verified lead credits ($${priceUSD})!`);
+                setTimeout(() => {
+                    setShowBuyCreditsModal(false);
+                    setBuyCreditsSuccess(null);
+                }, 2200);
+            }
+        } catch (err) {
+            console.error("Buy credits error", err);
+        } finally {
+            setBuyingCredits(false);
+        }
     };
 
     useEffect(() => {
@@ -1774,6 +1809,123 @@ export default function LeadsPoolPage() {
                                 </div>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Buy Lead Credits Modal */}
+            {showBuyCreditsModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+                    <div className="bg-[#0f172a] border border-cyan-500/40 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-2xl relative">
+                        <button
+                            onClick={() => setShowBuyCreditsModal(false)}
+                            className="absolute top-5 right-5 text-gray-400 hover:text-white p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30">
+                                <CreditCard size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                    Instant Lead Credit Top-Up
+                                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                                        No Expiration
+                                    </span>
+                                </h3>
+                                <p className="text-xs text-gray-400">
+                                    Credits stack onto your workspace balance and never expire.
+                                </p>
+                            </div>
+                        </div>
+
+                        {buyCreditsSuccess && (
+                            <div className="my-4 p-4 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-sm font-semibold flex items-center gap-2 animate-bounce">
+                                <CheckCircle size={18} className="text-emerald-400" />
+                                {buyCreditsSuccess}
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 my-6">
+                            {[
+                                {
+                                    name: "Starter Pack",
+                                    credits: 1000,
+                                    price: 10,
+                                    popular: false,
+                                    perLead: "$0.010 / lead"
+                                },
+                                {
+                                    name: "Growth Pack",
+                                    credits: 2500,
+                                    price: 22,
+                                    popular: true,
+                                    perLead: "$0.0088 / lead"
+                                },
+                                {
+                                    name: "Scale Pack",
+                                    credits: 5000,
+                                    price: 40,
+                                    popular: false,
+                                    perLead: "$0.0080 / lead"
+                                },
+                                {
+                                    name: "Agency Pack",
+                                    credits: 10000,
+                                    price: 75,
+                                    popular: false,
+                                    perLead: "$0.0075 / lead"
+                                }
+                            ].map((pack) => (
+                                <div
+                                    key={pack.name}
+                                    className={`relative rounded-2xl p-4 border transition-all flex flex-col justify-between ${
+                                        pack.popular
+                                            ? "bg-cyan-950/40 border-cyan-500/50 shadow-lg shadow-cyan-500/20 hover:border-cyan-400"
+                                            : "bg-white/[0.03] border-white/10 hover:border-white/20"
+                                    }`}
+                                >
+                                    {pack.popular && (
+                                        <div className="absolute -top-2.5 right-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-black text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md">
+                                            Most Popular
+                                        </div>
+                                    )}
+                                    <div>
+                                        <div className="text-xs font-bold text-gray-400 mb-1">{pack.name}</div>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-2xl font-black text-white">{pack.credits.toLocaleString()}</span>
+                                            <span className="text-xs text-cyan-400 font-semibold">Leads</span>
+                                        </div>
+                                        <div className="text-[11px] text-gray-400 mt-1">{pack.perLead}</div>
+                                    </div>
+                                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+                                        <div className="text-lg font-bold text-white">${pack.price}</div>
+                                        <button
+                                            onClick={() => handleBuyCredits(pack.credits, pack.price)}
+                                            disabled={buyingCredits}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 ${
+                                                pack.popular
+                                                    ? "bg-cyan-500 hover:bg-cyan-400 text-black shadow-md shadow-cyan-500/30"
+                                                    : "bg-white/10 hover:bg-white/20 text-white"
+                                            } disabled:opacity-50`}
+                                        >
+                                            <Zap size={12} className={pack.popular ? "fill-black" : "fill-white"} />
+                                            {buyingCredits ? "Adding..." : "Add Credits"}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-3.5 flex items-center justify-between text-xs text-gray-400">
+                            <span className="flex items-center gap-1.5">
+                                <ShieldCheck size={14} className="text-emerald-400" />
+                                Instant delivery to active workspace
+                            </span>
+                            <span className="text-gray-400">Card & Invoice billing</span>
+                        </div>
                     </div>
                 </div>
             )}

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame } from "lucide-react";
+import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame, Building2 } from "lucide-react";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 
 export default function PricingPage() {
@@ -65,14 +65,22 @@ export default function PricingPage() {
         { name: "Point of Sale (POS)", free: false, standard: true, custom: true },
         { name: "Purchase Management", free: false, standard: true, custom: true },
         { name: "Surveys & Documents", free: false, standard: true, custom: true },
-        { name: "Lead Pool Credits (1,500 Leads / User / Month)", free: false, standard: true, custom: true },
+        { name: "Single vs Multi-Company", free: "1 Company", standard: "1 Company", custom: "3 Included (+ $15/extra)" },
+        { name: "Lead Pool Credits / User / Mo", free: "50 Previews", standard: "1,500 (+ Top-up)", custom: "5,000+" },
         { name: "Beraxis Studio Customizer", free: false, standard: false, custom: true },
-        { name: "Multi-Company Support", free: false, standard: false, custom: true },
         { name: "External API Integrations", free: false, standard: false, custom: true },
         { name: "Dedicated Isolated Cloud Databases", free: false, standard: false, custom: true },
     ];
 
     const faqs = [
+        {
+            q: "How does company management work between Standard and Custom?",
+            a: "The Standard Plan is designed for operating a single company workspace (1 Company) with all 28 modules unlocked. If your business operates multiple entities, subsidiaries, or legal branches, the Custom Enterprise plan includes 3 companies out-of-the-box, with extra companies available for $15/company/month."
+        },
+        {
+            q: "Can I buy additional Lead Credits in the Lead Pool?",
+            a: "Yes! While the Standard Plan includes 1,500 lead credits per user seat every month, you can easily top-up additional credit packs directly inside your CRM Leads Pool cockpit starting at $10 for 1,000 verified leads ($0.01/lead)."
+        },
         {
             q: "How does the Lead Pool credits system work on the Standard Plan?",
             a: "Every user seat on the Standard plan receives 1,500 verified B2B lead credits each month (e.g., a 5-seat team gets 7,500 leads per month). Each credit unlocks full decision-maker contact details, runs real-time SMTP deliverability verification, and allows 1-click import into your CRM pipeline."
@@ -91,7 +99,7 @@ export default function PricingPage() {
         },
         {
             q: "How does the annual billing discount work?",
-            a: "By selecting annual billing, you receive a discount of approximately 20% compared to paying month-to-month, saving hundreds of dollars per seat."
+            a: "By selecting annual billing, you lock in the Early Bird $1/month/seat rate (billed as $12/user for the entire year upfront), saving 96% compared to standard pricing."
         }
     ];
 
@@ -194,6 +202,10 @@ export default function PricingPage() {
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <Check className="text-purple-400" size={16} />
+                                    <span>Single Company Workspace (1 Company)</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <Check className="text-purple-400" size={16} />
                                     <span>50 Starter Lead Pool Previews</span>
                                 </li>
                                 <li className="flex items-center gap-3">
@@ -266,9 +278,17 @@ export default function PricingPage() {
                             </div>
 
                             <ul className="space-y-4 text-sm text-gray-300">
+                                <li className="flex items-center gap-3 bg-purple-500/10 border border-purple-500/20 rounded-xl p-2.5 -mx-1 text-white font-bold">
+                                    <Building2 className="text-purple-400 shrink-0" size={16} />
+                                    <span>Single Company Workspace (1 Company included)</span>
+                                </li>
                                 <li className="flex items-center gap-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-2.5 -mx-1 text-cyan-200 font-bold shadow-sm">
                                     <Zap className="text-cyan-400 shrink-0" size={16} />
                                     <span>1,500 Verified B2B Lead Credits / user / month</span>
+                                </li>
+                                <li className="flex items-center gap-3 text-xs text-gray-300">
+                                    <Check className="text-emerald-400 shrink-0" size={15} />
+                                    <span>Buy extra lead packs anytime in Lead Pool ($10 / 1,000)</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <Check className="text-purple-400" size={16} />
@@ -281,10 +301,6 @@ export default function PricingPage() {
                                 <li className="flex items-center gap-3">
                                     <Check className="text-purple-400" size={16} />
                                     <span>Live Database Backups & High-Performance CDN</span>
-                                </li>
-                                <li className="flex items-center gap-3 text-gray-500">
-                                    <X size={16} />
-                                    <span>No Custom Code / API access</span>
                                 </li>
                             </ul>
                         </div>
@@ -317,13 +333,17 @@ export default function PricingPage() {
                             </div>
 
                             <ul className="space-y-4 text-sm text-gray-300">
+                                <li className="flex items-center gap-3 bg-pink-500/15 border border-pink-500/30 rounded-xl p-2.5 -mx-1 text-pink-100 font-bold shadow-sm">
+                                    <Building2 className="text-pink-400 shrink-0" size={16} />
+                                    <span>Multi-Company: 3 Companies included (+ $15/mo per extra company)</span>
+                                </li>
                                 <li className="flex items-center gap-3 bg-pink-500/10 border border-pink-500/30 rounded-xl p-2.5 -mx-1 text-pink-200 font-bold shadow-sm">
                                     <Zap className="text-pink-400 shrink-0" size={16} />
                                     <span>5,000+ Custom Lead Credits / user / month</span>
                                 </li>
-                                <li className="flex items-center gap-3">
-                                    <Check className="text-pink-400" size={16} />
-                                    <span>Everything in Standard plan</span>
+                                <li className="flex items-center gap-3 text-xs text-gray-300">
+                                    <Check className="text-pink-400 shrink-0" size={15} />
+                                    <span>Buy extra high-volume lead credits on-demand</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <Check className="text-pink-400" size={16} />
@@ -395,13 +415,31 @@ export default function PricingPage() {
                                     <tr key={idx} className="hover:bg-white/5 transition-colors">
                                         <td className="py-4 px-6 font-semibold text-white">{m.name}</td>
                                         <td className="py-4 px-6 text-center">
-                                            {m.free ? <Check size={16} className="text-purple-400 mx-auto" /> : <X size={16} className="text-gray-600 mx-auto" />}
+                                            {typeof m.free === "string" ? (
+                                                <span className="text-[11px] font-bold text-gray-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md inline-block">{m.free}</span>
+                                            ) : m.free ? (
+                                                <Check size={16} className="text-purple-400 mx-auto" />
+                                            ) : (
+                                                <X size={16} className="text-gray-600 mx-auto" />
+                                            )}
                                         </td>
                                         <td className="py-4 px-6 text-center">
-                                            {m.standard ? <Check size={16} className="text-purple-400 mx-auto" /> : <X size={16} className="text-gray-600 mx-auto" />}
+                                            {typeof m.standard === "string" ? (
+                                                <span className="text-[11px] font-bold text-purple-300 bg-purple-500/15 border border-purple-500/30 px-2 py-0.5 rounded-md inline-block">{m.standard}</span>
+                                            ) : m.standard ? (
+                                                <Check size={16} className="text-purple-400 mx-auto" />
+                                            ) : (
+                                                <X size={16} className="text-gray-600 mx-auto" />
+                                            )}
                                         </td>
                                         <td className="py-4 px-6 text-center">
-                                            {m.custom ? <Check size={16} className="text-pink-400 mx-auto" /> : <X size={16} className="text-gray-600 mx-auto" />}
+                                            {typeof m.custom === "string" ? (
+                                                <span className="text-[11px] font-bold text-pink-300 bg-pink-500/15 border border-pink-500/30 px-2 py-0.5 rounded-md inline-block">{m.custom}</span>
+                                            ) : m.custom ? (
+                                                <Check size={16} className="text-pink-400 mx-auto" />
+                                            ) : (
+                                                <X size={16} className="text-gray-600 mx-auto" />
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

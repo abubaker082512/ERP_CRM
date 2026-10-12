@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -15,6 +16,10 @@ import {
     Bell,
     CheckCircle,
     ArrowRight,
+    Flame,
+    Zap,
+    Building2,
+    Sparkles,
 } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -23,9 +28,32 @@ import Features from "@/components/landing/Features";
 import Stats from "@/components/landing/Stats";
 import Testimonials from "@/components/landing/Testimonials";
 import IndustryShowcase from "@/components/landing/IndustryShowcase";
+import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 
 export default function Home() {
     const router = useRouter();
+    const [billingCycle, setBillingCycle] = useState<"annually" | "monthly">("annually");
+    const [pricing, setPricing] = useState<PricingConfig>(DEFAULT_PRICING_CONFIG);
+
+    useEffect(() => {
+        fetch("/api/admin/pricing")
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.standard) setPricing(data);
+            })
+            .catch(() => {});
+    }, []);
+
+    const isAnnual = billingCycle === "annually";
+    const standardRate = isAnnual 
+        ? pricing.standard.annual_monthly_rate 
+        : pricing.standard.monthly_rate;
+    const standardOriginalRate = isAnnual 
+        ? (pricing.standard.original_annual_rate || 24.90) 
+        : (pricing.standard.original_monthly_rate || 31.10);
+    const customRate = isAnnual 
+        ? pricing.custom.annual_monthly_rate 
+        : pricing.custom.monthly_rate;
 
     return (
         <main className="min-h-screen bg-[#020205] text-white overflow-hidden">
@@ -166,33 +194,79 @@ export default function Home() {
             
             {/* Pricing Section */}
             <section id="pricing" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 md:pt-40 mb-28 scroll-mt-24">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-4">
+                <div className="text-center mb-12">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-pink-500/10 border border-amber-500/30 text-amber-300 text-xs font-extrabold uppercase tracking-widest mb-4 shadow-lg">
+                        <Flame size={14} className="text-amber-400 animate-pulse" />
+                        <span>Early Bird Launch Special — 96% OFF</span>
+                    </div>
+                    <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-4">
                         Transparent, Value-Packed <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Pricing</span>
                     </h2>
-                    <p className="text-gray-400 text-lg max-w-2xl mx-auto font-light leading-relaxed">
-                        Start with a single module forever free, or unlock the standard multi-app experience for only $24.90 per user seat.
+                    <p className="text-gray-300 text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed">
+                        Start with a single module forever free, or unlock all 28 integrated modules for as low as <strong className="text-white font-bold">$1/month</strong> ($12 billed annually) with our Early Bird Special.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
+                {/* Billing Cycle Toggle */}
+                <div className="flex justify-center mb-12">
+                    <div className="inline-flex items-center p-1.5 bg-[#0B0F19] border border-white/10 rounded-2xl shadow-xl backdrop-blur-md">
+                        <button
+                            type="button"
+                            onClick={() => setBillingCycle("annually")}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                                isAnnual
+                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25"
+                                    : "text-gray-400 hover:text-white"
+                            }`}
+                        >
+                            <span>Annually ($1/mo Early Bird)</span>
+                            <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/30">
+                                SAVE 96%
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setBillingCycle("monthly")}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                !isAnnual
+                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25"
+                                    : "text-gray-400 hover:text-white"
+                            }`}
+                        >
+                            <span>Monthly ($5/mo Early Bird)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
                     {/* Free Plan */}
-                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between bg-[#0F172A]/20">
+                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between bg-[#0F172A]/30 border-white/10 hover:border-white/20 transition-all">
                         <div>
+                            <div className="mb-4">
+                                <span className="text-xs bg-white/5 text-gray-400 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-white/10">Forever Free</span>
+                            </div>
                             <h3 className="text-xl font-bold text-gray-200 mb-2">One App Free</h3>
                             <p className="text-gray-400 text-xs mb-6">Choose any single module with unlimited users forever.</p>
-                            <div className="flex items-baseline gap-1 mb-8">
-                                <span className="text-4xl font-extrabold text-white">$0</span>
+                            <div className="flex items-baseline gap-1 mb-8 pb-6 border-b border-white/5">
+                                <span className="text-4xl font-black text-white">$0</span>
                                 <span className="text-gray-500 text-xs">/ seat / month</span>
                             </div>
-                            <div className="space-y-3 pt-6 border-t border-white/5 text-xs text-gray-300">
+                            <div className="space-y-3.5 text-xs text-gray-300">
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-purple-400 shrink-0" size={14} />
-                                    <span>Use any <strong>1</strong> full module</span>
+                                    <span>Choose <strong>any 1</strong> full ERP module</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-purple-400 shrink-0" size={14} />
                                     <span>Unlimited user seats</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Building2 className="text-gray-400 shrink-0" size={14} />
+                                    <span className="text-gray-300">Single Company Workspace (1 Company)</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle className="text-purple-400 shrink-0" size={14} />
+                                    <span>50 Starter Lead Pool Previews</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-purple-400 shrink-0" size={14} />
@@ -202,61 +276,103 @@ export default function Home() {
                         </div>
                         <button 
                             onClick={() => router.push('/signup')}
-                            className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3 px-4 rounded-xl mt-8 transition-all border border-white/10 text-xs flex items-center justify-center gap-2 cursor-pointer"
+                            className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 text-xs flex items-center justify-center gap-2 cursor-pointer"
                         >
                             Deploy Free App
                         </button>
                     </div>
 
                     {/* Standard Plan */}
-                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between border-purple-500/30 bg-[#0F172A]/40 relative shadow-2xl shadow-purple-500/5">
-                        <div className="absolute top-0 right-6 -translate-y-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-[8px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-lg">
-                            All Apps Included
+                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between border-purple-500/40 bg-[#0F172A]/60 relative shadow-2xl shadow-purple-500/10 ring-1 ring-purple-500/30">
+                        <div className="absolute top-0 right-6 -translate-y-1/2 bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 text-white font-extrabold text-[10px] uppercase tracking-wider px-3.5 py-1 rounded-full shadow-lg flex items-center gap-1.5">
+                            <Flame size={13} className="text-yellow-300 animate-pulse" />
+                            <span>Early Bird Special ({isAnnual ? "96% OFF" : "84% OFF"})</span>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-purple-300 mb-2">Standard</h3>
-                            <p className="text-gray-400 text-xs mb-6">Access all 28 integrated modules for your operations.</p>
-                            <div className="flex items-baseline gap-1 mb-8">
-                                <span className="text-4xl font-extrabold text-white">$24.90</span>
-                                <span className="text-gray-500 text-xs">/ seat / month</span>
+                            <div className="mb-4 flex items-center gap-2">
+                                <span className="text-xs bg-purple-500/20 text-purple-300 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-purple-500/30">
+                                    All 28 Modules Included
+                                </span>
                             </div>
-                            <div className="space-y-3 pt-6 border-t border-purple-500/10 text-xs text-gray-300">
-                                <div className="flex items-center gap-2 text-cyan-300 font-bold bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1.5 rounded-lg">
-                                    <CheckCircle className="text-cyan-400 shrink-0" size={14} />
+                            <h3 className="text-xl font-bold text-white mb-2">Standard Plan</h3>
+                            <p className="text-gray-400 text-xs mb-6">Complete business cockpit with 28 enterprise modules and built-in Lead Pool.</p>
+                            
+                            {/* Dynamic Rate Presentation */}
+                            <div className="mb-8 pb-6 border-b border-purple-500/20">
+                                {standardOriginalRate > standardRate && (
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <span className="text-sm text-gray-500 line-through font-bold">
+                                            ${standardOriginalRate.toFixed(2)}
+                                        </span>
+                                        <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded uppercase tracking-wider">
+                                            {Math.round(((standardOriginalRate - standardRate) / standardOriginalRate) * 100)}% OFF EARLY BIRD
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-5xl font-black text-white">${standardRate.toFixed(2)}</span>
+                                    <span className="text-gray-400 text-xs">/ seat / month</span>
+                                </div>
+                                <div className="mt-2 text-[11px] font-bold text-purple-300">
+                                    {isAnnual 
+                                        ? "Billed annually at $12 / user / year (Early Bird rate)" 
+                                        : "Billed monthly at $5 / user / month (Month-to-month)"}
+                                </div>
+                            </div>
+
+                            <div className="space-y-3.5 text-xs text-gray-300">
+                                <div className="flex items-center gap-2 text-white font-bold bg-purple-500/15 border border-purple-500/30 px-3 py-2 rounded-xl">
+                                    <Building2 className="text-purple-400 shrink-0" size={15} />
+                                    <span>Single Company Workspace (1 Company)</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-cyan-300 font-bold bg-cyan-500/10 border border-cyan-500/20 px-3 py-2 rounded-xl">
+                                    <Zap className="text-cyan-400 shrink-0" size={15} />
                                     <span>1,500 Verified Lead Credits / user / mo</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle className="text-purple-400 shrink-0" size={14} />
-                                    <span className="font-semibold text-white">All 28 enterprise modules</span>
+                                <div className="flex items-center gap-2 text-gray-300">
+                                    <CheckCircle className="text-emerald-400 shrink-0" size={14} />
+                                    <span>Buy extra lead packs anytime in Lead Pool ($10 / 1,000)</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-purple-400 shrink-0" size={14} />
-                                    <span>Standard Cloud SaaS</span>
+                                    <span className="font-semibold text-white">All 28 enterprise modules unlocked</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-purple-400 shrink-0" size={14} />
-                                    <span>Live Database Backups</span>
+                                    <span>Standard Cloud SaaS & Live Backups</span>
                                 </div>
                             </div>
                         </div>
                         <button 
-                            onClick={() => router.push('/signup')}
-                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3 px-4 rounded-xl mt-8 transition-all shadow-lg text-xs flex items-center justify-center gap-2 cursor-pointer"
+                            onClick={() => router.push(`/checkout?plan=standard&billing=${billingCycle}`)}
+                            className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-black py-3.5 px-4 rounded-xl mt-8 transition-all shadow-xl shadow-purple-500/25 text-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                         >
-                            Deploy Standard
+                            <span>Claim Early Bird Standard (${standardRate.toFixed(2)}/mo)</span>
+                            <ArrowRight size={14} />
                         </button>
                     </div>
 
                     {/* Custom Plan */}
-                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between bg-[#0F172A]/20">
+                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between bg-[#0F172A]/30 border-pink-500/20 hover:border-pink-500/40 transition-all">
                         <div>
-                            <h3 className="text-xl font-bold text-pink-300 mb-2">Custom</h3>
-                            <p className="text-gray-400 text-xs mb-6">Studio customizations, multi-company support, and API access.</p>
-                            <div className="flex items-baseline gap-1 mb-8">
-                                <span className="text-4xl font-extrabold text-white">$37.40</span>
+                            <div className="mb-4">
+                                <span className="text-xs bg-pink-500/10 text-pink-400 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-pink-500/20">Custom Enterprise</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-pink-300 mb-2">Custom Plan</h3>
+                            <p className="text-gray-400 text-xs mb-6">Multi-company consolidation, developer studio, and external API connectors.</p>
+                            <div className="flex items-baseline gap-1 mb-8 pb-6 border-b border-white/5">
+                                <span className="text-4xl font-extrabold text-white">${customRate.toFixed(2)}</span>
                                 <span className="text-gray-500 text-xs">/ seat / month</span>
                             </div>
-                            <div className="space-y-3 pt-6 border-t border-white/5 text-xs text-gray-300">
+                            <div className="space-y-3.5 text-xs text-gray-300">
+                                <div className="flex items-center gap-2 text-pink-200 font-bold bg-pink-500/10 border border-pink-500/30 px-3 py-2 rounded-xl">
+                                    <Building2 className="text-pink-400 shrink-0" size={15} />
+                                    <span>Multi-Company: 3 Companies included (+ $15/mo per extra company)</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-pink-300 font-bold bg-pink-500/10 border border-pink-500/20 px-3 py-2 rounded-xl">
+                                    <Zap className="text-pink-400 shrink-0" size={15} />
+                                    <span>5,000+ Custom Lead Credits / user / mo</span>
+                                </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-pink-400 shrink-0" size={14} />
                                     <span className="font-semibold text-white">Beraxis Studio customizer</span>
@@ -272,8 +388,8 @@ export default function Home() {
                             </div>
                         </div>
                         <button 
-                            onClick={() => router.push('/signup')}
-                            className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3 px-4 rounded-xl mt-8 transition-all border border-white/10 text-xs flex items-center justify-center gap-2 cursor-pointer"
+                            onClick={() => router.push(`/checkout?plan=custom&billing=${billingCycle}`)}
+                            className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 text-xs flex items-center justify-center gap-2 cursor-pointer hover:border-pink-500/40"
                         >
                             Configure Custom
                         </button>
