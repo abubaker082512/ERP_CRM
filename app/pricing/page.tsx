@@ -68,7 +68,7 @@ export default function PricingPage() {
         { name: "Beraxis Studio Customizer", free: false, standard: false, custom: true },
         { name: "Multi-Company Support", free: false, standard: false, custom: true },
         { name: "External API Integrations", free: false, standard: false, custom: true },
-        { name: "Custom Databases (Odoo.sh equivalent)", free: false, standard: false, custom: true },
+        { name: "Dedicated Isolated Cloud Databases", free: false, standard: false, custom: true },
     ];
 
     const faqs = [

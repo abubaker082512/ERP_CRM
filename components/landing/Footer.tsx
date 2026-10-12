@@ -12,7 +12,7 @@ export default function Footer() {
                             <span className="text-xl font-bold tracking-tighter text-white">BERAXIS<span className="text-purple-500">.</span></span>
                         </div>
                         <p className="text-xs text-gray-400 font-medium leading-relaxed max-w-sm">
-                            The #1 AI-driven open-source Odoo alternative and next-generation ERP/CRM command center. Streamline operations, automate workflows with Voice Pilot, and scale globally.
+                            The #1 AI-driven autonomous ERP/CRM command center. Streamline operations, automate workflows with Voice Pilot, and scale globally without modular bloat.
                         </p>
                         <div className="pt-2 flex flex-wrap gap-2">
                             <a href="https://wa.me/19707807993" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/20 px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition-all">
@@ -34,13 +34,14 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {/* Column 3: Odoo Comparison & Solutions */}
+                    {/* Column 3: Platform Comparison & Insights */}
                     <div>
-                        <h4 className="text-white font-bold uppercase tracking-wider text-xs mb-4">Odoo Comparison</h4>
+                        <h4 className="text-white font-bold uppercase tracking-wider text-xs mb-4">Platform & Insights</h4>
                         <ul className="space-y-2.5 text-xs">
-                            <li><a href="/#odoo-comparison" className="hover:text-white transition-colors text-purple-300 font-semibold">Beraxis vs Odoo Report</a></li>
-                            <li><Link href="/pricing" className="hover:text-white transition-colors">Odoo Pricing Alternative</Link></li>
-                            <li><Link href="/signup" className="hover:text-white transition-colors">Odoo Data Migration</Link></li>
+                            <li><Link href="/blog" className="hover:text-purple-300 transition-colors text-purple-400 font-semibold flex items-center gap-1.5"><span>📰 Insights & Blog</span></Link></li>
+                            <li><a href="/#comparison" className="hover:text-white transition-colors">Why Beraxis vs Others</a></li>
+                            <li><Link href="/leads-pool" className="hover:text-white transition-colors">Global Leads Pool</Link></li>
+                            <li><Link href="/pricing" className="hover:text-white transition-colors">Predictable Pricing</Link></li>
                             <li><Link href="/apps" className="hover:text-white transition-colors">All 30+ ERP Apps</Link></li>
                             <li><Link href="/about" className="hover:text-white transition-colors">AI Voice Assistant ERP</Link></li>
                         </ul>
@@ -65,8 +66,9 @@ export default function Footer() {
 
                 {/* Bottom copyright & SEO footer links */}
                 <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500">
-                    <p>© {new Date().getFullYear()} Beraxis Systems Inc. All rights reserved. The premier Odoo Alternative & AI ERP System.</p>
+                    <p>© {new Date().getFullYear()} Beraxis Systems Inc. All rights reserved. The Premier Autonomous Cloud ERP & AI CRM System.</p>
                     <div className="flex gap-6">
+                        <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
                         <Link href="/contact" className="hover:text-white transition-colors">Privacy Policy</Link>
                         <Link href="/pricing" className="hover:text-white transition-colors">Terms of Service</Link>
                         <Link href="/billing" className="hover:text-white transition-colors">SLA Agreement</Link>

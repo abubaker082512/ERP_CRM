@@ -30,7 +30,7 @@ export default function Hero() {
 
                 {/* Subheadline with key SEO keywords */}
                 <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-12 font-light leading-relaxed">
-                    Beraxis ERP unifies CRM with a built-in <strong className="text-white font-semibold">Worldwide Leads Pool</strong>, Omnichannel Sales, Inventory, Accounting, HRMS, and Duplex Voice Pilot. The modern open-source alternative to Odoo built for explosive growth.
+                    Beraxis ERP unifies CRM with a built-in <strong className="text-white font-semibold">Worldwide Leads Pool</strong>, Omnichannel Sales, Inventory, Accounting, HRMS, and Duplex Voice Pilot. The next-generation autonomous business suite built for explosive growth.
                 </p>
 
                 {/* Call To Actions */}
@@ -39,12 +39,12 @@ export default function Hero() {
                         Launch Your Free Workspace <ArrowRight className="group-hover:translate-x-1.5 transition-transform" size={22} />
                     </Link>
                     
-                    <Link href="/crm/leads-pool" className="px-8 py-4 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-cyan-400/50">
+                    <Link href="/leads-pool" className="px-8 py-4 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-cyan-400/50">
                         <Globe size={20} className="text-cyan-400" /> Explore Leads Pool
                     </Link>
 
-                    <a href="#odoo-comparison" className="px-7 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-medium transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-purple-400/40">
-                        <Layers size={20} className="text-purple-400" /> Compare vs Odoo
+                    <a href="#comparison" className="px-7 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-medium transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-purple-400/40">
+                        <Layers size={20} className="text-purple-400" /> Compare vs Others
                     </a>
                 </div>
 
@@ -97,10 +97,10 @@ export default function Hero() {
                                 </div>
                             </div>
 
-                            {/* Card 3: Odoo Migration Speed */}
+                            {/* Card 3: Speed vs Legacy */}
                             <div className="bg-white/5 rounded-xl p-5 border border-white/10">
                                 <div className="flex justify-between items-center mb-3">
-                                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">System Speed vs Odoo</span>
+                                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">System Speed vs Others</span>
                                     <span className="text-xs bg-purple-500/20 text-purple-300 font-bold px-2 py-0.5 rounded">10x Faster</span>
                                 </div>
                                 <div className="text-2xl font-extrabold text-white">45ms <span className="text-xs font-normal text-gray-400">Response</span></div>
@@ -125,7 +125,7 @@ export default function Hero() {
                         <Zap size={18} className="text-amber-400" /> Real-time Sub-second Sync
                     </div>
                     <div className="flex items-center justify-center gap-2.5 text-sm text-gray-300 font-medium">
-                        <Sparkles size={18} className="text-pink-400" /> 100% Odoo Feature Parity
+                        <Sparkles size={18} className="text-pink-400" /> 100% Full-Suite Feature Parity
                     </div>
                 </div>
             </div>

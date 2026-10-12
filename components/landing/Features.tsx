@@ -60,47 +60,47 @@ const features = [
     }
 ];
 
-const odooComparison = [
+const platformComparison = [
     {
-        feature: "Global Leads Pool (10M+ Contacts)",
+        feature: "Global Leads Pool (25M+ Contacts)",
         beraxis: "100% Free & Built-In",
-        odoo: "Expensive Third-Party Credits",
+        others: "Expensive Third-Party Credits / Lock-in",
         winner: "beraxis"
     },
     {
         feature: "AI Voice Pilot Assistant",
         beraxis: "Included Native (Duplex Voice)",
-        odoo: "Not Available / Complex Plugins",
+        others: "Not Available / Complex Plugins",
         winner: "beraxis"
     },
     {
         feature: "Pricing Model",
-        beraxis: "$199 Flat / Month (Unlimited Users)",
-        odoo: "$24 - $40+ Per User / Per Month",
+        beraxis: "Transparent & Predictable Flat Pricing",
+        others: "Hidden Per-App Fees & Per-Seat Escalation",
         winner: "beraxis"
     },
     {
         feature: "Free Starter Tier",
         beraxis: "One Full App Free Forever",
-        odoo: "Strict 14-Day Expiration",
+        others: "Strict 14-Day Expiration / Paywalls",
         winner: "beraxis"
     },
     {
         feature: "Architecture & Speed",
         beraxis: "Next.js 15 + FastAPI Edge (Sub-50ms)",
-        odoo: "Legacy Python Monolith",
+        others: "Clunky Legacy Monolith (Slow & Bloated)",
         winner: "beraxis"
     },
     {
         feature: "Crypto & Card Payments",
         beraxis: "DirectPay Card + 30+ Cryptos Built-in",
-        odoo: "Requires Third-Party Addons",
+        others: "Requires Third-Party Addons & Extra Fees",
         winner: "beraxis"
     },
     {
         feature: "Multi-Tenant Data Isolation",
         beraxis: "Supabase Row Level Security (RLS)",
-        odoo: "Complex Enterprise Sharding",
+        others: "Complex Fragile Database Sharding",
         winner: "beraxis"
     }
 ];
@@ -260,19 +260,19 @@ export default function Features() {
                     </div>
                 </div>
 
-                {/* Dedicated SEO Section: Beraxis vs Odoo Comparison Matrix */}
-                <div id="odoo-comparison" className="scroll-mt-28 bg-[#070B16] border border-white/15 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+                {/* Dedicated Comparison Section: Beraxis vs Other Platforms */}
+                <div id="comparison" className="scroll-mt-28 bg-[#070B16] border border-white/15 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
                     
                     <div className="text-center mb-12">
                         <span className="text-xs font-bold uppercase tracking-widest text-purple-400 bg-purple-500/10 border border-purple-500/20 px-4 py-1.5 rounded-full inline-block mb-4">
-                            SEO Comparison Report
+                            Capability & ROI Analysis
                         </span>
                         <h3 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-                            Why Businesses Are Switching From <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Odoo to Beraxis</span>
+                            Why Businesses Are Moving Away From <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Legacy Tools to Beraxis</span>
                         </h3>
                         <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">
-                            See how Beraxis delivers 10x faster performance, native Voice AI, and predictable pricing compared to Odoo.
+                            See how Beraxis delivers 10x faster performance, native Voice AI, and predictable transparent pricing compared to clunky legacy platforms.
                         </p>
                     </div>
 
@@ -283,11 +283,11 @@ export default function Features() {
                                 <tr className="border-b border-white/10 text-xs sm:text-sm uppercase tracking-wider text-gray-400">
                                     <th className="py-4 px-6">Capability / Feature</th>
                                     <th className="py-4 px-6 bg-purple-500/10 text-purple-300 font-bold rounded-t-xl">Beraxis ERP</th>
-                                    <th className="py-4 px-6 text-gray-400">Odoo</th>
+                                    <th className="py-4 px-6 text-gray-400">Other Tools & Legacy Suites</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5 text-sm sm:text-base">
-                                {odooComparison.map((row, idx) => (
+                                {platformComparison.map((row, idx) => (
                                     <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
                                         <td className="py-5 px-6 font-semibold text-white flex items-center gap-2">
                                             {row.feature}
@@ -299,7 +299,7 @@ export default function Features() {
                                         </td>
                                         <td className="py-5 px-6 text-gray-400">
                                             <span className="flex items-center gap-2 text-gray-500">
-                                                <XCircle size={18} className="text-red-400/70" /> {row.odoo}
+                                                <XCircle size={18} className="text-red-400/70" /> {row.others}
                                             </span>
                                         </td>
                                     </tr>
@@ -311,8 +311,8 @@ export default function Features() {
                     {/* Call to action inside comparison */}
                     <div className="mt-10 pt-8 border-t border-white/10 text-center flex flex-col sm:flex-row items-center justify-between gap-6">
                         <div className="text-left">
-                            <p className="text-white font-bold text-lg">Ready to migrate from Odoo?</p>
-                            <p className="text-xs text-gray-400">Import your Odoo data seamlessly in under 5 minutes with our automated migration tool.</p>
+                            <p className="text-white font-bold text-lg">Ready to replace fragmented legacy tools?</p>
+                            <p className="text-xs text-gray-400">Import your existing business data seamlessly in under 5 minutes with our automated zero-loss migration tool.</p>
                         </div>
                         <Link href="/signup" className="galaxy-btn-primary !px-7 !py-3.5 text-sm whitespace-nowrap flex items-center gap-2">
                             Switch To Beraxis Now <ArrowRight size={18} />
