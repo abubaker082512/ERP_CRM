@@ -1,26 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall } from "lucide-react";
+import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame } from "lucide-react";
+import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 
 export default function PricingPage() {
     const [billingCycle, setBillingCycle] = useState<"annually" | "monthly">("annually");
     const [usersCount, setUsersCount] = useState<number>(5);
+    const [pricing, setPricing] = useState<PricingConfig>(DEFAULT_PRICING_CONFIG);
 
-    // Odoo pricing models
-    // Standard: Annually = $24.90/user/mo, Monthly = $31.10/user/mo
-    // Custom: Annually = $37.40/user/mo, Monthly = $46.80/user/mo
-    const standardRate = billingCycle === "annually" ? 24.90 : 31.10;
-    const customRate = billingCycle === "annually" ? 37.40 : 46.80;
+    // Fetch dynamic pricing from Super Admin configuration
+    useEffect(() => {
+        fetch("/api/admin/pricing")
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.standard) {
+                    setPricing(data);
+                }
+            })
+            .catch(() => {
+                // Silently fallback to DEFAULT_PRICING_CONFIG ($1 annual / $5 monthly)
+            });
+    }, []);
+
+    const isAnnual = billingCycle === "annually";
+
+    // Active rates from config
+    const standardRate = isAnnual 
+        ? pricing.standard.annual_monthly_rate 
+        : pricing.standard.monthly_rate;
+    
+    const customRate = isAnnual 
+        ? pricing.custom.annual_monthly_rate 
+        : pricing.custom.monthly_rate;
 
     const standardTotal = (usersCount * standardRate).toFixed(2);
     const customTotal = (usersCount * customRate).toFixed(2);
 
-    // Dynamic annual savings calculations
-    const annualSavings = (usersCount * (31.10 - 24.90) * 12).toFixed(0);
+    // Strikethrough reference rates
+    const standardOriginalRate = isAnnual 
+        ? (pricing.standard.original_annual_rate || 24.90) 
+        : (pricing.standard.original_monthly_rate || 31.10);
+
+    // Dynamic savings: Annual ($1/mo) vs Monthly ($5/mo) savings over a 1-year period
+    const annualSavingsPerSeat = Math.max(0, (pricing.standard.monthly_rate - pricing.standard.annual_monthly_rate) * 12);
+    const annualSavings = (usersCount * annualSavingsPerSeat).toFixed(0);
+
 
     const modules = [
         { name: "Discuss & Channels", free: true, standard: true, custom: true },
@@ -40,7 +68,7 @@ export default function PricingPage() {
         { name: "Beraxis Studio Customizer", free: false, standard: false, custom: true },
         { name: "Multi-Company Support", free: false, standard: false, custom: true },
         { name: "External API Integrations", free: false, standard: false, custom: true },
-        { name: "Custom Databases (Odoo.sh equivalent)", free: false, standard: false, custom: true },
+        { name: "Dedicated Isolated Cloud Databases", free: false, standard: false, custom: true },
     ];
 
     const faqs = [
@@ -112,18 +140,22 @@ export default function PricingPage() {
                                     onClick={() => setBillingCycle("annually")}
                                     className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${billingCycle === "annually" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/25" : "text-gray-400 hover:text-white"}`}
                                 >
-                                    Annually (Save ~20%)
+                                    Annually ($1/mo Early Bird)
                                 </button>
                                 <button 
                                     onClick={() => setBillingCycle("monthly")}
                                     className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${billingCycle === "monthly" ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/25" : "text-gray-400 hover:text-white"}`}
                                 >
-                                    Monthly
+                                    Monthly ($5/mo Early Bird)
                                 </button>
                             </div>
-                            {billingCycle === "annually" && (
-                                <span className="text-xs bg-emerald-500/10 text-emerald-400 font-extrabold uppercase px-3 py-1 rounded-full border border-emerald-500/20 tracking-wider">
-                                    💰 Saving ${annualSavings}/year on Standard Plan
+                            {billingCycle === "annually" ? (
+                                <span className="text-xs bg-emerald-500/10 text-emerald-400 font-extrabold uppercase px-3 py-1 rounded-full border border-emerald-500/20 tracking-wider flex items-center gap-1.5">
+                                    💰 Save ${annualSavings}/year vs Monthly on Standard!
+                                </span>
+                            ) : (
+                                <span className="text-xs bg-purple-500/10 text-purple-300 font-extrabold uppercase px-3 py-1 rounded-full border border-purple-500/20 tracking-wider">
+                                    🚀 Early Bird Monthly: Only $5/seat/month
                                 </span>
                             )}
                         </div>
@@ -175,25 +207,53 @@ export default function PricingPage() {
                     </div>
 
                     {/* Tier 2: Standard Plan */}
-                    <div className="galaxy-card p-8 flex flex-col justify-between border-purple-500/20 bg-[#0F172A]/40 relative shadow-2xl shadow-purple-500/5">
-                        <div className="absolute top-0 right-8 -translate-y-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-[10px] uppercase tracking-wider px-3.5 py-1 rounded-full shadow-lg">
-                            Highly Recommended
+                    <div className="galaxy-card p-8 flex flex-col justify-between border-purple-500/30 bg-[#0F172A]/40 relative shadow-2xl shadow-purple-500/10 ring-1 ring-purple-500/20">
+                        <div className="absolute top-0 right-8 -translate-y-1/2 bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 text-white font-extrabold text-[11px] uppercase tracking-wider px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                            <Flame size={13} className="text-yellow-300 animate-pulse" />
+                            {pricing.standard.is_early_bird ? (pricing.standard.badge_text || "Early Bird Launch Special") : "Highly Recommended"}
                         </div>
                         <div>
-                            <div className="mb-4">
-                                <span className="text-xs bg-purple-500/10 text-purple-400 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-purple-500/20">All Modules Included</span>
+                            <div className="mb-4 flex items-center gap-2">
+                                <span className="text-xs bg-purple-500/20 text-purple-300 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-purple-500/30">
+                                    All 28 Modules Included
+                                </span>
+                                {pricing.standard.is_early_bird && (
+                                    <span className="text-[10px] bg-amber-500/20 text-amber-300 uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full border border-amber-500/30">
+                                        Early Bird
+                                    </span>
+                                )}
                             </div>
-                            <h3 className="text-2xl font-bold text-white mb-2">Standard</h3>
-                            <p className="text-gray-400 text-sm mb-8 leading-relaxed">Unlock all 28 integrated modules on cloud hosting. Streamline all processes.</p>
+                            <h3 className="text-2xl font-bold text-white mb-2">Standard Plan</h3>
+                            <p className="text-gray-400 text-sm mb-6 leading-relaxed">Unlock all 28 integrated modules on cloud hosting. Streamline all processes.</p>
                             
                             <div className="flex flex-col mb-8 border-b border-white/5 pb-8">
+                                {/* Strike-through comparison */}
+                                {pricing.standard.is_early_bird && standardOriginalRate > standardRate && (
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <span className="text-base text-gray-500 line-through font-bold">
+                                            ${standardOriginalRate.toFixed(2)}
+                                        </span>
+                                        <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                            {Math.round(((standardOriginalRate - standardRate) / standardOriginalRate) * 100)}% OFF EARLY BIRD
+                                        </span>
+                                    </div>
+                                )}
+
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-5xl font-extrabold text-white">${standardRate.toFixed(2)}</span>
-                                    <span className="text-gray-500 text-sm">/ seat / month</span>
+                                    <span className="text-5xl font-black text-white">${standardRate.toFixed(2)}</span>
+                                    <span className="text-gray-400 text-sm">/ seat / month</span>
                                 </div>
-                                <span className="text-xs text-purple-400 mt-2 font-bold uppercase tracking-wider">
-                                    Total: ${standardTotal} / month ({usersCount} {usersCount === 1 ? "seat" : "seats"})
-                                </span>
+
+                                <div className="mt-3 flex flex-col gap-1">
+                                    <span className="text-xs text-purple-300 font-bold uppercase tracking-wider">
+                                        Total: ${standardTotal} / month ({usersCount} {usersCount === 1 ? "seat" : "seats"})
+                                    </span>
+                                    {isAnnual && (
+                                        <span className="text-[11px] text-gray-400">
+                                            Billed annually at ${(parseFloat(standardTotal) * 12).toFixed(2)} / year ({usersCount} seats × ${standardRate.toFixed(2)}/mo × 12 mos)
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             <ul className="space-y-4 text-sm text-gray-300">
@@ -203,11 +263,11 @@ export default function PricingPage() {
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <Check className="text-purple-400" size={16} />
-                                    <span>Live Database Backups</span>
+                                    <span>Early Bird rate locked in for active term</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <Check className="text-purple-400" size={16} />
-                                    <span>High-Performance CDN</span>
+                                    <span>Live Database Backups & High-Performance CDN</span>
                                 </li>
                                 <li className="flex items-center gap-3 text-gray-500">
                                     <X size={16} />
@@ -217,10 +277,10 @@ export default function PricingPage() {
                         </div>
 
                         <Link 
-                            href="/signup" 
-                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95"
+                            href={`/checkout?plan=standard&users=${usersCount}&billing=${billingCycle}`}
+                            className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95 text-center"
                         >
-                            Launch Standard <ArrowRight size={16} />
+                            Claim Early Bird Standard (${standardRate.toFixed(2)}/mo) <ArrowRight size={16} />
                         </Link>
                     </div>
 
@@ -264,10 +324,10 @@ export default function PricingPage() {
                         </div>
 
                         <Link 
-                            href="/signup" 
+                            href={`/checkout?plan=custom&users=${usersCount}&billing=${billingCycle}`}
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 flex items-center justify-center gap-2 hover:border-pink-500/30"
                         >
-                            Configure Custom <ArrowRight size={16} />
+                            Subscribe Custom <ArrowRight size={16} />
                         </Link>
                     </div>
                 </div>

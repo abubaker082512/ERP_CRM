@@ -22,6 +22,7 @@ import Hero from "@/components/landing/Hero";
 import Features from "@/components/landing/Features";
 import Stats from "@/components/landing/Stats";
 import Testimonials from "@/components/landing/Testimonials";
+import IndustryShowcase from "@/components/landing/IndustryShowcase";
 
 export default function Home() {
     const router = useRouter();
@@ -160,6 +161,7 @@ export default function Home() {
 
             <Stats />
             <Features />
+            <IndustryShowcase />
             <Testimonials />
             
             {/* Pricing Section */}
