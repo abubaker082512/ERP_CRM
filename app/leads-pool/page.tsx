@@ -198,18 +198,25 @@ export default function LeadsPoolPublicPage() {
     }, [monthlyLeadsNeeded]);
 
     return (
-        <main className="min-h-screen bg-[#020205] text-white overflow-hidden selection:bg-cyan-500/30 selection:text-cyan-200">
+        <main className="min-h-screen bg-[#030712] text-white overflow-x-hidden selection:bg-cyan-500/30 selection:text-cyan-200 relative">
+            {/* Global Full-Bleed Ambient Galaxy Lighting & Cosmic Grid - Eliminates side and vertical black voids */}
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1400px] h-[700px] bg-gradient-to-b from-cyan-600/15 via-purple-600/10 to-transparent blur-[160px]" />
+                <div className="absolute top-1/4 -left-32 w-[650px] h-[650px] bg-cyan-600/15 rounded-full blur-[150px]" />
+                <div className="absolute top-1/2 -right-32 w-[700px] h-[700px] bg-purple-600/15 rounded-full blur-[160px]" />
+                <div className="absolute top-3/4 left-1/4 w-[600px] h-[600px] bg-pink-600/10 rounded-full blur-[160px]" />
+                <div className="absolute bottom-10 right-1/4 w-[800px] h-[600px] bg-cyan-500/10 rounded-full blur-[160px]" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_20%,#000_70%,transparent_100%)] opacity-70" />
+            </div>
+
             <Navbar />
 
             {/* HERO SECTION */}
-            <section className="relative pt-36 pb-20 overflow-hidden">
-                {/* Radial Glows */}
-                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-gradient-to-tr from-cyan-600/15 via-purple-600/10 to-pink-600/10 rounded-full blur-[140px] pointer-events-none" />
-
-                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <section className="relative pt-32 pb-14 sm:pb-16 overflow-hidden z-10">
+                <div className="relative z-10 max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 text-center">
                     
                     {/* Badge */}
-                    <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 mb-8 backdrop-blur-md shadow-lg shadow-cyan-950/40">
+                    <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 mb-6 backdrop-blur-md shadow-lg shadow-cyan-950/40">
                         <span className="flex h-2.5 w-2.5 relative">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
@@ -223,7 +230,7 @@ export default function LeadsPoolPublicPage() {
                     </div>
 
                     {/* Headline */}
-                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.08]">
+                    <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 leading-[1.08]">
                         Stop Buying Stale Lists.<br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500">
                             Mine Verified B2B Leads
@@ -232,7 +239,7 @@ export default function LeadsPoolPublicPage() {
                     </h1>
 
                     {/* Subheadline */}
-                    <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-12 font-light leading-relaxed">
+                    <p className="mt-4 text-base sm:text-lg md:text-xl text-gray-300 max-w-4xl mx-auto mb-10 font-light leading-relaxed">
                         Say goodbye to overpriced third-party databases, broken scraper plugins, and CSV import errors. 
                         Beraxis gives you instant access to over <strong className="text-white font-semibold">25,000,000+ verified decision-makers</strong> worldwide with real-time email verification and 1-click CRM ingestion.
                     </p>
@@ -241,35 +248,35 @@ export default function LeadsPoolPublicPage() {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                         <Link
                             href="/signup"
-                            className="galaxy-btn-primary !px-9 !py-4 text-lg w-full sm:w-auto flex items-center justify-center gap-3 group shadow-xl shadow-cyan-500/20"
+                            className="galaxy-btn-primary !px-9 !py-4 text-base sm:text-lg w-full sm:w-auto flex items-center justify-center gap-3 group shadow-xl shadow-cyan-500/20"
                         >
                             <span>Claim Free Workspace & Access Leads</span>
-                            <ArrowRight className="group-hover:translate-x-1.5 transition-transform" size={22} />
+                            <ArrowRight className="group-hover:translate-x-1.5 transition-transform" size={20} />
                         </Link>
 
                         <a
                             href="#interactive-demo"
-                            className="px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-cyan-400/40"
+                            className="px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-cyan-400/40 text-base"
                         >
-                            <Sparkles size={20} className="text-cyan-400" /> Test Interactive Demo
+                            <Sparkles size={18} className="text-cyan-400" /> Test Interactive Demo
                         </a>
                     </div>
 
                     {/* Highlights Ribbon */}
-                    <div className="mt-16 pt-10 border-t border-white/10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                    <div className="mt-12 pt-8 border-t border-white/10 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 text-center">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1120]/60 border border-white/10 hover:border-cyan-500/30 backdrop-blur-md transition-all shadow-lg">
                             <p className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">25.4M+</p>
                             <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider font-semibold">Verified B2B Executives</p>
                         </div>
-                        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1120]/60 border border-white/10 hover:border-purple-500/30 backdrop-blur-md transition-all shadow-lg">
                             <p className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">180+</p>
                             <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider font-semibold">Global Countries Covered</p>
                         </div>
-                        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1120]/60 border border-white/10 hover:border-emerald-500/30 backdrop-blur-md transition-all shadow-lg">
                             <p className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">98.6%</p>
                             <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider font-semibold">Email Deliverability Rate</p>
                         </div>
-                        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1120]/60 border border-white/10 hover:border-amber-500/30 backdrop-blur-md transition-all shadow-lg">
                             <p className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">&lt; 1 Sec</p>
                             <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider font-semibold">1-Click Native CRM Sync</p>
                         </div>
@@ -279,7 +286,7 @@ export default function LeadsPoolPublicPage() {
             </section>
 
             {/* INTERACTIVE LIVE SANDBOX DEMONSTRATION */}
-            <section id="interactive-demo" className="py-24 relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <section id="interactive-demo" className="py-12 sm:py-16 relative z-10 max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
                 <div className="text-center mb-12">
                     <span className="text-xs font-bold uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-4 py-1.5 rounded-full inline-block mb-4">
                         Live Interactive Sandbox
@@ -293,7 +300,7 @@ export default function LeadsPoolPublicPage() {
                 </div>
 
                 {/* Sandbox Card */}
-                <div className="bg-[#090D1A]/90 border border-white/15 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+                <div className="bg-[#090E1D]/90 border border-cyan-500/25 rounded-3xl p-5 sm:p-8 lg:p-10 shadow-[0_0_60px_rgba(6,182,212,0.12)] backdrop-blur-2xl relative overflow-hidden">
                     {/* Top control bar: search and filters */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                         {/* Search input */}
@@ -545,9 +552,9 @@ export default function LeadsPoolPublicPage() {
             )}
 
             {/* ROI & COST SAVINGS CALCULATOR */}
-            <section className="py-24 bg-[#050811] border-y border-white/10 relative">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <section className="py-14 sm:py-20 bg-gradient-to-b from-[#090F1E]/80 via-[#070B16]/95 to-[#090F1E]/80 border-y border-white/10 relative backdrop-blur-md">
+                <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
                         {/* Left column: Explanation & Slider */}
                         <div>
                             <span className="text-xs font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 rounded-full inline-block mb-4">
@@ -561,7 +568,7 @@ export default function LeadsPoolPublicPage() {
                             </p>
 
                             {/* Slider Box */}
-                            <div className="bg-[#0B1120] border border-white/10 rounded-2xl p-6">
+                            <div className="bg-[#0B1120]/90 border border-white/10 rounded-2xl p-6 shadow-xl backdrop-blur-md">
                                 <div className="flex justify-between items-center mb-4">
                                     <label className="text-sm font-bold text-gray-200">
                                         Estimated B2B Leads Needed Per Month:
@@ -590,7 +597,7 @@ export default function LeadsPoolPublicPage() {
                         {/* Right column: Comparison Cards */}
                         <div className="space-y-6">
                             {/* Competitor Cost Card */}
-                            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 relative overflow-hidden">
+                            <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 relative overflow-hidden backdrop-blur-md">
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
                                         <p className="text-xs uppercase font-bold text-red-400 tracking-wider">Traditional Fragmented Stack</p>
@@ -608,7 +615,7 @@ export default function LeadsPoolPublicPage() {
                             </div>
 
                             {/* Beraxis Value Card */}
-                            <div className="bg-gradient-to-br from-cyan-950/60 to-purple-950/60 border border-cyan-500/40 rounded-2xl p-6 relative shadow-xl shadow-cyan-900/20">
+                            <div className="bg-gradient-to-br from-cyan-950/70 via-[#0B1528] to-purple-950/70 border border-cyan-500/40 rounded-2xl p-6 relative shadow-2xl shadow-cyan-900/30 backdrop-blur-md">
                                 <div className="absolute top-0 right-6 -translate-y-1/2 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-extrabold text-[10px] uppercase tracking-wider px-3 py-1 rounded-full shadow-lg">
                                     Included In Platform
                                 </div>
@@ -640,8 +647,8 @@ export default function LeadsPoolPublicPage() {
             </section>
 
             {/* 3-STEP AUTONOMOUS WORKFLOW */}
-            <section className="py-24 relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16">
+            <section className="py-14 sm:py-20 relative z-10 max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+                <div className="text-center mb-12 sm:mb-14">
                     <span className="text-xs font-bold uppercase tracking-widest text-purple-400 bg-purple-500/10 border border-purple-500/20 px-4 py-1.5 rounded-full inline-block mb-4">
                         Autonomous Ingestion Flow
                     </span>
@@ -653,9 +660,9 @@ export default function LeadsPoolPublicPage() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
                     {/* Step 1 */}
-                    <div className="bg-[#0B1120] border border-white/10 rounded-3xl p-8 relative hover:border-cyan-500/40 transition-colors">
+                    <div className="bg-[#0B1120]/80 border border-white/10 rounded-3xl p-6 sm:p-8 relative hover:border-cyan-500/40 transition-colors backdrop-blur-md shadow-xl">
                         <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-black text-cyan-400 text-lg mb-6">
                             01
                         </div>
@@ -666,7 +673,7 @@ export default function LeadsPoolPublicPage() {
                     </div>
 
                     {/* Step 2 */}
-                    <div className="bg-[#0B1120] border border-white/10 rounded-3xl p-8 relative hover:border-purple-500/40 transition-colors">
+                    <div className="bg-[#0B1120]/80 border border-white/10 rounded-3xl p-6 sm:p-8 relative hover:border-purple-500/40 transition-colors backdrop-blur-md shadow-xl">
                         <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center font-black text-purple-400 text-lg mb-6">
                             02
                         </div>
@@ -677,7 +684,7 @@ export default function LeadsPoolPublicPage() {
                     </div>
 
                     {/* Step 3 */}
-                    <div className="bg-[#0B1120] border border-white/10 rounded-3xl p-8 relative hover:border-pink-500/40 transition-colors">
+                    <div className="bg-[#0B1120]/80 border border-white/10 rounded-3xl p-6 sm:p-8 relative hover:border-pink-500/40 transition-colors backdrop-blur-md shadow-xl">
                         <div className="w-12 h-12 rounded-2xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center font-black text-pink-400 text-lg mb-6">
                             03
                         </div>
@@ -690,9 +697,9 @@ export default function LeadsPoolPublicPage() {
             </section>
 
             {/* VOICE PILOT HIGHLIGHT */}
-            <section className="py-20 bg-gradient-to-r from-purple-950/40 via-[#070B16] to-cyan-950/40 border-y border-white/10 relative">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-10">
+            <section className="py-14 sm:py-18 bg-gradient-to-r from-purple-950/50 via-[#0A1020]/95 to-cyan-950/50 border-y border-white/10 relative backdrop-blur-md">
+                <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-10">
                         <div className="max-w-2xl">
                             <span className="text-xs font-bold uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-3.5 py-1 rounded-full inline-flex items-center gap-2 mb-4">
                                 <Bot size={14} /> Native Voice Pilot Capability
@@ -704,10 +711,10 @@ export default function LeadsPoolPublicPage() {
                                 You don't even have to click. With Beraxis Duplex Voice Pilot, you can command your ERP through natural speech while on your commute or during strategy meetings.
                             </p>
                         </div>
-                        <div className="shrink-0">
+                        <div className="shrink-0 w-full md:w-auto">
                             <Link
                                 href="/signup"
-                                className="galaxy-btn-primary !px-8 !py-4 text-base font-bold flex items-center gap-2 shadow-xl shadow-purple-500/25"
+                                className="galaxy-btn-primary !px-8 !py-4 text-base font-bold flex items-center justify-center gap-2 shadow-xl shadow-purple-500/25 w-full md:w-auto"
                             >
                                 <span>Try Voice Pilot & Leads Pool</span>
                                 <ArrowRight size={18} />
@@ -718,9 +725,9 @@ export default function LeadsPoolPublicPage() {
             </section>
 
             {/* FREQUENTLY ASKED QUESTIONS */}
-            <section className="py-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
+            <section className="py-14 sm:py-20 relative z-10 max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">
                         Frequently Asked Questions
                     </h2>
                     <p className="text-gray-400 text-sm sm:text-base">
@@ -728,36 +735,36 @@ export default function LeadsPoolPublicPage() {
                     </p>
                 </div>
 
-                <div className="space-y-6">
-                    <div className="bg-[#090D1A] border border-white/10 rounded-2xl p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl mx-auto">
+                    <div className="bg-[#0B1120]/80 border border-white/10 hover:border-cyan-500/30 rounded-2xl p-6 backdrop-blur-md transition-all shadow-lg">
                         <h3 className="text-base font-bold text-white mb-2">Are the leads really included without third-party fees?</h3>
                         <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
                             Yes! Unlike traditional software providers who charge $500–$2,000/month for external contact integrations or API connectors, Beraxis provides direct access to the Global Leads Directory right inside your workspace.
                         </p>
                     </div>
 
-                    <div className="bg-[#090D1A] border border-white/10 rounded-2xl p-6">
+                    <div className="bg-[#0B1120]/80 border border-white/10 hover:border-purple-500/30 rounded-2xl p-6 backdrop-blur-md transition-all shadow-lg">
                         <h3 className="text-base font-bold text-white mb-2">How fresh and accurate is the contact data?</h3>
                         <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
                             Our database is continuously updated through automated crawlers, corporate registry filings, and real-time SMTP handshake verification. Emails have an average deliverability rate of 98.6%.
                         </p>
                     </div>
 
-                    <div className="bg-[#090D1A] border border-white/10 rounded-2xl p-6">
+                    <div className="bg-[#0B1120]/80 border border-white/10 hover:border-cyan-500/30 rounded-2xl p-6 backdrop-blur-md transition-all shadow-lg">
                         <h3 className="text-base font-bold text-white mb-2">How do monthly Lead Credits work?</h3>
                         <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
                             On the Standard Plan, your organization receives <span className="text-cyan-400 font-semibold">1,500 Lead Credits per user per month</span>. For example, a team with 5 users receives 7,500 leads per month. Each time you import a verified prospect into your CRM with "Add to CRM", 1 credit is deducted. Credits refresh automatically every billing cycle, and additional credit packs can be adjusted anytime by your admin.
                         </p>
                     </div>
 
-                    <div className="bg-[#090D1A] border border-white/10 rounded-2xl p-6">
+                    <div className="bg-[#0B1120]/80 border border-white/10 hover:border-purple-500/30 rounded-2xl p-6 backdrop-blur-md transition-all shadow-lg">
                         <h3 className="text-base font-bold text-white mb-2">Can I export leads to CSV or sync with other tools?</h3>
                         <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
                             Yes. You can export filtered prospect lists directly to CSV or JSON with 1 click, or let Beraxis automatically sync them into your Sales, Quotations, and WhatsApp sequences.
                         </p>
                     </div>
 
-                    <div className="bg-[#090D1A] border border-white/10 rounded-2xl p-6">
+                    <div className="bg-[#0B1120]/80 border border-white/10 hover:border-emerald-500/30 rounded-2xl p-6 backdrop-blur-md transition-all shadow-lg md:col-span-2">
                         <h3 className="text-base font-bold text-white mb-2">Is the data compliant with international privacy laws?</h3>
                         <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
                             All data consists strictly of publicly available B2B professional business records in full compliance with GDPR legitimate interest provisions, CCPA, and CAN-SPAM regulations.
@@ -767,12 +774,12 @@ export default function LeadsPoolPublicPage() {
             </section>
 
             {/* BOTTOM CALL TO ACTION */}
-            <section className="py-20 relative z-10 text-center bg-[#070B16] border-t border-white/10">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-4xl sm:text-5xl font-black text-white mb-6">
+            <section className="py-16 sm:py-20 relative z-10 text-center bg-gradient-to-b from-[#0A1020]/90 via-[#060A14] to-[#030712] border-t border-white/10 backdrop-blur-md">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h2 className="text-3xl sm:text-5xl font-black text-white mb-4 sm:mb-6">
                         Fuel Your Sales Engine Today.
                     </h2>
-                    <p className="text-gray-400 text-base sm:text-lg mb-10 max-w-2xl mx-auto">
+                    <p className="text-gray-400 text-sm sm:text-lg mb-8 sm:mb-10 max-w-2xl mx-auto">
                         Get started with your free Beraxis workspace in 60 seconds. No credit card required.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
