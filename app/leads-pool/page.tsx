@@ -198,7 +198,7 @@ export default function LeadsPoolPublicPage() {
     }, [monthlyLeadsNeeded]);
 
     return (
-        <main className="min-h-screen bg-[#030712] text-white overflow-x-hidden selection:bg-cyan-500/30 selection:text-cyan-200 relative">
+        <main className="min-h-screen bg-[#020205] text-white overflow-x-hidden selection:bg-cyan-500/30 selection:text-cyan-200 relative">
             {/* Global Full-Bleed Ambient Galaxy Lighting & Cosmic Grid - Eliminates side and vertical black voids */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1400px] h-[700px] bg-gradient-to-b from-cyan-600/15 via-purple-600/10 to-transparent blur-[160px]" />

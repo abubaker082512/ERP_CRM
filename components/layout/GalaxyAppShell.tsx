@@ -108,9 +108,21 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
     if (!mounted) return null;
 
-    // Don't show shell on landing, login, signup, shop, checkout, billing, apps dashboard, main dashboard, meet room, or public booking page
-    const isLandingPage = pathname === '/about' || pathname === '/contact' || pathname === '/' || pathname === '/pricing';
-    const isExcludedPage = pathname === '/apps' || pathname === '/dashboard' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || pathname.startsWith('/shop/') || pathname === '/meet' || pathname.startsWith('/meet/') || pathname.startsWith('/appointments/book/') || isLandingPage;
+    // Don't show shell on landing, public demo, blog, login, signup, shop, checkout, billing, apps dashboard, main dashboard, meet room, or public booking page
+    const isLandingPage = 
+        pathname === '/' || 
+        pathname === '/pricing' || 
+        pathname === '/about' || 
+        pathname === '/contact' || 
+        pathname === '/leads-pool' || 
+        pathname === '/lead-pool' || 
+        pathname === '/blog' || 
+        (pathname && pathname.startsWith('/blog/')) ||
+        pathname === '/team' || 
+        pathname === '/pitch-deck' || 
+        pathname === '/presentation' || 
+        pathname === '/launch-creatives';
+    const isExcludedPage = pathname === '/apps' || pathname === '/dashboard' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || (pathname && pathname.startsWith('/shop/')) || pathname === '/meet' || (pathname && pathname.startsWith('/meet/')) || (pathname && pathname.startsWith('/appointments/book/')) || isLandingPage;
     
     if (isExcludedPage) return <BranchProvider>{children}</BranchProvider>;
 
