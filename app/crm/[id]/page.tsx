@@ -42,7 +42,7 @@ export default function OpportunityDetailPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetchAPI(`/opportunities/${params.id}`, {
+      const res = await fetchAPI(`/opportunities/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -82,7 +82,7 @@ export default function OpportunityDetailPage() {
     setForm((prev: any) => ({ ...prev, stage: newStage, win_probability: win_prob }));
 
     try {
-      const res = await fetchAPI(`/opportunities/${params.id}`, {
+      const res = await fetchAPI(`/opportunities/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -108,7 +108,7 @@ export default function OpportunityDetailPage() {
       setOpp((prev: any) => ({ ...prev, priority: newPriority }));
       setForm((prev: any) => ({ ...prev, priority: newPriority }));
       try {
-        const res = await fetchAPI(`/opportunities/${params.id}`, {
+        const res = await fetchAPI(`/opportunities/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ priority: newPriority }),
@@ -127,7 +127,7 @@ export default function OpportunityDetailPage() {
 
   const handleDelete = async () => {
     if (!confirm("Delete this opportunity?")) return;
-    await fetchAPI(`/opportunities/${params.id}`, { method: "DELETE" });
+    await fetchAPI(`/opportunities/${id}`, { method: "DELETE" });
     router.push("/crm");
   };
 
@@ -235,7 +235,7 @@ export default function OpportunityDetailPage() {
           </button>
           <button onClick={async () => {
             try {
-              const res = await fetchAPI(`/opportunities/${params.id}/convert-to-sale`, {
+              const res = await fetchAPI(`/opportunities/${id}/convert-to-sale`, {
                 method: "POST"
               });
               if (res.ok) {
@@ -358,7 +358,7 @@ export default function OpportunityDetailPage() {
 
       {/* Audit History & Activity Stream */}
       <ActivityHistory
-        entityId={params.id}
+        entityId={id}
         module="crm"
         entityType="opportunity"
         entityName={opp.name}

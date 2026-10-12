@@ -453,6 +453,7 @@ export default function LeadsPoolPage() {
 
     // Selection & Import
     const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+    const [addedLeadIds, setAddedLeadIds] = useState<string[]>([]);
     const [importing, setImporting] = useState(false);
     const [importSuccessMsg, setImportSuccessMsg] = useState("");
     const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
@@ -464,6 +465,13 @@ export default function LeadsPoolPage() {
     const [verDomain, setVerDomain] = useState("");
     const [verResult, setVerResult] = useState<any>(null);
     const [verLoading, setVerLoading] = useState(false);
+
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem("crm_added_lead_ids");
+            if (saved) setAddedLeadIds(JSON.parse(saved));
+        } catch {}
+    }, []);
 
     useEffect(() => {
         if (poolMode === "live_scraper") {
@@ -608,16 +616,27 @@ export default function LeadsPoolPage() {
             });
             if (res.ok) {
                 const data = await res.json();
-                setImportSuccessMsg(`🎉 ${data.message || `Successfully imported ${leadIdsToImport.length} lead(s) into your CRM Pipeline!`}`);
+                const count = data.imported_count !== undefined ? data.imported_count : leadIdsToImport.length;
+                if (count > 0) {
+                    setImportSuccessMsg(`🎉 ${data.message || `Successfully added ${count} lead(s) to your CRM Tab!`}`);
+                    const updatedAdded = Array.from(new Set([...addedLeadIds, ...leadIdsToImport]));
+                    setAddedLeadIds(updatedAdded);
+                    try {
+                        localStorage.setItem("crm_added_lead_ids", JSON.stringify(updatedAdded));
+                    } catch {}
+                } else {
+                    setImportSuccessMsg(`⚠️ Could not save lead(s) to CRM database. Please try again.`);
+                }
             } else {
-                setImportSuccessMsg(`🎉 Successfully imported ${leadIdsToImport.length} lead(s) into your CRM Pipeline!`);
+                setImportSuccessMsg(`⚠️ Failed to add lead(s) to CRM (Server response: ${res.status}).`);
             }
-        } catch (err) {
-            setImportSuccessMsg(`🎉 Successfully imported ${leadIdsToImport.length} lead(s) into your CRM Pipeline!`);
+        } catch (err: any) {
+            console.error("Import error:", err);
+            setImportSuccessMsg(`⚠️ Network error adding lead(s) to CRM. Please check backend connection.`);
         } finally {
             setSelectedLeadIds([]);
             setImporting(false);
-            setTimeout(() => setImportSuccessMsg(""), 6000);
+            setTimeout(() => setImportSuccessMsg(""), 8000);
         }
     };
 
@@ -1065,13 +1084,21 @@ export default function LeadsPoolPage() {
 
                                                         {/* 1-Click Import to CRM */}
                                                         <td className="py-4 text-right">
-                                                            <button
-                                                                onClick={() => handleImportLeads([lead.id], liveLeads)}
-                                                                className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-md shadow-purple-600/25 transition-all flex items-center gap-1 ml-auto cursor-pointer active:scale-95"
-                                                            >
-                                                                <Plus size={12} />
-                                                                <span>Add to CRM</span>
-                                                            </button>
+                                                            {addedLeadIds.includes(lead.id) ? (
+                                                                <span className="bg-emerald-500/20 text-emerald-300 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 ml-auto border border-emerald-500/30 w-fit">
+                                                                    <Check size={12} className="text-emerald-400" />
+                                                                    <span>Added</span>
+                                                                </span>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => handleImportLeads([lead.id], liveLeads)}
+                                                                    disabled={importing}
+                                                                    className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-md shadow-purple-600/25 transition-all flex items-center gap-1 ml-auto cursor-pointer active:scale-95 disabled:opacity-50"
+                                                                >
+                                                                    <Plus size={12} />
+                                                                    <span>Add to CRM</span>
+                                                                </button>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 );
@@ -1491,13 +1518,21 @@ export default function LeadsPoolPage() {
 
                                                         {/* Import to CRM */}
                                                         <td className="py-4 text-right">
-                                                            <button
-                                                                onClick={() => handleImportLeads([lead.id], leads)}
-                                                                className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-md shadow-purple-600/25 transition-all flex items-center gap-1 ml-auto cursor-pointer active:scale-95"
-                                                            >
-                                                                <Plus size={12} />
-                                                                <span>Add to CRM</span>
-                                                            </button>
+                                                            {addedLeadIds.includes(lead.id) ? (
+                                                                <span className="bg-emerald-500/20 text-emerald-300 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 ml-auto border border-emerald-500/30 w-fit">
+                                                                    <Check size={12} className="text-emerald-400" />
+                                                                    <span>Added</span>
+                                                                </span>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => handleImportLeads([lead.id], leads)}
+                                                                    disabled={importing}
+                                                                    className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-md shadow-purple-600/25 transition-all flex items-center gap-1 ml-auto cursor-pointer active:scale-95 disabled:opacity-50"
+                                                                >
+                                                                    <Plus size={12} />
+                                                                    <span>Add to CRM</span>
+                                                                </button>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 );

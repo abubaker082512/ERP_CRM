@@ -125,7 +125,7 @@ export default function CRMPage() {
     };
 
     const filteredTableLeads = leads.filter(item => {
-        if (tableFilter === 'lead') return item.type === 'lead';
+        if (tableFilter === 'lead') return item.type === 'lead' || item.type === 'opportunity' || !item.type;
         if (tableFilter === 'opportunity') return item.type === 'opportunity';
         if (tableFilter === 'won') return item.status?.toLowerCase() === 'won';
         if (tableFilter === 'lost') return item.status?.toLowerCase() === 'lost';
@@ -191,7 +191,7 @@ export default function CRMPage() {
                     <div className="flex h-full gap-4 min-w-max pb-2">
                         {initialStages.map((stage) => {
                             const stageOpps = leads.filter(
-                                o => o.status?.toLowerCase() === stage.id.toLowerCase() && o.type === 'opportunity'
+                                o => o.status?.toLowerCase() === stage.id.toLowerCase()
                             );
                             return (
                                 <div 

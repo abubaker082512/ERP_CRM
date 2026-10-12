@@ -31,25 +31,34 @@ def _map_crm_lead(row: dict) -> dict:
     elif not created_at:
         created_at = datetime.now(timezone.utc)
 
+    lead_name = row.get("name") or "Lead"
+    company_name = row.get("company_name")
+    if not company_name and " - " in lead_name:
+        company_name = lead_name.split(" - ")[0]
+
+    raw_exp_rev = row.get("expected_revenue")
+    expected_rev = float(raw_exp_rev) if raw_exp_rev is not None and float(raw_exp_rev) > 0 else (25000.0 if (row.get("type") or "opportunity") == "opportunity" else 0.0)
+
     return {
         "id": lead_id,
-        "name": row.get("name") or "Lead",
+        "name": lead_name,
         "email": row.get("email_from") or row.get("email"),
         "phone": row.get("phone"),
-        "company_name": row.get("company_name"),
+        "company_name": company_name,
         "status": row.get("stage_id") or row.get("status") or "New",
-        "type": row.get("type") or "lead",
-        "expected_revenue": float(row.get("expected_revenue") or 0.0),
-        "priority": int(row.get("priority") or 0),
+        "type": row.get("type") or "opportunity",
+        "expected_revenue": expected_rev,
+        "priority": int(row.get("priority") or 2),
         "date_deadline": row.get("date_deadline"),
         "source": row.get("source"),
         "notes": row.get("notes"),
-        "probability": float(row.get("probability") or 0.0),
-        "prorated_revenue": float(row.get("prorated_revenue") or 0.0),
+        "probability": float(row.get("probability") or 35.0),
+        "prorated_revenue": float(row.get("prorated_revenue") or (expected_rev * float(row.get("probability") or 35.0) / 100.0)),
         "lost_reason": row.get("lost_reason"),
         "sentiment_score": float(row.get("sentiment_score") or 0.0),
         "created_at": created_at,
     }
+
 
 @router.post("", response_model=Lead)
 def create_lead(lead: LeadCreate, client: Client = Depends(get_supabase_client)):
@@ -145,6 +154,9 @@ def read_leads(
         response = query.order("created_at", desc=True).range(skip, skip + limit - 1).execute()
         rows = response.data or []
     except Exception:
+        rows = []
+
+    if not rows:
         try:
             svc = get_service_role_client()
             query = svc.table("crm_lead").select("*")
