@@ -622,6 +622,7 @@ export default function LeadsPoolPublicPage() {
                                     </span>
                                 </div>
                                 <ul className="space-y-2 text-xs text-cyan-100 mb-6">
+                                    <li className="flex items-center gap-2 font-medium">✓ 1,500 Lead Credits included per user every month (Standard Plan)</li>
                                     <li className="flex items-center gap-2 font-medium">✓ Unlimited search across 25M+ pre-verified B2B records</li>
                                     <li className="flex items-center gap-2 font-medium">✓ Instant 1-click sync directly into your CRM Kanban pipeline</li>
                                     <li className="flex items-center gap-2 font-medium">✓ Real-time AI web scraper & email verifier included</li>
@@ -739,6 +740,13 @@ export default function LeadsPoolPublicPage() {
                         <h3 className="text-base font-bold text-white mb-2">How fresh and accurate is the contact data?</h3>
                         <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
                             Our database is continuously updated through automated crawlers, corporate registry filings, and real-time SMTP handshake verification. Emails have an average deliverability rate of 98.6%.
+                        </p>
+                    </div>
+
+                    <div className="bg-[#090D1A] border border-white/10 rounded-2xl p-6">
+                        <h3 className="text-base font-bold text-white mb-2">How do monthly Lead Credits work?</h3>
+                        <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                            On the Standard Plan, your organization receives <span className="text-cyan-400 font-semibold">1,500 Lead Credits per user per month</span>. For example, a team with 5 users receives 7,500 leads per month. Each time you import a verified prospect into your CRM with "Add to CRM", 1 credit is deducted. Credits refresh automatically every billing cycle, and additional credit packs can be adjusted anytime by your admin.
                         </p>
                     </div>
 

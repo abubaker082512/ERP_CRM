@@ -6,6 +6,7 @@ export interface PricingPlanConfig {
     original_monthly_rate: number;    // e.g. $31.10
     is_early_bird: boolean;           // true
     badge_text: string;               // "Early Bird Special (96% OFF)"
+    lead_credits_per_user_monthly: number; // e.g. 1500 leads / month / user
     bill_annual_upfront?: boolean;    // true = billed annually (12x), false = billed monthly
 }
 
@@ -25,6 +26,7 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
         original_monthly_rate: 31.10,    // Strikethrough comparison
         is_early_bird: true,
         badge_text: "Early Bird Special (Limited Time)",
+        lead_credits_per_user_monthly: 1500, // 1500 Leads / month / user
         bill_annual_upfront: true
     },
     custom: {
@@ -35,6 +37,7 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
         original_monthly_rate: 46.80,
         is_early_bird: false,
         badge_text: "Dedicated SLA & Developer Tools",
+        lead_credits_per_user_monthly: 5000, // 5000+ Custom Leads / month / user
         bill_annual_upfront: true
     },
     updated_at: new Date().toISOString(),

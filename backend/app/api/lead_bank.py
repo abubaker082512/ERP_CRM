@@ -68,6 +68,32 @@ def get_lead_bank_stats(client: Client = Depends(get_supabase_client)):
     """
     return lead_bank_service.get_stats()
 
+from app.services.lead_credit_service import lead_credit_service
+
+class CreditAdjustRequest(BaseModel):
+    bonus_add: Optional[int] = 0
+    new_quota_per_user: Optional[int] = None
+    user_seats: Optional[int] = None
+
+@router.get("/credits")
+def get_lead_credits():
+    """
+    Get current Lead Credits quota and remaining balance for the tenant.
+    Standard plan includes 1,500 leads / month / user.
+    """
+    return lead_credit_service.get_credits_status()
+
+@router.post("/credits/adjust")
+def adjust_lead_credits(payload: CreditAdjustRequest):
+    """
+    Adjust or top up lead credits (for Super Admin management).
+    """
+    return lead_credit_service.adjust_credits(
+        bonus_add=payload.bonus_add or 0,
+        new_quota_per_user=payload.new_quota_per_user,
+        user_seats=payload.user_seats
+    )
+
 @router.post("/import")
 def import_leads_to_crm(
     payload: LeadImportRequest,
@@ -76,6 +102,7 @@ def import_leads_to_crm(
     """
     1-Click import selected global leads into the tenant's private CRM Pipeline
     and Contacts directory with strict tenant isolation.
+    Enforces the Standard Plan 1,500 leads/user monthly credit quota.
     """
     imported = []
     leads_to_process: List[Dict[str, Any]] = []
@@ -105,6 +132,19 @@ def import_leads_to_crm(
                     })
             except Exception:
                 pass
+
+    # Check credit availability before importing
+    credits_status = lead_credit_service.get_credits_status()
+    needed = len(leads_to_process)
+    if needed > 0 and credits_status["remaining_credits"] < needed:
+        return {
+            "success": False,
+            "error": "INSUFFICIENT_CREDITS",
+            "imported_count": 0,
+            "credits_remaining": credits_status["remaining_credits"],
+            "total_quota": credits_status["total_quota"],
+            "message": f"Monthly lead credits exhausted! You requested {needed} lead(s), but only have {credits_status['remaining_credits']} credit(s) remaining for this month. The Standard plan includes 1,500 lead credits per user seat per month."
+        }
 
     for lead_data in leads_to_process:
         company_name = lead_data.get("company_name", "Prospective Enterprise")
@@ -165,11 +205,19 @@ def import_leads_to_crm(
             except Exception:
                 pass
 
+    # Deduct consumed credits
+    new_remaining = credits_status["remaining_credits"]
+    if len(imported) > 0:
+        deduction = lead_credit_service.check_and_deduct_credits(len(imported), description="CRM Pipeline Import")
+        new_remaining = deduction.get("remaining_credits", new_remaining - len(imported))
+
     return {
         "success": True,
         "imported_count": len(imported),
         "imported_companies": imported,
-        "message": f"Successfully added {len(imported)} lead(s) to your CRM Tab!"
+        "credits_remaining": new_remaining,
+        "total_quota": credits_status["total_quota"],
+        "message": f"Successfully added {len(imported)} lead(s) to your CRM Tab! ({new_remaining} of {credits_status['total_quota']} credits remaining this month)"
     }
 
 @router.post("/verify-email")

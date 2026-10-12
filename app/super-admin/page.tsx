@@ -155,7 +155,9 @@ export default function SuperAdminPage() {
         custom_annual_monthly_rate: "37.40",
         custom_monthly_rate: "46.80",
         custom_badge_text: "Custom Enterprise",
-        custom_is_early_bird: false
+        custom_is_early_bird: false,
+        standard_lead_credits_per_user_monthly: "1500",
+        custom_lead_credits_per_user_monthly: "5000"
     });
     const [savingPricing, setSavingPricing] = useState(false);
 
@@ -341,10 +343,12 @@ export default function SuperAdminPage() {
                         standard_is_early_bird: data.standard.is_early_bird !== false,
                         standard_badge_text: data.standard.badge_text || "Early Bird Special (96% OFF)",
                         standard_bill_annual_upfront: data.standard.bill_annual_upfront !== false,
+                        standard_lead_credits_per_user_monthly: String(data.standard?.lead_credits_per_user_monthly ?? "1500"),
                         custom_annual_monthly_rate: String(data.custom?.annual_monthly_rate ?? "37.40"),
                         custom_monthly_rate: String(data.custom?.monthly_rate ?? "46.80"),
                         custom_badge_text: data.custom?.badge_text || "Custom Enterprise",
-                        custom_is_early_bird: Boolean(data.custom?.is_early_bird)
+                        custom_is_early_bird: Boolean(data.custom?.is_early_bird),
+                        custom_lead_credits_per_user_monthly: String(data.custom?.lead_credits_per_user_monthly ?? "5000")
                     });
                 }
             }
@@ -366,7 +370,8 @@ export default function SuperAdminPage() {
                     original_monthly_rate: parseFloat(pricingForm.standard_original_monthly_rate) || 31.10,
                     is_early_bird: pricingForm.standard_is_early_bird,
                     badge_text: pricingForm.standard_badge_text,
-                    bill_annual_upfront: pricingForm.standard_bill_annual_upfront
+                    bill_annual_upfront: pricingForm.standard_bill_annual_upfront,
+                    lead_credits_per_user_monthly: parseInt(pricingForm.standard_lead_credits_per_user_monthly, 10) || 1500
                 },
                 custom: {
                     name: "Custom Enterprise",
@@ -376,7 +381,8 @@ export default function SuperAdminPage() {
                     original_monthly_rate: 46.80,
                     is_early_bird: pricingForm.custom_is_early_bird,
                     badge_text: pricingForm.custom_badge_text,
-                    bill_annual_upfront: true
+                    bill_annual_upfront: true,
+                    lead_credits_per_user_monthly: parseInt(pricingForm.custom_lead_credits_per_user_monthly, 10) || 5000
                 },
                 updated_at: new Date().toISOString(),
                 updated_by: "Super Admin"
@@ -417,10 +423,12 @@ export default function SuperAdminPage() {
             standard_is_early_bird: true,
             standard_badge_text: "Early Bird Special (96% OFF)",
             standard_bill_annual_upfront: true,
+            standard_lead_credits_per_user_monthly: "1500",
             custom_annual_monthly_rate: "37.40",
             custom_monthly_rate: "46.80",
             custom_badge_text: "Custom Enterprise",
-            custom_is_early_bird: false
+            custom_is_early_bird: false,
+            custom_lead_credits_per_user_monthly: "5000"
         });
         showToast("↺ Pricing form reset to $1 Early Bird defaults (click Save to publish)");
     };
@@ -1181,6 +1189,32 @@ export default function SuperAdminPage() {
                                             />
                                         </div>
 
+                                        {/* Lead Pool Credits Quota */}
+                                        <div className="p-4 bg-cyan-950/20 border border-cyan-500/30 rounded-xl space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <label className="block text-xs font-bold text-cyan-300 uppercase tracking-wider">
+                                                    Lead Pool Credits / User / Mo *
+                                                </label>
+                                                <span className="text-[10px] font-mono bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full font-bold">
+                                                    Standard Allocation
+                                                </span>
+                                            </div>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    min="50"
+                                                    step="50"
+                                                    required
+                                                    value={pricingForm.standard_lead_credits_per_user_monthly}
+                                                    onChange={(e) => setPricingForm(f => ({ ...f, standard_lead_credits_per_user_monthly: e.target.value }))}
+                                                    className="w-full bg-[#070B16] border border-cyan-500/40 rounded-xl px-4 py-2 text-white font-mono font-bold text-sm outline-none focus:border-cyan-400"
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-gray-400">
+                                                Default: 1,500 leads/user/mo. Each seat purchased receives this quota automatically.
+                                            </p>
+                                        </div>
+
                                         {/* Bill Upfront Option */}
                                         <label className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 cursor-pointer">
                                             <input
@@ -1258,6 +1292,24 @@ export default function SuperAdminPage() {
                                                     className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs outline-none focus:border-pink-500"
                                                 />
                                             </div>
+
+                                            {/* Enterprise Lead Pool Credits */}
+                                            <div className="p-4 bg-pink-950/20 border border-pink-500/20 rounded-xl space-y-2">
+                                                <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider">
+                                                    Custom Lead Credits / User / Mo
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min="100"
+                                                    step="100"
+                                                    value={pricingForm.custom_lead_credits_per_user_monthly}
+                                                    onChange={(e) => setPricingForm(f => ({ ...f, custom_lead_credits_per_user_monthly: e.target.value }))}
+                                                    className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2 text-white font-mono font-bold text-xs outline-none focus:border-pink-500"
+                                                />
+                                                <p className="text-[10px] text-gray-400">
+                                                    Default: 5,000+ custom credits/user/mo for high-velocity teams.
+                                                </p>
+                                            </div>
                                         </div>
 
                                         {/* ── LIVE SIMULATOR PREVIEW ── */}
@@ -1274,6 +1326,8 @@ export default function SuperAdminPage() {
                                                     const annualTotalYr = (seats * annualRateNum * 12).toFixed(2);
                                                     const monthlyTotalMo = (seats * monthlyRateNum).toFixed(2);
                                                     const savingsYr = ((seats * monthlyRateNum * 12) - (seats * annualRateNum * 12)).toFixed(0);
+                                                    const creditsPerUser = parseInt(pricingForm.standard_lead_credits_per_user_monthly, 10) || 1500;
+                                                    const totalCredits = seats * creditsPerUser;
 
                                                     return (
                                                         <div key={seats} className="p-3 bg-white/5 rounded-xl border border-white/5 text-left">
@@ -1284,7 +1338,10 @@ export default function SuperAdminPage() {
                                                             <div className="text-[11px] text-emerald-400">
                                                                 Annual: <span className="font-mono text-white font-bold">${annualTotalMo}/mo</span> (${annualTotalYr}/yr)
                                                             </div>
-                                                            <div className="text-[10px] text-amber-400 font-bold mt-1">
+                                                            <div className="text-[10px] text-cyan-300 font-bold mt-1">
+                                                                ⚡ {totalCredits.toLocaleString()} leads / mo
+                                                            </div>
+                                                            <div className="text-[10px] text-amber-400 font-bold mt-0.5">
                                                                 Save ${savingsYr}/yr!
                                                             </div>
                                                         </div>

@@ -221,6 +221,10 @@ export default function Home() {
                                 <span className="text-gray-500 text-xs">/ seat / month</span>
                             </div>
                             <div className="space-y-3 pt-6 border-t border-purple-500/10 text-xs text-gray-300">
+                                <div className="flex items-center gap-2 text-cyan-300 font-bold bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1.5 rounded-lg">
+                                    <CheckCircle className="text-cyan-400 shrink-0" size={14} />
+                                    <span>1,500 Verified Lead Credits / user / mo</span>
+                                </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-purple-400 shrink-0" size={14} />
                                     <span className="font-semibold text-white">All 28 enterprise modules</span>

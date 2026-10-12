@@ -1,0 +1,11 @@
+{
+  "plan": "Standard",
+  "credits_per_user": 1500,
+  "user_seats": 1,
+  "total_quota": 1500,
+  "used_credits": 0,
+  "bonus_credits": 0,
+  "cycle_start": "2026-10-12T08:36:43.279453+00:00",
+  "cycle_renewal": "2026-11-11T08:36:43.279453+00:00",
+  "transactions": []
+}

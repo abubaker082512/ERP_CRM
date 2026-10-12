@@ -72,7 +72,8 @@ export async function POST(req: NextRequest) {
         original_monthly_rate: parseFloat(body.standard.original_monthly_rate) || 31.10,
         is_early_bird: body.standard.is_early_bird !== false,
         badge_text: body.standard.badge_text || "Early Bird Special (Limited Time)",
-        bill_annual_upfront: body.standard.bill_annual_upfront !== false
+        bill_annual_upfront: body.standard.bill_annual_upfront !== false,
+        lead_credits_per_user_monthly: parseInt(body.standard.lead_credits_per_user_monthly, 10) || 1500
       },
       custom: {
         name: body.custom?.name || "Custom Enterprise",
@@ -82,7 +83,8 @@ export async function POST(req: NextRequest) {
         original_monthly_rate: parseFloat(body.custom?.original_monthly_rate) || 46.80,
         is_early_bird: Boolean(body.custom?.is_early_bird),
         badge_text: body.custom?.badge_text || "Custom Enterprise",
-        bill_annual_upfront: body.custom?.bill_annual_upfront !== false
+        bill_annual_upfront: body.custom?.bill_annual_upfront !== false,
+        lead_credits_per_user_monthly: parseInt(body.custom?.lead_credits_per_user_monthly, 10) || 5000
       },
       updated_at: new Date().toISOString(),
       updated_by: body.updated_by || "Super Admin"

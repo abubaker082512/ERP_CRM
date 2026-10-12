@@ -466,11 +466,37 @@ export default function LeadsPoolPage() {
     const [verResult, setVerResult] = useState<any>(null);
     const [verLoading, setVerLoading] = useState(false);
 
+    // Lead Credits System (Standard Plan: 1,500 leads/mo/user)
+    const [creditsInfo, setCreditsInfo] = useState({
+        remaining: 1500,
+        total: 1500,
+        plan: "Standard",
+        userSeats: 1,
+        isExhausted: false
+    });
+
+    const fetchCredits = async () => {
+        try {
+            const res = await fetchAPI("/lead-bank/credits");
+            if (res.ok) {
+                const data = await res.json();
+                setCreditsInfo({
+                    remaining: data.remaining_credits ?? 1500,
+                    total: data.total_quota ?? 1500,
+                    plan: data.plan || "Standard",
+                    userSeats: data.user_seats || 1,
+                    isExhausted: data.is_exhausted || false
+                });
+            }
+        } catch {}
+    };
+
     useEffect(() => {
         try {
             const saved = localStorage.getItem("crm_added_lead_ids");
             if (saved) setAddedLeadIds(JSON.parse(saved));
         } catch {}
+        fetchCredits();
     }, []);
 
     useEffect(() => {
@@ -598,6 +624,10 @@ export default function LeadsPoolPage() {
 
     const handleImportLeads = async (leadIdsToImport: string[], sourceList: LeadRecord[]) => {
         if (leadIdsToImport.length === 0) return;
+        if (creditsInfo.remaining < leadIdsToImport.length) {
+            alert(`⚠️ Lead Credit Limit Reached!\n\nYou requested ${leadIdsToImport.length} lead(s), but only have ${creditsInfo.remaining} credit(s) remaining for this month.\n\nStandard plan provides 1,500 Lead Credits per user seat per month. Please contact your administrator to add user seats or top up credits.`);
+            return;
+        }
         setImporting(true);
         setImportSuccessMsg("");
 
@@ -616,6 +646,19 @@ export default function LeadsPoolPage() {
             });
             if (res.ok) {
                 const data = await res.json();
+                if (data.credits_remaining !== undefined) {
+                    setCreditsInfo(prev => ({
+                        ...prev,
+                        remaining: data.credits_remaining,
+                        total: data.total_quota ?? prev.total,
+                        isExhausted: data.credits_remaining <= 0
+                    }));
+                }
+                if (data.error === "INSUFFICIENT_CREDITS") {
+                    setImportSuccessMsg(`⚠️ ${data.message}`);
+                    alert(data.message);
+                    return;
+                }
                 const count = data.imported_count !== undefined ? data.imported_count : leadIdsToImport.length;
                 if (count > 0) {
                     setImportSuccessMsg(`🎉 ${data.message || `Successfully added ${count} lead(s) to your CRM Tab!`}`);
@@ -744,7 +787,32 @@ export default function LeadsPoolPage() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Live Monthly Lead Credits Widget */}
+                        <div className="bg-[#0B1224]/90 border border-cyan-500/30 rounded-2xl p-2.5 px-4 flex items-center gap-3 shadow-lg">
+                            <div className="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-300 font-bold shrink-0">
+                                <Zap size={18} className="text-amber-400" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-gray-400 uppercase font-extrabold tracking-wider">Lead Credits</span>
+                                    <span className="bg-cyan-500/20 text-cyan-300 text-[10px] font-bold px-2 py-0.2 rounded-full border border-cyan-500/30">
+                                        Standard: 1,500/user/mo
+                                    </span>
+                                </div>
+                                <div className="flex items-baseline gap-2 mt-0.5">
+                                    <span className="text-sm font-black text-white font-mono">{creditsInfo.remaining.toLocaleString()}</span>
+                                    <span className="text-[11px] text-gray-400">/ {creditsInfo.total.toLocaleString()} leads available</span>
+                                </div>
+                                <div className="w-32 bg-white/10 h-1 rounded-full mt-1 overflow-hidden">
+                                    <div 
+                                        className={`h-full transition-all rounded-full ${creditsInfo.remaining > 300 ? 'bg-cyan-400' : creditsInfo.remaining > 0 ? 'bg-amber-400' : 'bg-red-500'}`}
+                                        style={{ width: `${Math.min(100, Math.max(0, (creditsInfo.remaining / Math.max(1, creditsInfo.total)) * 100))}%` }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         <button
                             onClick={() => handleExportCSV(poolMode === "live_scraper" ? liveLeads : leads, poolMode)}
                             className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 text-xs font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-sm active:scale-95"
