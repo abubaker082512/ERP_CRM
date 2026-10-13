@@ -20,4 +20,7 @@ build/
 # Large Files & Media
 *.mp4
 Videos Demonstration of Odoo(Competitor)/
+BERAXIS Screenshots/
+scratch/
+*.tsbuildinfo
 

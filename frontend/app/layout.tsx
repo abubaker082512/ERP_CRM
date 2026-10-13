@@ -8,16 +8,18 @@ import CosmicBackground from "@/components/CosmicBackground";
 import GalaxyAppShell from "@/components/layout/GalaxyAppShell";
 
 export const metadata: Metadata = {
-    metadataBase: new URL("https://erp-crm-puce.vercel.app"),
+    metadataBase: new URL("https://www.beraxis.online"),
     title: {
-        default: "Beraxis ERP - Autonomous AI ERP & Next-Gen Business Operating System",
-        template: "%s | Beraxis Autonomous AI ERP"
+        default: "Beraxis | Autonomous AI ERP & CRM · 25M+ B2B Leads",
+        template: "%s | Beraxis"
     },
-    description: "Beraxis is the premier AI-driven autonomous enterprise ERP & CRM command center. Unify CRM, 25.4M+ B2B Leads Pool, Point of Sale, Multi-Industry Operations, Smart Inventory, Accounting, HRMS, and Voice Pilot automation.",
+    description: "Beraxis is the premier autonomous AI ERP & CRM command center. Unify CRM, 25.4M+ verified B2B leads directory, POS, multi-industry operations, accounting, inventory, and HRMS for just $1/month.",
     keywords: [
         "Beraxis",
         "Beraxis ERP",
         "Beraxis CRM",
+        "Beraxis AI",
+        "beraxis.online",
         "Autonomous ERP",
         "Next Gen ERP",
         "B2B Leads Pool",
@@ -27,19 +29,15 @@ export const metadata: Metadata = {
         "Gym management software",
         "Fitness club ERP",
         "Padel club court booking software",
-        "Sports club membership software",
         "Automotive garage workshop ERP",
-        "Car repair job card software",
         "Restaurant POS and Kitchen Display System KDS",
         "Food and beverage recipe BOM ERP",
         "Real estate property lease management ERP",
         "Healthcare clinic patient EMR EHR software",
+        "NGOs grant management software",
         "Construction contractor project costing ERP",
         "Retail omnichannel multi-store POS",
         "School academy student LMS billing software",
-        "Hotel resort PMS front desk ERP",
-        "Professional services billable hours agency ERP",
-        "ERP CRM software",
         "Accounting software",
         "Inventory management software",
         "HRMS Payroll system",
@@ -47,7 +45,7 @@ export const metadata: Metadata = {
         "Voice AI business assistant",
         "Enterprise Resource Planning"
     ],
-    authors: [{ name: "Beraxis Team", url: "https://erp-crm-puce.vercel.app" }],
+    authors: [{ name: "Beraxis Team", url: "https://www.beraxis.online" }],
     creator: "Beraxis Platform",
     publisher: "Beraxis Systems",
     formatDetection: {
@@ -56,29 +54,48 @@ export const metadata: Metadata = {
         telephone: false,
     },
     alternates: {
-        canonical: "https://erp-crm-puce.vercel.app",
+        canonical: "https://www.beraxis.online",
     },
+    icons: {
+        icon: [
+            { url: "/favicon.ico", sizes: "any" },
+            { url: "/icon-48.png", type: "image/png", sizes: "48x48" },
+            { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+            { url: "/icon.png", type: "image/png", sizes: "512x512" },
+        ],
+        apple: [
+            { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+        ],
+        shortcut: "/favicon.ico",
+    },
+    manifest: "/site.webmanifest",
     openGraph: {
-        title: "Beraxis ERP - Autonomous AI ERP & Business Operating System",
-        description: "The ultimate AI-driven business operating system unifying CRM, Sales, Inventory, Accounting, HRMS & Voice Automation. Sub-50ms speed with built-in 25M+ Leads Pool.",
-        url: "https://erp-crm-puce.vercel.app",
-        siteName: "Beraxis ERP",
+        title: "Beraxis | Autonomous AI ERP & CRM · 25M+ B2B Leads Pool",
+        description: "The premier AI business operating system. Built-in 25.4M+ verified B2B leads directory, POS, multi-industry hubs, accounting & HRMS.",
+        url: "https://www.beraxis.online",
+        siteName: "Beraxis",
         images: [
             {
-                url: "https://erp-crm-puce.vercel.app/logo2.png",
+                url: "https://www.beraxis.online/og-image.png",
                 width: 1200,
                 height: 630,
-                alt: "Beraxis ERP - Autonomous AI ERP & Business Command Center",
+                alt: "Beraxis - Autonomous AI ERP & CRM Platform",
             },
+            {
+                url: "https://www.beraxis.online/icon.png",
+                width: 512,
+                height: 512,
+                alt: "Beraxis Logo",
+            }
         ],
         locale: "en_US",
         type: "website",
     },
     twitter: {
         card: "summary_large_image",
-        title: "Beraxis ERP - Autonomous AI ERP & CRM",
-        description: "Unify CRM, Sales, Inventory, Accounting, HRMS, and Voice Pilot. Built-in 25M+ B2B Leads Pool for modern high-growth enterprises.",
-        images: ["https://erp-crm-puce.vercel.app/logo2.png"],
+        title: "Beraxis | Autonomous AI ERP & CRM · 25M+ B2B Leads Pool",
+        description: "The AI-driven business command center. Built-in 25M+ verified B2B leads directory, POS, inventory, accounting & HRMS.",
+        images: ["https://www.beraxis.online/og-image.png"],
         creator: "@beraxis",
     },
     robots: {
@@ -103,31 +120,87 @@ export default function RootLayout({
         "@context": "https://schema.org",
         "@graph": [
             {
+                "@type": "Organization",
+                "@id": "https://www.beraxis.online/#organization",
+                "name": "Beraxis",
+                "legalName": "Beraxis",
+                "alternateName": ["Beraxis ERP", "Beraxis CRM", "Beraxis AI", "Beraxis AI ERP"],
+                "url": "https://www.beraxis.online",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://www.beraxis.online/icon.png",
+                    "width": "512",
+                    "height": "512"
+                },
+                "image": "https://www.beraxis.online/og-image.png",
+                "description": "Beraxis is an autonomous AI-driven enterprise ERP and CRM command center unifying business operations, CRM, 25.4M+ verified B2B Leads Pool, POS, multi-industry blueprints, inventory, and financial bookkeeping.",
+                "sameAs": [
+                    "https://www.beraxis.online",
+                    "https://wa.me/19707807993",
+                    "https://twitter.com/beraxis"
+                ],
+                "contactPoint": {
+                    "@type": "ContactPoint",
+                    "contactType": "customer support",
+                    "url": "https://www.beraxis.online/contact",
+                    "telephone": "+1-970-780-7993"
+                }
+            },
+            {
+                "@type": "WebSite",
+                "@id": "https://www.beraxis.online/#website",
+                "url": "https://www.beraxis.online",
+                "name": "Beraxis",
+                "alternateName": "Beraxis ERP",
+                "publisher": {
+                    "@id": "https://www.beraxis.online/#organization"
+                },
+                "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": "https://www.beraxis.online/leads-pool?query={search_term_string}",
+                    "query-input": "required name=search_term_string"
+                }
+            },
+            {
                 "@type": "SoftwareApplication",
-                "name": "Beraxis ERP",
-                "operatingSystem": "Web, Cloud, All",
+                "@id": "https://www.beraxis.online/#software",
+                "name": "Beraxis Autonomous AI ERP",
+                "operatingSystem": "Web, Cloud, iOS, Android",
                 "applicationCategory": "BusinessApplication",
                 "aggregateRating": {
                     "@type": "AggregateRating",
                     "ratingValue": "4.9",
-                    "ratingCount": "1280"
+                    "reviewCount": "1280"
                 },
                 "offers": {
-                    "@type": "Offer",
-                    "price": "0",
+                    "@type": "AggregateOffer",
+                    "lowPrice": "0",
+                    "highPrice": "37.40",
                     "priceCurrency": "USD",
-                    "description": "Free One App Forever or Early Bird Pro Plan"
+                    "offerCount": "3"
                 },
-                "description": "Beraxis is the premier AI-driven autonomous multi-industry ERP unifying CRM, 25.4M+ B2B Leads Pool, POS, Gym & Club Hub, Automotive, Real Estate, Inventory, Accounting, HRMS, and Voice Assistant automation.",
-                "url": "https://erp-crm-puce.vercel.app"
+                "description": "Beraxis is the premier AI-driven autonomous multi-industry ERP unifying CRM, 25.4M+ B2B Leads Pool, POS, Club Hub, Automotive, Real Estate, Inventory, Accounting, HRMS, and Voice Assistant automation.",
+                "url": "https://www.beraxis.online"
             },
             {
-                "@type": "Organization",
-                "name": "Beraxis",
-                "url": "https://erp-crm-puce.vercel.app",
-                "logo": "https://erp-crm-puce.vercel.app/logo2.png",
-                "sameAs": [
-                    "https://wa.me/19707807993"
+                "@type": "SiteNavigationElement",
+                "name": [
+                    "Lead Pool",
+                    "Pricing",
+                    "Features",
+                    "Blog",
+                    "About",
+                    "Contact",
+                    "Sign Up"
+                ],
+                "url": [
+                    "https://www.beraxis.online/leads-pool",
+                    "https://www.beraxis.online/pricing",
+                    "https://www.beraxis.online/#features",
+                    "https://www.beraxis.online/blog",
+                    "https://www.beraxis.online/about",
+                    "https://www.beraxis.online/contact",
+                    "https://www.beraxis.online/signup"
                 ]
             }
         ]
@@ -136,6 +209,15 @@ export default function RootLayout({
     return (
         <html lang="en">
             <head>
+                {/* Explicit search engine icon links */}
+                <link rel="icon" href="/favicon.ico" sizes="any" />
+                <link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png" />
+                <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+                <link rel="icon" type="image/png" sizes="512x512" href="/icon.png" />
+                <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+                <link rel="manifest" href="/site.webmanifest" />
+                <meta name="theme-color" content="#020205" />
+
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

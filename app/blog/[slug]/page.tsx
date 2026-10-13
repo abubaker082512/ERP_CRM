@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
@@ -18,6 +19,40 @@ import {
 
 interface Props {
     params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const { slug } = await params;
+    const post = BLOG_POSTS.find((p) => p.slug === slug);
+    if (!post) return { title: "Article Not Found | Beraxis" };
+    return {
+        title: `${post.title} | Beraxis Briefings`,
+        description: post.excerpt,
+        alternates: {
+            canonical: `https://www.beraxis.online/blog/${post.slug}`,
+        },
+        openGraph: {
+            title: `${post.title} | Beraxis`,
+            description: post.excerpt,
+            url: `https://www.beraxis.online/blog/${post.slug}`,
+            type: "article",
+            publishedTime: post.publishedAt,
+            images: [
+                {
+                    url: "https://www.beraxis.online/og-image.png",
+                    width: 1200,
+                    height: 630,
+                    alt: post.title,
+                }
+            ]
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: `${post.title} | Beraxis`,
+            description: post.excerpt,
+            images: ["https://www.beraxis.online/og-image.png"],
+        }
+    };
 }
 
 export default async function BlogPostPage({ params }: Props) {
