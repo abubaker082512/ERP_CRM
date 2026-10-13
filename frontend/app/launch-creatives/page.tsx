@@ -334,15 +334,15 @@ export default function LaunchCreativesPage() {
             <div className="bg-slate-900/90 rounded-3xl p-6 sm:p-8 border-2 border-cyan-500/40 shadow-2xl shadow-cyan-500/10">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                 <div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold mb-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    FEATURED • 100% AUTHENTIC LIVE PLATFORM COMMERCIAL (1:51)
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-bold mb-2">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    FEATURED • 12-INDUSTRY GLOBAL COMMERCIAL (2:12)
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    Beraxis AI Live Product Demonstration
+                    Beraxis AI: 12 Industries, POS, ERP, CRM & 25M+ Leads
                   </h2>
                   <p className="text-sm text-slate-300 mt-1 max-w-3xl">
-                    Full walkthrough recorded directly in the live Beraxis workspace. Live authenticated login, real executive dashboard, zero-overlapping synchronized professional voiceover, and dynamic lo-fi background music.
+                    Recorded in the live Beraxis workspace. Showcasing all 12 global industry archetypes, high-speed Point of Sale checkout, Cloud ERP financials, visual Smart CRM, and the proprietary 25M+ B2B Inbound Lead Pool with studio acoustic guitar/piano soundtrack and zero-overlapping narration.
                   </p>
                 </div>
 
@@ -383,8 +383,8 @@ export default function LaunchCreativesPage() {
                       controls
                       playsInline
                       preload="metadata"
-                      poster="/social_media_assets/beraxis_live_product_demo_preview.gif"
-                      src={demoFormat === "16x9" ? "/social_media_assets/beraxis_live_product_demo_16x9.mp4" : "/social_media_assets/beraxis_live_product_demo_9x16.mp4"}
+                      poster="/social_media_assets/beraxis_12_industries_commercial_preview.gif"
+                      src={demoFormat === "16x9" ? "/social_media_assets/beraxis_12_industries_commercial_16x9.mp4" : "/social_media_assets/beraxis_12_industries_commercial_9x16.mp4"}
                       className="w-full h-full object-contain"
                     />
                   </div>
@@ -392,23 +392,23 @@ export default function LaunchCreativesPage() {
                   {/* Quick Action Download Buttons */}
                   <div className="w-full mt-4 flex flex-wrap items-center justify-center gap-3">
                     <a
-                      href="/social_media_assets/beraxis_live_product_demo_16x9.mp4"
+                      href="/social_media_assets/beraxis_12_industries_commercial_16x9.mp4"
                       download
                       className="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-black flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Download 16:9 MP4 (9.6 MB)</span>
+                      <span>Download 16:9 MP4 (15.9 MB)</span>
                     </a>
                     <a
-                      href="/social_media_assets/beraxis_live_product_demo_9x16.mp4"
+                      href="/social_media_assets/beraxis_12_industries_commercial_9x16.mp4"
                       download
                       className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 flex items-center gap-2 transition"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Download 9:16 Reel MP4 (6.6 MB)</span>
+                      <span>Download 9:16 Reel MP4 (9.2 MB)</span>
                     </a>
                     <a
-                      href="/social_media_assets/beraxis_live_product_demo_preview.gif"
+                      href="/social_media_assets/beraxis_12_industries_commercial_preview.gif"
                       download
                       className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 flex items-center gap-2 transition"
                     >
@@ -421,55 +421,55 @@ export default function LaunchCreativesPage() {
                 {/* Operations Breakdown */}
                 <div className="lg:col-span-5 space-y-4">
                   <div className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
-                    ⚡ Authentic Live Workflows Demonstrated (1:51)
+                    ⚡ 6 Master Scenes Choreographed (2:12)
                   </div>
 
                   <div className="space-y-2.5">
                     <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:00</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-amber-400 font-mono font-bold text-xs mt-0.5">0:00</span>
                       <div>
-                        <div className="text-xs font-bold text-white">Live Login & The SaaS Fragmentation Problem</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">Direct login with user credentials into live multi-tenant workspace with interactive cursor feedback.</div>
+                        <div className="text-xs font-bold text-white">What Kind of Business Are You? (12 Global Archetypes)</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Showcase across F&B, Retail, Professional Services, Healthcare, Logistics, Real Estate, Automotive, and NGOs.</div>
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:14</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-purple-400 font-mono font-bold text-xs mt-0.5">0:26</span>
                       <div>
-                        <div className="text-xs font-bold text-white">Executive Dashboard & Modular App Suite</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">Real workspace KPIs, financial telemetry, activity feeds, and full modular enterprise app launcher.</div>
+                        <div className="text-xs font-bold text-white">Dynamic Industry Reconfiguration</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Interactive clicks adapting operational modes, department trees, and specialized modules in real-time.</div>
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:39</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:45</span>
                       <div>
-                        <div className="text-xs font-bold text-white">Inbound AI Lead Pool & Automated Lead Scoring</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">Centralized inbound lead ingestion showing hot enterprise leads ranked with 92/100 AI priority scores.</div>
+                        <div className="text-xs font-bold text-white">Enterprise Point of Sale (POS)</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">High-speed touch orders, categories, bakery & drinks carts, multi-terminal registers, and instant receipt sync.</div>
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:56</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-blue-400 font-mono font-bold text-xs mt-0.5">1:01</span>
                       <div>
-                        <div className="text-xs font-bold text-white">Visual Sales CRM Pipeline</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">Drag-and-drop opportunity cards from qualified inquiry to signed quotation with instant revenue tracking.</div>
+                        <div className="text-xs font-bold text-white">Cloud ERP Financials & Smart CRM</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Visual sales Kanban pipeline, general ledger accounting balance sheets, and multi-warehouse stock counts.</div>
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">1:16</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-emerald-400 font-mono font-bold text-xs mt-0.5">1:26</span>
                       <div>
-                        <div className="text-xs font-bold text-white">Cloud ERP Accounting & Multi-Warehouse Stock</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">Real-time ledger balancing, customer invoice summaries, reorder thresholds, and multi-location valuation.</div>
+                        <div className="text-xs font-bold text-white">25,000,000+ Inbound AI Lead Pool</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Proprietary B2B leads engine with hot AI intent scores (96/100), revenue filters, and 1-click CRM pipeline routing.</div>
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-900/40 bg-emerald-950/20 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded bg-emerald-900 text-emerald-300 font-mono font-bold text-xs mt-0.5">1:29</span>
+                      <span className="px-2 py-0.5 rounded bg-emerald-900 text-emerald-300 font-mono font-bold text-xs mt-0.5">1:48</span>
                       <div>
-                        <div className="text-xs font-bold text-emerald-300">Early-Bird Rate: $1/mo Annual ($12/yr) vs $5/mo</div>
-                        <div className="text-[11px] text-slate-300 mt-0.5">Early-bird checkout at www.beraxis.online, plus 1 App Free Forever with no credit card required.</div>
+                        <div className="text-xs font-bold text-emerald-300">Early-Bird Pricing ($1/mo vs $5/mo) & 1 App Free Forever</div>
+                        <div className="text-[11px] text-slate-300 mt-0.5">Transparent early-bird rate: Standard $1/mo Annual ($12/yr) vs $5/mo Monthly. 1 App Free forever with no credit card required.</div>
                       </div>
                     </div>
                   </div>
