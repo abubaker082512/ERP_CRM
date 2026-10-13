@@ -1,25 +1,40 @@
 import Link from 'next/link';
-import { ArrowRight, PlayCircle, ShieldCheck, Zap, Globe, Sparkles, CheckCircle, Mic, Layers, Cpu } from 'lucide-react';
+import { ArrowRight, PlayCircle, ShieldCheck, Zap, Globe, Sparkles, CheckCircle, Mic, Layers, Cpu, Flame, Tag } from 'lucide-react';
 
 export default function Hero() {
     return (
-        <div className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden transform-gpu">
+        <div className="relative min-h-screen flex items-center justify-center pt-32 sm:pt-36 pb-16 overflow-hidden transform-gpu">
             {/* Lightweight Background Radial Orbs (No high-cost blur filters) */}
             <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-pink-600/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 
-                {/* SEO & High-Converting Badge */}
-                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500/20 via-cyan-500/20 to-pink-500/20 border border-purple-500/40 mb-8 backdrop-blur-sm shadow-lg shadow-purple-900/20">
-                    <span className="flex h-2.5 w-2.5 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
-                    </span>
-                    <span className="text-xs sm:text-sm font-semibold text-purple-200 tracking-wide flex items-center gap-2">
-                        <span className="bg-cyan-500/30 text-cyan-200 text-[11px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">New</span>
-                        Global Leads Pool Live — 10M+ Free B2B Contacts & 1-Click CRM Import!
-                    </span>
+                {/* High-Converting Pricing & Launch Badges */}
+                <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+                    {/* Badge 1: Early Bird Price Highlight */}
+                    <Link 
+                        href="/pricing"
+                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/25 via-rose-500/20 to-purple-500/25 border border-amber-500/50 backdrop-blur-sm shadow-lg shadow-amber-950/30 hover:border-amber-400 transition-all group cursor-pointer"
+                    >
+                        <Flame size={14} className="text-amber-400 animate-pulse" />
+                        <span className="text-xs sm:text-sm font-bold text-amber-200 tracking-wide flex items-center gap-1.5">
+                            Early Bird Deal: <span className="text-white font-extrabold underline decoration-amber-400">$1/mo ($12/year)</span> or $5/mo · 1,500 Leads Included
+                        </span>
+                        <ArrowRight size={13} className="text-amber-300 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+
+                    {/* Badge 2: Leads Pool */}
+                    <Link
+                        href="/leads-pool" 
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs sm:text-sm font-semibold text-cyan-200 backdrop-blur-sm hover:border-cyan-400/50 transition-all"
+                    >
+                        <span className="flex h-2 w-2 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                        </span>
+                        <span>25.4M+ Leads Directory & 1-Click Import</span>
+                    </Link>
                 </div>
 
                 {/* Main Headline */}
@@ -28,25 +43,34 @@ export default function Hero() {
                     With AI, Voice & Leads Pool
                 </h1>
 
-                {/* Subheadline with key SEO keywords */}
-                <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-12 font-light leading-relaxed">
-                    Beraxis ERP unifies CRM with a built-in <strong className="text-white font-semibold">Worldwide Leads Pool</strong>, Omnichannel Sales, Inventory, Accounting, HRMS, and Duplex Voice Pilot. The next-generation autonomous business suite built for explosive growth.
+                {/* Subheadline with key SEO keywords and explicit pricing */}
+                <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-10 font-light leading-relaxed">
+                    Unify CRM with a built-in <strong className="text-white font-semibold">25.4M+ Leads Pool</strong>, Point of Sale, Smart Inventory, Accounting, HRMS, and Voice Pilot. Unlock all 28 business modules for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
                 </p>
 
                 {/* Call To Actions */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <Link href="/signup" className="galaxy-btn-primary !px-9 !py-4 text-lg w-full sm:w-auto flex items-center justify-center gap-3 group shadow-lg shadow-purple-500/20">
-                        Launch Your Free Workspace <ArrowRight className="group-hover:translate-x-1.5 transition-transform" size={22} />
-                    </Link>
-                    
-                    <Link href="/leads-pool" className="px-8 py-4 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-cyan-400/50">
-                        <Globe size={20} className="text-cyan-400" /> Explore Leads Pool
+                    <Link href="/pricing" className="galaxy-btn-primary !px-9 !py-4 text-lg w-full sm:w-auto flex items-center justify-center gap-3 group shadow-xl shadow-purple-500/30 font-black">
+                        Claim Early Bird Plan ($1/mo) <ArrowRight className="group-hover:translate-x-1.5 transition-transform" size={20} />
                     </Link>
 
-                    <a href="#comparison" className="px-7 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-medium transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-purple-400/40">
-                        <Layers size={20} className="text-purple-400" /> Compare vs Others
-                    </a>
+                    <Link href="/signup" className="px-7 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-purple-400/50">
+                        Deploy 1 App Free ($0)
+                    </Link>
+                    
+                    <Link href="/leads-pool" className="px-7 py-4 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-cyan-400/50">
+                        <Globe size={18} className="text-cyan-400" /> Explore Leads Pool
+                    </Link>
                 </div>
+
+                {/* Price reassurance helper */}
+                <p className="text-xs text-gray-400 mt-4 font-medium flex items-center justify-center gap-2 flex-wrap">
+                    <span className="text-emerald-400 font-bold">✓ 1,500 Lead Credits/seat/mo included</span>
+                    <span className="text-gray-600">•</span>
+                    <span>Single company on Standard · 3 companies on Custom</span>
+                    <span className="text-gray-600">•</span>
+                    <span>No credit card required for Free tier</span>
+                </p>
 
                 {/* Fast ERP Showcase Preview Container */}
                 <div className="mt-16 max-w-5xl mx-auto relative">

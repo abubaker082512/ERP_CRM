@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Database, Menu, X, LayoutDashboard, LogOut, ArrowRight } from 'lucide-react';
+import { Database, Menu, X, LayoutDashboard, LogOut, ArrowRight, Flame } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function Navbar() {
@@ -20,9 +20,22 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 bg-[#0F172A]/80 backdrop-blur-md border-b border-white/10" style={{transform: 'translateZ(0)', willChange: 'transform'}}>
+        <nav className="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 bg-[#0F172A]/90 backdrop-blur-md border-b border-white/10" style={{transform: 'translateZ(0)', willChange: 'transform'}}>
+            {/* Top Early Bird Deal Banner */}
+            <div className="bg-gradient-to-r from-purple-950 via-rose-950/90 to-amber-950/90 border-b border-purple-500/20 text-white text-[11px] sm:text-xs py-1.5 px-4 text-center font-medium flex items-center justify-center gap-2 flex-wrap">
+                <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-black uppercase text-[10px] tracking-wider flex items-center gap-1 shadow-sm">
+                    <Flame size={11} className="text-amber-400 animate-pulse" /> Early Bird Special
+                </span>
+                <span className="text-gray-200">
+                    Get All 28 ERP Modules + 1,500 Lead Credits/mo for just <strong className="text-white font-extrabold underline decoration-amber-400">$1/mo ($12/year billed annually)</strong> or $5/mo month-to-month.
+                </span>
+                <Link href="/pricing" className="text-amber-300 hover:text-amber-200 font-extrabold ml-1 inline-flex items-center gap-0.5 hover:underline">
+                    Claim Deal <ArrowRight size={11} />
+                </Link>
+            </div>
+
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-20">
+                <div className="flex justify-between items-center h-16 sm:h-20">
                     {/* Logo */}
                     <Link href="/" className="flex-shrink-0 flex items-center gap-3 hover:opacity-90 transition-opacity">
                         <img src="/logo2.png" onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png'; }} alt="Beraxis Logo" className="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]" />

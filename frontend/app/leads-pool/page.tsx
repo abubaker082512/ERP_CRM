@@ -623,10 +623,19 @@ export default function LeadsPoolPublicPage() {
                                         ${traditionalStackCost.toLocaleString()} / yr
                                     </span>
                                 </div>
-                                <ul className="space-y-2 text-xs text-gray-400">
-                                    <li className="flex items-center gap-2">✕ Expensive annual upfront contracts with rigid credit limits</li>
-                                    <li className="flex items-center gap-2">✕ Constant manual CSV exports and data import mismatches</li>
-                                    <li className="flex items-center gap-2">✕ Per-seat surcharges for every sales representative</li>
+                                <ul className="space-y-2.5 text-xs text-gray-400">
+                                    <li className="flex items-center gap-2">
+                                        <span className="text-red-400 font-bold shrink-0">✕</span>
+                                        <span>Expensive annual upfront contracts with rigid credit limits</span>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <span className="text-red-400 font-bold shrink-0">✕</span>
+                                        <span>Constant manual CSV exports and data import mismatches</span>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <span className="text-red-400 font-bold shrink-0">✕</span>
+                                        <span>Per-seat surcharges for every sales representative</span>
+                                    </li>
                                 </ul>
                             </div>
 
@@ -644,11 +653,23 @@ export default function LeadsPoolPublicPage() {
                                         $0 <span className="text-xs font-normal text-gray-300">Extra Fees</span>
                                     </span>
                                 </div>
-                                <ul className="space-y-2 text-xs text-cyan-100 mb-6">
-                                    <li className="flex items-center gap-2 font-medium">✓ 1,500 Lead Credits included per user every month (Standard Plan)</li>
-                                    <li className="flex items-center gap-2 font-medium">✓ Unlimited search across 25M+ pre-verified B2B records</li>
-                                    <li className="flex items-center gap-2 font-medium">✓ Instant 1-click sync directly into your CRM Kanban pipeline</li>
-                                    <li className="flex items-center gap-2 font-medium">✓ Real-time AI web scraper & email verifier included</li>
+                                <ul className="space-y-2.5 text-xs text-cyan-100 mb-6">
+                                    <li className="flex items-center gap-2 font-medium">
+                                        <Check size={14} className="text-emerald-400 shrink-0" />
+                                        <span>1,500 Lead Credits included per user every month (Standard Plan)</span>
+                                    </li>
+                                    <li className="flex items-center gap-2 font-medium">
+                                        <Check size={14} className="text-emerald-400 shrink-0" />
+                                        <span>Unlimited search across 25M+ pre-verified B2B records</span>
+                                    </li>
+                                    <li className="flex items-center gap-2 font-medium">
+                                        <Check size={14} className="text-emerald-400 shrink-0" />
+                                        <span>Instant 1-click sync directly into your CRM Kanban pipeline</span>
+                                    </li>
+                                    <li className="flex items-center gap-2 font-medium">
+                                        <Check size={14} className="text-emerald-400 shrink-0" />
+                                        <span>Buy extra credit packs in Lead Pool anytime ($10 / 1,000)</span>
+                                    </li>
                                 </ul>
                                 <div className="pt-4 border-t border-cyan-500/20 flex items-center justify-between">
                                     <span className="text-xs font-bold text-white">Estimated Annual Net Savings:</span>
