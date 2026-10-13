@@ -30,6 +30,7 @@ export default function LaunchCreativesPage() {
   const [currentVideoId, setCurrentVideoId] = useState<number>(1);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentSeconds, setCurrentSeconds] = useState<number>(0);
+  const [demoFormat, setDemoFormat] = useState<"16x9" | "9x16">("16x9");
 
   const videoData: Record<number, {
     title: string;
@@ -199,7 +200,7 @@ export default function LaunchCreativesPage() {
             }`}
           >
             <Video className="w-4 h-4" />
-            <span>Interactive Video Simulator & Scripts (3 Reels)</span>
+            <span>Live Video Demos & Commercials (Full HD)</span>
           </button>
           <button
             onClick={() => setActiveTab("copy")}
@@ -327,7 +328,241 @@ export default function LaunchCreativesPage() {
 
         {/* TAB 2: VIDEOS */}
         {activeTab === "videos" && (
-          <div className="mt-8 space-y-6">
+          <div className="mt-8 space-y-10">
+
+            {/* FEATURED: LIVE PRODUCT DEMONSTRATION VIDEO */}
+            <div className="bg-slate-900/90 rounded-3xl p-6 sm:p-8 border-2 border-cyan-500/40 shadow-2xl shadow-cyan-500/10">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-bold mb-2">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    FEATURED • 100% AUTHENTIC LIVE PLATFORM DEMO (55 SECONDS)
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    Beraxis AI Live Product Demonstration
+                  </h2>
+                  <p className="text-sm text-slate-300 mt-1 max-w-3xl">
+                    Full walkthrough recorded directly in the live Beraxis workspace. Synchronized professional voiceover narration and dynamic lo-fi background music showcasing all authentic core operations.
+                  </p>
+                </div>
+
+                {/* Aspect Ratio Switcher */}
+                <div className="flex items-center bg-slate-950 p-1.5 rounded-xl border border-slate-800 self-start md:self-auto">
+                  <button
+                    onClick={() => setDemoFormat("16x9")}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+                      demoFormat === "16x9"
+                        ? "bg-cyan-500 text-black shadow-md shadow-cyan-500/30"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <span>🖥️ 16:9 Landscape (Full HD)</span>
+                  </button>
+                  <button
+                    onClick={() => setDemoFormat("9x16")}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+                      demoFormat === "9x16"
+                        ? "bg-cyan-500 text-black shadow-md shadow-cyan-500/30"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <span>📱 9:16 Vertical (Reels/TikTok)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Video Player Display */}
+              <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Player Box */}
+                <div className="lg:col-span-7 flex flex-col items-center">
+                  <div className={`w-full overflow-hidden rounded-2xl bg-black border border-slate-800 shadow-2xl relative ${
+                    demoFormat === "16x9" ? "aspect-video" : "max-w-[340px] aspect-[9/16] mx-auto"
+                  }`}>
+                    <video
+                      key={demoFormat}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      poster="/social_media_assets/beraxis_live_product_demo_preview.gif"
+                      src={demoFormat === "16x9" ? "/social_media_assets/beraxis_live_product_demo_16x9.mp4" : "/social_media_assets/beraxis_live_product_demo_9x16.mp4"}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+
+                  {/* Quick Action Download Buttons */}
+                  <div className="w-full mt-4 flex flex-wrap items-center justify-center gap-3">
+                    <a
+                      href="/social_media_assets/beraxis_live_product_demo_16x9.mp4"
+                      download
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-black flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download 16:9 MP4 (4.9 MB)</span>
+                    </a>
+                    <a
+                      href="/social_media_assets/beraxis_live_product_demo_9x16.mp4"
+                      download
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 flex items-center gap-2 transition"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download 9:16 Reel MP4 (2.9 MB)</span>
+                    </a>
+                    <a
+                      href="/social_media_assets/beraxis_live_product_demo_preview.gif"
+                      download
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 flex items-center gap-2 transition"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download Preview GIF (1.6 MB)</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Operations Breakdown */}
+                <div className="lg:col-span-5 space-y-4">
+                  <div className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
+                    ⚡ Authentic Live Workflows Demonstrated (0:55)
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:00</span>
+                      <div>
+                        <div className="text-xs font-bold text-white">30-Second Company Setup & Provisioning</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Instant multi-tenant workspace initialization with live health metrics and quick-start telemetry.</div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:08</span>
+                      <div>
+                        <div className="text-xs font-bold text-white">AI Lead Pool & Automated Lead Scoring</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Centralized inbound lead ingestion showing hot enterprise leads ranked with 92/100 AI priority scores.</div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:17</span>
+                      <div>
+                        <div className="text-xs font-bold text-white">Visual Sales CRM Pipeline</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Drag-and-drop opportunity cards from qualified inquiry to signed quotation with instant revenue tracking.</div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:26</span>
+                      <div>
+                        <div className="text-xs font-bold text-white">Cloud ERP Accounting & Financial Ledger</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Real-time profit & loss ledger, invoice reconciliation, and automated cash flow tracking.</div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:35</span>
+                      <div>
+                        <div className="text-xs font-bold text-white">Multi-Warehouse Inventory & Valuation</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Live stock reorder thresholds, batch tracking, and real-time inventory valuation across locations.</div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-900/40 bg-emerald-950/20 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded bg-emerald-900 text-emerald-300 font-mono font-bold text-xs mt-0.5">0:44</span>
+                      <div>
+                        <div className="text-xs font-bold text-emerald-300">Early-Bird Rate: $1/mo Annual ($12/yr) vs $5/mo</div>
+                        <div className="text-[11px] text-slate-300 mt-0.5">Early-bird checkout at www.beraxis.online, plus 1 App Free Forever with no credit card required.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ADDITIONAL COMMERCIALS & INFLUENCER ADS GALLERY */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-bold text-white">Production Commercials & Influencer Video Ads</h3>
+                <p className="text-xs text-slate-400">High-converting social ad creatives ready for Meta Ads Manager, TikTok Spark Ads, and YouTube pre-rolls.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Video 1: Master Commercial */}
+                <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between">
+                  <div>
+                    <div className="relative rounded-xl overflow-hidden aspect-[9/16] max-h-[300px] bg-black border border-slate-800">
+                      <video
+                        controls
+                        playsInline
+                        preload="metadata"
+                        src="/social_media_assets/beraxis_master_commercial_32s.mp4"
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-400 text-black">32s Commercial</span>
+                    </div>
+                    <h4 className="font-bold text-white text-sm mt-3">Cinematic Master Commercial (32s)</h4>
+                    <p className="text-xs text-slate-400 mt-1">SaaS overload transformation with full voiceover, dynamic soundtrack & pricing reveal.</p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <span className="text-xs font-mono text-cyan-300">5.0 MB MP4</span>
+                    <a href="/social_media_assets/beraxis_master_commercial_32s.mp4" download className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-black flex items-center gap-1.5 transition">
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Video 2: Influencer Scale Ad */}
+                <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between">
+                  <div>
+                    <div className="relative rounded-xl overflow-hidden aspect-[9/16] max-h-[300px] bg-black border border-slate-800">
+                      <video
+                        controls
+                        playsInline
+                        preload="metadata"
+                        src="/social_media_assets/female_influencer_scale_ad_30s.mp4"
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-400 text-black">30s Influencer</span>
+                    </div>
+                    <h4 className="font-bold text-white text-sm mt-3">Influencer Scale Ad ($1 vs $5)</h4>
+                    <p className="text-xs text-slate-400 mt-1">Creator walkthrough highlighting early-bird $1/mo annual rate and lead pool.</p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <span className="text-xs font-mono text-purple-300">6.2 MB MP4</span>
+                    <a href="/social_media_assets/female_influencer_scale_ad_30s.mp4" download className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-black flex items-center gap-1.5 transition">
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Video 3: Influencer $1 Offer */}
+                <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between">
+                  <div>
+                    <div className="relative rounded-xl overflow-hidden aspect-[9/16] max-h-[300px] bg-black border border-slate-800">
+                      <video
+                        controls
+                        playsInline
+                        preload="metadata"
+                        src="/social_media_assets/female_influencer_ad_1dollar.mp4"
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-400 text-black">Viral Reel</span>
+                    </div>
+                    <h4 className="font-bold text-white text-sm mt-3">Influencer Viral Hook Reel (30s)</h4>
+                    <p className="text-xs text-slate-400 mt-1">High-energy viral hook focusing on $1/month early-bird access and free tier.</p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <span className="text-xs font-mono text-yellow-300">3.2 MB MP4</span>
+                    <a href="/social_media_assets/female_influencer_ad_1dollar.mp4" download className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-black flex items-center gap-1.5 transition">
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Interactive Storyboard Simulator */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-slate-900/80 rounded-3xl p-6 sm:p-8 border border-slate-800">
               
               {/* Phone Simulator */}
