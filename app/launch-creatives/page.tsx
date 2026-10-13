@@ -334,15 +334,15 @@ export default function LaunchCreativesPage() {
             <div className="bg-slate-900/90 rounded-3xl p-6 sm:p-8 border-2 border-cyan-500/40 shadow-2xl shadow-cyan-500/10">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                 <div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-bold mb-2">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                    FEATURED • 100% AUTHENTIC LIVE PLATFORM DEMO (55 SECONDS)
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold mb-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    FEATURED • 100% AUTHENTIC LIVE PLATFORM COMMERCIAL (1:51)
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                     Beraxis AI Live Product Demonstration
                   </h2>
                   <p className="text-sm text-slate-300 mt-1 max-w-3xl">
-                    Full walkthrough recorded directly in the live Beraxis workspace. Synchronized professional voiceover narration and dynamic lo-fi background music showcasing all authentic core operations.
+                    Full walkthrough recorded directly in the live Beraxis workspace. Live authenticated login, real executive dashboard, zero-overlapping synchronized professional voiceover, and dynamic lo-fi background music.
                   </p>
                 </div>
 
@@ -397,7 +397,7 @@ export default function LaunchCreativesPage() {
                       className="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-black flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Download 16:9 MP4 (4.9 MB)</span>
+                      <span>Download 16:9 MP4 (9.6 MB)</span>
                     </a>
                     <a
                       href="/social_media_assets/beraxis_live_product_demo_9x16.mp4"
@@ -405,7 +405,7 @@ export default function LaunchCreativesPage() {
                       className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 flex items-center gap-2 transition"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Download 9:16 Reel MP4 (2.9 MB)</span>
+                      <span>Download 9:16 Reel MP4 (6.6 MB)</span>
                     </a>
                     <a
                       href="/social_media_assets/beraxis_live_product_demo_preview.gif"
@@ -413,7 +413,7 @@ export default function LaunchCreativesPage() {
                       className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 flex items-center gap-2 transition"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Download Preview GIF (1.6 MB)</span>
+                      <span>Download Preview GIF (2.1 MB)</span>
                     </a>
                   </div>
                 </div>
@@ -421,28 +421,36 @@ export default function LaunchCreativesPage() {
                 {/* Operations Breakdown */}
                 <div className="lg:col-span-5 space-y-4">
                   <div className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
-                    ⚡ Authentic Live Workflows Demonstrated (0:55)
+                    ⚡ Authentic Live Workflows Demonstrated (1:51)
                   </div>
 
                   <div className="space-y-2.5">
                     <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
                       <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:00</span>
                       <div>
-                        <div className="text-xs font-bold text-white">30-Second Company Setup & Provisioning</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">Instant multi-tenant workspace initialization with live health metrics and quick-start telemetry.</div>
+                        <div className="text-xs font-bold text-white">Live Login & The SaaS Fragmentation Problem</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Direct login with user credentials into live multi-tenant workspace with interactive cursor feedback.</div>
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:08</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:14</span>
                       <div>
-                        <div className="text-xs font-bold text-white">AI Lead Pool & Automated Lead Scoring</div>
+                        <div className="text-xs font-bold text-white">Executive Dashboard & Modular App Suite</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Real workspace KPIs, financial telemetry, activity feeds, and full modular enterprise app launcher.</div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:39</span>
+                      <div>
+                        <div className="text-xs font-bold text-white">Inbound AI Lead Pool & Automated Lead Scoring</div>
                         <div className="text-[11px] text-slate-400 mt-0.5">Centralized inbound lead ingestion showing hot enterprise leads ranked with 92/100 AI priority scores.</div>
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:17</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:56</span>
                       <div>
                         <div className="text-xs font-bold text-white">Visual Sales CRM Pipeline</div>
                         <div className="text-[11px] text-slate-400 mt-0.5">Drag-and-drop opportunity cards from qualified inquiry to signed quotation with instant revenue tracking.</div>
@@ -450,23 +458,15 @@ export default function LaunchCreativesPage() {
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:26</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">1:16</span>
                       <div>
-                        <div className="text-xs font-bold text-white">Cloud ERP Accounting & Financial Ledger</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">Real-time profit & loss ledger, invoice reconciliation, and automated cash flow tracking.</div>
-                      </div>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:35</span>
-                      <div>
-                        <div className="text-xs font-bold text-white">Multi-Warehouse Inventory & Valuation</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">Live stock reorder thresholds, batch tracking, and real-time inventory valuation across locations.</div>
+                        <div className="text-xs font-bold text-white">Cloud ERP Accounting & Multi-Warehouse Stock</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Real-time ledger balancing, customer invoice summaries, reorder thresholds, and multi-location valuation.</div>
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-slate-950/70 border border-emerald-900/40 bg-emerald-950/20 flex items-start gap-3">
-                      <span className="px-2 py-0.5 rounded bg-emerald-900 text-emerald-300 font-mono font-bold text-xs mt-0.5">0:44</span>
+                      <span className="px-2 py-0.5 rounded bg-emerald-900 text-emerald-300 font-mono font-bold text-xs mt-0.5">1:29</span>
                       <div>
                         <div className="text-xs font-bold text-emerald-300">Early-Bird Rate: $1/mo Annual ($12/yr) vs $5/mo</div>
                         <div className="text-[11px] text-slate-300 mt-0.5">Early-bird checkout at www.beraxis.online, plus 1 App Free Forever with no credit card required.</div>
