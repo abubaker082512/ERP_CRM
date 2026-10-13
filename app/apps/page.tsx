@@ -42,6 +42,7 @@ import {
     Sliders,
     X,
     Dumbbell,
+    HeartHandshake,
     Settings
 } from "lucide-react";
 import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
@@ -51,7 +52,7 @@ import { GLOBAL_INDUSTRIES, GlobalIndustryId, getIndustryById } from "@/lib/indu
 import UniversalBranchSwitcher from "@/components/shared/UniversalBranchSwitcher";
 import BranchSetupWizardModal from "@/components/settings/BranchSetupWizardModal";
 
-// Icon mapping for 10 global industries
+// Icon mapping for 12 global industries
 const INDUSTRY_ICON_MAP: Record<string, any> = {
     UtensilsCrossed,
     ShoppingBag,
@@ -63,13 +64,15 @@ const INDUSTRY_ICON_MAP: Record<string, any> = {
     Wrench,
     HardHat,
     GraduationCap,
-    Dumbbell
+    Dumbbell,
+    HeartHandshake
 };
 
 // All 30+ Enterprise apps with vibrant colors matching Screenshot 1
 const allApps = [
     // Specialized Industry & Sports Hubs
     { name: "Club & Fitness", icon: Dumbbell, color: "bg-emerald-600", href: "/club" },
+    { name: "NGOs & Grants", icon: HeartHandshake, color: "bg-rose-600", href: "/ngos" },
     
     // Commerce & POS
     { name: "Point of Sale", icon: ShoppingCart, color: "bg-amber-600", href: "/pos" },
@@ -291,8 +294,8 @@ export default function AppsDashboardPage() {
                             )}
                         </div>
 
-                        {/* 10 Clean Industry Squircle Icons */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 max-w-5xl mx-auto">
+                        {/* 12 Clean Industry Squircle Icons */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 max-w-5xl mx-auto">
                             {GLOBAL_INDUSTRIES.map(industry => {
                                 const isSelected = selectedIndId === industry.id;
                                 const IconComponent = INDUSTRY_ICON_MAP[industry.iconName] || Building2;

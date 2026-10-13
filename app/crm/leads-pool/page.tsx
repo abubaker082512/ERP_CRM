@@ -206,7 +206,8 @@ const INDUSTRY_SUFFIXES: Record<string, string[]> = {
     "E-Commerce & Import/Export": ["Trading Corporation", "Global Merchandising", "Retail Dynamics", "Direct Brands Group", "Cross-Border Trade"],
     "Energy & Sustainability": ["Renewables Group", "Clean Grid Tech", "Solar Storage", "Green Power Corp", "EcoSystems Energy", "Hydrogen Works"],
     "Aerospace & Defense": ["Aero Systems", "Avionics Defense", "Space Flight Dynamics", "Defense Tech", "Orbital Labs"],
-    "Telecommunications": ["Telecom Networks", "Fiber Grid", "5G Infrastructure", "Satellite Connect", "Bandwidth Core"]
+    "Telecommunications": ["Telecom Networks", "Fiber Grid", "5G Infrastructure", "Satellite Connect", "Bandwidth Core"],
+    "NGOs": ["Humanitarian Foundation", "Global Relief Initiative", "Development Trust", "Charitable Aid Network", "Community Welfare Alliance", "Social Impact Fund", "International NGO Council"]
 };
 
 const TECH_STACK_MAP: Record<string, string[]> = {
@@ -219,7 +220,8 @@ const TECH_STACK_MAP: Record<string, string[]> = {
     "E-Commerce & Import/Export": ["Shopify Plus", "Next.js", "Stripe", "Klaviyo", "PostgreSQL"],
     "Energy & Sustainability": ["SCADA", "Python", "Azure Cloud", "InfluxDB", "Grafana"],
     "Aerospace & Defense": ["MATLAB", "C++", "AWS GovCloud", "Linux RT", "Docker"],
-    "Telecommunications": ["OpenStack", "Kafka", "Kubernetes", "Redis", "Golang", "AWS"]
+    "Telecommunications": ["OpenStack", "Kafka", "Kubernetes", "Redis", "Golang", "AWS"],
+    "NGOs": ["Salesforce Non-Profit", "Microsoft 365", "GrantVantage", "PowerBI", "AWS", "KoboToolbox"]
 };
 
 const BUYING_SIGNALS = [
@@ -952,6 +954,12 @@ export default function LeadsPoolPage() {
                                     >
                                         🇵🇰 Karachi Industry
                                     </button>
+                                    <button
+                                        onClick={() => { setLiveQuery("NGOs & Foundations"); setLiveCity("Islamabad"); setLiveCountry("Pakistan"); setLiveIndustry("NGOs"); }}
+                                        className="bg-white/5 hover:bg-rose-600/30 border border-white/10 hover:border-rose-500/30 px-2.5 py-1 rounded-lg text-gray-300 hover:text-white transition-all cursor-pointer"
+                                    >
+                                        🤝 Global NGOs
+                                    </button>
                                 </div>
                             </div>
 
@@ -1336,6 +1344,7 @@ export default function LeadsPoolPage() {
                                         <option value="Energy & Sustainability">⚡ Energy & Green Tech</option>
                                         <option value="Aerospace & Defense">🚀 Aerospace & Defense</option>
                                         <option value="Telecommunications">📡 Telecommunications</option>
+                                        <option value="NGOs">🤝 NGOs</option>
                                     </select>
 
                                     {/* Role Filter */}

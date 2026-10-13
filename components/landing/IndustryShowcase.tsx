@@ -19,6 +19,7 @@ import {
   HardHat,
   GraduationCap,
   Dumbbell,
+  HeartHandshake,
   ArrowRight,
   CheckCircle2,
   Sparkles,
@@ -37,7 +38,8 @@ const ICON_MAP: Record<string, any> = {
   Wrench,
   HardHat,
   GraduationCap,
-  Dumbbell
+  Dumbbell,
+  HeartHandshake
 };
 
 export default function IndustryShowcase() {
@@ -55,14 +57,14 @@ export default function IndustryShowcase() {
           <span>Tailored Worldwide Archetypes</span>
         </div>
         <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white">
-          Engineered for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400">11 Global Industries</span>
+          Engineered for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400">12 Global Industries</span>
         </h2>
         <p className="text-gray-400 text-sm sm:text-base max-w-3xl mx-auto font-light leading-relaxed">
-          From padel clubs and artisan bakeries to dental clinics, auto repair garages, real estate brokerages, and discrete manufacturing plants — Beraxis auto-configures your exact workflow, POS, KDS, and operational tools out of the box.
+          From padel clubs, NGOs, and artisan bakeries to dental clinics, auto repair garages, real estate brokerages, and discrete manufacturing plants — Beraxis auto-configures your exact workflow, POS, KDS, and operational tools out of the box.
         </p>
       </div>
 
-      {/* 11 Industry Selector Tabs */}
+      {/* 12 Industry Selector Tabs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-10">
         {GLOBAL_INDUSTRIES.map(ind => {
           const isSelected = selectedId === ind.id;

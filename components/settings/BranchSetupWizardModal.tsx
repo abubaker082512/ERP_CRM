@@ -32,6 +32,7 @@ import {
   HelpCircle,
   Plus,
   Dumbbell,
+  HeartHandshake,
   Globe,
   Search,
   Filter
@@ -50,12 +51,14 @@ const ICON_MAP: Record<string, any> = {
   HardHat,
   GraduationCap,
   Dumbbell,
+  HeartHandshake,
   Globe
 };
 
 // All available 30+ Enterprise Modules
 const ALL_SYSTEM_MODULES = [
   { name: "Leads Pool (25.8M+ B2B Contacts)", href: "/crm/leads-pool", category: "Sales & CRM", icon: Globe, color: "bg-cyan-500" },
+  { name: "NGOs, Grants & Humanitarian Hub", href: "/ngos", category: "NGOs & Non-Profit", icon: HeartHandshake, color: "bg-rose-600" },
   { name: "Point of Sale (POS)", href: "/pos", category: "Commerce", icon: ShoppingBag, color: "bg-amber-600" },
   { name: "Kitchen Display (KDS)", href: "/pos/kds", category: "Food & Beverage", icon: UtensilsCrossed, color: "bg-red-600" },
   { name: "Recipe & BOM Costing", href: "/pos/recipes", category: "Food & Beverage", icon: Layers, color: "bg-orange-600" },
@@ -227,6 +230,10 @@ export default function BranchSetupWizardModal({
         matchedIndustry = "education_academies";
         matchedSub = "Training Academy & Institute";
         matchedMode = "term_tuition";
+      } else if (lower.includes("ngo") || lower.includes("non-profit") || lower.includes("nonprofit") || lower.includes("charity") || lower.includes("foundation") || lower.includes("humanitarian") || lower.includes("donor") || lower.includes("relief") || lower.includes("grant")) {
+        matchedIndustry = "ngos";
+        matchedSub = "Humanitarian & Disaster Relief NGO";
+        matchedMode = "grant_donor_fund";
       }
 
       setSelectedIndustryId(matchedIndustry);

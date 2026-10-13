@@ -153,6 +153,21 @@ const DEMO_LEADS = [
         intentLabel: "Rapid Hiring Spree",
         verifiedEmail: "p.sundaram@apexscale.in",
         phone: "+91 (80) 6712-****"
+    },
+    {
+        id: "dl-9",
+        name: "Dr. Nadia Al-Khatib",
+        title: "Country Director & Head of Grants",
+        seniority: "Director",
+        company: "Global Humanitarian Relief Foundation",
+        industry: "NGOs & Humanitarian Aid",
+        location: "Geneva, Switzerland",
+        country: "USA",
+        headcount: "500-1,000",
+        intentScore: 95,
+        intentLabel: "Grant ERP Modernization",
+        verifiedEmail: "n.alkhatib@globalrelieffoundation.org",
+        phone: "+41 (22) 819-****"
     }
 ];
 
@@ -330,6 +345,7 @@ export default function LeadsPoolPublicPage() {
                                 <option value="Manufacturing">Manufacturing & Robotics</option>
                                 <option value="Healthcare">Healthcare & MedTech</option>
                                 <option value="Cybersecurity">Cybersecurity</option>
+                                <option value="NGOs">NGOs & Humanitarian Aid</option>
                             </select>
                         </div>
 

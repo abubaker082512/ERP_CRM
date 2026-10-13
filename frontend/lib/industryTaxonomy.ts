@@ -9,7 +9,8 @@ export type GlobalIndustryId =
   | "automotive_workshop"
   | "construction_contracting"
   | "education_academies"
-  | "fitness_sports_club";
+  | "fitness_sports_club"
+  | "ngos";
 
 export type OperationMode = {
   id: string;
@@ -474,6 +475,62 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
     ],
     defaultDepartments: ["Front Desk & Court Operations", "Fitness Coaching & Personal Trainers", "Pro Shop & Clubhouse Cafe", "Facility & Court Maintenance", "Member Relations & Sales"],
     defaultRoles: ["Club Operations Director", "Head Padel / Tennis Coach", "Head Fitness Trainer", "Front Desk Concierge", "Court Maintenance Lead", "Membership Sales Lead"]
+  },
+  {
+    id: "ngos",
+    name: "NGOs (Non-Governmental & Non-Profits)",
+    tagline: "Humanitarian Aid, Foundations, Charities & Grant Programs",
+    description: "Donor & grant lifecycle tracking, restricted fund accounting, field relief distribution, volunteer rosters, and impact reporting.",
+    iconName: "HeartHandshake",
+    themeColor: "bg-rose-600",
+    accentColor: "text-rose-400",
+    borderColor: "border-rose-500/30",
+    subSectors: [
+      "Humanitarian & Disaster Relief NGO",
+      "Charitable Foundation & Endowment",
+      "International Development Organization",
+      "Environmental & Climate Action NGO",
+      "Education, Health & Social Welfare Trust",
+      "Advocacy, Civil Society & Non-Profit"
+    ],
+    operationModes: [
+      { id: "grant_donor_fund", name: "Grant & Donor Fund Management", description: "Track institutional grants, recurring donors, and restricted fund allocations.", badge: "🤝 Grants & Donors" },
+      { id: "field_relief_ops", name: "Field Relief & Aid Distribution", description: "Manage field projects, relief kit inventory, and beneficiary outreach.", badge: "🌍 Field Operations" },
+      { id: "volunteer_campaigns", name: "Volunteer & Fundraising Campaigns", description: "Coordinate volunteer mobilization, community events, and public pledges.", badge: "❤️ Campaigns" }
+    ],
+    defaultModules: [
+      "/ngos",
+      "/crm",
+      "/crm/leads-pool",
+      "/accounting",
+      "/project",
+      "/contacts",
+      "/documents",
+      "/employees",
+      "/surveys",
+      "/sign",
+      "/calendar"
+    ],
+    specializedRoutes: [
+      { name: "NGOs & Grants Hub", href: "/ngos", icon: "HeartHandshake" },
+      { name: "Field Projects & Impact", href: "/project", icon: "CheckSquare" },
+      { name: "Beneficiary Surveys", href: "/surveys", icon: "MessageSquare" }
+    ],
+    defaultDepartments: [
+      "Donor Relations & Fundraising",
+      "Grants & Compliance",
+      "Field Operations & Programs",
+      "Finance & Fund Accounting",
+      "Volunteer Coordination"
+    ],
+    defaultRoles: [
+      "Executive Director",
+      "Country Director",
+      "Head of Grants & Partnerships",
+      "Program Manager",
+      "Fundraising & Donor Lead",
+      "Field Operations Coordinator"
+    ]
   }
 ];
 

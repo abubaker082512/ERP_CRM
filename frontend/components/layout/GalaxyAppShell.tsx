@@ -10,6 +10,9 @@ import {
 import { useState, useEffect, useRef } from 'react';
 import GalaxyTopBar from './GalaxyTopBar';
 import CommandOverlay from '../antigravity/CommandOverlay';
+import BeraxisSupportWidgets from '../support/BeraxisSupportWidgets';
+import InactivitySessionTracker from '../auth/InactivitySessionTracker';
+import { BranchProvider } from '@/lib/branchContext';
 
 const navItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -105,7 +108,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
     if (!mounted) return null;
 
-    // Don't show shell on landing, public demo, blog, login, signup, shop, checkout, billing, apps dashboard, main dashboard, or forgotten password page
+    // Don't show shell on landing, public demo, blog, login, signup, shop, checkout, billing, apps dashboard, main dashboard, meet room, or public booking page
     const isLandingPage = 
         pathname === '/' || 
         pathname === '/pricing' || 
@@ -114,27 +117,18 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         pathname === '/leads-pool' || 
         pathname === '/lead-pool' || 
         pathname === '/blog' || 
-        Boolean(pathname && pathname.startsWith('/blog/')) ||
+        (pathname && pathname.startsWith('/blog/')) ||
         pathname === '/team' || 
         pathname === '/pitch-deck' || 
         pathname === '/presentation' || 
         pathname === '/launch-creatives';
-    const isExcludedPage = 
-        pathname === '/apps' || 
-        pathname === '/dashboard' || 
-        pathname === '/login' || 
-        pathname === '/signup' || 
-        pathname === '/forgot-password' || 
-        pathname === '/billing' || 
-        pathname === '/checkout' || 
-        pathname === '/shop' || 
-        Boolean(pathname && pathname.startsWith('/shop/')) || 
-        isLandingPage;
+    const isExcludedPage = pathname === '/apps' || pathname === '/dashboard' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || (pathname && pathname.startsWith('/shop/')) || pathname === '/meet' || (pathname && pathname.startsWith('/meet/')) || (pathname && pathname.startsWith('/appointments/book/')) || isLandingPage;
     
-    if (isExcludedPage) return <>{children}</>;
+    if (isExcludedPage) return <BranchProvider>{children}</BranchProvider>;
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[#020205] flex-col">
+        <BranchProvider>
+            <div className="flex h-screen overflow-hidden bg-[#020205] flex-col">
             {/* Backend Connection Banner */}
             {backendStatus === 'waking' && (
                 <div className="w-full bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-center gap-2 text-xs text-amber-400 shrink-0 z-[100]">
@@ -219,7 +213,6 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
             <main className={`flex-1 flex flex-col transition-all duration-500 ease-in-out ${
                 isSidebarOpen ? 'ml-64' : 'ml-0'
             }`}>
-                <GalaxyTopBar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
                 <div 
                     className="flex-1 overflow-y-auto overflow-x-hidden bg-[#020205] relative custom-scrollbar"
                     style={{ 
@@ -238,19 +231,17 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                 </div>
             </main>
 
-            {/* Floating Antigravity Pilot Trigger */}
-            <button
-                onClick={() => setIsAntigravityOpen(true)}
-                className="fixed bottom-6 right-6 z-40 p-4 bg-gradient-to-tr from-sky-500 via-purple-500 to-pink-500 hover:opacity-90 rounded-full text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105 transition-all duration-300 flex items-center justify-center"
-                title="Open Antigravity Co-Pilot"
-            >
-                <Sparkles className="w-6 h-6 animate-pulse" />
-            </button>
+            {/* Persistent Support Widgets: WhatsApp on Left, AI Support on Right */}
+            <BeraxisSupportWidgets />
+
+            {/* Inactivity Auto-Logout & Session Tracker (1 minute idle limit) */}
+            <InactivitySessionTracker />
 
             {/* Antigravity Cockpit Overlay */}
             <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />
-            </div>{/* end flex-1 overflow-hidden */}
-        </div>
+                </div>{/* end flex-1 overflow-hidden */}
+            </div>
+        </BranchProvider>
     );
 }
 

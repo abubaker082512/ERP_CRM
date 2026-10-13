@@ -170,7 +170,8 @@ INDUSTRY_TEMPLATES = {
     "E-Commerce & Import/Export": ["Trading Corporation", "Global Merchandising", "Retail Dynamics", "Direct Brands Group", "Cross-Border Trade", "Commercial Exports", "OmniCommerce"],
     "Energy & Sustainability": ["Renewables Group", "Clean Grid Tech", "Solar Storage", "Green Power Corp", "EcoSystems Energy", "Hydrogen Works", "BioEnergy Global", "NetZero Ventures"],
     "Aerospace & Defense": ["Aero Systems", "Avionics Defense", "Space Flight Dynamics", "Defense Technologies", "Orbital Labs", "Guidance Systems"],
-    "Telecommunications": ["Telecom Networks", "Fiber Grid", "5G Infrastructure", "Satellite Connect", "Bandwidth Core", "Cloud Comms"]
+    "Telecommunications": ["Telecom Networks", "Fiber Grid", "5G Infrastructure", "Satellite Connect", "Bandwidth Core", "Cloud Comms"],
+    "NGOs": ["Humanitarian Foundation", "Global Relief Initiative", "Development Trust", "Charitable Aid Network", "Community Welfare Alliance", "Social Impact Fund", "International NGO Council"]
 }
 
 TECH_STACK_POOLS = {
@@ -183,7 +184,8 @@ TECH_STACK_POOLS = {
     "E-Commerce & Import/Export": ["Shopify Plus", "Next.js", "Stripe", "Klaviyo", "PostgreSQL", "Algolia", "AWS"],
     "Energy & Sustainability": ["SCADA", "Python", "Azure Cloud", "InfluxDB", "Grafana", "TimescaleDB"],
     "Aerospace & Defense": ["MATLAB", "C++", "AWS GovCloud", "Linux Real-Time", "Simulink", "Docker"],
-    "Telecommunications": ["OpenStack", "Kafka", "Kubernetes", "Redis", "Golang", "AWS", "Prometheus"]
+    "Telecommunications": ["OpenStack", "Kafka", "Kubernetes", "Redis", "Golang", "AWS", "Prometheus"],
+    "NGOs": ["Salesforce Non-Profit", "Microsoft 365", "GrantVantage", "PowerBI", "AWS", "KoboToolbox"]
 }
 
 JOB_TITLES = [

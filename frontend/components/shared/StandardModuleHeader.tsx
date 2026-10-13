@@ -2,83 +2,145 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, LayoutGrid, Globe, Settings, Bot, MessageSquare } from "lucide-react";
+import {
+    ArrowLeft,
+    LayoutGrid,
+    Globe,
+    Settings,
+    Bot,
+    MessageSquare,
+    Plus
+} from "lucide-react";
 import UniversalModuleSearch from "./UniversalModuleSearch";
+import UserProfileDropdown from "./UserProfileDropdown";
+import UniversalBranchSwitcher from "./UniversalBranchSwitcher";
 
-type MenuItem = {
+export type MenuItem = {
     name: string;
     href: string;
 };
 
-type ModuleHeaderProps = {
+export type StandardModuleHeaderProps = {
     moduleName: string;
     moduleIcon: React.ReactNode;
-    menuItems: MenuItem[];
+    menuItems?: MenuItem[];
     searchPlaceholder?: string;
     searchValue?: string;
     onSearchChange?: (val: string) => void;
     onSearch?: (val: string) => void;
+    onNewClick?: () => void;
+    newButtonText?: string;
+    actionButton?: React.ReactNode;
+    planBadge?: string;
 };
 
 export default function StandardModuleHeader({
     moduleName,
     moduleIcon,
-    menuItems,
-    searchPlaceholder = "Search...",
-    searchValue,
+    menuItems = [],
+    searchPlaceholder,
+    searchValue = "",
     onSearchChange,
     onSearch,
-}: ModuleHeaderProps) {
+    onNewClick,
+    newButtonText = "New",
+    actionButton
+}: StandardModuleHeaderProps) {
     const pathname = usePathname();
     const router = useRouter();
 
     return (
-        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50">
-            {/* Top Bar */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700/60 gap-4">
+        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2 gap-2 sm:gap-3">
+                {/* Left Section: Beraxis Logo, Back, Apps, Website, Module Logo & Inline Nav Pills */}
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                    {/* Back Button */}
-                    <button
-                        onClick={() => router.back()}
-                        title="Go back"
-                        className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold cursor-pointer"
+                    {/* Beraxis Logo & Branding */}
+                    <Link
+                        href="/apps"
+                        title="Beraxis Workspace"
+                        className="flex items-center gap-2 pr-2 border-r border-gray-700/80 shrink-0 hover:opacity-90 transition-opacity"
                     >
-                        <ArrowLeft size={16} />
+                        <img src="/logo2.png" alt="Beraxis Logo" className="h-6 w-auto" />
+                        <span className="font-extrabold text-sm tracking-tight text-white hidden xl:inline">BERAXIS</span>
+                    </Link>
+
+                    {/* Back to Apps Button */}
+                    <Link
+                        href="/apps"
+                        title="Back to Apps Dashboard"
+                        className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold cursor-pointer shrink-0"
+                    >
+                        <ArrowLeft size={15} />
                         <span className="hidden sm:inline">Back</span>
-                    </button>
+                    </Link>
 
                     {/* Apps Dashboard Launcher Button */}
                     <Link
                         href="/apps"
                         title="Workspace Apps Dashboard"
-                        className="flex items-center gap-1 text-gray-400 hover:text-purple-300 transition-colors p-1.5 rounded-lg hover:bg-purple-600/20"
+                        className="flex items-center gap-1 text-gray-400 hover:text-purple-300 transition-colors p-1.5 rounded-lg hover:bg-purple-600/20 shrink-0"
                     >
-                        <LayoutGrid size={18} />
+                        <LayoutGrid size={17} />
                     </Link>
 
                     {/* Public Website Button */}
                     <Link
                         href="/"
                         title="Public Website"
-                        className="flex items-center gap-1 text-gray-400 hover:text-cyan-300 transition-colors p-1.5 rounded-lg hover:bg-cyan-600/20"
+                        className="flex items-center gap-1 text-gray-400 hover:text-cyan-300 transition-colors p-1.5 rounded-lg hover:bg-cyan-600/20 shrink-0"
                     >
-                        <Globe size={18} />
+                        <Globe size={17} />
                     </Link>
 
                     {/* Module Name & Icon */}
                     <Link
                         href={menuItems[0]?.href || "/apps"}
-                        className="flex items-center gap-2 text-base sm:text-lg font-bold text-gray-100 hover:text-white transition-colors ml-1"
+                        className="flex items-center gap-2 text-sm sm:text-base font-bold text-gray-100 hover:text-white transition-colors ml-0.5"
                     >
                         <div className="bg-purple-600/30 text-purple-400 border border-purple-500/30 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg shadow-sm shrink-0">
                             {moduleIcon}
                         </div>
-                        <span className="truncate">{moduleName}</span>
+                        <span className="font-bold tracking-tight">{moduleName}</span>
                     </Link>
+
+                    {/* Optional New Action Button */}
+                    {onNewClick && (
+                        <button
+                            onClick={onNewClick}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-md shadow-purple-900/30 transition-all active:scale-95 cursor-pointer ml-1 shrink-0"
+                        >
+                            <Plus size={14} /> {newButtonText}
+                        </button>
+                    )}
+
+                    {/* Custom Action Button */}
+                    {actionButton && <div className="shrink-0">{actionButton}</div>}
+
+                    {/* Navigation Pills */}
+                    {menuItems && menuItems.length > 0 && (
+                        <nav className="hidden lg:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-none">
+                            {menuItems.map((item) => {
+                                const isActive = pathname === item.href || (item.href !== "/" && item.href !== "/apps" && pathname.startsWith(item.href));
+                                return (
+                                    <Link
+                                        key={item.name}
+                                        href={item.href}
+                                        className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+                                            isActive
+                                                ? "text-white bg-white/15 border border-white/10 shadow-inner"
+                                                : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                                        }`}
+                                    >
+                                        {item.name}
+                                    </Link>
+                                );
+                            })}
+                        </nav>
+                    )}
                 </div>
 
-                {/* Universal Search Bar */}
-                <div className="flex-1 max-w-xl mx-2">
+                {/* Center: Universal Search */}
+                <div className="flex-1 max-w-md mx-2 hidden md:block">
                     <UniversalModuleSearch
                         moduleName={moduleName}
                         placeholder={searchPlaceholder || `Search ${moduleName}...`}
@@ -88,60 +150,56 @@ export default function StandardModuleHeader({
                     />
                 </div>
 
-                {/* Right Actions */}
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                    <button
-                        onClick={() => router.push("/ai")}
-                        title="AI Assistant & Smart Search"
+                {/* Right Action Icons, Branch Switcher & User Profile Dropdown */}
+                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                    <UniversalBranchSwitcher />
+                    <Link
+                        href="/ai"
+                        title="AI Business Assistant"
                         className="text-gray-400 hover:text-purple-400 p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
                     >
-                        <Bot size={19} />
-                    </button>
+                        <Bot size={17} />
+                    </Link>
 
-                    <button
-                        onClick={() => router.push("/discuss")}
-                        title="Discuss & Messages"
+                    <Link
+                        href="/discuss"
+                        title="Team Chat & Discuss"
                         className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 relative transition-colors cursor-pointer"
                     >
-                        <MessageSquare size={19} />
+                        <MessageSquare size={17} />
                         <span className="absolute top-1 right-1 bg-purple-500 text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
                             3
                         </span>
-                    </button>
-
-                    <button
-                        onClick={() => router.push("/settings")}
-                        title="System Settings"
-                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
-                    >
-                        <Settings size={19} />
-                    </button>
+                    </Link>
 
                     <Link
                         href="/settings"
-                        title="Company Profile"
-                        className="flex items-center gap-2 border-l border-gray-700 pl-3 hover:opacity-80 transition-opacity"
+                        title="System Settings"
+                        className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
                     >
-                        <span className="text-xs text-gray-300 font-medium hidden xl:inline">ABT IT Innovation PVT LTD.</span>
-                        <div className="w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-inner">
-                            A
-                        </div>
+                        <Settings size={17} />
                     </Link>
+
+                    {/* Vertical Divider */}
+                    <div className="w-px h-5 bg-gray-700 mx-1"></div>
+
+                    {/* Integrated User Profile Dropdown with Full Name & Plan */}
+                    <UserProfileDropdown />
                 </div>
             </div>
 
-            {/* Menu Navigation Items Bar */}
+            {/* Mobile / Tablet Horizontal Navigation Scrollbar for smaller viewports */}
             {menuItems && menuItems.length > 0 && (
-                <div className="flex items-center px-4 py-1.5 gap-6 text-sm overflow-x-auto bg-[#1E293B]/60 scrollbar-none">
+                <div className="lg:hidden flex items-center px-3 py-1.5 gap-1.5 text-xs overflow-x-auto bg-[#1E293B]/90 border-t border-gray-700/50 scrollbar-none">
                     {menuItems.map((item) => {
                         const isActive = pathname === item.href || (item.href !== "/" && item.href !== "/apps" && pathname.startsWith(item.href));
                         return (
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className={`font-medium transition-colors whitespace-nowrap text-xs ${
+                                className={`font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md transition-colors whitespace-nowrap ${
                                     isActive
-                                        ? "text-purple-400 border-b-2 border-purple-500 pb-0.5"
+                                        ? "text-white bg-white/10"
                                         : "text-gray-400 hover:text-gray-200"
                                 }`}
                             >

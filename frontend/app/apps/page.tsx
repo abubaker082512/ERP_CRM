@@ -24,64 +24,129 @@ import {
     Palette,
     MessageSquare,
     PenTool,
-    LogOut,
-    Bell,
-    Database,
-    Lock,
-    Zap,
-    X,
     PieChart,
-    Globe
+    Globe,
+    Building2,
+    UtensilsCrossed,
+    ShoppingBag,
+    Briefcase,
+    Stethoscope,
+    Wrench,
+    GraduationCap,
+    Truck,
+    HardHat,
+    Plus,
+    Sparkles,
+    Check,
+    ChevronRight,
+    Sliders,
+    X,
+    Dumbbell,
+    HeartHandshake,
+    Settings
 } from "lucide-react";
-import { fetchAPI } from "@/lib/api";
+import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
+import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
+import { useBranchContext } from "@/lib/branchContext";
+import { GLOBAL_INDUSTRIES, GlobalIndustryId, getIndustryById } from "@/lib/industryTaxonomy";
+import UniversalBranchSwitcher from "@/components/shared/UniversalBranchSwitcher";
+import BranchSetupWizardModal from "@/components/settings/BranchSetupWizardModal";
 
-const apps = [
-    { name: "Discuss", icon: LayoutDashboard, color: "bg-orange-500", href: "/discuss" },
-    { name: "Calendar", icon: Calendar, color: "bg-yellow-600", href: "/calendar" },
-    { name: "Appointments", icon: ClipboardList, color: "bg-cyan-500", href: "/appointments" },
-    { name: "To do", icon: CheckSquare, color: "bg-blue-500", href: "/todo" },
-    { name: "Knowledge", icon: BookOpen, color: "bg-teal-500", href: "/knowledge" },
-    { name: "Contacts", icon: Users, color: "bg-purple-500", href: "/contacts" },
-    { name: "CRM", icon: Target, color: "bg-cyan-600", href: "/crm" },
-    { name: "Sales", icon: BarChart3, color: "bg-orange-600", href: "/sales" },
-    { name: "Dashboards", icon: Grid3x3, color: "bg-pink-500", href: "/dashboard" },
+// Icon mapping for 12 global industries
+const INDUSTRY_ICON_MAP: Record<string, any> = {
+    UtensilsCrossed,
+    ShoppingBag,
+    Briefcase,
+    Cog,
+    Stethoscope,
+    Truck,
+    Building: Building2,
+    Wrench,
+    HardHat,
+    GraduationCap,
+    Dumbbell,
+    HeartHandshake
+};
+
+// All 30+ Enterprise apps with vibrant colors matching Screenshot 1
+const allApps = [
+    // Specialized Industry & Sports Hubs
+    { name: "Club & Fitness", icon: Dumbbell, color: "bg-emerald-600", href: "/club" },
+    { name: "NGOs & Grants", icon: HeartHandshake, color: "bg-rose-600", href: "/ngos" },
+    
+    // Commerce & POS
     { name: "Point of Sale", icon: ShoppingCart, color: "bg-amber-600", href: "/pos" },
+    { name: "Kitchen Display", icon: UtensilsCrossed, color: "bg-red-600", href: "/pos/kds" },
+    { name: "Recipes & BOM", icon: BookOpen, color: "bg-orange-600", href: "/pos/recipes" },
+    { name: "Floor & Tables", icon: Grid3x3, color: "bg-amber-700", href: "/pos/tables" },
+    
+    // Core Operations & Supply Chain
+    { name: "Inventory", icon: Package, color: "bg-purple-600", href: "/inventory" },
+    { name: "Barcode", icon: Barcode, color: "bg-[#e11d74]", href: "/barcode" },
     { name: "Purchase", icon: ShoppingCart, color: "bg-pink-600", href: "/purchase" },
+    { name: "Sales", icon: BarChart3, color: "bg-orange-500", href: "/sales" },
     { name: "Accounting", icon: CreditCard, color: "bg-red-500", href: "/accounting" },
+    
+    // CRM & Growth
+    { name: "CRM", icon: Target, color: "bg-cyan-600", href: "/crm" },
+    { name: "Leads Pool", icon: Globe, color: "bg-cyan-500", href: "/crm/leads-pool" },
+    { name: "Contacts", icon: Users, color: "bg-purple-500", href: "/contacts" },
+    
+    // Operations & Projects
     { name: "Project", icon: Palette, color: "bg-blue-600", href: "/project" },
     { name: "Timesheets", icon: Clock, color: "bg-indigo-500", href: "/timesheets" },
     { name: "Planning", icon: Grid3x3, color: "bg-yellow-500", href: "/planning" },
+    { name: "Manufacturing", icon: Cog, color: "bg-[#d9480f]", href: "/manufacturing" },
+    
+    // HR & Talent
+    { name: "Employees", icon: UserCircle, color: "bg-[#4338ca]", href: "/employees" },
+    { name: "Contracts", icon: PenTool, color: "bg-blue-500", href: "/employees/contracts" },
+    { name: "Payroll", icon: CreditCard, color: "bg-[#f43f5e]", href: "/payroll" },
+    { name: "Attendances", icon: UserCheck, color: "bg-[#f97316]", href: "/attendances" },
+    { name: "Recruitment", icon: Target, color: "bg-[#0d9488]", href: "/recruitment" },
+    { name: "Team", icon: Users, color: "bg-[#9333ea]", href: "/team" },
+    
+    // Specialized Subsystems
+    { name: "Sign", icon: PenTool, color: "bg-[#06b6d4]", href: "/sign" },
+    { name: "Documents", icon: BookOpen, color: "bg-[#3b82f6]", href: "/documents" },
+    { name: "Helpdesk", icon: CheckSquare, color: "bg-[#6366f1]", href: "/helpdesk" },
+    { name: "Reports", icon: PieChart, color: "bg-[#7e22ce]", href: "/reports" },
+    { name: "Vehicle Jobs", icon: Wrench, color: "bg-red-600", href: "/automotive" },
+    { name: "Properties", icon: Building2, color: "bg-indigo-600", href: "/real-estate" },
+    { name: "Academy", icon: GraduationCap, color: "bg-teal-600", href: "/education" },
+    { name: "Appointments", icon: ClipboardList, color: "bg-cyan-500", href: "/appointments" },
+    { name: "Discuss", icon: LayoutDashboard, color: "bg-orange-500", href: "/discuss" },
+    { name: "Knowledge", icon: BookOpen, color: "bg-teal-500", href: "/knowledge" },
+    { name: "To do", icon: CheckSquare, color: "bg-blue-500", href: "/todo" },
+    { name: "Calendar", icon: Calendar, color: "bg-yellow-600", href: "/calendar" },
     { name: "Surveys", icon: MessageSquare, color: "bg-blue-400", href: "/surveys" },
-    { name: "Inventory", icon: Package, color: "bg-purple-600", href: "/inventory" },
-    { name: "Barcode", icon: Barcode, color: "bg-pink-600", href: "/barcode" },
-    { name: "Sign", icon: PenTool, color: "bg-cyan-400", href: "/sign" },
-    { name: "Employees", icon: UserCircle, color: "bg-indigo-600", href: "/employees" },
-    { name: "Payroll", icon: CreditCard, color: "bg-pink-400", href: "/payroll" },
-    { name: "Attendances", icon: UserCheck, color: "bg-orange-400", href: "/attendances" },
-    { name: "Recruitment", icon: Target, color: "bg-teal-600", href: "/recruitment" },
-    { name: "Manufacturing", icon: Cog, color: "bg-orange-700", href: "/manufacturing" },
-    { name: "Helpdesk", icon: CheckSquare, color: "bg-indigo-500", href: "/helpdesk" },
-    { name: "Documents", icon: BookOpen, color: "bg-blue-400", href: "/documents" },
-    { name: "Team", icon: Users, color: "bg-purple-600", href: "/team" },
-    { name: "Reports", icon: PieChart, color: "bg-purple-700", href: "/reports" },
-    { name: "Settings", icon: Cog, color: "bg-gray-500", href: "/settings" },
+    { name: "Dashboards", icon: Grid3x3, color: "bg-pink-500", href: "/dashboard" },
+    { name: "Settings", icon: Cog, color: "bg-[#64748b]", href: "/settings" }
 ];
-
-function matchesModule(appName: string, selectedModule: string): boolean {
-    if (!selectedModule) return false;
-    return appName.toLowerCase().trim() === selectedModule.toLowerCase().trim();
-}
 
 export default function AppsDashboardPage() {
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [userData, setUserData] = useState<any>(null);
-    const [trialDays, setTrialDays] = useState<number | null>(null);
-    const [selectedModule, setSelectedModule] = useState<string>("");
-    const [isFreePlan, setIsFreePlan] = useState(false);
-    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [isPaidUser, setIsPaidUser] = useState(false);
+
+    // Branch Context
+    const {
+        branches,
+        activeBranch,
+        activeIndustry,
+        hasSelectedIndustry,
+        createBranch,
+        resetToIndustrySelection,
+        isModuleActive
+    } = useBranchContext();
+
+    // Industry Selection Mode
+    const [isSelectingIndustry, setIsSelectingIndustry] = useState(false);
+    const [isManageAppsModalOpen, setIsManageAppsModalOpen] = useState(false);
+    const [selectedIndId, setSelectedIndId] = useState<GlobalIndustryId>("food_beverage");
+    const [selectedSubSector, setSelectedSubSector] = useState("");
+    const [selectedOpMode, setSelectedOpMode] = useState("");
+    const [companyName, setCompanyName] = useState("");
 
     useEffect(() => {
         setMounted(true);
@@ -91,247 +156,295 @@ export default function AppsDashboardPage() {
             return;
         }
 
-        const mod = localStorage.getItem("selectedModule") || "";
-        setSelectedModule(mod);
-
         const cachedUserStr = localStorage.getItem("user");
         if (cachedUserStr) {
             try {
-                const cached = JSON.parse(cachedUserStr);
-                setUserData(cached);
-                const SUPER_ADMIN_EMAILS = ['admin@beraxis.online', 'admin2@erp-crm.com'];
-                setIsAdmin(SUPER_ADMIN_EMAILS.includes(cached.email));
+                setUserData(JSON.parse(cachedUserStr));
             } catch {}
         }
-
-        // Silent background fetch to update fresh subscription and user details
-        fetchUserData();
     }, [router]);
 
-    const fetchUserData = async () => {
-        try {
-            const res = await fetchAPI("/auth/me");
-            if (res.ok) {
-                const data = await res.json();
-                setUserData(data);
-
-                const SUPER_ADMIN_EMAILS = ['admin@beraxis.online', 'admin2@erp-crm.com'];
-                const isUserAdmin = SUPER_ADMIN_EMAILS.includes(data.email);
-                setIsAdmin(isUserAdmin);
-
-                if (data.tenant?.trial_ends_at) {
-                    const ends = new Date(data.tenant.trial_ends_at);
-                    const now = new Date();
-                    const diffTime = ends.getTime() - now.getTime();
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    setTrialDays(diffDays > 0 ? diffDays : 0);
-                }
-
-                try {
-                    const meta = JSON.parse(data.tenant?.stripe_customer_id || "{}");
-                    if (data.tenant?.subscription_status === "active") {
-                        if (meta?.plan === "One App Free" && !isUserAdmin) {
-                            setIsFreePlan(true);
-                        } else {
-                            setIsPaidUser(true);
-                        }
-                    }
-                } catch {}
-            } else if (res.status === 401) {
-                router.replace("/login");
-            }
-        } catch (err) {
-            console.error(err);
+    const handlePickIndustry = (indId: GlobalIndustryId) => {
+        setSelectedIndId(indId);
+        const ind = getIndustryById(indId);
+        setSelectedSubSector(ind.subSectors[0] || "");
+        setSelectedOpMode(ind.operationModes[0]?.id || "default");
+        if (!companyName || companyName.endsWith("Company") || companyName.endsWith("Hub")) {
+            setCompanyName(`${ind.name.split(" ")[0]} Company`);
         }
     };
 
-    if (!mounted) {
-        return null;
-    }
+    const handleOpenIndustrySelection = () => {
+        const ind = getIndustryById("food_beverage");
+        setSelectedIndId("food_beverage");
+        setSelectedSubSector(ind.subSectors[0]);
+        setSelectedOpMode(ind.operationModes[0]?.id || "hybrid");
+        setCompanyName("Downtown Artisan Bakery & Cafe");
+        setIsSelectingIndustry(true);
+    };
+
+    const handleConfirmLaunch = (e: React.FormEvent) => {
+        e.preventDefault();
+        const ind = getIndustryById(selectedIndId);
+        const nameFinal = companyName.trim() || `${ind.name.split(" ")[0]} Company`;
+
+        createBranch({
+            name: nameFinal,
+            code: `${selectedIndId.slice(0, 3).toUpperCase()}-${Math.floor(10 + Math.random() * 90)}`,
+            industryId: selectedIndId,
+            subSector: selectedSubSector || ind.subSectors[0],
+            operationMode: selectedOpMode || ind.operationModes[0]?.id || "default",
+            location: "Main Location",
+            currency: "$ USD",
+            enabledModules: ind.defaultModules,
+            sharingRules: {
+                shareEmployees: true,
+                shareCustomers: true,
+                shareInventory: false,
+                shareAccounting: true,
+                shareVendors: true
+            },
+            isPrimary: branches.length === 0
+        });
+
+        setIsSelectingIndustry(false);
+    };
+
+    // Filter apps based on active industry/branch
+    const displayedApps = activeBranch
+        ? allApps.filter(app => isModuleActive(app.href) || app.href === "/settings" || app.href === "/dashboard" || app.href === "/crm/leads-pool")
+        : allApps;
+
+    const chosenInd = getIndustryById(selectedIndId);
+    const ChosenIcon = INDUSTRY_ICON_MAP[chosenInd.iconName] || Building2;
+
+    const showOnboarding = !hasSelectedIndustry || isSelectingIndustry || !activeBranch;
 
     return (
-        <div className="min-h-screen bg-transparent text-white p-4 md:p-8 relative">
-            {/* Top Command Banner */}
-            <div className="max-w-7xl mx-auto mb-8 flex flex-wrap justify-between items-center bg-[#0F172A]/60 backdrop-blur-xl p-5 md:p-6 rounded-3xl border border-white/10 shadow-2xl gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-purple-500/20 border border-white/10 shrink-0">
-                        {userData?.metadata?.name?.charAt(0) || userData?.email?.charAt(0)?.toUpperCase() || "U"}
-                    </div>
-                    <div>
-                        <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">
-                            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{userData?.metadata?.name || userData?.email?.split('@')[0] || "User"}</span>!
-                        </h1>
-                        <p className="text-gray-400 text-xs md:text-sm font-medium flex items-center gap-2 mt-0.5">
-                            <Database size={12} className="text-purple-400" /> {userData?.tenant?.name || "Beraxis Workspace"}
-                        </p>
-                    </div>
+        <div className="min-h-screen bg-transparent text-white flex flex-col selection:bg-purple-500 selection:text-white">
+            {/* Top Navigation Bar */}
+            <header className="border-b border-white/5 bg-[#090d16]/80 backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Link href="/apps" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+                        <img src="/logo2.png" alt="Beraxis Logo" className="h-7 w-auto" />
+                        <span className="font-extrabold text-base tracking-tight text-white">BERAXIS WORKSPACE</span>
+                    </Link>
+                    {activeBranch && (
+                        <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            {activeIndustry.name}
+                        </span>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3">
-                    {/* Visit Public Website Button */}
+                    {hasSelectedIndustry && activeBranch && (
+                        <>
+                            <UniversalBranchSwitcher />
+                            <button
+                                onClick={() => setIsManageAppsModalOpen(true)}
+                                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-[#141b2c] hover:bg-[#1c243a] border border-purple-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                                title="Install or manage apps for active company"
+                            >
+                                <Settings size={13} className="text-purple-400" />
+                                <span>+ Manage Apps</span>
+                            </button>
+                            <button
+                                onClick={handleOpenIndustrySelection}
+                                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95 cursor-pointer"
+                            >
+                                <Plus size={14} /> + Add New Company
+                            </button>
+                        </>
+                    )}
+
                     <Link
                         href="/"
-                        title="Visit Main Website"
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 hover:text-white transition-all border border-purple-500/30 text-xs font-semibold cursor-pointer"
+                        title="Public Website"
+                        className="hidden sm:flex items-center gap-1 text-gray-400 hover:text-cyan-300 transition-colors px-2.5 py-1.5 rounded-xl border border-white/5 hover:bg-white/5 text-xs font-semibold"
                     >
-                        <Globe size={15} />
-                        <span>Visit Website</span>
+                        <Globe size={14} /> Website
                     </Link>
 
-                    <button
-                        onClick={() => router.push("/settings")}
-                        className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all border border-white/5 cursor-pointer"
-                        title="Notifications"
-                    >
-                        <Bell size={18} />
-                    </button>
-                    
-                    <button 
-                        onClick={() => {
-                            localStorage.removeItem("token");
-                            window.location.href = "/login";
-                        }}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white/5 hover:bg-red-500/15 text-gray-400 hover:text-red-400 transition-all border border-white/5 text-xs font-medium cursor-pointer"
-                    >
-                        <LogOut size={16} />
-                        <span className="hidden sm:inline">Logout</span>
-                    </button>
+                    <div className="w-px h-5 bg-white/10 hidden sm:block" />
+                    <UserProfileDropdown />
                 </div>
-            </div>
+            </header>
 
-            {/* Trial Banner */}
-            {trialDays !== null && !isAdmin && !isPaidUser && (
-                <div className="max-w-7xl mx-auto mb-8 bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-500/25 rounded-2xl p-4 md:p-5 text-amber-200 flex flex-wrap justify-between items-center shadow-xl backdrop-blur-md gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400">
-                            <Clock size={18} />
-                        </div>
-                        <p className="text-sm font-medium">
-                            Your free trial will expire in <span className="text-amber-400 font-bold underline decoration-2 underline-offset-4">{trialDays} days</span>. 
-                            Unlock the full power of Beraxis today.
-                        </p>
-                    </div>
-                    <button 
-                        onClick={() => router.push('/billing')}
-                        className="bg-amber-500 hover:bg-amber-400 text-[#0F172A] px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-amber-500/20 active:scale-95 cursor-pointer"
-                    >
-                        Upgrade Now
-                    </button>
-                </div>
-            )}
-
-            {/* Free Plan Banner */}
-            {isFreePlan && (
-                <div className="max-w-7xl mx-auto mb-8 bg-gradient-to-r from-purple-900/40 to-pink-900/30 border border-purple-500/25 rounded-2xl p-4 md:p-5 flex flex-wrap justify-between items-center shadow-xl backdrop-blur-md gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400">
-                            <Zap size={18} />
-                        </div>
-                        <div>
-                            <p className="text-sm font-bold text-white">Free Plan — 1 Module Active</p>
-                            <p className="text-xs text-gray-400 mt-0.5">
-                                {selectedModule ? <><span className="text-purple-400 font-medium">{selectedModule}</span> is your active module. All others are locked.</> : "Upgrade to unlock all 28 modules."}
+            {/* Main Canvas Area */}
+            <main className="flex-1 max-w-7xl w-full mx-auto p-6 sm:p-10 flex flex-col justify-center">
+                
+                {/* ─── ONBOARDING / INDUSTRY SELECTION GATEWAY (Ultra Clean) ─── */}
+                {showOnboarding ? (
+                    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200 py-4">
+                        <div className="text-center space-y-2 max-w-2xl mx-auto">
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                                Select Your Business Industry
+                            </h1>
+                            <p className="text-gray-400 text-xs sm:text-sm">
+                                Choose the industry that matches your company to instantly load its tailored apps.
                             </p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => router.push('/billing')}
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-purple-500/20 flex items-center gap-2 cursor-pointer"
-                    >
-                        <Zap size={12} /> Upgrade Now
-                    </button>
-                </div>
-            )}
-
-            {/* App Grid */}
-            <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                {apps.map((app) => {
-                    const isLocked = isFreePlan && !matchesModule(app.name, selectedModule);
-                    return (
-                        <button
-                            key={app.name}
-                            onClick={() => {
-                                if (isLocked) { setShowUpgradeModal(true); return; }
-                                router.push(app.href);
-                            }}
-                            className={`flex flex-col items-center gap-3 p-4 rounded-lg transition-all group relative cursor-pointer ${
-                                isLocked
-                                    ? "opacity-40 grayscale hover:opacity-55"
-                                    : "hover:bg-surface/50"
-                            }`}
-                        >
-                            {/* Lock overlay */}
-                            {isLocked && (
-                                <div className="absolute top-1 right-1 w-5 h-5 bg-gray-800/90 border border-white/10 rounded-full flex items-center justify-center z-10">
-                                    <Lock size={9} className="text-gray-400" />
-                                </div>
+                            {branches.length > 0 && (
+                                <button
+                                    onClick={() => setIsSelectingIndustry(false)}
+                                    className="text-xs text-purple-400 hover:underline pt-1 inline-block"
+                                >
+                                    ← Back to active workspace ({activeBranch?.name})
+                                </button>
                             )}
-                            <div className={`${app.color} p-4 rounded-2xl shadow-lg transition-transform ${
-                                isLocked ? "" : "group-hover:scale-110"
-                            }`}>
-                                <app.icon className="w-8 h-8 text-white" />
-                            </div>
-                            <span className={`text-sm transition-colors ${
-                                isLocked ? "text-gray-500" : "text-gray-300 group-hover:text-white"
-                            }`}>
-                                {app.name}
-                            </span>
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* Upgrade Modal for locked modules */}
-            {showUpgradeModal && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                    style={{ background: "rgba(2,2,5,0.85)", backdropFilter: "blur(12px)" }}
-                    onClick={() => setShowUpgradeModal(false)}
-                >
-                    <div
-                        className="max-w-sm w-full bg-[#0F172A] border border-purple-500/25 rounded-3xl p-8 text-center shadow-2xl shadow-purple-500/15 relative"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <button onClick={() => setShowUpgradeModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white p-1 cursor-pointer">
-                            <X size={16} />
-                        </button>
-                        <div className="w-16 h-16 bg-purple-500/15 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-purple-500/20">
-                            <Lock size={28} className="text-purple-400" />
                         </div>
-                        <h2 className="text-xl font-black text-white mb-2">Module Locked</h2>
-                        <p className="text-gray-400 text-sm mb-6">
-                            This module is only available on the <span className="text-white font-bold">Standard</span> or <span className="text-white font-bold">Premium</span> plan.
-                            {selectedModule && <> Your current free module is <span className="text-purple-400 font-bold">{selectedModule}</span>.</>}
-                        </p>
-                        <button
-                            onClick={() => { setShowUpgradeModal(false); router.push('/billing'); }}
-                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                            <Zap size={16} /> Upgrade to Unlock All Modules
-                        </button>
-                        <button
-                            onClick={() => setShowUpgradeModal(false)}
-                            className="mt-3 text-xs text-gray-500 hover:text-white transition-colors cursor-pointer"
-                        >
-                            Stay on Free Plan
-                        </button>
-                    </div>
-                </div>
-            )}
 
-            {/* Persistent Floating WhatsApp Support Widget for logged-in users */}
-            <a 
-                href="https://wa.me/19707807993" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="fixed bottom-8 right-8 z-50 bg-[#25D366] hover:bg-[#20BA56] text-white p-4 rounded-full shadow-[0_4px_20px_rgba(37,211,102,0.4)] transition-all duration-300 hover:scale-110 flex items-center justify-center group active:scale-95 border border-white/10"
-                title="Chat with Beraxis Live Support"
-            >
-                <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 ease-out whitespace-nowrap font-bold text-xs pl-0 group-hover:pl-2 group-hover:pr-2">
-                    Live Chat Support
-                </span>
-                <MessageSquare className="w-5 h-5" />
-            </a>
+                        {/* 12 Clean Industry Squircle Icons */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 max-w-5xl mx-auto">
+                            {GLOBAL_INDUSTRIES.map(industry => {
+                                const isSelected = selectedIndId === industry.id;
+                                const IconComponent = INDUSTRY_ICON_MAP[industry.iconName] || Building2;
+
+                                return (
+                                    <button
+                                        key={industry.id}
+                                        type="button"
+                                        onClick={() => handlePickIndustry(industry.id)}
+                                        className="flex flex-col items-center gap-3 p-2 rounded-2xl group transition-all cursor-pointer focus:outline-none"
+                                    >
+                                        <div
+                                            className={`w-18 h-18 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl ${industry.themeColor} flex items-center justify-center text-white shadow-xl transition-all duration-200 group-hover:scale-105 ${
+                                                isSelected ? "ring-4 ring-purple-400 scale-105 shadow-purple-600/50" : "opacity-85 group-hover:opacity-100"
+                                            }`}
+                                        >
+                                            <IconComponent className="w-9 h-9 text-white" />
+                                        </div>
+                                        <span className={`text-xs sm:text-sm font-semibold text-center transition-colors ${
+                                            isSelected ? "text-purple-300 font-bold" : "text-gray-300 group-hover:text-white"
+                                        }`}>
+                                            {industry.name.split(" (")[0]}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Clean Configuration Form */}
+                        <div className="max-w-xl mx-auto bg-[#0e1322]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-4">
+                            <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+                                <div className={`w-10 h-10 rounded-xl ${chosenInd.themeColor} flex items-center justify-center text-white`}>
+                                    <ChosenIcon size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-sm">{chosenInd.name}</h3>
+                                    <p className="text-[11px] text-gray-400">{chosenInd.tagline}</p>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleConfirmLaunch} className="space-y-4 text-xs">
+                                <div>
+                                    <label className="font-bold text-gray-300 block mb-1">Company / Branch Name</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={companyName}
+                                        onChange={e => setCompanyName(e.target.value)}
+                                        placeholder="e.g. Downtown Artisan Bakery & Cafe"
+                                        className="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="font-bold text-gray-300 block mb-1">Sub-Sector</label>
+                                        <select
+                                            value={selectedSubSector}
+                                            onChange={e => setSelectedSubSector(e.target.value)}
+                                            className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                                        >
+                                            {chosenInd.subSectors.map(s => (
+                                                <option key={s} value={s}>{s}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="font-bold text-gray-300 block mb-1">Operating Mode</label>
+                                        <select
+                                            value={selectedOpMode}
+                                            onChange={e => setSelectedOpMode(e.target.value)}
+                                            className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                                        >
+                                            {chosenInd.operationModes.map(m => (
+                                                <option key={m.id} value={m.id}>{m.badge} - {m.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="pt-3 flex items-center justify-between">
+                                    <span className="text-[11px] text-gray-400">
+                                        {chosenInd.defaultModules.length} tailored apps will be configured
+                                    </span>
+                                    <button
+                                        type="submit"
+                                        className="flex items-center gap-1.5 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95 cursor-pointer"
+                                    >
+                                        <span>Launch Workspace</span>
+                                        <ChevronRight size={14} />
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                ) : (
+                    /* ─── ULTRA-CLEAN APP GRID (MATCHING SCREENSHOT 1) ─── */
+                    <div className="py-6 sm:py-12 animate-in fade-in duration-200">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-6 gap-y-10 sm:gap-x-8 sm:gap-y-12 max-w-6xl mx-auto">
+                            {displayedApps.map(app => {
+                                const IconComponent = app.icon;
+
+                                return (
+                                    <Link
+                                        key={app.name}
+                                        href={app.href}
+                                        className="group flex flex-col items-center gap-3.5 focus:outline-none cursor-pointer"
+                                    >
+                                        {/* Vibrant Squircle Icon */}
+                                        <div className={`w-20 h-20 sm:w-22 sm:h-22 rounded-3xl ${app.color} flex items-center justify-center text-white shadow-xl shadow-black/40 group-hover:scale-110 transition-transform duration-200 ease-out`}>
+                                            <IconComponent className="w-10 h-10 text-white" strokeWidth={1.8} />
+                                        </div>
+
+                                        {/* Clean Label Beneath Icon */}
+                                        <span className="text-xs sm:text-sm font-medium text-gray-300 group-hover:text-white transition-colors text-center tracking-tight">
+                                            {app.name}
+                                        </span>
+                                    </Link>
+                                );
+                            })}
+
+                            {/* + Add / Install More Apps Tile */}
+                            <button
+                                type="button"
+                                onClick={() => setIsManageAppsModalOpen(true)}
+                                className="group flex flex-col items-center gap-3.5 focus:outline-none cursor-pointer"
+                                title="Add or remove modules from active company"
+                            >
+                                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-3xl bg-gradient-to-br from-purple-900/30 via-[#141b2c] to-indigo-950/30 border-2 border-dashed border-purple-500/50 hover:border-purple-400 flex items-center justify-center text-purple-300 hover:text-white shadow-xl shadow-black/40 group-hover:scale-110 transition-transform duration-200 ease-out">
+                                    <Plus className="w-9 h-9" strokeWidth={2} />
+                                </div>
+                                <span className="text-xs sm:text-sm font-semibold text-purple-400 group-hover:text-purple-300 transition-colors text-center tracking-tight">
+                                    + Add Apps
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </main>
+
+            {/* Persistent Support Widgets */}
+            <BeraxisSupportWidgets />
+
+            {/* Manage Apps & Entity Configuration Modal */}
+            <BranchSetupWizardModal
+                isOpen={isManageAppsModalOpen}
+                onClose={() => setIsManageAppsModalOpen(false)}
+                editingBranch={activeBranch}
+            />
         </div>
     );
 }
