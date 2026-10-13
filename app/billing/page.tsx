@@ -37,6 +37,9 @@ interface Plan {
     tagline: string;
     monthlyPrice: number;
     annualPrice: number;
+    originalMonthlyRate?: number;
+    originalAnnualRate?: number;
+    freemiusPlanId: string;
     highlight: boolean;
     badge?: string;
     features: string[];
@@ -49,13 +52,16 @@ const PLANS: Plan[] = [
         id: "free",
         name: "One App Free",
         tagline: "Pick any 1 module, use it forever",
-        monthlyPrice: 2.99,
-        annualPrice: 2.42,
+        monthlyPrice: 0.00,
+        annualPrice: 0.00,
+        freemiusPlanId: "51030",
         highlight: false,
         isFree: true,
         features: [
             "1 module of your choice",
             "Unlimited user seats",
+            "Single Company Workspace (1 Company)",
+            "50 Starter Lead Pool Previews",
             "Managed cloud hosting",
             "Community support",
         ],
@@ -64,37 +70,44 @@ const PLANS: Plan[] = [
     {
         id: "standard",
         name: "Standard",
-        tagline: "Full suite — all 28 modules",
-        monthlyPrice: 31.10,
-        annualPrice: 25.19,
+        tagline: "Full suite — all 28 modules + Lead Pool",
+        monthlyPrice: 5.00,
+        annualPrice: 1.00,
+        originalMonthlyRate: 31.10,
+        originalAnnualRate: 24.90,
+        freemiusPlanId: "51032",
         highlight: true,
-        badge: "Most Popular",
+        badge: "Early Bird Special (96% OFF)",
         features: [
-            "All 28 ERP/CRM modules",
-            "Unlimited user seats & workspaces",
-            "Antigravity AI Brain included",
-            "Priority 24/7 support",
-            "Real-time data sync",
-            "Advanced analytics & reporting",
+            "Single Company Workspace (1 Company)",
+            "1,500 Verified Lead Credits / user / mo",
+            "Buy extra lead packs in Lead Pool ($10 / 1,000)",
+            "All 28 ERP/CRM modules unlocked",
+            "Antigravity AI Brain & Voice Pilot",
+            "Priority 24/7 support & live backups",
         ],
         cryptoPlanKey: "standard",
     },
     {
         id: "premium",
-        name: "Premium",
-        tagline: "Multi-company management",
+        name: "Custom Enterprise",
+        tagline: "Multi-company management & studio",
         monthlyPrice: 46.80,
-        annualPrice: 37.91,
+        annualPrice: 37.40,
+        originalMonthlyRate: 46.80,
+        originalAnnualRate: 37.40,
+        freemiusPlanId: "51034",
         highlight: false,
+        badge: "Multi-Company & Custom APIs",
         features: [
-            "Everything in Standard",
-            "Multi-company management",
-            "Custom branding & white-label",
-            "Dedicated account manager",
+            "Multi-Company: 3 Companies included (+ $15/mo per extra company)",
+            "5,000+ Custom Lead Credits / user / mo",
+            "Beraxis Studio Customizer app",
+            "External APIs & Webhooks",
+            "Dedicated account manager & 24/7 hotline",
             "SLA-backed uptime guarantee",
-            "API access & integrations",
         ],
-        cryptoPlanKey: "premium",
+        cryptoPlanKey: "custom",
     },
 ];
 
@@ -114,51 +127,54 @@ function ModuleSelectorModal({
              style={{ background: "rgba(2,2,5,0.92)", backdropFilter: "blur(16px)" }}>
             <div className="max-w-2xl w-full bg-[#0F172A] border border-purple-500/20 rounded-3xl shadow-2xl shadow-purple-500/10 overflow-hidden">
                 {/* Header */}
-                <div className="p-6 border-b border-white/8 flex items-center justify-between">
+                <div className="flex items-center justify-between p-6 border-b border-white/5">
                     <div>
-                        <h3 className="text-lg font-black text-white">Choose Your Free App</h3>
-                        <p className="text-xs text-gray-400 mt-0.5">Select any 1 module to unlock unlimited usage.</p>
+                        <h2 className="text-xl font-black text-white">Choose Your Free Module</h2>
+                        <p className="text-sm text-gray-400 mt-1">Select 1 module to use forever, free. You can upgrade anytime.</p>
                     </div>
-                    <button onClick={onClose} className="text-gray-500 hover:text-white p-2 rounded-xl hover:bg-white/5 transition-colors">
-                        <X size={18} />
+                    <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5">
+                        <X size={20} />
                     </button>
                 </div>
 
-                {/* Grid */}
-                <div className="p-6 max-h-[60vh] overflow-y-auto grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    {ALL_MODULES.map((mod) => {
-                        const isSelected = selected === mod;
-                        return (
-                            <button
-                                key={mod}
-                                onClick={() => setSelected(mod)}
-                                className={`p-3 rounded-2xl border text-left text-xs font-bold transition-all ${
-                                    isSelected
-                                        ? "bg-purple-600 border-purple-400 text-white shadow-lg shadow-purple-500/30 scale-95"
-                                        : "bg-white/5 border-white/5 text-gray-300 hover:bg-white/10 hover:border-white/10"
-                                }`}
-                            >
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="text-sm">⚡</span>
-                                    {isSelected && <Check size={12} className="text-white" />}
-                                </div>
-                                <span>{mod}</span>
-                            </button>
-                        );
-                    })}
+                {/* Module Grid */}
+                <div className="p-6 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-2 max-h-80 overflow-y-auto">
+                    {ALL_MODULES.map((mod) => (
+                        <button
+                            key={mod}
+                            onClick={() => setSelected(mod)}
+                            className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all text-xs font-medium gap-1 ${
+                                selected === mod
+                                    ? "border-purple-500 bg-purple-500/20 text-white shadow-lg shadow-purple-500/20 scale-105"
+                                    : "border-white/8 bg-white/3 text-gray-400 hover:bg-white/8 hover:text-white hover:border-white/20"
+                            }`}
+                        >
+                            {selected === mod && (
+                                <Check size={12} className="text-purple-400" />
+                            )}
+                            <span className="leading-tight">{mod}</span>
+                        </button>
+                    ))}
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-white/8 flex justify-end gap-3 bg-[#070B16]">
-                    <button onClick={onClose} className="px-5 py-2.5 text-xs text-gray-400 hover:text-white font-bold">
+                <div className="p-6 pt-3 border-t border-white/5 flex items-center gap-3">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-3 px-4 rounded-xl border border-white/10 text-gray-400 hover:text-white transition-colors text-sm font-medium"
+                    >
                         Cancel
                     </button>
                     <button
                         disabled={!selected}
                         onClick={() => selected && onSelect(selected)}
-                        className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-purple-500/25 transition-all"
+                        className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        Confirm & Continue to Card Checkout →
+                        {selected ? (
+                            <>Start Free with {selected} <ArrowRight size={14} /></>
+                        ) : (
+                            "Select a module first"
+                        )}
                     </button>
                 </div>
             </div>
@@ -166,7 +182,7 @@ function ModuleSelectorModal({
     );
 }
 
-// ─── Crypto Payment Step ──────────────────────────────────────────────────────
+// ─── Crypto Selector ─────────────────────────────────────────────────────────
 
 function CryptoStep({
     plan,
@@ -181,102 +197,112 @@ function CryptoStep({
     onBack: () => void;
     userEmail: string;
 }) {
-    const [selectedCrypto, setSelectedCrypto] = useState("USDT");
+    const [selected, setSelected] = useState("BTC");
     const [loading, setLoading] = useState(false);
-    const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [invoiceUrl, setInvoiceUrl] = useState("");
+    const [txnId, setTxnId] = useState("");
+    const [orderNumber, setOrderNumber] = useState("");
+    const [copyFeedback, setCopyFeedback] = useState(false);
+    const router = useRouter();
 
-    const handleCreateInvoice = async () => {
+    const handleCreate = async () => {
         setLoading(true);
-        setError(null);
         try {
-            const res = await fetchAPI("/billing/crypto/create-invoice", {
+            const res = await fetchAPI("/billing/create-invoice", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    plan_key: plan.cryptoPlanKey,
-                    currency: selectedCrypto,
-                    amount_usd: totalPrice,
-                    email: userEmail,
+                    plan_name: plan.cryptoPlanKey,
+                    currency: selected,
+                    amount_usd: totalPrice
                 }),
             });
             const data = await res.json();
             if (res.ok && data.invoice_url) {
                 setInvoiceUrl(data.invoice_url);
-                window.location.href = data.invoice_url;
+                setTxnId(data.txn_id || "");
+                setOrderNumber(data.order_number || "");
+                if (data.mock) router.push(data.invoice_url);
             } else {
-                setError(data.detail || "Failed to generate crypto invoice.");
+                alert(data.detail || "Failed to create payment. Try again.");
             }
-        } catch (e: any) {
-            setError(e.message || "Network error. Please try again.");
-        } finally {
-            setLoading(false);
-        }
+        } catch { alert("Network error. Please try again."); }
+        finally { setLoading(false); }
     };
 
+    if (invoiceUrl && !loading) {
+        return (
+            <div className="space-y-4">
+                <button onClick={onBack} className="text-xs text-gray-500 hover:text-white transition-colors">← Back</button>
+                <div className="bg-[#0F172A]/90 border border-white/10 rounded-2xl p-6 space-y-3">
+                    <h3 className="font-bold text-white">Complete Your Payment</h3>
+                    {[
+                        ["Plan", plan.name],
+                        ["Duration", durationLabel],
+                        ["Total Amount", `$${totalPrice.toFixed(2)}`],
+                        ["Currency", selected],
+                        orderNumber && ["Order #", orderNumber],
+                        txnId && ["Txn ID", txnId.slice(0, 20) + "..."],
+                    ].filter(Boolean).map(([k, v]: any) => (
+                        <div key={k} className="flex justify-between text-sm border-b border-white/5 pb-2">
+                            <span className="text-gray-400">{k}</span>
+                            <span className="text-white font-medium">{v}</span>
+                        </div>
+                    ))}
+                    <a href={invoiceUrl} target="_blank" rel="noopener noreferrer"
+                       className="w-full mt-3 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3 rounded-xl transition-all text-sm">
+                        Pay on Plisio <ExternalLink size={14} />
+                    </a>
+                    {txnId && (
+                        <button onClick={() => { navigator.clipboard.writeText(txnId); setCopyFeedback(true); setTimeout(() => setCopyFeedback(false), 2000); }}
+                                className="w-full flex items-center justify-center gap-2 text-xs text-gray-500 hover:text-white transition-colors">
+                            {copyFeedback ? <><CheckCircle size={12} /> Copied!</> : <><Copy size={12} /> Copy Transaction ID</>}
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-white/8">
-                <div>
-                    <h3 className="text-sm font-bold text-gray-300">Selected Plan</h3>
-                    <p className="text-xl font-black text-white">{plan.name} <span className="text-xs text-purple-400 font-bold">({durationLabel})</span></p>
-                </div>
-                <div className="text-right">
-                    <p className="text-xs text-gray-400">Total Due</p>
-                    <p className="text-2xl font-black text-emerald-400">${totalPrice.toFixed(2)}</p>
-                </div>
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Select Crypto Currency</h3>
+                <button onClick={onBack} className="text-xs text-gray-500 hover:text-white transition-colors">← Back</button>
             </div>
-
-            <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Select Cryptocurrency</label>
-                <div className="grid grid-cols-4 gap-2.5">
-                    {CRYPTO_CURRENCIES.map(c => {
-                        const isSel = selectedCrypto === c.id;
-                        return (
-                            <button
-                                key={c.id}
-                                onClick={() => setSelectedCrypto(c.id)}
-                                className={`p-3 rounded-2xl border text-center transition-all ${
-                                    isSel
-                                        ? "bg-purple-600/20 border-purple-500 text-white shadow-lg shadow-purple-500/20"
-                                        : "bg-white/5 border-white/5 text-gray-400 hover:text-white hover:bg-white/10"
-                                }`}
-                            >
-                                <span className="text-xl block mb-1">{c.emoji}</span>
-                                <span className="text-xs font-bold">{c.id}</span>
-                            </button>
-                        );
-                    })}
-                </div>
+            <div className="bg-purple-500/5 border border-purple-500/15 p-3 rounded-xl flex justify-between items-center">
+                <span className="text-xs text-gray-400">Total ({durationLabel})</span>
+                <span className="text-xl font-black text-white">${totalPrice.toFixed(2)}</span>
             </div>
-
-            {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs">
-                    {error}
-                </div>
-            )}
-
-            <div className="flex gap-3 pt-2">
-                <button
-                    onClick={onBack}
-                    className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold transition-all"
-                >
-                    Back
-                </button>
-                <button
-                    onClick={handleCreateInvoice}
-                    disabled={loading}
-                    className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-bold shadow-lg shadow-purple-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                    {loading ? <Loader2 size={16} className="animate-spin" /> : <Bitcoin size={16} />}
-                    Pay with {selectedCrypto}
-                </button>
+            <div className="grid grid-cols-2 gap-2">
+                {CRYPTO_CURRENCIES.map(coin => (
+                    <button key={coin.id} onClick={() => setSelected(coin.id)}
+                            className={`flex items-center gap-2 p-3 rounded-xl border transition-all text-left ${
+                                selected === coin.id
+                                    ? "border-purple-500/60 bg-purple-500/10"
+                                    : "border-white/8 bg-white/3 hover:bg-white/6"
+                            }`}>
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm shrink-0"
+                             style={{ background: `${coin.color}20`, border: `1px solid ${coin.color}30` }}>
+                            <span style={{ color: coin.color }}>{coin.emoji}</span>
+                        </div>
+                        <div>
+                            <div className="text-white text-xs font-bold">{coin.id}</div>
+                            <div className="text-gray-500 text-[10px]">{coin.name}</div>
+                        </div>
+                        {selected === coin.id && <CheckCircle className="text-purple-400 ml-auto" size={12} />}
+                    </button>
+                ))}
             </div>
+            <button onClick={handleCreate} disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3.5 rounded-xl transition-all text-sm disabled:opacity-60">
+                {loading ? <><Loader2 size={14} className="animate-spin" /> Creating Invoice...</> : <>Proceed to Payment <ArrowRight size={14} /></>}
+            </button>
         </div>
     );
 }
 
-// ─── Plan Card Component ──────────────────────────────────────────────────────
+// ─── Plan Card ────────────────────────────────────────────────────────────────
 
 function PlanCard({
     plan,
@@ -293,31 +319,24 @@ function PlanCard({
     onSelectFree: () => void;
     onSelectCrypto: (plan: Plan, totalPrice: number, durationLabel: string) => void;
 }) {
-    const router = useRouter();
-    const monthlyRate = billing === "annual" ? plan.annualPrice : plan.monthlyPrice;
+    const monthlyRate = plan.isFree ? 0 : (billing === "annual" ? plan.annualPrice : plan.monthlyPrice);
     const monthsTotal = billing === "annual" ? durationCount * 12 : durationCount;
-    const totalPrice = monthlyRate * monthsTotal;
+    const totalPrice = plan.isFree ? 0 : monthlyRate * monthsTotal;
     const durationLabel = billing === "annual"
         ? `${durationCount} ${durationCount === 1 ? 'Year' : 'Years'}`
         : `${durationCount} ${durationCount === 1 ? 'Month' : 'Months'}`;
 
-    const handleCardCheckout = () => {
-        if (plan.isFree) {
-            onSelectFree();
-            return;
-        }
-        router.push(`/checkout?plan=${plan.id}&billing=${billing}&duration=${durationCount}`);
-    };
+    const freemiusUrl = `https://checkout.freemius.com/product/31108/plan/${plan.freemiusPlanId}/?user_email=${encodeURIComponent(userEmail)}&billing_cycle=${billing === "annual" ? "annual" : "monthly"}&readonly_user=true`;
 
     return (
         <div className={`relative flex flex-col rounded-3xl border p-7 transition-all duration-300 ${
             plan.highlight
-                ? "border-purple-500/40 bg-gradient-to-b from-purple-950/50 to-[#0F172A]/80 shadow-2xl shadow-purple-500/15 scale-[1.02]"
+                ? "border-purple-500/40 bg-gradient-to-b from-purple-950/50 to-[#0F172A]/80 shadow-2xl shadow-purple-500/15 scale-[1.02] ring-1 ring-purple-500/30"
                 : "border-white/8 bg-[#0F172A]/40 hover:border-white/20"
         }`}>
             {/* Badge */}
             {plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-extrabold uppercase tracking-widest px-4 py-1 rounded-full shadow-lg">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 text-white text-[10px] font-extrabold uppercase tracking-widest px-4 py-1 rounded-full shadow-lg whitespace-nowrap">
                     {plan.badge}
                 </div>
             )}
@@ -329,18 +348,58 @@ function PlanCard({
             </div>
 
             {/* Price */}
-            <div className="flex items-end gap-1 mb-1">
-                <span className={`text-5xl font-black ${plan.highlight ? "text-white" : "text-gray-200"}`}>
-                    ${monthlyRate.toFixed(2)}
-                </span>
-                <span className="text-gray-500 text-xs mb-2">/mo</span>
-            </div>
+            {plan.isFree ? (
+                <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-5xl font-black text-white">$0</span>
+                    <span className="text-gray-500 text-xs mb-2">/mo</span>
+                </div>
+            ) : (
+                <div className="mb-1">
+                    {billing === "annual" && plan.originalAnnualRate && plan.originalAnnualRate > monthlyRate && (
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm text-gray-500 line-through font-bold">
+                                ${plan.originalAnnualRate.toFixed(2)}
+                            </span>
+                            <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded uppercase tracking-wider">
+                                {Math.round(((plan.originalAnnualRate - monthlyRate) / plan.originalAnnualRate) * 100)}% OFF EARLY BIRD
+                            </span>
+                        </div>
+                    )}
+                    {billing === "monthly" && plan.originalMonthlyRate && plan.originalMonthlyRate > monthlyRate && (
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm text-gray-500 line-through font-bold">
+                                ${plan.originalMonthlyRate.toFixed(2)}
+                            </span>
+                            <span className="text-[10px] font-black text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded uppercase tracking-wider">
+                                {Math.round(((plan.originalMonthlyRate - monthlyRate) / plan.originalMonthlyRate) * 100)}% OFF
+                            </span>
+                        </div>
+                    )}
+                    <div className="flex items-baseline gap-1">
+                        <span className={`text-5xl font-black ${plan.highlight ? "text-white" : "text-gray-200"}`}>
+                            ${monthlyRate.toFixed(2)}
+                        </span>
+                        <span className="text-gray-500 text-xs mb-2">/mo</span>
+                    </div>
+                </div>
+            )}
 
             {/* Total Duration Badge */}
             <div className="mb-5">
-                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-xl">
-                    <span>Total: <strong className="text-white">${totalPrice.toFixed(2)}</strong> for {durationLabel}</span>
-                </div>
+                {plan.isFree ? (
+                    <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-xl">
+                        <span>Forever Free • No Credit Card Required</span>
+                    </div>
+                ) : (
+                    <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-xl">
+                        <span>
+                            Total: <strong className="text-white">${totalPrice.toFixed(2)}</strong> for {durationLabel}
+                            {billing === "annual" && plan.id === "standard" && durationCount === 1 && (
+                                <span className="text-[10px] text-gray-400 ml-1">($12/yr upfront)</span>
+                            )}
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* Features */}
@@ -355,27 +414,36 @@ function PlanCard({
 
             {/* CTA Buttons */}
             <div className="space-y-2.5">
-                {/* DirectPay Card Payment */}
-                <button
-                    onClick={handleCardCheckout}
-                    className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer ${
-                        plan.highlight
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/25"
-                            : "bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30"
-                    }`}
-                >
-                    <CreditCard size={14} /> 
-                    {plan.isFree ? "Choose Module & Pay" : "Pay with Card via DirectPay"} 
-                    <ArrowRight size={14} />
-                </button>
+                {plan.isFree ? (
+                    <button
+                        onClick={onSelectFree}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-sm bg-white/10 hover:bg-white/15 text-white border border-white/20 transition-all cursor-pointer"
+                    >
+                        <span>Choose Module & Start Free</span> <ArrowRight size={14} />
+                    </button>
+                ) : (
+                    <>
+                        <a
+                            href={freemiusUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all ${
+                                plan.highlight
+                                    ? "bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/25"
+                                    : "bg-white/10 hover:bg-white/15 text-white border border-white/15"
+                            }`}
+                        >
+                            <CreditCard size={14} /> Pay with Card via DirectPay <ArrowRight size={14} />
+                        </a>
 
-                {/* Crypto */}
-                <button
-                    onClick={() => onSelectCrypto(plan, totalPrice, durationLabel)}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 cursor-pointer"
-                >
-                    <Bitcoin size={14} /> Pay with Crypto <ArrowRight size={14} />
-                </button>
+                        <button
+                            onClick={() => onSelectCrypto(plan, totalPrice, durationLabel)}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-xs bg-purple-600/15 hover:bg-purple-600/25 text-purple-300 border border-purple-500/20 transition-all cursor-pointer"
+                        >
+                            <Bitcoin size={14} /> Pay with Crypto <ArrowRight size={14} />
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     );
@@ -388,7 +456,7 @@ function BillingPageContent() {
     const searchParams = useSearchParams();
     const isCanceled = searchParams.get("canceled") === "true";
 
-    const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+    const [billing, setBilling] = useState<"monthly" | "annual">("annual");
     const [durationCount, setDurationCount] = useState<number>(1);
     const [userEmail, setUserEmail] = useState("");
     const [showModuleModal, setShowModuleModal] = useState(false);
@@ -406,8 +474,8 @@ function BillingPageContent() {
     const [success, setSuccess] = useState(false);
 
     useEffect(() => {
-        // Check billing_success redirect
-        if (searchParams.get("billing_success") === "true" || searchParams.get("dp_status") === "success") {
+        // Check billing_success from Freemius/Plisio redirect
+        if (searchParams.get("billing_success") === "true") {
             setSuccess(true);
             setTimeout(() => router.push("/"), 3000);
         }
@@ -422,37 +490,19 @@ function BillingPageContent() {
     const handleModuleSelected = (mod: string) => {
         localStorage.setItem("selectedModule", mod);
         setShowModuleModal(false);
-        router.push(`/checkout?plan=free&module=${encodeURIComponent(mod)}&billing=${billing}`);
+        setSuccess(true);
+        setTimeout(() => router.push("/apps"), 1500);
     };
 
-    const handleApplyPromo = async (e: React.MouseEvent) => {
+    const handleApplyPromo = (e: React.MouseEvent) => {
         e.preventDefault();
         setPromoError(""); setPromoSuccess("");
         const code = promoCode.trim().toUpperCase();
-        if (!code) { 
-            setPromoError("Enter a promo code first."); 
-            return; 
-        }
-
-        try {
-            const res = await fetch(`/api/admin/promocodes?validate=${encodeURIComponent(code)}&package=all&amount=31.10`);
-            const data = await res.json();
-            if (res.ok && data.valid) {
-                setPromoDiscount(data.promo.discount_value / 100);
-                setPromoSuccess(`🎉 Promo '${data.promo.code}' applied! (${data.promo.discount_value}% Discount)`);
-            } else {
-                setPromoError(data.error || "Invalid promo code.");
-                setPromoDiscount(0);
-            }
-        } catch {
-            if (["FREE100", "BERAXIS100", "BERAXIS"].includes(code)) { 
-                setPromoDiscount(1.0); 
-                setPromoSuccess("🎉 100% Lifetime Discount Applied!"); 
-            } else {
-                setPromoError("Invalid promo code.");
-                setPromoDiscount(0);
-            }
-        }
+        if (["FREE100", "BERAXIS100", "BERAXIS"].includes(code)) { setPromoDiscount(1.0); setPromoSuccess("🎉 100% Discount Applied!"); }
+        else if (code === "LAUNCH50") { setPromoDiscount(0.5); setPromoSuccess("🎉 50% off applied!"); }
+        else if (code === "LAUNCH20") { setPromoDiscount(0.2); setPromoSuccess("🎉 20% off applied!"); }
+        else if (!code) { setPromoError("Enter a promo code first."); }
+        else { setPromoError("Invalid promo code."); setPromoDiscount(0); }
     };
 
     const handleManualActivate = async (e: React.FormEvent) => {
@@ -559,27 +609,27 @@ function BillingPageContent() {
                     {/* Cycle Toggle */}
                     <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-2xl p-1">
                         <button
-                            onClick={() => { setBilling("monthly"); setDurationCount(1); }}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                                billing === "monthly"
-                                    ? "bg-white text-gray-900 shadow"
+                            onClick={() => { setBilling("annual"); setDurationCount(1); }}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                billing === "annual"
+                                    ? "bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white shadow-lg shadow-purple-500/25"
                                     : "text-gray-400 hover:text-white"
                             }`}
                         >
-                            Monthly
+                            <span>Annual ($1/mo Early Bird)</span>
+                            <span className="bg-emerald-500/20 text-emerald-300 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500/30">
+                                SAVE 96%
+                            </span>
                         </button>
                         <button
-                            onClick={() => { setBilling("annual"); setDurationCount(1); }}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                                billing === "annual"
-                                    ? "bg-white text-gray-900 shadow"
+                            onClick={() => { setBilling("monthly"); setDurationCount(1); }}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                billing === "monthly"
+                                    ? "bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white shadow-lg shadow-purple-500/25"
                                     : "text-gray-400 hover:text-white"
                             }`}
                         >
-                            Annual
-                            <span className="bg-green-500/20 text-green-400 text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-green-500/20">
-                                SAVE 19%
-                            </span>
+                            Monthly ($5/mo Early Bird)
                         </button>
                     </div>
 
@@ -647,7 +697,7 @@ function BillingPageContent() {
                 {!promoStep ? (
                     <button
                         onClick={() => setPromoStep(true)}
-                        className="text-sm text-gray-500 hover:text-white transition-colors underline mb-8 cursor-pointer"
+                        className="text-sm text-gray-500 hover:text-white transition-colors underline mb-8"
                     >
                         🎫 I have a promo code
                     </button>
@@ -666,7 +716,7 @@ function BillingPageContent() {
                                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-purple-500 transition-colors"
                             />
                             <button type="button" onClick={handleApplyPromo}
-                                    className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-3 rounded-xl text-xs transition-colors cursor-pointer">
+                                    className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-3 rounded-xl text-xs transition-colors">
                                 Apply
                             </button>
                         </div>
@@ -674,7 +724,7 @@ function BillingPageContent() {
                         {promoError && <p className="text-xs text-red-400">{promoError}</p>}
                         {promoDiscount > 0 && (
                             <button type="submit" disabled={promoLoading}
-                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
+                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50 flex items-center justify-center gap-2">
                                 {promoLoading ? <><Loader2 size={14} className="animate-spin" /> Activating...</> : "Activate Workspace"}
                             </button>
                         )}
@@ -683,7 +733,7 @@ function BillingPageContent() {
 
                 {/* Trust badges */}
                 <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-600">
-                    {["DirectPay Card", "Visa", "Mastercard", "UnionPay", "30+ Cryptos"].map(item => (
+                    {["Bitcoin", "Ethereum", "USDT", "30+ Cryptos", "Visa / Mastercard", "PayPal"].map(item => (
                         <div key={item} className="flex items-center gap-1.5">
                             <CheckCircle size={11} className="text-purple-500" />
                             <span>{item}</span>
@@ -691,7 +741,7 @@ function BillingPageContent() {
                     ))}
                     <div className="flex items-center gap-1.5">
                         <Shield size={11} className="text-green-500" />
-                        <span>Secured by DirectPay Card Gateway &amp; SSL Encryption</span>
+                        <span>Secured by Freemius &amp; Plisio</span>
                     </div>
                 </div>
             </div>

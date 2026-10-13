@@ -37,6 +37,8 @@ interface Plan {
     tagline: string;
     monthlyPrice: number;
     annualPrice: number;
+    originalMonthlyRate?: number;
+    originalAnnualRate?: number;
     freemiusPlanId: string;
     highlight: boolean;
     badge?: string;
@@ -50,14 +52,16 @@ const PLANS: Plan[] = [
         id: "free",
         name: "One App Free",
         tagline: "Pick any 1 module, use it forever",
-        monthlyPrice: 2.99,
-        annualPrice: 2.42,
+        monthlyPrice: 0.00,
+        annualPrice: 0.00,
         freemiusPlanId: "51030",
         highlight: false,
         isFree: true,
         features: [
             "1 module of your choice",
             "Unlimited user seats",
+            "Single Company Workspace (1 Company)",
+            "50 Starter Lead Pool Previews",
             "Managed cloud hosting",
             "Community support",
         ],
@@ -66,39 +70,44 @@ const PLANS: Plan[] = [
     {
         id: "standard",
         name: "Standard",
-        tagline: "Full suite — all 28 modules",
-        monthlyPrice: 31.10,
-        annualPrice: 25.19,
+        tagline: "Full suite — all 28 modules + Lead Pool",
+        monthlyPrice: 5.00,
+        annualPrice: 1.00,
+        originalMonthlyRate: 31.10,
+        originalAnnualRate: 24.90,
         freemiusPlanId: "51032",
         highlight: true,
-        badge: "Most Popular",
+        badge: "Early Bird Special (96% OFF)",
         features: [
-            "All 28 ERP/CRM modules",
-            "Unlimited user seats & workspaces",
-            "Antigravity AI Brain included",
-            "Priority 24/7 support",
-            "Real-time data sync",
-            "Advanced analytics & reporting",
+            "Single Company Workspace (1 Company)",
+            "1,500 Verified Lead Credits / user / mo",
+            "Buy extra lead packs in Lead Pool ($10 / 1,000)",
+            "All 28 ERP/CRM modules unlocked",
+            "Antigravity AI Brain & Voice Pilot",
+            "Priority 24/7 support & live backups",
         ],
         cryptoPlanKey: "standard",
     },
     {
         id: "premium",
-        name: "Premium",
-        tagline: "Multi-company management",
+        name: "Custom Enterprise",
+        tagline: "Multi-company management & studio",
         monthlyPrice: 46.80,
-        annualPrice: 37.91,
+        annualPrice: 37.40,
+        originalMonthlyRate: 46.80,
+        originalAnnualRate: 37.40,
         freemiusPlanId: "51034",
         highlight: false,
+        badge: "Multi-Company & Custom APIs",
         features: [
-            "Everything in Standard",
-            "Multi-company management",
-            "Custom branding & white-label",
-            "Dedicated account manager",
+            "Multi-Company: 3 Companies included (+ $15/mo per extra company)",
+            "5,000+ Custom Lead Credits / user / mo",
+            "Beraxis Studio Customizer app",
+            "External APIs & Webhooks",
+            "Dedicated account manager & 24/7 hotline",
             "SLA-backed uptime guarantee",
-            "API access & integrations",
         ],
-        cryptoPlanKey: "premium",
+        cryptoPlanKey: "custom",
     },
 ];
 
@@ -310,9 +319,9 @@ function PlanCard({
     onSelectFree: () => void;
     onSelectCrypto: (plan: Plan, totalPrice: number, durationLabel: string) => void;
 }) {
-    const monthlyRate = billing === "annual" ? plan.annualPrice : plan.monthlyPrice;
+    const monthlyRate = plan.isFree ? 0 : (billing === "annual" ? plan.annualPrice : plan.monthlyPrice);
     const monthsTotal = billing === "annual" ? durationCount * 12 : durationCount;
-    const totalPrice = monthlyRate * monthsTotal;
+    const totalPrice = plan.isFree ? 0 : monthlyRate * monthsTotal;
     const durationLabel = billing === "annual"
         ? `${durationCount} ${durationCount === 1 ? 'Year' : 'Years'}`
         : `${durationCount} ${durationCount === 1 ? 'Month' : 'Months'}`;
@@ -322,12 +331,12 @@ function PlanCard({
     return (
         <div className={`relative flex flex-col rounded-3xl border p-7 transition-all duration-300 ${
             plan.highlight
-                ? "border-purple-500/40 bg-gradient-to-b from-purple-950/50 to-[#0F172A]/80 shadow-2xl shadow-purple-500/15 scale-[1.02]"
+                ? "border-purple-500/40 bg-gradient-to-b from-purple-950/50 to-[#0F172A]/80 shadow-2xl shadow-purple-500/15 scale-[1.02] ring-1 ring-purple-500/30"
                 : "border-white/8 bg-[#0F172A]/40 hover:border-white/20"
         }`}>
             {/* Badge */}
             {plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-extrabold uppercase tracking-widest px-4 py-1 rounded-full shadow-lg">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 text-white text-[10px] font-extrabold uppercase tracking-widest px-4 py-1 rounded-full shadow-lg whitespace-nowrap">
                     {plan.badge}
                 </div>
             )}
@@ -339,18 +348,58 @@ function PlanCard({
             </div>
 
             {/* Price */}
-            <div className="flex items-end gap-1 mb-1">
-                <span className={`text-5xl font-black ${plan.highlight ? "text-white" : "text-gray-200"}`}>
-                    ${monthlyRate.toFixed(2)}
-                </span>
-                <span className="text-gray-500 text-xs mb-2">/mo</span>
-            </div>
+            {plan.isFree ? (
+                <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-5xl font-black text-white">$0</span>
+                    <span className="text-gray-500 text-xs mb-2">/mo</span>
+                </div>
+            ) : (
+                <div className="mb-1">
+                    {billing === "annual" && plan.originalAnnualRate && plan.originalAnnualRate > monthlyRate && (
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm text-gray-500 line-through font-bold">
+                                ${plan.originalAnnualRate.toFixed(2)}
+                            </span>
+                            <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded uppercase tracking-wider">
+                                {Math.round(((plan.originalAnnualRate - monthlyRate) / plan.originalAnnualRate) * 100)}% OFF EARLY BIRD
+                            </span>
+                        </div>
+                    )}
+                    {billing === "monthly" && plan.originalMonthlyRate && plan.originalMonthlyRate > monthlyRate && (
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm text-gray-500 line-through font-bold">
+                                ${plan.originalMonthlyRate.toFixed(2)}
+                            </span>
+                            <span className="text-[10px] font-black text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded uppercase tracking-wider">
+                                {Math.round(((plan.originalMonthlyRate - monthlyRate) / plan.originalMonthlyRate) * 100)}% OFF
+                            </span>
+                        </div>
+                    )}
+                    <div className="flex items-baseline gap-1">
+                        <span className={`text-5xl font-black ${plan.highlight ? "text-white" : "text-gray-200"}`}>
+                            ${monthlyRate.toFixed(2)}
+                        </span>
+                        <span className="text-gray-500 text-xs mb-2">/mo</span>
+                    </div>
+                </div>
+            )}
 
             {/* Total Duration Badge */}
             <div className="mb-5">
-                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-xl">
-                    <span>Total: <strong className="text-white">${totalPrice.toFixed(2)}</strong> for {durationLabel}</span>
-                </div>
+                {plan.isFree ? (
+                    <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-xl">
+                        <span>Forever Free • No Credit Card Required</span>
+                    </div>
+                ) : (
+                    <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-xl">
+                        <span>
+                            Total: <strong className="text-white">${totalPrice.toFixed(2)}</strong> for {durationLabel}
+                            {billing === "annual" && plan.id === "standard" && durationCount === 1 && (
+                                <span className="text-[10px] text-gray-400 ml-1">($12/yr upfront)</span>
+                            )}
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* Features */}
@@ -365,44 +414,36 @@ function PlanCard({
 
             {/* CTA Buttons */}
             <div className="space-y-2.5">
-                {/* Card / PayPal */}
                 {plan.isFree ? (
                     <button
                         onClick={onSelectFree}
-                        className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all ${
-                            plan.highlight
-                                ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/25"
-                                : "bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/20"
-                        }`}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-sm bg-white/10 hover:bg-white/15 text-white border border-white/20 transition-all cursor-pointer"
                     >
-                        <CreditCard size={14} /> Choose Module & Pay <ArrowRight size={14} />
+                        <span>Choose Module & Start Free</span> <ArrowRight size={14} />
                     </button>
                 ) : (
-                    <a
-                        href={freemiusUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all ${
-                            plan.highlight
-                                ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/25"
-                                : "bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/20"
-                        }`}
-                    >
-                        <CreditCard size={14} /> Pay with Card / PayPal <ExternalLink size={12} />
-                    </a>
-                )}
+                    <>
+                        <a
+                            href={freemiusUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all ${
+                                plan.highlight
+                                    ? "bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/25"
+                                    : "bg-white/10 hover:bg-white/15 text-white border border-white/15"
+                            }`}
+                        >
+                            <CreditCard size={14} /> Pay with Card via DirectPay <ArrowRight size={14} />
+                        </a>
 
-                {/* Crypto */}
-                <button
-                    onClick={() => onSelectCrypto(plan, totalPrice, durationLabel)}
-                    className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all ${
-                        plan.highlight
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/25"
-                            : "bg-purple-600/15 hover:bg-purple-600/25 text-purple-400 border border-purple-500/20"
-                    }`}
-                >
-                    <Bitcoin size={14} /> Pay with Crypto <ArrowRight size={14} />
-                </button>
+                        <button
+                            onClick={() => onSelectCrypto(plan, totalPrice, durationLabel)}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-xs bg-purple-600/15 hover:bg-purple-600/25 text-purple-300 border border-purple-500/20 transition-all cursor-pointer"
+                        >
+                            <Bitcoin size={14} /> Pay with Crypto <ArrowRight size={14} />
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     );
@@ -415,7 +456,7 @@ function BillingPageContent() {
     const searchParams = useSearchParams();
     const isCanceled = searchParams.get("canceled") === "true";
 
-    const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+    const [billing, setBilling] = useState<"monthly" | "annual">("annual");
     const [durationCount, setDurationCount] = useState<number>(1);
     const [userEmail, setUserEmail] = useState("");
     const [showModuleModal, setShowModuleModal] = useState(false);
@@ -449,9 +490,8 @@ function BillingPageContent() {
     const handleModuleSelected = (mod: string) => {
         localStorage.setItem("selectedModule", mod);
         setShowModuleModal(false);
-        const plan = PLANS.find(p => p.isFree)!;
-        const url = `https://checkout.freemius.com/product/31108/plan/${plan.freemiusPlanId}/?user_email=${encodeURIComponent(userEmail)}&billing_cycle=${billing === "annual" ? "annual" : "monthly"}&readonly_user=true`;
-        window.open(url, "_blank");
+        setSuccess(true);
+        setTimeout(() => router.push("/apps"), 1500);
     };
 
     const handleApplyPromo = (e: React.MouseEvent) => {
@@ -569,27 +609,27 @@ function BillingPageContent() {
                     {/* Cycle Toggle */}
                     <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-2xl p-1">
                         <button
-                            onClick={() => { setBilling("monthly"); setDurationCount(1); }}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                                billing === "monthly"
-                                    ? "bg-white text-gray-900 shadow"
+                            onClick={() => { setBilling("annual"); setDurationCount(1); }}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                billing === "annual"
+                                    ? "bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white shadow-lg shadow-purple-500/25"
                                     : "text-gray-400 hover:text-white"
                             }`}
                         >
-                            Monthly
+                            <span>Annual ($1/mo Early Bird)</span>
+                            <span className="bg-emerald-500/20 text-emerald-300 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500/30">
+                                SAVE 96%
+                            </span>
                         </button>
                         <button
-                            onClick={() => { setBilling("annual"); setDurationCount(1); }}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                                billing === "annual"
-                                    ? "bg-white text-gray-900 shadow"
+                            onClick={() => { setBilling("monthly"); setDurationCount(1); }}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                billing === "monthly"
+                                    ? "bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white shadow-lg shadow-purple-500/25"
                                     : "text-gray-400 hover:text-white"
                             }`}
                         >
-                            Annual
-                            <span className="bg-green-500/20 text-green-400 text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-green-500/20">
-                                SAVE 19%
-                            </span>
+                            Monthly ($5/mo Early Bird)
                         </button>
                     </div>
 

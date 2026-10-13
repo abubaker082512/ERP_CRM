@@ -22,9 +22,12 @@ BACKEND_URL = os.environ.get("BACKEND_URL", "https://galaxy-erp-backend.onrender
 
 # Plan pricing in USD
 PLAN_PRICES = {
-    "pro": 199.00,
-    "starter": 49.00,
-    "enterprise": 499.00,
+    "standard": 12.00,       # $1/mo Early Bird annual rate ($12/yr upfront)
+    "custom": 37.40,         # Custom enterprise rate
+    "free": 0.00,
+    "pro": 12.00,
+    "starter": 5.00,
+    "enterprise": 37.40,
 }
 
 class CreateInvoiceRequest(BaseModel):
