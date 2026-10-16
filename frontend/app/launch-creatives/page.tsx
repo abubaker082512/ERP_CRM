@@ -484,6 +484,102 @@ export default function LaunchCreativesPage() {
                 <p className="text-xs text-slate-400">High-converting social ad creatives ready for Meta Ads Manager, TikTok Spark Ads, and YouTube pre-rolls.</p>
               </div>
 
+              {/* FLAGSHIP AI FEMALE MODEL PRESENTER COMMERCIAL */}
+              <div className="bg-slate-900/90 rounded-3xl p-6 sm:p-8 border-2 border-purple-500/40 shadow-2xl shadow-purple-500/10 mb-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold mb-2">
+                      <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+                      NEW • AI FEMALE FOUNDER PRESENTER COMMERCIAL (46s)
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                      "Stop Overpaying for Software" — AI Presenter Commercial
+                    </h3>
+                    <p className="text-sm text-slate-300 mt-1 max-w-3xl">
+                      Stylized creator commercial featuring a charismatic AI female tech founder speaking directly to camera with cinematic Ken Burns camera tracking, floating live UI cards, cost breakdown comparison, and upbeat studio acoustic guitar & piano music.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-purple-400">46.0s Full HD</span>
+                    <span className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-emerald-400">Dual Format</span>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                  {/* Video Player */}
+                  <div className="lg:col-span-5 flex flex-col items-center">
+                    <div className="relative w-full max-w-[320px] aspect-[9/16] rounded-2xl overflow-hidden bg-black border-2 border-purple-500/30 shadow-2xl">
+                      <video
+                        controls
+                        playsInline
+                        preload="metadata"
+                        poster="/social_media_assets/ai_female_model_commercial_preview.gif"
+                        src="/social_media_assets/ai_female_model_commercial_9x16.mp4"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="w-full mt-4 flex items-center justify-center gap-3">
+                      <a
+                        href="/social_media_assets/ai_female_model_commercial_9x16.mp4"
+                        download
+                        className="px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white flex items-center gap-2 shadow-lg shadow-purple-500/25 transition"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download 9:16 Reel (13.9 MB)</span>
+                      </a>
+                      <a
+                        href="/social_media_assets/ai_female_model_commercial_16x9.mp4"
+                        download
+                        className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 flex items-center gap-2 transition"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>16:9 Landscape (8.1 MB)</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Scene Breakdown & Pitch Angle */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div className="text-xs font-bold text-purple-400 uppercase tracking-wider">
+                      ⚡ 4 Dynamic Presenter Scenes (46.0s)
+                    </div>
+                    <div className="space-y-2.5">
+                      <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
+                        <span className="px-2 py-0.5 rounded bg-rose-950 text-rose-400 font-mono font-bold text-xs mt-0.5">0:00</span>
+                        <div>
+                          <div className="text-xs font-bold text-white">The $400 SaaS Tax Disruptive Hook</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">Direct eye contact from AI presenter calling out subscription bloat: QuickBooks ($85/mo), HubSpot ($50/mo), inventory apps ($120/mo).</div>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
+                        <span className="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:09</span>
+                        <div>
+                          <div className="text-xs font-bold text-white">Gesture Demonstration & Floating UI Card</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">Presenter gestures to a floating 3D glass card demonstrating 25M+ B2B leads, Cloud ERP financials, and touch POS.</div>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
+                        <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-mono font-bold text-xs mt-0.5">0:25</span>
+                        <div>
+                          <div className="text-xs font-bold text-emerald-300">Radical Cost Disruption ($1/mo vs $20k Setup)</div>
+                          <div className="text-[11px] text-slate-300 mt-0.5">Contrast against legacy SAP/NetSuite fees with Beraxis $1/mo early-bird annual plan or 1 App 100% Free Forever.</div>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3">
+                        <span className="px-2 py-0.5 rounded bg-yellow-950 text-yellow-400 font-mono font-bold text-xs mt-0.5">0:36</span>
+                        <div>
+                          <div className="text-xs font-bold text-yellow-300">Live Phone Display & Irresistible CTA</div>
+                          <div className="text-[11px] text-slate-300 mt-0.5">Presenter holding phone showing the live Beraxis app with glowing CTA directing viewers to www.beraxis.online.</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Video 1: Master Commercial */}
                 <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between">
