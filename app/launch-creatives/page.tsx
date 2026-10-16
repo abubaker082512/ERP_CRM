@@ -562,6 +562,249 @@ export default function LaunchCreativesPage() {
               </div>
             </div>
 
+            {/* 8-PART SHORT PITCH ADS & CUSTOMER ENGAGEMENT COMMERCIALS SUITE */}
+            <div className="space-y-10 pt-8 border-t border-slate-800">
+              
+              {/* SECTION 1: SHORT PREMIUM PITCH ADS */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-bold mb-1">
+                      <span>⚡ 5 SHORT PREMIUM PITCH ADS (15s–45s)</span>
+                    </div>
+                    <h3 className="text-2xl font-black text-white">Ultra-High Conversion Pitch Ads</h3>
+                    <p className="text-xs text-slate-400">Paced for instant attention retention, direct competitor contrast, and early-bird $1/mo trial activation.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-emerald-400">🎸 Studio Acoustic Music</span>
+                    <span className="px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-cyan-300">100% Zero-Overlap Audio</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Ad 1: SaaS Tax */}
+                  <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between group hover:border-cyan-500/40 transition">
+                    <div>
+                      <div className="relative rounded-xl overflow-hidden aspect-video bg-black border border-slate-800">
+                        <img src="/social_media_assets/ad1_saas_tax_preview.gif" alt="Ad 1 SaaS Tax" className="w-full h-full object-cover" />
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500 text-white">Ad 1 • 37.5s</span>
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/75 text-cyan-400">Dual Format</span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mt-3">The $400 SaaS Tax</h4>
+                      <p className="text-xs text-slate-400 mt-1">Directly exposes SaaS subscription bloat ($400/mo) and replaces QuickBooks, HubSpot, and fragmented tools with Beraxis for $1/mo.</p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <a href="/social_media_assets/ad1_saas_tax_16x9.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-black text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>16:9 (3.1M)</span>
+                        </a>
+                        <a href="/social_media_assets/ad1_saas_tax_9x16.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>9:16 (2.2M)</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ad 2: Customer Generator */}
+                  <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between group hover:border-cyan-500/40 transition">
+                    <div>
+                      <div className="relative rounded-xl overflow-hidden aspect-video bg-black border border-slate-800">
+                        <img src="/social_media_assets/ad2_customer_generator_preview.gif" alt="Ad 2 Customer Generator" className="w-full h-full object-cover" />
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-black">Ad 2 • 43.5s</span>
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/75 text-cyan-400">Dual Format</span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mt-3">The Customer Generator (25M+ Leads)</h4>
+                      <p className="text-xs text-slate-400 mt-1">Differentiates Beraxis from dead ERP databases by showcasing the built-in 25M+ lead engine that fills sales pipelines automatically.</p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <a href="/social_media_assets/ad2_customer_generator_16x9.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-black text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>16:9 (3.6M)</span>
+                        </a>
+                        <a href="/social_media_assets/ad2_customer_generator_9x16.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>9:16 (2.4M)</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ad 3: 12-Industry Chameleon */}
+                  <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between group hover:border-cyan-500/40 transition">
+                    <div>
+                      <div className="relative rounded-xl overflow-hidden aspect-video bg-black border border-slate-800">
+                        <img src="/social_media_assets/ad3_industry_chameleon_preview.gif" alt="Ad 3 12 Industries" className="w-full h-full object-cover" />
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500 text-white">Ad 3 • 49.4s</span>
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/75 text-cyan-400">Dual Format</span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mt-3">The 12-Industry Chameleon</h4>
+                      <p className="text-xs text-slate-400 mt-1">Bakery, garage, real estate, or retail: demonstrates 1-click archetype morphing, instant department trees, and specialized touch POS.</p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <a href="/social_media_assets/ad3_industry_chameleon_16x9.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-black text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>16:9 (5.2M)</span>
+                        </a>
+                        <a href="/social_media_assets/ad3_industry_chameleon_9x16.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>9:16 (3.0M)</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ad 4: 15s Executive Speed Pitch */}
+                  <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between group hover:border-cyan-500/40 transition">
+                    <div>
+                      <div className="relative rounded-xl overflow-hidden aspect-video bg-black border border-slate-800">
+                        <img src="/social_media_assets/ad4_speed_pitch_preview.gif" alt="Ad 4 Speed Pitch" className="w-full h-full object-cover" />
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500 text-black">Ad 4 • 26.8s</span>
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/75 text-cyan-400">Speed Pitch</span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mt-3">15s Executive Speed Pitch</h4>
+                      <p className="text-xs text-slate-400 mt-1">Ultra-rapid punchy pitch delivering the full core value proposition: 1 app free forever, $1/month full access, zero credit card friction.</p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <a href="/social_media_assets/ad4_speed_pitch_16x9.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-black text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>16:9 (3.1M)</span>
+                        </a>
+                        <a href="/social_media_assets/ad4_speed_pitch_9x16.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>9:16 (1.9M)</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ad 5: Anti-Legacy ERP Manifesto */}
+                  <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between group hover:border-cyan-500/40 transition">
+                    <div>
+                      <div className="relative rounded-xl overflow-hidden aspect-video bg-black border border-slate-800">
+                        <img src="/social_media_assets/ad5_anti_legacy_preview.gif" alt="Ad 5 Anti Legacy" className="w-full h-full object-cover" />
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-black">Ad 5 • 57.0s</span>
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/75 text-cyan-400">Manifesto</span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mt-3">The Anti-Legacy ERP Manifesto</h4>
+                      <p className="text-xs text-slate-400 mt-1">Ditches the $20,000 consultant fees and 6-month onboarding hell of SAP & NetSuite. Deploy modern ERP & POS in 30 seconds for $1/month.</p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <a href="/social_media_assets/ad5_anti_legacy_16x9.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-black text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>16:9 (4.6M)</span>
+                        </a>
+                        <a href="/social_media_assets/ad5_anti_legacy_9x16.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>9:16 (3.1M)</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: CUSTOMER ENGAGEMENT COMMERCIALS */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-bold mb-1">
+                      <span>🎯 3 CUSTOMER ENGAGEMENT COMMERCIALS (45s–70s)</span>
+                    </div>
+                    <h3 className="text-2xl font-black text-white">Lifecycle & Pipeline Commercials</h3>
+                    <p className="text-xs text-slate-400">Engineered for deep buyer engagement, demonstrating step-by-step ROI, customer retention, and deal closing acceleration.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-yellow-400">⚡ Live System Tours</span>
+                    <span className="px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-purple-300">📈 Proven Conversion Funnels</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Engagement Ad 1: Retention Machine */}
+                  <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between group hover:border-purple-500/40 transition">
+                    <div>
+                      <div className="relative rounded-xl overflow-hidden aspect-video bg-black border border-slate-800">
+                        <img src="/social_media_assets/engagement_ad1_retention_preview.gif" alt="Engagement Ad 1 Retention" className="w-full h-full object-cover" />
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500 text-white">Engagement 1 • 48.1s</span>
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/75 text-cyan-400">Dual Format</span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mt-3">The Retention Machine</h4>
+                      <p className="text-xs text-slate-400 mt-1">Converts one-time buyers into lifetime high-LTV advocates with automated replenishment alerts, loyalty points, and purchase pattern triggers.</p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <a href="/social_media_assets/engagement_ad1_retention_16x9.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-black text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>16:9 (5.0M)</span>
+                        </a>
+                        <a href="/social_media_assets/engagement_ad1_retention_9x16.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>9:16 (3.0M)</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Engagement Ad 2: Smart CRM Pipeline */}
+                  <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between group hover:border-purple-500/40 transition">
+                    <div>
+                      <div className="relative rounded-xl overflow-hidden aspect-video bg-black border border-slate-800">
+                        <img src="/social_media_assets/engagement_ad2_crm_pipeline_preview.gif" alt="Engagement Ad 2 CRM" className="w-full h-full object-cover" />
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500 text-white">Engagement 2 • 58.2s</span>
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/75 text-cyan-400">Dual Format</span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mt-3">Close Deals 3x Faster: Smart CRM</h4>
+                      <p className="text-xs text-slate-400 mt-1">Visual sales drag-and-drop Kanban, auto-generated PDF proposals, digital signature tracking, and automatic accounting ledger sync.</p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <a href="/social_media_assets/engagement_ad2_crm_pipeline_16x9.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-black text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>16:9 (5.6M)</span>
+                        </a>
+                        <a href="/social_media_assets/engagement_ad2_crm_pipeline_9x16.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>9:16 (3.3M)</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Engagement Ad 3: Leads to Clients */}
+                  <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between group hover:border-purple-500/40 transition">
+                    <div>
+                      <div className="relative rounded-xl overflow-hidden aspect-video bg-black border border-slate-800">
+                        <img src="/social_media_assets/engagement_ad3_leads_to_clients_preview.gif" alt="Engagement Ad 3 Leads to Clients" className="w-full h-full object-cover" />
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-black">Engagement 3 • 69.0s</span>
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/75 text-cyan-400">Dual Format</span>
+                      </div>
+                      <h4 className="font-bold text-white text-base mt-3">From 25M Cold Leads to Clients</h4>
+                      <p className="text-xs text-slate-400 mt-1">The complete growth engine: filter verified decision makers, push qualified prospects directly to CRM, trigger email sequences, and cash out at POS.</p>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <a href="/social_media_assets/engagement_ad3_leads_to_clients_16x9.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-black text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>16:9 (6.5M)</span>
+                        </a>
+                        <a href="/social_media_assets/engagement_ad3_leads_to_clients_9x16.mp4" download className="w-[48%] py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 text-center flex items-center justify-center gap-1.5 transition">
+                          <Download className="w-3.5 h-3.5" />
+                          <span>9:16 (4.1M)</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
             {/* Interactive Storyboard Simulator */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-slate-900/80 rounded-3xl p-6 sm:p-8 border border-slate-800">
               
