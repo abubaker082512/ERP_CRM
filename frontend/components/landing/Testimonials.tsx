@@ -4,7 +4,7 @@ const testimonials = [
     {
         name: "Sarah Jenkins",
         role: "COO at TechNova",
-        content: "Galaxy ERP completely transformed how we operate. We replaced five different fragmented systems with one beautiful interface. Our sales cycle is 30% faster.",
+        content: "Beraxis completely transformed how we operate. We replaced five different fragmented systems with one beautiful interface. Our sales cycle is 30% faster.",
         avatar: "S"
     },
     {

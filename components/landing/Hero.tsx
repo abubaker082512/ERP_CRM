@@ -33,7 +33,7 @@ export default function Hero() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
                         </span>
-                        <span>25.4M+ Leads Directory & 1-Click Import</span>
+                        <span>25M+ Leads Directory & 1-Click Import</span>
                     </Link>
                 </div>
 
@@ -45,7 +45,7 @@ export default function Hero() {
 
                 {/* Subheadline with key SEO keywords and explicit pricing */}
                 <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-10 font-light leading-relaxed">
-                    Unify CRM with a built-in <strong className="text-white font-semibold">25.4M+ Leads Pool</strong>, Point of Sale, Smart Inventory, Accounting, HRMS, and Voice Pilot. Unlock all 28 business modules for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
+                    Unify CRM with a built-in <strong className="text-white font-semibold">25M+ Leads Pool</strong>, Point of Sale, Smart Inventory, Accounting, HRMS, and Voice Pilot. Unlock all 28 business modules for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
                 </p>
 
                 {/* Call To Actions */}
@@ -98,7 +98,7 @@ export default function Hero() {
                                     <span className="text-xs font-semibold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
                                         <Globe size={14} /> Leads Pool
                                     </span>
-                                    <span className="text-xs bg-cyan-500/20 text-cyan-300 font-bold px-2 py-0.5 rounded">10M+ Records</span>
+                                    <span className="text-xs bg-cyan-500/20 text-cyan-300 font-bold px-2 py-0.5 rounded">25M+ Records</span>
                                 </div>
                                 <div className="text-2xl font-extrabold text-white">Global B2B Contacts</div>
                                 <p className="text-xs text-gray-300 mt-1">Verified Emails, Direct Dials & 1-Click Import</p>
@@ -143,7 +143,7 @@ export default function Hero() {
                         <ShieldCheck size={18} className="text-purple-400" /> Enterprise RLS Security
                     </div>
                     <div className="flex items-center justify-center gap-2.5 text-sm text-gray-300 font-medium">
-                        <Globe size={18} className="text-cyan-400" /> 10M+ Global Leads Pool
+                        <Globe size={18} className="text-cyan-400" /> 25M+ Global Leads Pool
                     </div>
                     <div className="flex items-center justify-center gap-2.5 text-sm text-gray-300 font-medium">
                         <Zap size={18} className="text-amber-400" /> Real-time Sub-second Sync

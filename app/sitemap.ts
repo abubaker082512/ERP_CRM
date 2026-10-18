@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { BLOG_POSTS } from '@/lib/blog-data';
 import { COMPARISONS } from '@/lib/comparisonData';
+import { INDUSTRIES_MAP } from '@/lib/industryData';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://www.beraxis.online';
@@ -11,14 +12,38 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/leads-pool`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },
     { url: `${baseUrl}/compare`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },
+    { url: `${baseUrl}/features`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },
+    { url: `${baseUrl}/industries`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },
     { url: `${baseUrl}/pricing`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/blog`, lastModified: now, changeFrequency: 'daily', priority: 0.85 },
     { url: `${baseUrl}/about`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/contact`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/privacy`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${baseUrl}/terms`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/apps`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
     { url: `${baseUrl}/signup`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/login`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
   ];
+
+  // Semantic Feature Landing Routes
+  const featureRoutes: MetadataRoute.Sitemap = [
+    'crm-pipeline',
+    'inventory',
+    'voice-pilot'
+  ].map(slug => ({
+    url: `${baseUrl}/features/${slug}`,
+    lastModified: now,
+    changeFrequency: 'daily',
+    priority: 0.90,
+  }));
+
+  // Dedicated Industry Landing Routes (12 Archetypes)
+  const industrySubRoutes: MetadataRoute.Sitemap = Object.keys(INDUSTRIES_MAP).map(slug => ({
+    url: `${baseUrl}/industries/${slug}`,
+    lastModified: now,
+    changeFrequency: 'daily',
+    priority: 0.90,
+  }));
 
   // Programmatic Competitor Comparison Routes
   const comparisonRoutes: MetadataRoute.Sitemap = Object.keys(COMPARISONS).map(slug => ({
@@ -28,8 +53,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.90,
   }));
 
-  // Industry Archetype Dedicated Landing Routes
-  const industryRoutes: MetadataRoute.Sitemap = [
+  // Legacy Industry Landing Routes (Compatibility)
+  const legacyIndustryRoutes: MetadataRoute.Sitemap = [
     'automotive',
     'club',
     'education',
@@ -39,10 +64,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${baseUrl}/${ind}`,
     lastModified: now,
     changeFrequency: 'weekly',
-    priority: 0.85,
+    priority: 0.80,
   }));
 
-  // Blog Routes
+  // Blog Article Routes
   const blogRoutes: MetadataRoute.Sitemap = BLOG_POSTS.map(post => ({
     url: `${baseUrl}/blog/${post.slug}`,
     lastModified: now,
@@ -50,5 +75,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...staticRoutes, ...comparisonRoutes, ...industryRoutes, ...blogRoutes];
+  return [
+    ...staticRoutes,
+    ...featureRoutes,
+    ...industrySubRoutes,
+    ...comparisonRoutes,
+    ...legacyIndustryRoutes,
+    ...blogRoutes
+  ];
 }

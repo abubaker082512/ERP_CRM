@@ -27,6 +27,8 @@ import {
   Globe
 } from "lucide-react";
 
+import Link from "next/link";
+
 const ICON_MAP: Record<string, any> = {
   UtensilsCrossed,
   ShoppingBag,
@@ -40,6 +42,21 @@ const ICON_MAP: Record<string, any> = {
   GraduationCap,
   Dumbbell,
   HeartHandshake
+};
+
+const ID_TO_SLUG: Record<string, string> = {
+  fitness_sports_club: "padel-clubs",
+  food_beverage: "bakeries-restaurants",
+  healthcare_wellness: "dental-clinics",
+  automotive_workshop: "automotive-garages",
+  real_estate: "real-estate",
+  retail_supermarket: "retail-supermarkets",
+  construction_contracting: "construction-contracting",
+  education_academies: "education-academies",
+  ngos: "ngos-non-profits",
+  manufacturing: "manufacturing",
+  logistics_wholesale: "logistics-wholesale",
+  professional_services: "professional-services",
 };
 
 export default function IndustryShowcase() {
@@ -97,6 +114,16 @@ export default function IndustryShowcase() {
             </button>
           );
         })}
+      </div>
+
+      <div className="text-center mb-8">
+        <Link
+          href="/industries"
+          className="inline-flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 hover:border-purple-400/40 transition-all"
+        >
+          <span>Explore All 12 Dedicated Industry Landing Pages &amp; Blueprints</span>
+          <ArrowRight size={13} />
+        </Link>
       </div>
 
       {/* Interactive Industry Deep-Dive Card */}
@@ -160,7 +187,7 @@ export default function IndustryShowcase() {
               </div>
             </div>
 
-            <div className="pt-4 flex flex-wrap items-center gap-4">
+            <div className="pt-4 flex flex-wrap items-center gap-3">
               <button
                 onClick={() => router.push("/signup")}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
@@ -168,9 +195,16 @@ export default function IndustryShowcase() {
                 <span>Launch {selectedIndustry.name.split(" ")[0]} Workspace</span>
                 <ArrowRight size={14} />
               </button>
-              <div className="flex items-center gap-2 text-xs text-emerald-400 font-semibold">
+              <Link
+                href={`/industries/${ID_TO_SLUG[selectedIndustry.id] || "padel-clubs"}`}
+                className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+              >
+                <span>View {selectedIndustry.name.split(" ")[0]} Blueprint Page</span>
+                <ArrowRight size={13} />
+              </Link>
+              <div className="flex items-center gap-2 text-xs text-emerald-400 font-semibold w-full sm:w-auto mt-1 sm:mt-0">
                 <CheckCircle2 size={16} />
-                <span>Includes 25.8M+ B2B Leads Pool & Full ERP/CRM Suite</span>
+                <span>Includes 25M+ B2B Leads Pool & Full ERP/CRM Suite</span>
               </div>
             </div>
           </div>

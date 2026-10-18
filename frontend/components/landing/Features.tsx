@@ -3,8 +3,8 @@ import Link from 'next/link';
 
 const features = [
     {
-        title: "Global Leads Pool (10M+)",
-        description: "Access 10M+ worldwide verified B2B leads across USA, UK, UAE, Saudi, Europe & Asia with direct dials, verified emails, and 1-click CRM import.",
+        title: "Global Leads Pool (25M+)",
+        description: "Access 25M+ worldwide verified B2B leads across USA, UK, UAE, Saudi, Europe & Asia with direct dials, verified emails, and 1-click CRM import.",
         icon: Globe,
         color: "text-cyan-400",
         bg: "bg-cyan-500/10"
@@ -154,19 +154,19 @@ export default function Features() {
                             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-bold uppercase tracking-wider mb-5">
                                 <Globe size={14} className="animate-spin text-cyan-400" /> Free Native B2B Engine
                             </div>
-                            <h3 className="text-3xl sm:text-4xl font-extrabold text-white mb-5 leading-tight">
+                            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-5 leading-tight">
                                 Never Pay For Apollo or ZoomInfo Again: <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-purple-400">
-                                    10M+ Global Leads Pool Built-in
+                                    25M+ Global Leads Pool Built-in
                                 </span>
-                            </h3>
+                            </h2>
                             <p className="text-gray-300 text-base font-light leading-relaxed mb-6">
                                 Stop burning thousands of dollars every month on separate lead enrichment tools. Beraxis comes with a pre-indexed, verified international leads pool. Discover decision-makers, direct phone numbers, and verified corporate emails, then import them directly into your sales pipeline in a single click.
                             </p>
 
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
                                 <div className="bg-white/5 border border-white/10 rounded-xl p-3.5">
-                                    <div className="text-xl sm:text-2xl font-black text-cyan-300">10M+</div>
+                                    <div className="text-xl sm:text-2xl font-black text-cyan-300">25M+</div>
                                     <div className="text-xs text-gray-400">B2B Contacts</div>
                                 </div>
                                 <div className="bg-white/5 border border-white/10 rounded-xl p-3.5">
@@ -268,9 +268,9 @@ export default function Features() {
                         <span className="text-xs font-bold uppercase tracking-widest text-purple-400 bg-purple-500/10 border border-purple-500/20 px-4 py-1.5 rounded-full inline-block mb-4">
                             Capability & ROI Analysis
                         </span>
-                        <h3 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
                             Why Businesses Are Moving Away From <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Legacy Tools to Beraxis</span>
-                        </h3>
+                        </h2>
                         <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">
                             See how Beraxis delivers 10x faster performance, native Voice AI, and predictable transparent pricing compared to clunky legacy platforms.
                         </p>

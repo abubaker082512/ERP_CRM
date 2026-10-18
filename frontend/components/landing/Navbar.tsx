@@ -42,13 +42,14 @@ export default function Navbar() {
                     </Link>
  
                     {/* Desktop Menu */}
-                    <div className="hidden md:flex space-x-8 items-center">
+                    <div className="hidden md:flex space-x-7 items-center">
                         <Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Home</Link>
                         <Link href="/leads-pool" className="text-cyan-300 hover:text-cyan-200 transition-colors text-sm font-semibold flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-400/40">
                             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
                             Lead Pool
                         </Link>
-                        <Link href="/#features" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Features</Link>
+                        <Link href="/features" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Features</Link>
+                        <Link href="/industries" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Industries</Link>
                         <Link href="/pricing" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Pricing</Link>
                         <Link href="/compare" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Compare</Link>
                         <Link href="/about" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">About</Link>
@@ -104,7 +105,8 @@ export default function Navbar() {
                         <Link href="/leads-pool" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-semibold text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 rounded-md">
                             🎯 Lead Pool (25M+ Directory)
                         </Link>
-                        <Link href="/#features" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Features</Link>
+                        <Link href="/features" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Features</Link>
+                        <Link href="/industries" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Industries</Link>
                         <Link href="/pricing" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Pricing</Link>
                         <Link href="/compare" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Compare</Link>
                         <Link href="/about" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">About</Link>

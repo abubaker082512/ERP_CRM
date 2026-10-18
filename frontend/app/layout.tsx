@@ -13,7 +13,7 @@ export const metadata: Metadata = {
         default: "Beraxis | Autonomous AI ERP & CRM · 25M+ B2B Leads",
         template: "%s | Beraxis"
     },
-    description: "Beraxis is the premier autonomous AI ERP & CRM command center. Unify CRM, 25.4M+ verified B2B leads directory, POS, multi-industry operations, accounting, inventory, and HRMS for just $1/month.",
+    description: "Beraxis is the premier autonomous AI ERP & CRM command center. Unify CRM, 25M+ verified B2B leads directory, POS, multi-industry operations, accounting, inventory, and HRMS for just $1/month.",
     keywords: [
         "Beraxis",
         "Beraxis ERP",
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     manifest: "/site.webmanifest",
     openGraph: {
         title: "Beraxis | Autonomous AI ERP & CRM · 25M+ B2B Leads Pool",
-        description: "The premier AI business operating system. Built-in 25.4M+ verified B2B leads directory, POS, multi-industry hubs, accounting & HRMS.",
+        description: "The premier AI business operating system. Built-in 25M+ verified B2B leads directory, POS, multi-industry hubs, accounting & HRMS.",
         url: "https://www.beraxis.online",
         siteName: "Beraxis",
         images: [
@@ -123,7 +123,7 @@ export default function RootLayout({
                 "@type": "Organization",
                 "@id": "https://www.beraxis.online/#organization",
                 "name": "Beraxis",
-                "legalName": "Beraxis",
+                "legalName": "Beraxis Systems Inc.",
                 "alternateName": ["Beraxis ERP", "Beraxis CRM", "Beraxis AI", "Beraxis AI ERP"],
                 "url": "https://www.beraxis.online",
                 "logo": {
@@ -133,7 +133,7 @@ export default function RootLayout({
                     "height": "512"
                 },
                 "image": "https://www.beraxis.online/og-image.png",
-                "description": "Beraxis is an autonomous AI-driven enterprise ERP and CRM command center unifying business operations, CRM, 25.4M+ verified B2B Leads Pool, POS, multi-industry blueprints, inventory, and financial bookkeeping.",
+                "description": "Beraxis Systems Inc. is an autonomous AI-driven enterprise ERP and CRM command center unifying business operations, CRM, 25M+ verified B2B Leads Pool, POS, multi-industry blueprints, inventory, and financial bookkeeping.",
                 "sameAs": [
                     "https://www.beraxis.online",
                     "https://wa.me/19707807993",
@@ -143,7 +143,8 @@ export default function RootLayout({
                     "@type": "ContactPoint",
                     "contactType": "customer support",
                     "url": "https://www.beraxis.online/contact",
-                    "telephone": "+1-970-780-7993"
+                    "telephone": "+1-970-780-7993",
+                    "email": "support@beraxis.online"
                 }
             },
             {
@@ -164,30 +165,81 @@ export default function RootLayout({
             {
                 "@type": "SoftwareApplication",
                 "@id": "https://www.beraxis.online/#software",
-                "name": "Beraxis Autonomous AI ERP",
-                "operatingSystem": "Web, Cloud, iOS, Android",
+                "name": "Beraxis",
+                "operatingSystem": "Cloud, Web, iOS, Android",
                 "applicationCategory": "BusinessApplication",
                 "aggregateRating": {
                     "@type": "AggregateRating",
                     "ratingValue": "4.9",
-                    "reviewCount": "1280"
+                    "reviewCount": "1280",
+                    "bestRating": "5",
+                    "worstRating": "1"
                 },
                 "offers": {
-                    "@type": "AggregateOffer",
-                    "lowPrice": "0",
-                    "highPrice": "37.40",
+                    "@type": "Offer",
+                    "price": "1.00",
                     "priceCurrency": "USD",
-                    "offerCount": "3"
+                    "priceValidUntil": "2027-12-31",
+                    "availability": "https://schema.org/InStock",
+                    "description": "Early Bird Plan: $1/seat/month billed annually ($12/year) or $5/seat/month month-to-month. All 28 modules included with 1,500 lead credits/month."
                 },
-                "description": "Beraxis is the premier AI-driven autonomous multi-industry ERP unifying CRM, 25.4M+ B2B Leads Pool, POS, Club Hub, Automotive, Real Estate, Inventory, Accounting, HRMS, and Voice Assistant automation.",
+                "description": "Beraxis is an autonomous AI ERP & CRM platform featuring a built-in 25M+ B2B Leads Pool, POS, accounting, inventory, HRMS, and Voice Pilot for $1/month.",
                 "url": "https://www.beraxis.online"
+            },
+            {
+                "@type": "FAQPage",
+                "@id": "https://www.beraxis.online/#faq",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": "What is Beraxis?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Beraxis is an autonomous AI-powered ERP and CRM platform that unifies 28 business modules—including double-entry accounting, point of sale (POS), inventory management, HRMS payroll, an AI Voice Pilot, and a built-in 25M+ verified B2B leads directory—into a single glassmorphic command deck."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "How much does Beraxis cost?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Beraxis offers a Forever Free tier (1 full module free with unlimited seats). The Early Bird Standard Plan unlocks all 28 enterprise modules and 1,500 lead credits/month for just $1.00/month ($12 billed annually) or $5.00/month on month-to-month billing."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "What is the Beraxis 25M+ B2B Leads Pool?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "The Leads Pool is an integrated global B2B contact directory containing over 25 million verified corporate decision-makers, direct dials, and verified emails across 50+ countries. Users can search and 1-click import leads directly into their Beraxis CRM pipeline with zero extra third-party software subscriptions."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "How does the AI Voice Pilot work?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "The AI Voice Pilot allows business owners and staff to control their ERP using natural voice commands. You can issue instructions such as 'Create a $500 invoice for Acme Corp' or 'Check inventory for SKU-402', and the autonomous engine executes the workflow in real-time."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Which industries does Beraxis support?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Beraxis comes pre-engineered with dedicated operational blueprints for 12 global industries, including padel and sports clubs, dental and healthcare clinics, artisan bakeries and restaurants, supermarkets and retail, auto repair workshops, real estate brokerages, construction contractors, schools, and discrete manufacturing."
+                        }
+                    }
+                ]
             },
             {
                 "@type": "SiteNavigationElement",
                 "name": [
                     "Lead Pool",
                     "Pricing",
+                    "Compare",
                     "Features",
+                    "Industries",
                     "Blog",
                     "About",
                     "Contact",
@@ -196,7 +248,9 @@ export default function RootLayout({
                 "url": [
                     "https://www.beraxis.online/leads-pool",
                     "https://www.beraxis.online/pricing",
-                    "https://www.beraxis.online/#features",
+                    "https://www.beraxis.online/compare",
+                    "https://www.beraxis.online/features",
+                    "https://www.beraxis.online/industries",
                     "https://www.beraxis.online/blog",
                     "https://www.beraxis.online/about",
                     "https://www.beraxis.online/contact",

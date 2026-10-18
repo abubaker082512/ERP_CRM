@@ -26,9 +26,9 @@ export default function Footer() {
                     <div>
                         <h4 className="text-white font-bold uppercase tracking-wider text-xs mb-4">ERP Modules</h4>
                         <ul className="space-y-2.5 text-xs">
-                            <li><Link href="/crm" className="hover:text-white transition-colors">CRM Lead Pipeline</Link></li>
+                            <li><Link href="/features/crm-pipeline" className="hover:text-white transition-colors">CRM Lead Pipeline</Link></li>
                             <li><Link href="/sales" className="hover:text-white transition-colors">Sales & Quotations</Link></li>
-                            <li><Link href="/inventory" className="hover:text-white transition-colors">Smart Inventory</Link></li>
+                            <li><Link href="/features/inventory" className="hover:text-white transition-colors">Smart Inventory</Link></li>
                             <li><Link href="/accounting" className="hover:text-white transition-colors">Double-Entry Accounting</Link></li>
                             <li><Link href="/payroll" className="hover:text-white transition-colors">HRMS & Payroll</Link></li>
                             <li><Link href="/pos" className="hover:text-white transition-colors">POS Retail Terminal</Link></li>
@@ -39,12 +39,12 @@ export default function Footer() {
                     <div>
                         <h4 className="text-white font-bold uppercase tracking-wider text-xs mb-4">Platform & Insights</h4>
                         <ul className="space-y-2.5 text-xs">
-                            <li><Link href="/blog" className="hover:text-purple-300 transition-colors text-purple-400 font-semibold flex items-center gap-1.5"><span>📰 Insights & Blog</span></Link></li>
+                            <li><Link href="/features" className="hover:text-white transition-colors">Platform Features Hub</Link></li>
+                            <li><Link href="/industries" className="hover:text-white transition-colors">12 Industry Archetypes</Link></li>
                             <li><Link href="/compare" className="hover:text-cyan-300 transition-colors text-cyan-400 font-semibold flex items-center gap-1.5"><span>⚡ Compare vs. Competitors</span></Link></li>
                             <li><Link href="/leads-pool" className="hover:text-white transition-colors">Global Leads Pool</Link></li>
                             <li><Link href="/pricing" className="hover:text-white transition-colors">Predictable Pricing</Link></li>
-                            <li><Link href="/apps" className="hover:text-white transition-colors">All 30+ ERP Apps</Link></li>
-                            <li><Link href="/about" className="hover:text-white transition-colors">AI Voice Assistant ERP</Link></li>
+                            <li><Link href="/features/voice-pilot" className="hover:text-purple-300 transition-colors text-purple-400 font-semibold flex items-center gap-1.5"><span>🎙️ AI Voice Assistant</span></Link></li>
                         </ul>
                     </div>
 
@@ -70,9 +70,9 @@ export default function Footer() {
                     <p>© {new Date().getFullYear()} Beraxis Systems Inc. All rights reserved. The Premier Autonomous Cloud ERP & AI CRM System.</p>
                     <div className="flex gap-6">
                         <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-                        <Link href="/contact" className="hover:text-white transition-colors">Privacy Policy</Link>
-                        <Link href="/pricing" className="hover:text-white transition-colors">Terms of Service</Link>
-                        <Link href="/billing" className="hover:text-white transition-colors">SLA Agreement</Link>
+                        <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                        <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+                        <Link href="/terms" className="hover:text-white transition-colors">SLA Agreement</Link>
                     </div>
                 </div>
             </div>
