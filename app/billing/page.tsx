@@ -541,9 +541,8 @@ function BillingPageContent() {
         return (
             <div className="min-h-screen bg-[#020205] flex items-center justify-center p-4">
                 <div className="max-w-md w-full bg-[#0F172A]/90 border border-white/10 rounded-3xl p-7 shadow-2xl">
-                    <div className="mb-2 flex items-center gap-2">
-                        <img src="/logo2.png" alt="Beraxis" className="h-6 w-auto" />
-                        <span className="text-white font-bold tracking-tight text-sm">BERAXIS<span className="text-purple-500">.</span></span>
+                    <div className="mb-2 flex items-center">
+                        <img src="/logo-full.png" alt="Beraxis" className="h-6 w-auto object-contain" />
                     </div>
                     <h2 className="text-white font-black text-lg mb-6">{cryptoSelection.plan.name} — Crypto Payment</h2>
                     <CryptoStep
@@ -569,9 +568,8 @@ function BillingPageContent() {
             </div>
 
             {/* Logo */}
-            <div className="absolute top-6 left-7 flex items-center gap-2 z-10">
-                <img src="/logo2.png" alt="Beraxis" className="h-8 w-auto" />
-                <span className="text-xl font-bold tracking-tighter text-white">BERAXIS<span className="text-purple-500">.</span></span>
+            <div className="absolute top-6 left-7 flex items-center z-10">
+                <img src="/logo-full.png" alt="Beraxis" className="h-8 w-auto object-contain" />
             </div>
 
             {/* Back to dashboard */}

@@ -80,9 +80,8 @@ export default function Home() {
                         {/* Sidebar Mockup */}
                         <div className="w-1/5 bg-[#141A28]/80 border border-white/5 rounded-2xl p-4 flex flex-col justify-between shrink-0 hidden sm:flex">
                             <div className="space-y-4">
-                                <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-3">
-                                    <img src="/logo2.png" alt="Beraxis Logo" className="h-5 w-auto" />
-                                    <span className="font-bold text-white tracking-wider uppercase text-[10px]">BERAXIS</span>
+                                <div className="flex items-center mb-6 border-b border-white/5 pb-3">
+                                    <img src="/logo-full.png" alt="Beraxis Logo" className="h-4 w-auto object-contain" />
                                 </div>
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2.5 px-3 py-2 bg-purple-500/20 text-purple-300 rounded-lg font-bold"><LayoutDashboard size={14}/> Dashboard</div>

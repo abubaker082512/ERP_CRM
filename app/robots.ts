@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'Googlebot-Image',
-        allow: ['/icon.png', '/icon-192.png', '/icon-48.png', '/apple-touch-icon.png', '/favicon.ico', '/logo.png', '/logo2.png', '/og-image.png'],
+        allow: ['/icon.png', '/icon-192.png', '/icon-48.png', '/apple-touch-icon.png', '/favicon.ico', '/logo.png', '/logo2.png', '/logo-full.png', '/logo-full-suite.png', '/og-image.png'],
       }
     ],
     sitemap: 'https://www.beraxis.online/sitemap.xml',

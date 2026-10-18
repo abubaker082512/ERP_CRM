@@ -67,7 +67,7 @@ function LoginForm() {
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center mb-4">
-                        <img src="/logo2.png" alt="Beraxis Logo" className="h-16 w-auto" />
+                        <img src="/logo-full.png" alt="Beraxis Logo" className="h-12 w-auto object-contain" />
                     </div>
                     <h1 className="text-3xl font-bold text-white">Welcome back</h1>
                     <p className="text-gray-400 mt-2">Sign in to your ERP workspace</p>

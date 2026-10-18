@@ -9,9 +9,8 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-10 mb-12 text-left">
                     {/* Column 1: Brand Info & SEO Tagline */}
                     <div className="md:col-span-2 space-y-4">
-                        <div className="flex items-center gap-2">
-                            <img src="/logo2.png" onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png'; }} alt="Beraxis Logo" className="h-8 w-auto object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]" />
-                            <span className="text-xl font-bold tracking-tighter text-white">BERAXIS<span className="text-purple-500">.</span></span>
+                        <div className="flex items-center">
+                            <img src="/logo-full.png" onError={(e) => { (e.target as HTMLImageElement).src = '/logo2.png'; }} alt="Beraxis Logo" className="h-8 w-auto object-contain" />
                         </div>
                         <p className="text-xs text-gray-400 font-medium leading-relaxed max-w-sm">
                             The #1 AI-driven autonomous ERP/CRM command center. Streamline operations, automate workflows with Voice Pilot, and scale globally without modular bloat.
