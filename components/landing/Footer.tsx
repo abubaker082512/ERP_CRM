@@ -40,7 +40,7 @@ export default function Footer() {
                         <h4 className="text-white font-bold uppercase tracking-wider text-xs mb-4">Platform & Insights</h4>
                         <ul className="space-y-2.5 text-xs">
                             <li><Link href="/blog" className="hover:text-purple-300 transition-colors text-purple-400 font-semibold flex items-center gap-1.5"><span>📰 Insights & Blog</span></Link></li>
-                            <li><a href="/#comparison" className="hover:text-white transition-colors">Why Beraxis vs Others</a></li>
+                            <li><Link href="/compare" className="hover:text-cyan-300 transition-colors text-cyan-400 font-semibold flex items-center gap-1.5"><span>⚡ Compare vs. Competitors</span></Link></li>
                             <li><Link href="/leads-pool" className="hover:text-white transition-colors">Global Leads Pool</Link></li>
                             <li><Link href="/pricing" className="hover:text-white transition-colors">Predictable Pricing</Link></li>
                             <li><Link href="/apps" className="hover:text-white transition-colors">All 30+ ERP Apps</Link></li>
