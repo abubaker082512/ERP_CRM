@@ -21,11 +21,13 @@ export type BusinessBranch = {
   location: string;
   currency: string;
   enabledModules: string[];
+  modules?: string[];
   sharingRules: BranchSharingRules;
   createdAt: string;
   isPrimary: boolean;
   ownerId?: string;
   accountType?: "individual" | "company";
+  entityType?: "individual" | "company";
 };
 
 export type UserPlanType = "free" | "standard" | "premium";
@@ -106,8 +108,10 @@ export type BranchContextType = {
   activeIndustry: IndustryArchetype;
   hasSelectedIndustry: boolean;
   userPlan: UserPlanType;
+  planTier: UserPlanType;
   isFreePlan: boolean;
   freeSelectedApp: string;
+  freePlanModule: string;
   accountType: "individual" | "company";
   currentUserKey: string;
   setUserPlan: (plan: UserPlanType) => void;
@@ -119,6 +123,7 @@ export type BranchContextType = {
   resetToIndustrySelection: () => void;
   toggleModuleForActiveBranch: (moduleHref: string) => void;
   isModuleActive: (moduleHref: string) => boolean;
+  isModuleEnabled: (moduleHref: string) => boolean;
   isLeadPoolUnlocked: () => boolean;
   getEntityStorageKey: (resourceType: string) => string;
   refreshUserContext: () => void;
@@ -384,14 +389,17 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    const resolvedEntityType = data.entityType || data.accountType || info.accountType;
     const newBranch: BusinessBranch = {
       ...data,
       enabledModules: finalModules,
+      modules: finalModules,
       id: newId,
       createdAt: new Date().toISOString().slice(0, 10),
       isPrimary: branches.length === 0,
       ownerId: uKey,
-      accountType: info.accountType
+      accountType: resolvedEntityType,
+      entityType: resolvedEntityType
     };
 
     // Free Plan only allows 1 single company workspace
@@ -524,8 +532,10 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         activeIndustry,
         hasSelectedIndustry,
         userPlan,
+        planTier: userPlan,
         isFreePlan,
         freeSelectedApp,
+        freePlanModule: freeSelectedApp,
         accountType,
         currentUserKey,
         setUserPlan,
@@ -537,6 +547,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         resetToIndustrySelection,
         toggleModuleForActiveBranch,
         isModuleActive,
+        isModuleEnabled: isModuleActive,
         isLeadPoolUnlocked,
         getEntityStorageKey,
         refreshUserContext: loadUserScopedContext

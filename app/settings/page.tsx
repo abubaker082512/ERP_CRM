@@ -134,9 +134,11 @@ const WORLD_LOCALE_DATA = [
 ];
 
 import { useBranchContext } from "@/lib/branchContext";
+import Link from "next/link";
+import { ShieldCheck, Lock, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { activeBranch, getEntityStorageKey, updateBranch } = useBranchContext();
+  const { activeBranch, getEntityStorageKey, updateBranch, planTier, isFreePlan, freePlanModule } = useBranchContext();
   const [activeTab, setActiveTab] = useState("general");
   const [saving, setSaving] = useState(false);
 
@@ -272,7 +274,7 @@ export default function SettingsPage() {
 
     const updated = [...uoms, newUom];
     setUoms(updated);
-    localStorage.setItem("settings_uoms", JSON.stringify(updated));
+    localStorage.setItem(`${getEntityStorageKey("settings")}_uoms`, JSON.stringify(updated));
 
     setNewUomName("");
     setNewUomRatio("1.0");
@@ -282,13 +284,13 @@ export default function SettingsPage() {
   const toggleUom = (id: string) => {
     const updated = uoms.map(u => u.id === id ? { ...u, active: !u.active } : u);
     setUoms(updated);
-    localStorage.setItem("settings_uoms", JSON.stringify(updated));
+    localStorage.setItem(`${getEntityStorageKey("settings")}_uoms`, JSON.stringify(updated));
   };
 
   const deleteUom = (id: string) => {
     const updated = uoms.filter(u => u.id !== id);
     setUoms(updated);
-    localStorage.setItem("settings_uoms", JSON.stringify(updated));
+    localStorage.setItem(`${getEntityStorageKey("settings")}_uoms`, JSON.stringify(updated));
   };
 
   const tabs = [
@@ -297,8 +299,7 @@ export default function SettingsPage() {
     { id: "uom", label: "Units of Measure", icon: Scale },
     { id: "email", label: "Email Setup", icon: Mail },
     { id: "users", label: "Users & Teams", icon: Globe },
-    { id: "integrations", label: "Integrations", icon: Database },
-    { id: "billing", label: "Billing", icon: CreditCard },
+    { id: "billing", label: "Billing & Plans", icon: CreditCard },
   ];
 
   const filteredLocales = WORLD_LOCALE_DATA.filter(loc => 
@@ -674,12 +675,126 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Other tabs */}
-            {["users", "integrations", "billing"].includes(activeTab) && (
-              <div className="py-12 flex flex-col items-center justify-center text-center">
-                <Settings size={48} className="text-gray-600 mb-4 animate-[spin_10s_linear_infinite]" />
-                <h3 className="text-lg font-medium text-white mb-2">Coming Soon</h3>
-                <p className="text-gray-400 max-w-xs">This configuration area is currently under active SaaS subscription packaging development.</p>
+            {/* Users & Teams Tab */}
+            {activeTab === "users" && (
+              <div className="space-y-6 max-w-2xl">
+                <div className="p-5 bg-purple-900/10 border border-purple-500/20 rounded-2xl">
+                  <h3 className="text-base font-bold text-white mb-1">
+                    Entity Structure: {activeBranch?.entityType === "individual" ? "Individual Entity (Single User)" : "Company Organization"}
+                  </h3>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    {activeBranch?.entityType === "individual"
+                      ? "Your workspace is configured as an independent Individual Entity managed by a single user. Only one concurrent session can be active worldwide at a time."
+                      : "Your workspace is configured as an independent Company Organization. Each user account enforces a single active login session worldwide at any given time."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Billing & SaaS Plans Tab (Strictly Plan Purchase & Status — No Payment Gateway Integration) */}
+            {activeTab === "billing" && (
+              <div className="space-y-6">
+                {/* Current Plan Banner */}
+                <div className="p-6 rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-900/20 via-indigo-900/15 to-transparent flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                        <CheckCircle2 size={12} /> {isFreePlan ? "FREE PLAN ACTIVE" : "PAID PLAN APPROVED"}
+                      </span>
+                      <span className="text-xs text-gray-400 font-mono">
+                        Entity: {activeBranch?.name || companyName || "My Entity"}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-black text-white">
+                      {planTier === "free"
+                        ? "One App Free Plan ($0.00)"
+                        : planTier === "standard"
+                        ? "Standard Full-Suite Plan ($1/mo Annual · $5/mo Monthly)"
+                        : "Custom Enterprise Plan ($37.40/mo Annual · $46.80/mo Monthly)"}
+                    </h3>
+                    <p className="text-xs text-gray-300 mt-1">
+                      {isFreePlan
+                        ? `Active Free App: ${(freePlanModule || activeBranch?.modules?.[0] || "/accounting").replace("/", "").toUpperCase()} + SETTINGS (Leads Pool requires a Paid Plan)`
+                        : "All 28 ERP & CRM Apps + Verified Leads Pool Unlocked"}
+                    </p>
+                  </div>
+                  <Link
+                    href="/billing"
+                    className="px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-purple-600/25 flex items-center gap-2 shrink-0 transition-all"
+                  >
+                    <Sparkles size={15} /> Buy / Upgrade Plan <ArrowRight size={14} />
+                  </Link>
+                </div>
+
+                {/* Available Beraxis Plans to Buy */}
+                <div>
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-3">
+                    Available Beraxis Subscription Plans
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Free Plan */}
+                    <div className={`p-5 rounded-2xl border ${planTier === "free" ? "border-purple-500 bg-purple-500/10" : "border-gray-800 bg-[#141A28]"} flex flex-col justify-between`}>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-bold text-white">One App Free</span>
+                          {planTier === "free" && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300">Current</span>}
+                        </div>
+                        <div className="text-2xl font-black text-white mb-1">$0 <span className="text-xs font-normal text-gray-400">/ forever</span></div>
+                        <p className="text-xs text-gray-400 mb-4">1 Major App of your choice + Settings. Leads Pool is not included.</p>
+                      </div>
+                      <Link
+                        href="/billing"
+                        className="w-full py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-center text-xs font-bold text-gray-300 transition-colors"
+                      >
+                        {planTier === "free" ? "Active Plan" : "View Plan"}
+                      </Link>
+                    </div>
+
+                    {/* Standard Plan */}
+                    <div className={`p-5 rounded-2xl border ${planTier === "standard" ? "border-emerald-500 bg-emerald-500/10" : "border-purple-500/40 bg-[#141A28]"} flex flex-col justify-between`}>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-bold text-white">Standard Plan</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">96% OFF</span>
+                        </div>
+                        <div className="text-2xl font-black text-white mb-1">$1.00 <span className="text-xs font-normal text-gray-400">/ mo (Annual) or $5/mo</span></div>
+                        <p className="text-xs text-gray-400 mb-4">All 28 ERP/CRM Apps + 1,500 Verified Leads Pool credits/mo.</p>
+                      </div>
+                      <Link
+                        href="/billing"
+                        className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-center text-xs font-bold text-white transition-colors shadow-md"
+                      >
+                        {planTier === "standard" ? "Manage / Renew Plan" : "Buy Standard Plan →"}
+                      </Link>
+                    </div>
+
+                    {/* Enterprise Plan */}
+                    <div className={`p-5 rounded-2xl border ${planTier === "premium" ? "border-emerald-500 bg-emerald-500/10" : "border-gray-800 bg-[#141A28]"} flex flex-col justify-between`}>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-bold text-white">Custom Enterprise</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">Multi-Company</span>
+                        </div>
+                        <div className="text-2xl font-black text-white mb-1">$37.40 <span className="text-xs font-normal text-gray-400">/ mo (Annual) or $46.80/mo</span></div>
+                        <p className="text-xs text-gray-400 mb-4">3 Companies included + 5,000+ Leads Pool credits/mo + Beraxis Studio.</p>
+                      </div>
+                      <Link
+                        href="/billing"
+                        className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-center text-xs font-bold text-white transition-colors"
+                      >
+                        {planTier === "premium" ? "Manage Enterprise Plan" : "Buy Enterprise Plan →"}
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Strict Super Admin Gateway & POS Machine Terminal Policy */}
+                <div className="p-4 rounded-xl bg-[#0F172A] border border-gray-800 flex items-start gap-3">
+                  <ShieldCheck size={18} className="text-purple-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-gray-400 leading-relaxed">
+                    <strong className="text-gray-200">Platform Billing & Payment Policy:</strong> All SaaS subscription payments and payment gateways are centrally operated by the <strong className="text-white">Beraxis Super Admin</strong>. Workspace accounts cannot integrate external payment gateways to collect online payments. Within your workspace apps, you can view accounting figures and physical POS terminal machine transaction statuses (<span className="text-emerald-400 font-semibold">Approved</span> / <span className="text-rose-400 font-semibold">Not Approved</span>) only.
+                  </div>
+                </div>
               </div>
             )}
 

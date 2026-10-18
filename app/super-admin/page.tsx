@@ -177,6 +177,9 @@ export default function SuperAdminPage() {
     const [isChangePlanOpen, setIsChangePlanOpen] = useState<Workspace | null>(null);
     const [isTestDirectPayOpen, setIsTestDirectPayOpen] = useState(false);
     const [directPayTestResult, setDirectPayTestResult] = useState<any>(null);
+    const [directPayClientId, setDirectPayClientId] = useState("pwa_ci_k1qlq54hv4gw5pr0khux");
+    const [directPayClientSecret, setDirectPayClientSecret] = useState("pwa_secret_zp5rai8z02zr3o5sebm1co6uxci58uca");
+    const [directPayEnabled, setDirectPayEnabled] = useState(true);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     // Form inputs
@@ -1526,6 +1529,103 @@ export default function SuperAdminPage() {
                                 <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Monthly Card Revenue</p>
                                 <p className="text-3xl font-black text-purple-400">${monthlySaaSRevenue.toLocaleString()}</p>
                                 <p className="text-xs text-gray-500 mt-1">DirectPay gateway card transactions</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-[#111827] rounded-3xl border border-purple-500/30 p-6 shadow-2xl space-y-5">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-11 h-11 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold text-lg">
+                                        ⚡
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-base font-bold text-white">Super Admin SaaS Payment Gateway — DirectPay (Payin PWA)</h3>
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                                Super Admin Exclusive
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-0.5">
+                                            Platform gateway used exclusively by Beraxis Super Admin to collect $1/$5 Standard and $37.40/$46.80 Enterprise subscription plan payments from users.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={directPayEnabled}
+                                            onChange={e => setDirectPayEnabled(e.target.checked)}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            localStorage.setItem("superadmin_directpay_client_id", directPayClientId);
+                                            localStorage.setItem("superadmin_directpay_client_secret", directPayClientSecret);
+                                            localStorage.setItem("superadmin_directpay_enabled", String(directPayEnabled));
+                                            showToast("Super Admin DirectPay SaaS Gateway settings saved!");
+                                        }}
+                                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-600/20 cursor-pointer"
+                                    >
+                                        Save Gateway Keys
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">DirectPay Client ID</label>
+                                    <input
+                                        type="text"
+                                        value={directPayClientId}
+                                        onChange={e => setDirectPayClientId(e.target.value)}
+                                        className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">DirectPay Client Secret</label>
+                                    <input
+                                        type="password"
+                                        value={directPayClientSecret}
+                                        onChange={e => setDirectPayClientSecret(e.target.value)}
+                                        className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Payin Landing Page URL</label>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value="https://payin-pwa.directpay.pro/pay"
+                                        className="w-full bg-[#0B0F19]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-400 font-mono text-xs outline-none cursor-not-allowed"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Inquiry / Status URL</label>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value="https://payin-pwa.directpay.pro/pay/status"
+                                        className="w-full bg-[#0B0F19]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-400 font-mono text-xs outline-none cursor-not-allowed"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2 border-t border-gray-800/80">
+                                <div className="flex-1">
+                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Webhook Notification URL (IPN Settlement)</label>
+                                    <code className="text-xs text-emerald-400 font-mono">https://beraxis.online/api/payments/directpay/webhook</code>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleTestDirectPay}
+                                    className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-bold transition-all border border-white/10 flex items-center gap-2 cursor-pointer shrink-0"
+                                >
+                                    🧪 Test DirectPay Gateway Connection
+                                </button>
                             </div>
                         </div>
 
