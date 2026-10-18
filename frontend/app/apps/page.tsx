@@ -43,7 +43,10 @@ import {
     X,
     Dumbbell,
     HeartHandshake,
-    Settings
+    Settings,
+    Lock,
+    Crown,
+    User
 } from "lucide-react";
 import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
 import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
@@ -68,36 +71,34 @@ const INDUSTRY_ICON_MAP: Record<string, any> = {
     HeartHandshake
 };
 
-// All 30+ Enterprise apps with vibrant colors matching Screenshot 1
+// Complete Enterprise App Catalog
 const allApps = [
-    // Specialized Industry & Sports Hubs
-    { name: "Club & Fitness", icon: Dumbbell, color: "bg-emerald-600", href: "/club" },
-    { name: "NGOs & Grants", icon: HeartHandshake, color: "bg-rose-600", href: "/ngos" },
-    
-    // Commerce & POS
-    { name: "Point of Sale", icon: ShoppingCart, color: "bg-amber-600", href: "/pos" },
-    { name: "Kitchen Display", icon: UtensilsCrossed, color: "bg-red-600", href: "/pos/kds" },
-    { name: "Recipes & BOM", icon: BookOpen, color: "bg-orange-600", href: "/pos/recipes" },
+    // Core & Retail
+    { name: "Point of Sale", icon: ShoppingBag, color: "bg-amber-600", href: "/pos" },
+    { name: "Kitchen (KDS)", icon: UtensilsCrossed, color: "bg-red-600", href: "/pos/kds" },
+    { name: "Recipes & BOM", icon: ClipboardList, color: "bg-orange-600", href: "/pos/recipes" },
     { name: "Floor & Tables", icon: Grid3x3, color: "bg-amber-700", href: "/pos/tables" },
-    
-    // Core Operations & Supply Chain
+    { name: "Club Hub", icon: Dumbbell, color: "bg-emerald-600", href: "/club" },
+    { name: "NGOs & Grants", icon: HeartHandshake, color: "bg-rose-600", href: "/ngos" },
+    { name: "Website", icon: Globe, color: "bg-blue-600", href: "/website" },
+    { name: "eCommerce", icon: ShoppingCart, color: "bg-emerald-600", href: "/shop" },
     { name: "Inventory", icon: Package, color: "bg-purple-600", href: "/inventory" },
     { name: "Barcode", icon: Barcode, color: "bg-[#e11d74]", href: "/barcode" },
     { name: "Purchase", icon: ShoppingCart, color: "bg-pink-600", href: "/purchase" },
     { name: "Sales", icon: BarChart3, color: "bg-orange-500", href: "/sales" },
     { name: "Accounting", icon: CreditCard, color: "bg-red-500", href: "/accounting" },
-    
+
     // CRM & Growth
     { name: "CRM", icon: Target, color: "bg-cyan-600", href: "/crm" },
-    { name: "Leads Pool", icon: Globe, color: "bg-cyan-500", href: "/crm/leads-pool" },
+    { name: "Leads Pool", icon: Globe, color: "bg-cyan-500", href: "/crm/leads-pool", paidOnly: true },
     { name: "Contacts", icon: Users, color: "bg-purple-500", href: "/contacts" },
-    
+
     // Operations & Projects
     { name: "Project", icon: Palette, color: "bg-blue-600", href: "/project" },
     { name: "Timesheets", icon: Clock, color: "bg-indigo-500", href: "/timesheets" },
     { name: "Planning", icon: Grid3x3, color: "bg-yellow-500", href: "/planning" },
     { name: "Manufacturing", icon: Cog, color: "bg-[#d9480f]", href: "/manufacturing" },
-    
+
     // HR & Talent
     { name: "Employees", icon: UserCircle, color: "bg-[#4338ca]", href: "/employees" },
     { name: "Contracts", icon: PenTool, color: "bg-blue-500", href: "/employees/contracts" },
@@ -105,7 +106,7 @@ const allApps = [
     { name: "Attendances", icon: UserCheck, color: "bg-[#f97316]", href: "/attendances" },
     { name: "Recruitment", icon: Target, color: "bg-[#0d9488]", href: "/recruitment" },
     { name: "Team", icon: Users, color: "bg-[#9333ea]", href: "/team" },
-    
+
     // Specialized Subsystems
     { name: "Sign", icon: PenTool, color: "bg-[#06b6d4]", href: "/sign" },
     { name: "Documents", icon: BookOpen, color: "bg-[#3b82f6]", href: "/documents" },
@@ -113,9 +114,10 @@ const allApps = [
     { name: "Reports", icon: PieChart, color: "bg-[#7e22ce]", href: "/reports" },
     { name: "Vehicle Jobs", icon: Wrench, color: "bg-red-600", href: "/automotive" },
     { name: "Properties", icon: Building2, color: "bg-indigo-600", href: "/real-estate" },
-    { name: "Academy", icon: GraduationCap, color: "bg-teal-600", href: "/education" },
-    { name: "Appointments", icon: ClipboardList, color: "bg-cyan-500", href: "/appointments" },
-    { name: "Discuss", icon: LayoutDashboard, color: "bg-orange-500", href: "/discuss" },
+    { name: "Education", icon: GraduationCap, color: "bg-teal-600", href: "/education" },
+    { name: "Appointments", icon: Calendar, color: "bg-cyan-500", href: "/appointments" },
+    { name: "Discuss", icon: MessageSquare, color: "bg-orange-500", href: "/discuss" },
+    { name: "Meet", icon: Users, color: "bg-purple-600", href: "/meet" },
     { name: "Knowledge", icon: BookOpen, color: "bg-teal-500", href: "/knowledge" },
     { name: "To do", icon: CheckSquare, color: "bg-blue-500", href: "/todo" },
     { name: "Calendar", icon: Calendar, color: "bg-yellow-600", href: "/calendar" },
@@ -123,6 +125,11 @@ const allApps = [
     { name: "Dashboards", icon: Grid3x3, color: "bg-pink-500", href: "/dashboard" },
     { name: "Settings", icon: Cog, color: "bg-[#64748b]", href: "/settings" }
 ];
+
+// Selectable apps for Free Plan (excludes Settings which is always free, and excludes Leads Pool which is Paid Only)
+const FREE_PLAN_SELECTABLE_APPS = allApps.filter(
+    app => app.href !== "/settings" && app.href !== "/crm/leads-pool"
+);
 
 export default function AppsDashboardPage() {
     const router = useRouter();
@@ -135,18 +142,30 @@ export default function AppsDashboardPage() {
         activeBranch,
         activeIndustry,
         hasSelectedIndustry,
+        isFreePlan,
+        userPlan,
+        freeSelectedApp,
+        setFreeSelectedApp,
         createBranch,
-        resetToIndustrySelection,
-        isModuleActive
+        isModuleActive,
+        refreshUserContext
     } = useBranchContext();
 
-    // Industry Selection Mode
+    // Industry Selection & Onboarding Mode
     const [isSelectingIndustry, setIsSelectingIndustry] = useState(false);
     const [isManageAppsModalOpen, setIsManageAppsModalOpen] = useState(false);
-    const [selectedIndId, setSelectedIndId] = useState<GlobalIndustryId>("food_beverage");
+    const [upgradePromptModal, setUpgradePromptModal] = useState<{ open: boolean; title: string; reason: string }>({
+        open: false,
+        title: "",
+        reason: ""
+    });
+
+    const [selectedIndId, setSelectedIndId] = useState<GlobalIndustryId>("professional_services");
     const [selectedSubSector, setSelectedSubSector] = useState("");
     const [selectedOpMode, setSelectedOpMode] = useState("");
     const [companyName, setCompanyName] = useState("");
+    const [entityType, setEntityType] = useState<"individual" | "company">("individual");
+    const [chosenFreeAppHref, setChosenFreeAppHref] = useState<string>("/accounting");
 
     useEffect(() => {
         setMounted(true);
@@ -156,37 +175,98 @@ export default function AppsDashboardPage() {
             return;
         }
 
+        refreshUserContext();
+
         const cachedUserStr = localStorage.getItem("user");
         if (cachedUserStr) {
             try {
-                setUserData(JSON.parse(cachedUserStr));
+                const parsed = JSON.parse(cachedUserStr);
+                setUserData(parsed);
+                const accType = parsed.account_type || parsed.user_metadata?.account_type || "individual";
+                setEntityType(accType === "company" ? "company" : "individual");
+                const initialCompName =
+                    parsed.company_name ||
+                    parsed.user_metadata?.company_name ||
+                    (parsed.name ? `${parsed.name}'s Entity` : "");
+                if (initialCompName) {
+                    setCompanyName(initialCompName);
+                }
             } catch {}
         }
-    }, [router]);
+
+        const defaultInd = getIndustryById("professional_services");
+        setSelectedSubSector(defaultInd.subSectors[0] || "");
+        setSelectedOpMode(defaultInd.operationModes[0]?.id || "default");
+    }, [router, refreshUserContext]);
+
+    useEffect(() => {
+        if (freeSelectedApp && freeSelectedApp !== "/settings" && freeSelectedApp !== "/crm/leads-pool") {
+            setChosenFreeAppHref(freeSelectedApp);
+        }
+    }, [freeSelectedApp]);
 
     const handlePickIndustry = (indId: GlobalIndustryId) => {
         setSelectedIndId(indId);
         const ind = getIndustryById(indId);
         setSelectedSubSector(ind.subSectors[0] || "");
         setSelectedOpMode(ind.operationModes[0]?.id || "default");
-        if (!companyName || companyName.endsWith("Company") || companyName.endsWith("Hub")) {
-            setCompanyName(`${ind.name.split(" ")[0]} Company`);
+        // Recommend primary app from this industry if on Free Plan and user hasn't explicitly picked from billing
+        if (isFreePlan && !freeSelectedApp) {
+            const firstRecommended = ind.defaultModules.find(
+                m => m !== "/settings" && m !== "/crm/leads-pool"
+            );
+            if (firstRecommended) {
+                setChosenFreeAppHref(firstRecommended);
+            }
         }
     };
 
     const handleOpenIndustrySelection = () => {
-        const ind = getIndustryById("food_beverage");
-        setSelectedIndId("food_beverage");
+        if (isFreePlan && branches.length >= 1) {
+            setUpgradePromptModal({
+                open: true,
+                title: "Multi-Company Requires Paid Plan",
+                reason: "Your Free Plan includes 1 independent Company / Individual Entity workspace. Upgrade to Standard or Custom Enterprise to create and manage multiple companies."
+            });
+            return;
+        }
+        const ind = getIndustryById("professional_services");
+        setSelectedIndId("professional_services");
         setSelectedSubSector(ind.subSectors[0]);
-        setSelectedOpMode(ind.operationModes[0]?.id || "hybrid");
-        setCompanyName("Downtown Artisan Bakery & Cafe");
+        setSelectedOpMode(ind.operationModes[0]?.id || "default");
+        setCompanyName("");
         setIsSelectingIndustry(true);
     };
 
     const handleConfirmLaunch = (e: React.FormEvent) => {
         e.preventDefault();
         const ind = getIndustryById(selectedIndId);
-        const nameFinal = companyName.trim() || `${ind.name.split(" ")[0]} Company`;
+        const fallbackName =
+            entityType === "individual"
+                ? `${userData?.name || userData?.email?.split("@")[0] || "My"} Individual Entity`
+                : `${ind.name.split(" ")[0]} Company`;
+        const nameFinal = companyName.trim() || fallbackName;
+
+        let modulesToEnable: string[];
+        if (isFreePlan) {
+            const appToUse = chosenFreeAppHref || "/accounting";
+            setFreeSelectedApp(appToUse);
+            modulesToEnable = [appToUse, "/settings"];
+        } else {
+            modulesToEnable = Array.from(new Set([...ind.defaultModules, "/settings"]));
+        }
+
+        // Persist entityType on user object
+        try {
+            if (userData) {
+                const updatedUser = {
+                    ...userData,
+                    account_type: entityType,
+                    company_name: nameFinal
+                };
+                localStorage.setItem("user", JSON.stringify(updatedUser));
+            }
+        } catch {}
 
         createBranch({
             name: nameFinal,
@@ -196,29 +276,52 @@ export default function AppsDashboardPage() {
             operationMode: selectedOpMode || ind.operationModes[0]?.id || "default",
             location: "Main Location",
             currency: "$ USD",
-            enabledModules: ind.defaultModules,
+            enabledModules: modulesToEnable,
             sharingRules: {
-                shareEmployees: true,
-                shareCustomers: true,
+                shareEmployees: false,
+                shareCustomers: false,
                 shareInventory: false,
-                shareAccounting: true,
-                shareVendors: true
+                shareAccounting: false,
+                shareVendors: false
             },
-            isPrimary: branches.length === 0
+            isPrimary: branches.length === 0,
+            accountType: entityType
         });
 
         setIsSelectingIndustry(false);
     };
 
-    // Filter apps based on active industry/branch
+    // Strict App Filtering:
+    // - On Free Plan: ONLY the 1 chosen major app + Settings (/settings). NEVER Leads Pool!
+    // - On Paid Plan: All enabled modules for the active industry/company + Leads Pool + Settings.
     const displayedApps = activeBranch
-        ? allApps.filter(app => isModuleActive(app.href) || app.href === "/settings" || app.href === "/dashboard" || app.href === "/crm/leads-pool")
-        : allApps;
+        ? isFreePlan
+            ? allApps.filter(app => {
+                  if (app.href === "/crm/leads-pool") return false;
+                  if (app.href === "/settings") return true;
+                  const activeFreeHref =
+                      freeSelectedApp ||
+                      activeBranch.enabledModules.find(
+                          m => m !== "/settings" && m !== "/crm/leads-pool"
+                      ) ||
+                      chosenFreeAppHref;
+                  return app.href === activeFreeHref;
+              })
+            : allApps.filter(
+                  app =>
+                      isModuleActive(app.href) ||
+                      app.href === "/settings" ||
+                      app.href === "/dashboard" ||
+                      app.href === "/crm/leads-pool"
+              )
+        : [];
 
     const chosenInd = getIndustryById(selectedIndId);
     const ChosenIcon = INDUSTRY_ICON_MAP[chosenInd.iconName] || Building2;
 
     const showOnboarding = !hasSelectedIndustry || isSelectingIndustry || !activeBranch;
+
+    if (!mounted) return null;
 
     return (
         <div className="min-h-screen bg-transparent text-white flex flex-col selection:bg-purple-500 selection:text-white">
@@ -235,6 +338,15 @@ export default function AppsDashboardPage() {
                             {activeIndustry.name}
                         </span>
                     )}
+                    <span
+                        className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                            isFreePlan
+                                ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                                : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                        }`}
+                    >
+                        {isFreePlan ? "FREE PLAN (1 APP + SETTINGS)" : `${userPlan.toUpperCase()} PLAN`}
+                    </span>
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -242,12 +354,22 @@ export default function AppsDashboardPage() {
                         <>
                             <UniversalBranchSwitcher />
                             <button
-                                onClick={() => setIsManageAppsModalOpen(true)}
+                                onClick={() => {
+                                    if (isFreePlan) {
+                                        setUpgradePromptModal({
+                                            open: true,
+                                            title: "Unlock All 28 Apps & 25M+ Leads Pool",
+                                            reason: "Your Free Plan allows 1 Major App + Settings. Upgrade to a Paid Plan ($1/mo Early Bird) to install unlimited ERP/CRM apps and unlock the 25.8M+ B2B Leads Pool."
+                                        });
+                                    } else {
+                                        setIsManageAppsModalOpen(true);
+                                    }
+                                }}
                                 className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-[#141b2c] hover:bg-[#1c243a] border border-purple-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
                                 title="Install or manage apps for active company"
                             >
                                 <Settings size={13} className="text-purple-400" />
-                                <span>+ Manage Apps</span>
+                                <span>{isFreePlan ? "Unlock More Apps" : "+ Manage Apps"}</span>
                             </button>
                             <button
                                 onClick={handleOpenIndustrySelection}
@@ -257,6 +379,14 @@ export default function AppsDashboardPage() {
                             </button>
                         </>
                     )}
+
+                    <Link
+                        href="/billing"
+                        title="Subscription & Plans"
+                        className="hidden sm:flex items-center gap-1 text-amber-300 hover:text-amber-200 transition-colors px-2.5 py-1.5 rounded-xl border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 text-xs font-bold"
+                    >
+                        <Crown size={13} /> {isFreePlan ? "Upgrade Plan" : "Billing"}
+                    </Link>
 
                     <Link
                         href="/"
@@ -273,16 +403,18 @@ export default function AppsDashboardPage() {
 
             {/* Main Canvas Area */}
             <main className="flex-1 max-w-7xl w-full mx-auto p-6 sm:p-10 flex flex-col justify-center">
-                
-                {/* ─── ONBOARDING / INDUSTRY SELECTION GATEWAY (Ultra Clean) ─── */}
+                {/* ─── ONBOARDING / INDUSTRY & COMPANY SELECTION GATEWAY ─── */}
                 {showOnboarding ? (
                     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200 py-4">
                         <div className="text-center space-y-2 max-w-2xl mx-auto">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                                <Sparkles size={12} /> Independent Entity & Workspace Setup
+                            </span>
                             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                                Select Your Business Industry
+                                Set Up Your Company & Business Industry
                             </h1>
                             <p className="text-gray-400 text-xs sm:text-sm">
-                                Choose the industry that matches your company to instantly load its tailored apps.
+                                Every account operates as an independent, isolated entity with its own private database. Select your industry and configure your workspace below.
                             </p>
                             {branches.length > 0 && (
                                 <button
@@ -294,71 +426,140 @@ export default function AppsDashboardPage() {
                             )}
                         </div>
 
-                        {/* 12 Clean Industry Squircle Icons */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 max-w-5xl mx-auto">
-                            {GLOBAL_INDUSTRIES.map(industry => {
-                                const isSelected = selectedIndId === industry.id;
-                                const IconComponent = INDUSTRY_ICON_MAP[industry.iconName] || Building2;
+                        {/* Step 1: 12 Clean Industry Squircle Icons */}
+                        <div>
+                            <div className="text-center text-xs font-bold uppercase tracking-wider text-purple-300 mb-4">
+                                1. Choose Your Industry Sector
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-5 max-w-5xl mx-auto">
+                                {GLOBAL_INDUSTRIES.map(industry => {
+                                    const isSelected = selectedIndId === industry.id;
+                                    const IconComponent = INDUSTRY_ICON_MAP[industry.iconName] || Building2;
 
-                                return (
-                                    <button
-                                        key={industry.id}
-                                        type="button"
-                                        onClick={() => handlePickIndustry(industry.id)}
-                                        className="flex flex-col items-center gap-3 p-2 rounded-2xl group transition-all cursor-pointer focus:outline-none"
-                                    >
-                                        <div
-                                            className={`w-18 h-18 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl ${industry.themeColor} flex items-center justify-center text-white shadow-xl transition-all duration-200 group-hover:scale-105 ${
-                                                isSelected ? "ring-4 ring-purple-400 scale-105 shadow-purple-600/50" : "opacity-85 group-hover:opacity-100"
-                                            }`}
+                                    return (
+                                        <button
+                                            key={industry.id}
+                                            type="button"
+                                            onClick={() => handlePickIndustry(industry.id)}
+                                            className="flex flex-col items-center gap-2.5 p-2 rounded-2xl group transition-all cursor-pointer focus:outline-none"
                                         >
-                                            <IconComponent className="w-9 h-9 text-white" />
-                                        </div>
-                                        <span className={`text-xs sm:text-sm font-semibold text-center transition-colors ${
-                                            isSelected ? "text-purple-300 font-bold" : "text-gray-300 group-hover:text-white"
-                                        }`}>
-                                            {industry.name.split(" (")[0]}
-                                        </span>
-                                    </button>
-                                );
-                            })}
+                                            <div
+                                                className={`w-16 h-16 sm:w-18 sm:h-18 rounded-2xl sm:rounded-3xl ${industry.themeColor} flex items-center justify-center text-white shadow-xl transition-all duration-200 group-hover:scale-105 ${
+                                                    isSelected
+                                                        ? "ring-4 ring-purple-400 scale-105 shadow-purple-600/50"
+                                                        : "opacity-85 group-hover:opacity-100"
+                                                }`}
+                                            >
+                                                <IconComponent className="w-8 h-8 text-white" />
+                                            </div>
+                                            <span
+                                                className={`text-xs font-semibold text-center transition-colors ${
+                                                    isSelected
+                                                        ? "text-purple-300 font-bold"
+                                                        : "text-gray-300 group-hover:text-white"
+                                                }`}
+                                            >
+                                                {industry.name.split(" (")[0]}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
-                        {/* Clean Configuration Form */}
-                        <div className="max-w-xl mx-auto bg-[#0e1322]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-4">
-                            <div className="flex items-center gap-3 pb-3 border-b border-white/10">
-                                <div className={`w-10 h-10 rounded-xl ${chosenInd.themeColor} flex items-center justify-center text-white`}>
-                                    <ChosenIcon size={20} />
+                        {/* Step 2 & 3: Entity Details + Free Plan 1-App Selection */}
+                        <div className="max-w-3xl mx-auto bg-[#0e1322]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+                            <div className="flex items-center justify-between pb-4 border-b border-white/10 flex-wrap gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-11 h-11 rounded-xl ${chosenInd.themeColor} flex items-center justify-center text-white shadow-lg`}>
+                                        <ChosenIcon size={22} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-white text-sm sm:text-base">{chosenInd.name}</h3>
+                                        <p className="text-xs text-gray-400">{chosenInd.tagline}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-white text-sm">{chosenInd.name}</h3>
-                                    <p className="text-[11px] text-gray-400">{chosenInd.tagline}</p>
-                                </div>
+                                <span
+                                    className={`text-[11px] font-extrabold uppercase px-3 py-1 rounded-full border ${
+                                        isFreePlan
+                                            ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+                                            : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                                    }`}
+                                >
+                                    {isFreePlan ? "Free Plan: 1 App + Settings" : `${userPlan.toUpperCase()} Plan: All Apps + Leads Pool`}
+                                </span>
                             </div>
 
-                            <form onSubmit={handleConfirmLaunch} className="space-y-4 text-xs">
+                            <form onSubmit={handleConfirmLaunch} className="space-y-5 text-xs">
+                                {/* Entity Type Selector: Individual vs Company */}
                                 <div>
-                                    <label className="font-bold text-gray-300 block mb-1">Company / Branch Name</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={companyName}
-                                        onChange={e => setCompanyName(e.target.value)}
-                                        placeholder="e.g. Downtown Artisan Bakery & Cafe"
-                                        className="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                                    />
+                                    <label className="font-bold text-gray-300 block mb-2">
+                                        2. Entity Structure (Independent Isolated Account)
+                                    </label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setEntityType("individual")}
+                                            className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
+                                                entityType === "individual"
+                                                    ? "border-purple-500 bg-purple-500/15 text-white shadow-lg"
+                                                    : "border-white/10 bg-black/40 text-gray-400 hover:text-white"
+                                            }`}
+                                        >
+                                            <User size={18} className="text-purple-400 shrink-0 mt-0.5" />
+                                            <div>
+                                                <div className="font-bold text-xs text-white">Individual Entity (Single User)</div>
+                                                <div className="text-[11px] text-gray-400 mt-0.5">
+                                                    Operate as an independent individual company with your own private data.
+                                                </div>
+                                            </div>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setEntityType("company")}
+                                            className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
+                                                entityType === "company"
+                                                    ? "border-purple-500 bg-purple-500/15 text-white shadow-lg"
+                                                    : "border-white/10 bg-black/40 text-gray-400 hover:text-white"
+                                            }`}
+                                        >
+                                            <Building2 size={18} className="text-cyan-400 shrink-0 mt-0.5" />
+                                            <div>
+                                                <div className="font-bold text-xs text-white">Company Organization</div>
+                                                <div className="text-[11px] text-gray-400 mt-0.5">
+                                                    Form an isolated company workspace (supports team members on paid plans).
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div className="sm:col-span-1">
+                                        <label className="font-bold text-gray-300 block mb-1">
+                                            {entityType === "individual" ? "Entity / Workspace Name *" : "Company Name *"}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={companyName}
+                                            onChange={e => setCompanyName(e.target.value)}
+                                            placeholder={entityType === "individual" ? "e.g. Alex Consulting" : "e.g. Acme Corp"}
+                                            className="w-full bg-black/60 border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                        />
+                                    </div>
                                     <div>
                                         <label className="font-bold text-gray-300 block mb-1">Sub-Sector</label>
                                         <select
                                             value={selectedSubSector}
                                             onChange={e => setSelectedSubSector(e.target.value)}
-                                            className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                                            className="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500"
                                         >
                                             {chosenInd.subSectors.map(s => (
-                                                <option key={s} value={s}>{s}</option>
+                                                <option key={s} value={s}>
+                                                    {s}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
@@ -367,24 +568,110 @@ export default function AppsDashboardPage() {
                                         <select
                                             value={selectedOpMode}
                                             onChange={e => setSelectedOpMode(e.target.value)}
-                                            className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                                            className="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500"
                                         >
                                             {chosenInd.operationModes.map(m => (
-                                                <option key={m.id} value={m.id}>{m.badge} - {m.name}</option>
+                                                <option key={m.id} value={m.id}>
+                                                    {m.badge} - {m.name}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
                                 </div>
 
-                                <div className="pt-3 flex items-center justify-between">
+                                {/* Step 3: Free Plan 1-App Selector */}
+                                {isFreePlan && (
+                                    <div className="pt-2 border-t border-white/10 space-y-3">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                            <div>
+                                                <label className="font-bold text-amber-300 text-xs flex items-center gap-1.5">
+                                                    <span>3. Select Your 1 Free Major App</span>
+                                                    <span className="text-[10px] bg-white/10 text-gray-300 px-2 py-0.5 rounded-full font-normal">
+                                                        + Settings included automatically
+                                                    </span>
+                                                </label>
+                                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                                    On the Free Plan, you can select <strong className="text-white">1 major app</strong> below.{" "}
+                                                    <span className="text-amber-300/90 font-semibold">
+                                                        Note: Leads Pool (25.8M+ B2B Leads) is only available on Paid Plans.
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            <Link
+                                                href="/billing"
+                                                className="text-[11px] font-bold text-purple-400 hover:text-purple-300 underline shrink-0"
+                                            >
+                                                Want all 28 apps + Leads Pool? Upgrade ($1/mo) →
+                                            </Link>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-56 overflow-y-auto p-2 bg-black/40 border border-white/10 rounded-2xl">
+                                            {FREE_PLAN_SELECTABLE_APPS.map(app => {
+                                                const AppIcon = app.icon;
+                                                const isPicked = chosenFreeAppHref === app.href;
+                                                const isIndDefault = chosenInd.defaultModules.includes(app.href);
+                                                return (
+                                                    <button
+                                                        key={app.href}
+                                                        type="button"
+                                                        onClick={() => setChosenFreeAppHref(app.href)}
+                                                        className={`p-2.5 rounded-xl border text-left transition-all flex items-center gap-2 cursor-pointer ${
+                                                            isPicked
+                                                                ? "border-purple-500 bg-purple-600/25 text-white ring-2 ring-purple-500/40 shadow-md"
+                                                                : "border-white/5 bg-white/[0.03] text-gray-400 hover:bg-white/[0.08] hover:text-white"
+                                                        }`}
+                                                    >
+                                                        <div className={`w-7 h-7 rounded-lg ${app.color} flex items-center justify-center text-white shrink-0`}>
+                                                            <AppIcon size={14} />
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="font-bold text-[11px] truncate">{app.name}</div>
+                                                            {isIndDefault && (
+                                                                <div className="text-[9px] text-purple-300 truncate">Recommended</div>
+                                                            )}
+                                                        </div>
+                                                        {isPicked && <Check size={13} className="text-emerald-400 shrink-0" />}
+                                                    </button>
+                                                );
+                                            })}
+
+                                            {/* Locked Leads Pool Tile (Paid Only) */}
+                                            <Link
+                                                href="/billing"
+                                                className="p-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-300/70 hover:bg-amber-500/10 transition-all flex items-center gap-2 cursor-pointer"
+                                                title="Leads Pool requires a Paid Plan"
+                                            >
+                                                <div className="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center text-amber-400 shrink-0">
+                                                    <Lock size={13} />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="font-bold text-[11px] truncate">Leads Pool</div>
+                                                    <div className="text-[9px] text-amber-400 font-semibold truncate">Paid Plan Only</div>
+                                                </div>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-white/10">
                                     <span className="text-[11px] text-gray-400">
-                                        {chosenInd.defaultModules.length} tailored apps will be configured
+                                        {isFreePlan ? (
+                                            <>
+                                                Active on Launch:{" "}
+                                                <strong className="text-white">
+                                                    {allApps.find(a => a.href === chosenFreeAppHref)?.name || "Accounting"}
+                                                </strong>{" "}
+                                                + <strong className="text-white">Settings</strong> (100% Isolated Data)
+                                            </>
+                                        ) : (
+                                            <>{chosenInd.defaultModules.length} tailored industry apps + Leads Pool will be configured</>
+                                        )}
                                     </span>
                                     <button
                                         type="submit"
-                                        className="flex items-center gap-1.5 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95 cursor-pointer"
+                                        className="flex items-center justify-center gap-1.5 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95 cursor-pointer"
                                     >
-                                        <span>Launch Workspace</span>
+                                        <span>Launch Isolated Workspace</span>
                                         <ChevronRight size={14} />
                                     </button>
                                 </div>
@@ -392,8 +679,36 @@ export default function AppsDashboardPage() {
                         </div>
                     </div>
                 ) : (
-                    /* ─── ULTRA-CLEAN APP GRID (MATCHING SCREENSHOT 1) ─── */
-                    <div className="py-6 sm:py-12 animate-in fade-in duration-200">
+                    /* ─── WORKSPACE APP GRID ─── */
+                    <div className="py-6 sm:py-12 animate-in fade-in duration-200 space-y-10">
+                        {isFreePlan && (
+                            <div className="max-w-4xl mx-auto bg-gradient-to-r from-purple-950/60 via-[#0F172A]/90 to-amber-950/40 border border-purple-500/30 rounded-2xl p-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0">
+                                        <Crown size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                                            <span>Free Plan Workspace ({activeBranch?.name})</span>
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                                1 Major App + Settings
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-gray-400 mt-0.5">
+                                            Upgrade to Standard ($1/mo Annual Early Bird) to unlock all 28 ERP/CRM apps and the{" "}
+                                            <strong className="text-cyan-300">25.8M+ Verified B2B Leads Pool</strong>.
+                                        </p>
+                                    </div>
+                                </div>
+                                <Link
+                                    href="/billing"
+                                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white font-bold text-xs shadow-lg whitespace-nowrap transition-all"
+                                >
+                                    Upgrade Plan →
+                                </Link>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-6 gap-y-10 sm:gap-x-8 sm:gap-y-12 max-w-6xl mx-auto">
                             {displayedApps.map(app => {
                                 const IconComponent = app.icon;
@@ -405,7 +720,9 @@ export default function AppsDashboardPage() {
                                         className="group flex flex-col items-center gap-3.5 focus:outline-none cursor-pointer"
                                     >
                                         {/* Vibrant Squircle Icon */}
-                                        <div className={`w-20 h-20 sm:w-22 sm:h-22 rounded-3xl ${app.color} flex items-center justify-center text-white shadow-xl shadow-black/40 group-hover:scale-110 transition-transform duration-200 ease-out`}>
+                                        <div
+                                            className={`w-20 h-20 sm:w-22 sm:h-22 rounded-3xl ${app.color} flex items-center justify-center text-white shadow-xl shadow-black/40 group-hover:scale-110 transition-transform duration-200 ease-out`}
+                                        >
                                             <IconComponent className="w-10 h-10 text-white" strokeWidth={1.8} />
                                         </div>
 
@@ -417,24 +734,88 @@ export default function AppsDashboardPage() {
                                 );
                             })}
 
+                            {/* Locked Leads Pool Tile for Free Plan Users */}
+                            {isFreePlan && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setUpgradePromptModal({
+                                            open: true,
+                                            title: "Leads Pool Requires a Paid Plan",
+                                            reason: "The 25.8M+ Verified B2B Leads Pool & Live Business Scraper is exclusively available on Paid Plans (Standard or Custom Enterprise). Upgrade your subscription to unlock instant lead extraction."
+                                        })
+                                    }
+                                    className="group flex flex-col items-center gap-3.5 focus:outline-none cursor-pointer relative"
+                                    title="Leads Pool is available only on Paid Plans"
+                                >
+                                    <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-3xl bg-gray-900/80 border-2 border-amber-500/40 flex items-center justify-center text-amber-400 shadow-xl shadow-black/40 group-hover:scale-105 transition-transform duration-200 ease-out relative">
+                                        <Globe className="w-9 h-9 opacity-40" strokeWidth={1.8} />
+                                        <div className="absolute -top-2 -right-2 bg-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-md">
+                                            <Lock size={10} /> PAID
+                                        </div>
+                                    </div>
+                                    <span className="text-xs sm:text-sm font-medium text-amber-300/80 group-hover:text-amber-300 transition-colors text-center tracking-tight">
+                                        Leads Pool 🔒
+                                    </span>
+                                </button>
+                            )}
+
                             {/* + Add / Install More Apps Tile */}
                             <button
                                 type="button"
-                                onClick={() => setIsManageAppsModalOpen(true)}
+                                onClick={() => {
+                                    if (isFreePlan) {
+                                        setUpgradePromptModal({
+                                            open: true,
+                                            title: "Upgrade to Unlock All 28 Modules",
+                                            reason: "Free Plan users can access 1 selected major app plus Settings. Upgrade to Standard ($1/mo Early Bird) or Custom Enterprise to unlock all 28 ERP & CRM apps."
+                                        });
+                                    } else {
+                                        setIsManageAppsModalOpen(true);
+                                    }
+                                }}
                                 className="group flex flex-col items-center gap-3.5 focus:outline-none cursor-pointer"
-                                title="Add or remove modules from active company"
+                                title={isFreePlan ? "Upgrade to unlock more apps" : "Add or remove modules from active company"}
                             >
                                 <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-3xl bg-gradient-to-br from-purple-900/30 via-[#141b2c] to-indigo-950/30 border-2 border-dashed border-purple-500/50 hover:border-purple-400 flex items-center justify-center text-purple-300 hover:text-white shadow-xl shadow-black/40 group-hover:scale-110 transition-transform duration-200 ease-out">
                                     <Plus className="w-9 h-9" strokeWidth={2} />
                                 </div>
                                 <span className="text-xs sm:text-sm font-semibold text-purple-400 group-hover:text-purple-300 transition-colors text-center tracking-tight">
-                                    + Add Apps
+                                    {isFreePlan ? "+ Unlock Apps" : "+ Add Apps"}
                                 </span>
                             </button>
                         </div>
                     </div>
                 )}
             </main>
+
+            {/* Upgrade Plan Modal for Free Plan Restrictions */}
+            {upgradePromptModal.open && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="max-w-md w-full bg-[#0F172A] border border-purple-500/40 rounded-3xl p-6 shadow-2xl space-y-4 text-center">
+                        <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
+                            <Lock size={26} />
+                        </div>
+                        <h3 className="text-lg font-extrabold text-white">{upgradePromptModal.title}</h3>
+                        <p className="text-xs text-gray-300 leading-relaxed">{upgradePromptModal.reason}</p>
+                        <div className="flex items-center gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setUpgradePromptModal({ open: false, title: "", reason: "" })}
+                                className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white text-xs font-bold"
+                            >
+                                Close
+                            </button>
+                            <Link
+                                href="/billing"
+                                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-bold shadow-lg"
+                            >
+                                View Paid Plans →
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Persistent Support Widgets */}
             <BeraxisSupportWidgets />

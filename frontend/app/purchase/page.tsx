@@ -22,11 +22,7 @@ type RFQ = {
     date: string;
 };
 
-const mockRFQs: RFQ[] = [
-    { id: "RFQ001", vendor: "Supplier A", total: 15000, status: "draft", date: "2025-12-01" },
-    { id: "RFQ002", vendor: "Supplier B", total: 28000, status: "sent", date: "2025-12-02" },
-    { id: "RFQ003", vendor: "Supplier C", total: 42000, status: "confirmed", date: "2025-12-03" },
-];
+const mockRFQs: RFQ[] = [];
 
 export default function PurchasePage() {
     const [rfqs] = useState<RFQ[]>(mockRFQs);

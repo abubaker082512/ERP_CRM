@@ -26,11 +26,7 @@ type Employee = {
     manager: string;
 };
 
-const mockEmployees: Employee[] = [
-    { id: "EMP001", name: "John Smith", role: "Sales Manager", department: "Sales", email: "john.smith@company.com", phone: "+1 555 0101", location: "New York", status: "active", manager: "Sarah Connor" },
-    { id: "EMP002", name: "Jane Doe", role: "Software Engineer", department: "IT", email: "jane.doe@company.com", phone: "+1 555 0102", location: "San Francisco", status: "active", manager: "Mike Ross" },
-    { id: "EMP003", name: "Bob Wilson", role: "HR Specialist", department: "Human Resources", email: "bob.wilson@company.com", phone: "+1 555 0103", location: "New York", status: "on_leave", manager: "Alice Wonderland" },
-];
+const mockEmployees: Employee[] = [];
 
 export default function EmployeesPage() {
     const [employees] = useState<Employee[]>(mockEmployees);

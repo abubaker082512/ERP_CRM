@@ -156,17 +156,6 @@ def read_leads(
     except Exception:
         rows = []
 
-    if not rows:
-        try:
-            svc = get_service_role_client()
-            query = svc.table("crm_lead").select("*")
-            if lead_type:
-                query = query.eq("type", lead_type)
-            response = query.order("created_at", desc=True).range(skip, skip + limit - 1).execute()
-            rows = response.data or []
-        except Exception:
-            rows = []
-
     return [_map_crm_lead(r) for r in rows]
 
 @router.get("/{lead_id}", response_model=Lead)

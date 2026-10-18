@@ -24,11 +24,7 @@ type Project = {
     deadline: string;
 };
 
-const mockProjects: Project[] = [
-    { id: "PRJ/001", name: "Website Redesign", manager: "John Doe", customer: "Acme Corp", status: "in_progress", tasks: 12, progress: 45, deadline: "2025-12-31" },
-    { id: "PRJ/002", name: "Mobile App Dev", manager: "Jane Smith", customer: "Tech Solutions", status: "planning", tasks: 8, progress: 10, deadline: "2026-03-15" },
-    { id: "PRJ/003", name: "ERP Implementation", manager: "Bob Wilson", customer: "Global Industries", status: "done", tasks: 25, progress: 100, deadline: "2025-11-30" },
-];
+const mockProjects: Project[] = [];
 
 export default function ProjectPage() {
     const [projects] = useState<Project[]>(mockProjects);

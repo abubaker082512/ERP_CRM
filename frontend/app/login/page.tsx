@@ -14,10 +14,14 @@ function LoginForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [inactivityMsg, setInactivityMsg] = useState(false);
+    const [concurrentMsg, setConcurrentMsg] = useState(false);
 
     useEffect(() => {
-        if (searchParams.get("reason") === "inactivity") {
+        const reason = searchParams.get("reason");
+        if (reason === "inactivity") {
             setInactivityMsg(true);
+        } else if (reason === "concurrent_login") {
+            setConcurrentMsg(true);
         }
     }, [searchParams]);
 
@@ -39,17 +43,24 @@ function LoginForm() {
             }
 
             if (resp.ok && data.access_token) {
+                const sid = data.session_id || data.user?.session_id || `sid_${Date.now()}`;
                 localStorage.setItem('token', data.access_token);
                 if (data.refresh_token) {
                     localStorage.setItem('refresh_token', data.refresh_token);
                 }
-                localStorage.setItem('user', JSON.stringify(data.user));
-                // Redirect super admins directly to the admin dashboard
+                localStorage.setItem('beraxis_session_id', sid);
+                try {
+                    sessionStorage.setItem('beraxis_tab_session_id', sid);
+                } catch {}
+                localStorage.setItem('user', JSON.stringify({ ...data.user, session_id: sid }));
+                window.dispatchEvent(new Event("beraxis_auth_changed"));
+
+                // Redirect super admins directly to the admin dashboard, and all users directly to /apps (Workspace & Industry Onboarding)
                 const SUPER_ADMIN_EMAILS = ['admin@beraxis.online', 'admin2@erp-crm.com'];
                 if (SUPER_ADMIN_EMAILS.includes(data.user?.email)) {
                     router.push("/super-admin");
                 } else {
-                    router.push("/");
+                    router.push("/apps");
                 }
             } else {
                 setError(data.detail || 'Login failed. Please check your credentials.');
@@ -79,6 +90,15 @@ function LoginForm() {
                             <Clock size={18} className="text-amber-400 shrink-0" />
                             <p className="text-amber-300 text-xs font-semibold">
                                 You were automatically logged out due to 1 minute of inactivity. Your work time was saved to Timesheets.
+                            </p>
+                        </div>
+                    )}
+
+                    {concurrentMsg && (
+                        <div className="flex items-center gap-3 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl mb-6">
+                            <AlertCircle size={18} className="text-rose-400 shrink-0" />
+                            <p className="text-rose-300 text-xs font-semibold">
+                                Session ended: Your account was logged in from another device or location. Only one active login session is permitted at a time worldwide.
                             </p>
                         </div>
                     )}

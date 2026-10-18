@@ -2,8 +2,9 @@
 
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
-import { useState } from "react";
-import { DollarSign, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { DollarSign, Plus, X, CheckCircle2 } from "lucide-react";
+import { useBranchContext } from "@/lib/branchContext";
 
 const MENU_ITEMS = [
     { name: "Dashboard", href: "/accounting" },
@@ -23,15 +24,67 @@ type Bill = {
     due_date: string;
 };
 
-const mockBills: Bill[] = [
-    { id: "BILL/2025/001", vendor: "Supplier A", amount: 5000, status: "posted", date: "2025-12-01", due_date: "2025-12-15" },
-    { id: "BILL/2025/002", vendor: "Supplier B", amount: 1200, status: "draft", date: "2025-12-02", due_date: "2025-12-20" },
-    { id: "BILL/2025/003", vendor: "Supplier C", amount: 8500, status: "posted", date: "2025-12-03", due_date: "2025-12-25" },
-];
-
 export default function AccountingVendorsPage() {
-    const [bills] = useState<Bill[]>(mockBills);
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const [bills, setBills] = useState<Bill[]>([]);
     const [currentView, setCurrentView] = useState<ViewType>("list");
+    const [searchTerm, setSearchTerm] = useState("");
+    const [showNewModal, setShowNewModal] = useState(false);
+
+    const [vendorName, setVendorName] = useState("");
+    const [amount, setAmount] = useState("");
+    const [status, setStatus] = useState("posted");
+    const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
+    const [dueDate, setDueDate] = useState(() => new Date(Date.now() + 15 * 86400000).toISOString().split("T")[0]);
+
+    useEffect(() => {
+        try {
+            const key = getEntityStorageKey("accounting_bills");
+            const saved = localStorage.getItem(key);
+            setBills(saved ? JSON.parse(saved) : []);
+        } catch {
+            setBills([]);
+        }
+    }, [activeBranch, getEntityStorageKey]);
+
+    const saveBills = (updated: Bill[]) => {
+        setBills(updated);
+        try {
+            localStorage.setItem(getEntityStorageKey("accounting_bills"), JSON.stringify(updated));
+        } catch {}
+    };
+
+    const handleCreateBill = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!vendorName.trim() || !amount) return;
+
+        const year = new Date().getFullYear();
+        const nextNum = String(bills.length + 1).padStart(3, "0");
+        const newBill: Bill = {
+            id: `BILL/${year}/${nextNum}`,
+            vendor: vendorName.trim(),
+            amount: parseFloat(amount) || 0,
+            status,
+            date,
+            due_date: dueDate,
+        };
+
+        saveBills([newBill, ...bills]);
+        setVendorName("");
+        setAmount("");
+        setShowNewModal(false);
+    };
+
+    const handleMarkPaid = (id: string) => {
+        const updated = bills.map(b => (b.id === id ? { ...b, status: "paid" } : b));
+        saveBills(updated);
+    };
+
+    const filteredBills = bills.filter(
+        b =>
+            b.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            b.id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="flex flex-col h-screen bg-[#0F172A]">
@@ -40,14 +93,19 @@ export default function AccountingVendorsPage() {
                 moduleIcon={<DollarSign size={20} />}
                 menuItems={MENU_ITEMS}
                 searchPlaceholder="Search bills..."
+                onSearchChange={setSearchTerm}
+                onNewClick={() => setShowNewModal(true)}
+                newButtonLabel="New Bill"
             />
 
             <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                     <div className="flex items-center gap-4">
                         <div>
                             <h2 className="text-2xl font-semibold text-gray-200">Vendor Bills</h2>
-                            <p className="text-sm text-gray-400 mt-1">{bills.length} bills • ${bills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()} total</p>
+                            <p className="text-sm text-gray-400 mt-1">
+                                {filteredBills.length} bills • ${filteredBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()} total ({activeBranch?.name || "Isolated Entity"})
+                            </p>
                         </div>
                         <ViewSwitcher
                             currentView={currentView}
@@ -55,9 +113,28 @@ export default function AccountingVendorsPage() {
                             onViewChange={setCurrentView}
                         />
                     </div>
+                    <button
+                        onClick={() => setShowNewModal(true)}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 cursor-pointer"
+                    >
+                        <Plus size={16} /> Record Vendor Bill
+                    </button>
                 </div>
 
-                {currentView === "list" && (
+                {filteredBills.length === 0 ? (
+                    <div className="bg-[#1E293B] rounded-xl border border-gray-700 p-12 text-center">
+                        <h3 className="text-lg font-semibold text-white mb-2">No Vendor Bills Yet</h3>
+                        <p className="text-sm text-gray-400 mb-6">
+                            Your entity ledger starts completely clean with zero pre-filled bills. Record your first supplier bill below.
+                        </p>
+                        <button
+                            onClick={() => setShowNewModal(true)}
+                            className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2 cursor-pointer"
+                        >
+                            <Plus size={16} /> Record First Bill
+                        </button>
+                    </div>
+                ) : currentView === "list" ? (
                     <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
                         <table className="w-full">
                             <thead className="bg-[#0F172A] border-b border-gray-700">
@@ -72,7 +149,7 @@ export default function AccountingVendorsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {bills.map(bill => (
+                                {filteredBills.map(bill => (
                                     <tr key={bill.id} className="border-b border-gray-700 hover:bg-[#1E293B] transition-colors">
                                         <td className="px-4 py-3 font-medium text-white">{bill.id}</td>
                                         <td className="px-4 py-3 text-gray-300">{bill.vendor}</td>
@@ -80,29 +157,40 @@ export default function AccountingVendorsPage() {
                                         <td className="px-4 py-3 text-gray-400">{new Date(bill.due_date).toLocaleDateString()}</td>
                                         <td className="px-4 py-3 text-green-400 font-semibold">${bill.amount.toLocaleString()}</td>
                                         <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${bill.status === 'posted' ? 'bg-blue-500/20 text-blue-400' :
-                                                    'bg-gray-500/20 text-gray-400'
-                                                }`}>
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                bill.status === "paid"
+                                                    ? "bg-emerald-500/20 text-emerald-400"
+                                                    : bill.status === "posted"
+                                                    ? "bg-blue-500/20 text-blue-400"
+                                                    : "bg-gray-500/20 text-gray-400"
+                                            }`}>
                                                 {bill.status}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <button className="text-blue-400 hover:text-blue-300 text-sm">View</button>
+                                            {bill.status !== "paid" ? (
+                                                <button
+                                                    onClick={() => handleMarkPaid(bill.id)}
+                                                    className="text-emerald-400 hover:text-emerald-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <CheckCircle2 size={14} /> Mark Paid
+                                                </button>
+                                            ) : (
+                                                <span className="text-xs text-gray-500">Paid</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                )}
-
-                {currentView === "kanban" && (
+                ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {['draft', 'posted', 'paid'].map(status => (
-                            <div key={status} className="bg-[#1E293B]/50 rounded-lg p-4 border border-gray-700">
-                                <h3 className="font-semibold text-white mb-4 capitalize">{status}</h3>
+                        {["draft", "posted", "paid"].map(st => (
+                            <div key={st} className="bg-[#1E293B]/50 rounded-lg p-4 border border-gray-700">
+                                <h3 className="font-semibold text-white mb-4 capitalize">{st}</h3>
                                 <div className="space-y-3">
-                                    {bills.filter(b => b.status === status).map(bill => (
+                                    {filteredBills.filter(b => b.status === st).map(bill => (
                                         <div key={bill.id} className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-all">
                                             <div className="flex justify-between mb-2">
                                                 <span className="font-medium text-white">{bill.id}</span>
@@ -118,6 +206,91 @@ export default function AccountingVendorsPage() {
                     </div>
                 )}
             </div>
+
+            {showNewModal && (
+                <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-[#1E293B] border border-gray-700 rounded-2xl max-w-md w-full p-6 text-white shadow-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold">Record Vendor Bill</h3>
+                            <button onClick={() => setShowNewModal(false)} className="text-gray-400 hover:text-white">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleCreateBill} className="space-y-4 text-sm">
+                            <div>
+                                <label className="block text-gray-300 mb-1 font-medium">Vendor / Supplier Name *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={vendorName}
+                                    onChange={(e) => setVendorName(e.target.value)}
+                                    placeholder="e.g. Supplier Name"
+                                    className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3.5 py-2 text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-gray-300 mb-1 font-medium">Bill Amount ($) *</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    required
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    placeholder="0.00"
+                                    className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3.5 py-2 text-white"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 mb-1 font-medium">Bill Date</label>
+                                    <input
+                                        type="date"
+                                        value={date}
+                                        onChange={(e) => setDate(e.target.value)}
+                                        className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 mb-1 font-medium">Due Date</label>
+                                    <input
+                                        type="date"
+                                        value={dueDate}
+                                        onChange={(e) => setDueDate(e.target.value)}
+                                        className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-gray-300 mb-1 font-medium">Status</label>
+                                <select
+                                    value={status}
+                                    onChange={(e) => setStatus(e.target.value)}
+                                    className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3.5 py-2 text-white"
+                                >
+                                    <option value="draft">Draft</option>
+                                    <option value="posted">Posted</option>
+                                    <option value="paid">Paid</option>
+                                </select>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewModal(false)}
+                                    className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300 hover:text-white"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold"
+                                >
+                                    Save Bill
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

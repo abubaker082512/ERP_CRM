@@ -12,7 +12,7 @@ import GalaxyTopBar from './GalaxyTopBar';
 import CommandOverlay from '../antigravity/CommandOverlay';
 import BeraxisSupportWidgets from '../support/BeraxisSupportWidgets';
 import InactivitySessionTracker from '../auth/InactivitySessionTracker';
-import { BranchProvider } from '@/lib/branchContext';
+import { BranchProvider, useBranchContext } from '@/lib/branchContext';
 
 const navItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -26,14 +26,84 @@ const navItems = [
     { name: 'SaaS Admin', icon: ShieldCheck, href: '/super-admin' },
 ];
 
+function WorkspaceModuleGuard({ pathname, children }: { pathname: string; children: React.ReactNode }) {
+    const { hasSelectedIndustry, isFreePlan, freeSelectedApp, isModuleEnabled } = useBranchContext();
+
+    // Always allow Settings, AI, Billing, Super Admin, and Leads Pool (which renders its own Paid Plan gate)
+    const isAlwaysAllowed =
+        pathname.startsWith('/settings') ||
+        pathname.startsWith('/billing') ||
+        pathname.startsWith('/super-admin') ||
+        pathname.startsWith('/crm/leads-pool') ||
+        pathname.startsWith('/crm/lead-bank');
+
+    if (!hasSelectedIndustry && ! pathname.startsWith('/super-admin')) {
+        return (
+            <div className="min-h-[80vh] flex items-center justify-center p-6 text-white">
+                <div className="max-w-lg w-full bg-[#0F172A] border border-purple-500/40 rounded-3xl p-8 text-center shadow-2xl space-y-4">
+                    <div className="w-14 h-14 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 mx-auto">
+                        <Sparkles size={28} />
+                    </div>
+                    <h2 className="text-xl font-black text-white">Complete Your Industry & Entity Setup First</h2>
+                    <p className="text-xs text-gray-300 leading-relaxed">
+                        Every user and company under Beraxis is an independent entity with its own isolated workspace. Please select your industry sector, entity structure (Individual or Company), and free app to initialize your workspace.
+                    </p>
+                    <Link
+                        href="/apps"
+                        className="inline-flex items-center justify-center w-full py-3 px-5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all"
+                    >
+                        Configure Industry & Entity Now →
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    if (isFreePlan && !isAlwaysAllowed && !isModuleEnabled(pathname)) {
+        return (
+            <div className="min-h-[80vh] flex items-center justify-center p-6 text-white">
+                <div className="max-w-lg w-full bg-[#0F172A] border border-amber-500/40 rounded-3xl p-8 text-center shadow-2xl space-y-4">
+                    <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto">
+                        <ShieldCheck size={28} />
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold uppercase">
+                        🔒 One App Free Plan Limit
+                    </div>
+                    <h2 className="text-xl font-black text-white">Module Locked on Free Plan</h2>
+                    <p className="text-xs text-gray-300 leading-relaxed">
+                        Your <strong className="text-amber-300">One App Free Plan</strong> includes <strong className="text-white">1 Selected Major App ({freeSelectedApp.replace('/', '').toUpperCase()}) + Settings</strong>.
+                        To access additional ERP modules or the Global Leads Pool, upgrade to Standard ($18/mo) or Premium ($25/mo).
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                        <Link
+                            href="/apps"
+                            className="flex-1 py-2.5 px-4 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold text-xs transition-all"
+                        >
+                            ← Back to My Workspace
+                        </Link>
+                        <Link
+                            href="/billing"
+                            className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-xs shadow-lg shadow-amber-600/30 transition-all"
+                        >
+                            Upgrade Plan →
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return <>{children}</>;
+}
+
 export default function GalaxyAppShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [mounted, setMounted] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [planLabel, setPlanLabel] = useState("FREE TIER");
-    const [planTitle, setPlanTitle] = useState("Free Starter Plan");
-    const [planSubtitle, setPlanSubtitle] = useState("1 Module Active");
+    const [planLabel, setPlanLabel] = useState("ONE APP FREE");
+    const [planTitle, setPlanTitle] = useState("One App Free Plan");
+    const [planSubtitle, setPlanSubtitle] = useState("1 Major App + Settings");
     const [isAntigravityOpen, setIsAntigravityOpen] = useState(false);
     const [backendStatus, setBackendStatus] = useState<'unknown' | 'waking' | 'ready'>('unknown');
     const warmupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -53,42 +123,30 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                     setPlanTitle("Beraxis Elite Plan");
                     setPlanSubtitle("Unlimited Workspaces");
                 } else if (user.tenant?.subscription_status === "active") {
-                    setPlanLabel("PRO PLAN");
+                    setPlanLabel("PAID PLAN");
                     setPlanTitle("Beraxis Pro Plan");
-                    setPlanSubtitle("All Modules Active");
-                } else if (user.tenant?.trial_ends_at) {
-                    const diffDays = Math.ceil((new Date(user.tenant.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                    setPlanLabel("TRIAL");
-                    setPlanTitle("Free Trial");
-                    setPlanSubtitle(`${Math.max(0, diffDays)} Days Remaining`);
+                    setPlanSubtitle("All Modules + Leads Pool");
                 } else {
-                    const mod = localStorage.getItem("selectedModule") || "CRM";
-                    setPlanLabel("FREE TIER");
-                    setPlanTitle("Free Starter Plan");
-                    setPlanSubtitle(`${mod} Module Active`);
+                    setPlanLabel("ONE APP FREE");
+                    setPlanTitle("One App Free Plan");
+                    setPlanSubtitle("1 Major App + Settings");
                 }
             } catch (e) {}
         }
 
         // ── Backend Warm-up ──────────────────────────────────────────────
-        // Ping the backend immediately on app load so Render wakes up
-        // BEFORE the user tries to do something. This eliminates cold-start
-        // delays for the user's first real action.
         const pingBackend = async () => {
             try {
-                // Show banner only after 2 seconds (if still waiting)
                 warmupRef.current = setTimeout(() => setBackendStatus('waking'), 2000);
                 const res = await fetch('/api/v1/ping', { method: 'GET' });
                 if (warmupRef.current) clearTimeout(warmupRef.current);
                 if (res.ok) {
                     setBackendStatus('ready');
-                    // Hide the 'ready' banner after 2 seconds
                     setTimeout(() => setBackendStatus('unknown'), 2000);
                 }
             } catch {
                 if (warmupRef.current) clearTimeout(warmupRef.current);
                 setBackendStatus('waking');
-                // Retry after 5 seconds
                 setTimeout(pingBackend, 5000);
             }
         };
@@ -98,7 +156,6 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
     }, []);
 
     useEffect(() => {
-        // Automatically collapse the sidebar when navigating to any specific page other than /dashboard
         if (pathname && pathname !== '/dashboard') {
             setIsSidebarOpen(false);
         } else {
@@ -124,7 +181,14 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         pathname === '/launch-creatives';
     const isExcludedPage = pathname === '/apps' || pathname === '/dashboard' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || (pathname && pathname.startsWith('/shop/')) || pathname === '/meet' || (pathname && pathname.startsWith('/meet/')) || (pathname && pathname.startsWith('/appointments/book/')) || isLandingPage;
     
-    if (isExcludedPage) return <BranchProvider>{children}</BranchProvider>;
+    if (isExcludedPage) {
+        return (
+            <BranchProvider>
+                {children}
+                {(pathname === '/apps' || pathname === '/dashboard' || pathname === '/billing') && <InactivitySessionTracker />}
+            </BranchProvider>
+        );
+    }
 
     return (
         <BranchProvider>
@@ -225,7 +289,9 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                     <div className="fixed bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-pink-600/5 blur-[120px] rounded-full pointer-events-none" style={{zIndex:0}}></div>
                     
                     <div className="relative z-10 p-8 min-h-full">
-                        {children}
+                        <WorkspaceModuleGuard pathname={pathname || ""}>
+                            {children}
+                        </WorkspaceModuleGuard>
                     </div>
                 </div>
             </main>

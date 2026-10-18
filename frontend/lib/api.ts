@@ -42,6 +42,11 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
             headers['X-Company-Id'] = activeBranchId;
             headers['X-Branch-Id'] = activeBranchId;
         }
+
+        const sessionId = localStorage.getItem('beraxis_session_id');
+        if (sessionId) {
+            headers['X-Session-Id'] = sessionId;
+        }
     }
 
     const config: RequestInit = {
@@ -60,11 +65,24 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
         }
     }
 
-    // Auth Interceptor: Only clear session if explicit auth endpoint returns 401
-    if (response.status === 401 && (path.includes('/auth/me') || path.includes('/auth/login'))) {
-        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+    // Auth & Single Concurrent Session Interceptor
+    if (response.status === 401 && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        try {
+            const cloned = response.clone();
+            const errBody = await cloned.json();
+            if (errBody?.detail && String(errBody.detail).includes('SESSION_SUPERSEDED')) {
+                console.warn("[API] Session superseded by another login worldwide - logging out");
+                localStorage.removeItem('token');
+                localStorage.removeItem('beraxis_session_id');
+                window.location.href = '/login?reason=concurrent_login';
+                return response;
+            }
+        } catch {}
+
+        if (path.includes('/auth/me') || path.includes('/auth/login')) {
             console.warn("[API] 401 Unauthorized on Auth Check - Redirecting to login");
             localStorage.removeItem('token');
+            localStorage.removeItem('beraxis_session_id');
             window.location.href = '/login';
         }
     }

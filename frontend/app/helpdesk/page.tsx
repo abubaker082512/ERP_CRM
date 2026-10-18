@@ -25,11 +25,7 @@ type Ticket = {
     assigned_to: string;
 };
 
-const mockTickets: Ticket[] = [
-    { id: "TICKET/001", subject: "Login Issue", customer: "John Doe", team: "Support L1", priority: "high", status: "new", created: "2025-12-01", assigned_to: "" },
-    { id: "TICKET/002", subject: "Billing Question", customer: "Jane Smith", team: "Billing", priority: "medium", status: "in_progress", created: "2025-12-02", assigned_to: "Alice" },
-    { id: "TICKET/003", subject: "Feature Request", customer: "Bob Wilson", team: "Product", priority: "low", status: "solved", created: "2025-11-28", assigned_to: "Mike" },
-];
+const mockTickets: Ticket[] = [];
 
 export default function HelpdeskPage() {
     const [tickets] = useState<Ticket[]>(mockTickets);

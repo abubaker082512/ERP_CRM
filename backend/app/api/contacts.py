@@ -139,12 +139,7 @@ def read_contacts(skip: int = 0, limit: int = 100, client: Client = Depends(get_
         response = client.table("contacts").select("*").order("created_at", desc=True).range(skip, skip + limit - 1).execute()
         rows = response.data or []
     except Exception:
-        try:
-            svc = get_service_role_client()
-            response = svc.table("contacts").select("*").order("created_at", desc=True).range(skip, skip + limit - 1).execute()
-            rows = response.data or []
-        except Exception:
-            rows = []
+        rows = []
     return [_map_contact(r) for r in rows]
 
 @router.get("/{contact_id}", response_model=Contact)

@@ -4,8 +4,43 @@ from supabase import create_client, Client
 from app.core.config import settings
 from app.core.supabase_client import get_service_role_client
 from datetime import datetime, timezone
+from typing import Dict, Any
 
 security = HTTPBearer()
+
+# Global Single-Session Registry: uid -> {"session_id": str, "token": str, "logged_in_at": str}
+# Enforces that only 1 login session can be active per account worldwide at any given time.
+ACTIVE_USER_SESSIONS: Dict[str, Dict[str, Any]] = {}
+
+def register_active_session(uid: str, session_id: str, token: str):
+    ACTIVE_USER_SESSIONS[uid] = {
+        "session_id": session_id,
+        "token": token,
+        "logged_in_at": datetime.now(timezone.utc).isoformat()
+    }
+
+def verify_single_active_session(uid: str, request_session_id: str | None, token: str, user_metadata: dict | None = None):
+    active_entry = ACTIVE_USER_SESSIONS.get(uid)
+    meta_session_id = (user_metadata or {}).get("active_session_id")
+
+    if active_entry:
+        expected_sid = active_entry.get("session_id")
+        expected_token = active_entry.get("token")
+        if request_session_id and expected_sid and request_session_id != expected_sid:
+            raise HTTPException(
+                status_code=401,
+                detail="SESSION_SUPERSEDED: This account is active in another session. Only one login is allowed at a time worldwide."
+            )
+        if not request_session_id and expected_token and token != expected_token:
+            raise HTTPException(
+                status_code=401,
+                detail="SESSION_SUPERSEDED: This account was logged in from another location. Only one active session is allowed."
+            )
+    elif meta_session_id and request_session_id and request_session_id != meta_session_id:
+        raise HTTPException(
+            status_code=401,
+            detail="SESSION_SUPERSEDED: This account is active in another session. Only one login is allowed at a time worldwide."
+        )
 
 SUPER_ADMIN_EMAILS = [
     "admin@beraxis.online",
@@ -17,7 +52,8 @@ SUPER_ADMIN_EMAILS = [
 def get_supabase_client(request: Request, credentials: HTTPAuthorizationCredentials = Security(security)) -> Client:
     """
     Creates a fresh Supabase client for each request, authenticated with the user's JWT.
-    This guarantees thread-safe Row Level Security (RLS) enforcement per user/tenant.
+    This guarantees thread-safe Row Level Security (RLS) enforcement per user/tenant,
+    and enforces Single Active Login Session worldwide.
     """
     token = credentials.credentials
     
@@ -39,6 +75,14 @@ def get_supabase_client(request: Request, credentials: HTTPAuthorizationCredenti
     
     uid = str(user_resp.user.id)
     user_email = user_resp.user.email or ""
+    user_meta = user_resp.user.user_metadata if hasattr(user_resp.user, "user_metadata") else {}
+
+    # Enforce Worldwide Single Concurrent Login Session per Account
+    req_session_id = request.headers.get("X-Session-Id")
+    verify_single_active_session(uid, req_session_id, token, user_meta)
+    # Attach authenticated user ID and email onto client for strict tenant filtering
+    setattr(client, "_beraxis_uid", uid)
+    setattr(client, "_beraxis_email", user_email)
     
     # Identify Super Admin (admin@beraxis.online, @erp-crm.com, @galaxy.com, etc.)
     is_super_admin = False

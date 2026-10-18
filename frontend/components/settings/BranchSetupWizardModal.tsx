@@ -103,7 +103,7 @@ export default function BranchSetupWizardModal({
   onClose,
   editingBranch = null
 }: BranchSetupWizardModalProps) {
-  const { createBranch, updateBranch } = useBranchContext();
+  const { createBranch, updateBranch, isFreePlan, freeSelectedApp, setFreeSelectedApp, accountType } = useBranchContext();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
@@ -119,21 +119,24 @@ export default function BranchSetupWizardModal({
   const [selectedIndustryId, setSelectedIndustryId] = useState<GlobalIndustryId>(
     editingBranch?.industryId || "food_beverage"
   );
+  const [entityType, setEntityType] = useState<"individual" | "company">(
+    editingBranch?.entityType || accountType || "company"
+  );
   const [branchName, setBranchName] = useState(editingBranch?.name || "");
   const [branchCode, setBranchCode] = useState(editingBranch?.code || "");
   const [subSector, setSubSector] = useState(editingBranch?.subSector || "");
   const [operationMode, setOperationMode] = useState(editingBranch?.operationMode || "");
-  const [location, setLocation] = useState(editingBranch?.location || "San Francisco HQ • 100 Market St");
+  const [location, setLocation] = useState(editingBranch?.location || "Main Facility");
   const [currency, setCurrency] = useState(editingBranch?.currency || "$ USD");
 
   // Sharing Rules
   const [sharingRules, setSharingRules] = useState<BranchSharingRules>(
     editingBranch?.sharingRules || {
-      shareEmployees: true,
-      shareCustomers: true,
+      shareEmployees: false,
+      shareCustomers: false,
       shareInventory: false,
-      shareAccounting: true,
-      shareVendors: true
+      shareAccounting: false,
+      shareVendors: false
     }
   );
 
@@ -147,6 +150,7 @@ export default function BranchSetupWizardModal({
     if (isOpen) {
       if (editingBranch) {
         setSelectedIndustryId(editingBranch.industryId || "food_beverage");
+        setEntityType(editingBranch.entityType || accountType || "company");
         setBranchName(editingBranch.name || "");
         setBranchCode(editingBranch.code || "");
         setSubSector(editingBranch.subSector || "");
@@ -154,29 +158,38 @@ export default function BranchSetupWizardModal({
         setLocation(editingBranch.location || "Main Facility");
         setCurrency(editingBranch.currency || "$ USD");
         setSharingRules(editingBranch.sharingRules || {
-          shareEmployees: true,
-          shareCustomers: true,
+          shareEmployees: false,
+          shareCustomers: false,
           shareInventory: false,
-          shareAccounting: true,
-          shareVendors: true
+          shareAccounting: false,
+          shareVendors: false
         });
-        setSelectedModules(editingBranch.enabledModules || getIndustryById(editingBranch.industryId).defaultModules);
+        if (isFreePlan) {
+          setSelectedModules([freeSelectedApp || "/crm"]);
+        } else {
+          setSelectedModules(editingBranch.enabledModules || getIndustryById(editingBranch.industryId).defaultModules);
+        }
         setStep(4); // Open straight to Module Manager for instant app adding/removing!
       } else {
         setSelectedIndustryId("food_beverage");
+        setEntityType(accountType || "company");
         setBranchName("");
         setBranchCode("");
         setSubSector(getIndustryById("food_beverage").subSectors[0]);
         setOperationMode(getIndustryById("food_beverage").operationModes[0]?.id || "");
         setLocation("Main Facility");
         setCurrency("$ USD");
-        setSelectedModules(getIndustryById("food_beverage").defaultModules);
+        if (isFreePlan) {
+          setSelectedModules([freeSelectedApp || "/crm"]);
+        } else {
+          setSelectedModules(getIndustryById("food_beverage").defaultModules);
+        }
         setStep(1);
       }
       setModuleSearch("");
       setModuleCategoryFilter("ALL");
     }
-  }, [isOpen, editingBranch]);
+  }, [isOpen, editingBranch, isFreePlan, freeSelectedApp, accountType]);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -240,7 +253,7 @@ export default function BranchSetupWizardModal({
       const ind = getIndustryById(matchedIndustry);
       setSubSector(matchedSub);
       setOperationMode(matchedMode);
-      setSelectedModules(ind.defaultModules);
+      setSelectedModules(isFreePlan ? [ind.defaultModules.find(m => m !== "/crm/leads-pool" && m !== "/settings") || "/crm"] : ind.defaultModules);
       if (!branchName) {
         setBranchName(aiPrompt.length < 30 ? aiPrompt : `${ind.name.split(" ")[0]} Branch`);
       }
@@ -254,13 +267,22 @@ export default function BranchSetupWizardModal({
     const ind = getIndustryById(indId);
     setSubSector(ind.subSectors[0]);
     setOperationMode(ind.operationModes[0]?.id || "");
-    setSelectedModules(ind.defaultModules);
+    setSelectedModules(isFreePlan ? [ind.defaultModules.find(m => m !== "/crm/leads-pool" && m !== "/settings") || "/crm"] : ind.defaultModules);
     if (!branchName) {
       setBranchName(`${ind.name.split(" ")[0]} Hub`);
     }
   };
 
   const toggleModule = (href: string) => {
+    if (isFreePlan) {
+      if (href === "/crm/leads-pool" || href === "/crm/lead-bank" || href === "/leads-pool") {
+        alert("🔒 Leads Pool is strictly available on Paid Plans (Standard or Premium) only. Please upgrade your subscription to unlock Leads Pool.");
+        return;
+      }
+      setSelectedModules([href]);
+      setFreeSelectedApp(href);
+      return;
+    }
     if (selectedModules.includes(href)) {
       setSelectedModules(selectedModules.filter(m => m !== href));
     } else {
@@ -272,6 +294,14 @@ export default function BranchSetupWizardModal({
     e.preventDefault();
     if (!branchName.trim()) return;
 
+    const finalModules = isFreePlan
+      ? Array.from(new Set([selectedModules[0] || freeSelectedApp || "/crm", "/settings"]))
+      : Array.from(new Set([...selectedModules, "/settings"]));
+
+    if (isFreePlan && selectedModules[0]) {
+      setFreeSelectedApp(selectedModules[0]);
+    }
+
     const payload = {
       name: branchName.trim(),
       code: branchCode.trim() || `${selectedIndustryId.slice(0, 3).toUpperCase()}-${Math.floor(10 + Math.random() * 90)}`,
@@ -280,8 +310,9 @@ export default function BranchSetupWizardModal({
       operationMode: operationMode || currentIndustry.operationModes[0]?.id || "default",
       location: location.trim() || "Main Facility",
       currency: currency.trim() || "$ USD",
-      enabledModules: selectedModules,
+      enabledModules: finalModules,
       sharingRules,
+      entityType,
       isPrimary: false
     };
 
@@ -460,9 +491,51 @@ export default function BranchSetupWizardModal({
                 </button>
               </div>
 
+              {/* Entity Structure Selector: Individual vs Company */}
+              <div>
+                <label className="font-bold text-gray-300 block mb-2">Entity Structure Type *</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEntityType("individual")}
+                    className={`p-3.5 rounded-xl border text-left transition-all ${
+                      entityType === "individual"
+                        ? "bg-purple-950/40 border-purple-500 text-white ring-1 ring-purple-500/40"
+                        : "bg-gray-900 border-gray-800 text-gray-400 hover:border-gray-700"
+                    }`}
+                  >
+                    <div className="font-bold text-xs text-white flex items-center justify-between">
+                      <span>👤 Individual Entity (Single User)</span>
+                      {entityType === "individual" && <CheckCircle2 size={14} className="text-emerald-400" />}
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      Form an independent company workspace managed individually by a single user with isolated records.
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEntityType("company")}
+                    className={`p-3.5 rounded-xl border text-left transition-all ${
+                      entityType === "company"
+                        ? "bg-purple-950/40 border-purple-500 text-white ring-1 ring-purple-500/40"
+                        : "bg-gray-900 border-gray-800 text-gray-400 hover:border-gray-700"
+                    }`}
+                  >
+                    <div className="font-bold text-xs text-white flex items-center justify-between">
+                      <span>🏢 Company Organization (Multi-User Ready)</span>
+                      {entityType === "company" && <CheckCircle2 size={14} className="text-emerald-400" />}
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      Independent corporate entity under Beraxis with its own isolated database and multi-user support on paid plans.
+                    </p>
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-bold text-gray-300 block mb-1">Branch / Business Unit Name *</label>
+                  <label className="font-bold text-gray-300 block mb-1">Company / Entity Name *</label>
                   <input
                     type="text"
                     required
@@ -473,7 +546,7 @@ export default function BranchSetupWizardModal({
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-gray-300 block mb-1">Branch Code / Identifier</label>
+                  <label className="font-bold text-gray-300 block mb-1">Entity Code / Identifier</label>
                   <input
                     type="text"
                     value={branchCode}
@@ -542,10 +615,10 @@ export default function BranchSetupWizardModal({
             <div className="space-y-4">
               <div className="p-4 rounded-2xl bg-purple-950/30 border border-purple-500/20 space-y-1">
                 <h4 className="font-bold text-purple-300 text-xs flex items-center gap-1.5">
-                  <Sliders size={14} /> Multi-Entity Resource Sharing Matrix
+                  <Sliders size={14} /> Multi-Entity Resource Isolation & Sharing Matrix
                 </h4>
                 <p className="text-gray-300 text-[11px]">
-                  Configure which data and records are synchronized across all company branches versus kept isolated to this specific branch.
+                  Every entity under Beraxis starts 100% isolated with its own clean data. If you operate multiple branches under your account on a Paid Plan, you can optionally share specific directories across your own branches.
                 </p>
               </div>
 
@@ -553,7 +626,7 @@ export default function BranchSetupWizardModal({
                 <label className="p-3.5 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-between cursor-pointer hover:bg-gray-850">
                   <div>
                     <span className="font-bold text-white block">Share Employee & HR Directory</span>
-                    <span className="text-[10px] text-gray-400">Staff roster & payroll contracts accessible across branches</span>
+                    <span className="text-[10px] text-gray-400">Staff roster & payroll contracts accessible across your branches</span>
                   </div>
                   <input
                     type="checkbox"
@@ -566,7 +639,7 @@ export default function BranchSetupWizardModal({
                 <label className="p-3.5 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-between cursor-pointer hover:bg-gray-850">
                   <div>
                     <span className="font-bold text-white block">Share CRM & Customer Contacts</span>
-                    <span className="text-[10px] text-gray-400">Universal customer accounts and loyalty points</span>
+                    <span className="text-[10px] text-gray-400">Universal customer accounts across your branches</span>
                   </div>
                   <input
                     type="checkbox"
@@ -627,15 +700,21 @@ export default function BranchSetupWizardModal({
                     {editingBranch ? "Company & Apps Configuration" : "Ready to Activate"}
                   </span>
                   <h4 className="font-bold text-white text-base mt-0.5">
-                    {branchName || "New Branch"} • {currentIndustry.name}
+                    {branchName || "New Entity"} • {currentIndustry.name} ({entityType === "individual" ? "Individual Entity" : "Company Organization"})
                   </h4>
                   <p className="text-[11px] text-gray-300 mt-0.5">
-                    Industry Mode: <strong className="text-white">{operationMode}</strong> • {selectedModules.length} Apps Enabled
+                    {isFreePlan ? (
+                      <span className="text-amber-300 font-semibold">
+                        One App Free Plan: Select <strong>1 Major App</strong> below (+ Settings included automatically). Leads Pool requires a Paid Plan.
+                      </span>
+                    ) : (
+                      <>Industry Mode: <strong className="text-white">{operationMode}</strong> • {selectedModules.length} Apps Enabled</>
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs bg-purple-600 text-white font-bold px-3.5 py-1.5 rounded-full shadow-md shadow-purple-900/40">
-                    {selectedModules.length} Active Modules
+                    {isFreePlan ? "1 Free App + Settings" : `${selectedModules.length} Active Modules`}
                   </span>
                 </div>
               </div>
@@ -644,29 +723,31 @@ export default function BranchSetupWizardModal({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                   <div>
                     <span className="text-[11px] font-bold uppercase tracking-wider text-gray-300 block">
-                      Install / Manage Modules (Click to Add or Remove Any App):
+                      {isFreePlan ? "Select Your 1 Free Major App (Settings Included Automatically):" : "Install / Manage Modules (Click to Add or Remove Any App):"}
                     </span>
                     <span className="text-[10px] text-gray-400">
-                      Enable specialized modules like Point of Sale, Leads Pool, Club Hub, Vehicles, etc.
+                      {isFreePlan ? "Upgrade to Standard ($18) or Premium ($25) to unlock all 30+ apps and the Global Leads Pool." : "Enable specialized modules like Point of Sale, Leads Pool, Club Hub, Vehicles, etc."}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-[10px]">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedModules(currentIndustry.defaultModules)}
-                      className="text-purple-400 hover:text-purple-300 hover:underline font-bold"
-                    >
-                      Reset Defaults
-                    </button>
-                    <span className="text-gray-600">•</span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedModules(ALL_SYSTEM_MODULES.map(m => m.href))}
-                      className="text-blue-400 hover:text-blue-300 hover:underline font-bold"
-                    >
-                      Enable All (30+ Apps)
-                    </button>
-                  </div>
+                  {!isFreePlan && (
+                    <div className="flex items-center gap-2 text-[10px]">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedModules(currentIndustry.defaultModules)}
+                        className="text-purple-400 hover:text-purple-300 hover:underline font-bold"
+                      >
+                        Reset Defaults
+                      </button>
+                      <span className="text-gray-600">•</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedModules(ALL_SYSTEM_MODULES.map(m => m.href))}
+                        className="text-blue-400 hover:text-blue-300 hover:underline font-bold"
+                      >
+                        Enable All (30+ Apps)
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Module Search & Category Bar */}
@@ -720,7 +801,8 @@ export default function BranchSetupWizardModal({
                     const matchesCat = moduleCategoryFilter === "ALL" || mod.category === moduleCategoryFilter;
                     return matchesSearch && matchesCat;
                   }).map(module => {
-                    const isEnabled = selectedModules.includes(module.href);
+                    const isLeadsPoolLocked = isFreePlan && module.href === "/crm/leads-pool";
+                    const isEnabled = !isLeadsPoolLocked && selectedModules.includes(module.href);
                     const isRecommended = currentIndustry.defaultModules.includes(module.href);
                     const ModIcon = module.icon;
 
@@ -729,7 +811,9 @@ export default function BranchSetupWizardModal({
                         key={module.href}
                         onClick={() => toggleModule(module.href)}
                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                          isEnabled
+                          isLeadsPoolLocked
+                            ? "bg-amber-950/15 border-amber-500/30 text-gray-400 opacity-75"
+                            : isEnabled
                             ? "bg-[#161d2d] border-purple-500 text-white shadow-sm ring-1 ring-purple-500/50"
                             : "bg-gray-900/40 border-gray-800/80 text-gray-400 hover:border-gray-700 hover:bg-gray-850"
                         }`}
@@ -741,7 +825,11 @@ export default function BranchSetupWizardModal({
                           <div className="min-w-0">
                             <div className="font-bold text-xs flex items-center gap-1.5 truncate">
                               <span className="truncate">{module.name}</span>
-                              {isRecommended && (
+                              {isLeadsPoolLocked ? (
+                                <span className="text-[8px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.2 rounded font-bold shrink-0">
+                                  🔒 PAID ONLY
+                                </span>
+                              ) : isRecommended && (
                                 <span className="text-[8px] bg-purple-500/20 text-purple-300 px-1.5 py-0.2 rounded font-mono shrink-0">
                                   Default
                                 </span>

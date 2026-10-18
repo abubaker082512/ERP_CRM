@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import CRMHeader from "@/components/crm/CRMHeader";
 import { fetchAPI } from "@/lib/api";
+import { useBranchContext } from "@/lib/branchContext";
 import {
     Globe,
     Search,
     Filter,
     Download,
     CheckCircle,
+    CheckCircle2,
     Phone,
     Mail,
     Building2,
@@ -194,6 +196,47 @@ export default function LeadBankPage() {
             setVerLoading(false);
         }
     };
+
+    const { isFreePlan } = useBranchContext();
+
+    if (isFreePlan) {
+        return (
+            <div className="min-h-screen bg-[#020205] text-white flex flex-col">
+                <CRMHeader />
+                <main className="flex-1 flex items-center justify-center p-6">
+                    <div className="max-w-xl w-full bg-[#0F172A] border border-amber-500/40 rounded-3xl p-8 text-center shadow-2xl space-y-5">
+                        <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto shadow-lg shadow-amber-500/10">
+                            <ShieldCheck size={32} />
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                            🔒 Paid Plan Exclusive Feature
+                        </div>
+                        <h1 className="text-2xl sm:text-3xl font-black text-white">
+                            Global Leads Pool & B2B Lead Bank
+                        </h1>
+                        <p className="text-gray-300 text-sm leading-relaxed">
+                            The <strong className="text-white">25.8M+ Global B2B Leads Pool & Lead Bank</strong> is not available on the <strong className="text-amber-300">One App Free Plan</strong>.
+                            Upgrade to the <strong className="text-cyan-300">Standard Plan ($18/mo)</strong> or <strong className="text-purple-300">Premium Plan ($25/mo)</strong> to unlock verified worldwide business leads.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                            <Link
+                                href="/apps"
+                                className="flex-1 py-3 px-4 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold text-xs transition-all"
+                            >
+                                ← Back to Workspace
+                            </Link>
+                            <Link
+                                href="/billing"
+                                className="flex-1 py-3 px-5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-xs shadow-lg shadow-amber-600/30 transition-all"
+                            >
+                                Upgrade to Paid Plan →
+                            </Link>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-transparent text-white flex flex-col">

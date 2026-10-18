@@ -21,11 +21,7 @@ type Todo = {
     tags: string[];
 };
 
-const mockTodos: Todo[] = [
-    { id: "TODO/001", title: "Review Q4 Marketing Plan", due_date: "2025-12-05", priority: "high", status: "pending", tags: ["Marketing", "Q4"] },
-    { id: "TODO/002", title: "Update Client Contact Info", due_date: "2025-12-03", priority: "medium", status: "pending", tags: ["Admin"] },
-    { id: "TODO/003", title: "Prepare Weekly Report", due_date: "2025-12-02", priority: "low", status: "done", tags: ["Reporting"] },
-];
+const mockTodos: Todo[] = [];
 
 export default function TodoPage() {
     const [todos] = useState<Todo[]>(mockTodos);

@@ -133,20 +133,23 @@ const WORLD_LOCALE_DATA = [
   { country: "Zimbabwe", code: "ZW", currency: "ZWL", currencyName: "Zimbabwean Dollar", timezone: "Africa/Harare" }
 ];
 
+import { useBranchContext } from "@/lib/branchContext";
+
 export default function SettingsPage() {
+  const { activeBranch, getEntityStorageKey, updateBranch } = useBranchContext();
   const [activeTab, setActiveTab] = useState("general");
   const [saving, setSaving] = useState(false);
 
-  // General settings state
-  const [companyName, setCompanyName] = useState("Galaxy Technologies Inc.");
+  // General settings state (isolated per entity)
+  const [companyName, setCompanyName] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [timezone, setTimezone] = useState("UTC");
   const [country, setCountry] = useState("US");
   const [dateFormat, setDateFormat] = useState("YYYY-MM-DD");
 
   // POS Receipt template states
-  const [receiptHeader, setReceiptHeader] = useState("Welcome to Beraxis Cloud ERP");
-  const [receiptFooter, setReceiptFooter] = useState("Thank you for shopping with us!");
+  const [receiptHeader, setReceiptHeader] = useState("Welcome to Our Store");
+  const [receiptFooter, setReceiptFooter] = useState("Thank you for your business!");
   const [receiptPaperSize, setReceiptPaperSize] = useState("58mm");
 
   // Search filter query for general locale search
@@ -154,10 +157,10 @@ export default function SettingsPage() {
   const [isLocaleDropdownOpen, setIsLocaleDropdownOpen] = useState(false);
 
   // Email settings state
-  const [smtpServer, setSmtpServer] = useState("smtp.galaxy.com");
+  const [smtpServer, setSmtpServer] = useState("");
   const [smtpPort, setSmtpPort] = useState("587");
   const [encryption, setEncryption] = useState("tls");
-  const [smtpUser, setSmtpUser] = useState("admin@galaxy.com");
+  const [smtpUser, setSmtpUser] = useState("");
 
   // Units of Measure state
   const [uoms, setUoms] = useState<any[]>(DEFAULT_UOMS);
@@ -169,31 +172,43 @@ export default function SettingsPage() {
   const localeDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load persisted settings on mount
-    const savedCompany = localStorage.getItem("settings_company_name");
-    const savedCurrency = localStorage.getItem("settings_currency");
-    const savedTimezone = localStorage.getItem("settings_timezone");
-    const savedCountry = localStorage.getItem("settings_country");
-    const savedDateFormat = localStorage.getItem("settings_date_format");
-    const savedSmtp = localStorage.getItem("settings_smtp_server");
-    const savedPort = localStorage.getItem("settings_smtp_port");
-    const savedEnc = localStorage.getItem("settings_encryption");
-    const savedUser = localStorage.getItem("settings_smtp_username");
-    const savedUoms = localStorage.getItem("settings_uoms");
-    const savedRecHeader = localStorage.getItem("settings_receipt_header");
-    const savedRecFooter = localStorage.getItem("settings_receipt_footer");
-    const savedRecSize = localStorage.getItem("settings_receipt_size");
+    const keyPrefix = getEntityStorageKey("settings");
+    const savedCompany = localStorage.getItem(`${keyPrefix}_company_name`);
+    const savedCurrency = localStorage.getItem(`${keyPrefix}_currency`);
+    const savedTimezone = localStorage.getItem(`${keyPrefix}_timezone`);
+    const savedCountry = localStorage.getItem(`${keyPrefix}_country`);
+    const savedDateFormat = localStorage.getItem(`${keyPrefix}_date_format`);
+    const savedSmtp = localStorage.getItem(`${keyPrefix}_smtp_server`);
+    const savedPort = localStorage.getItem(`${keyPrefix}_smtp_port`);
+    const savedEnc = localStorage.getItem(`${keyPrefix}_encryption`);
+    const savedUser = localStorage.getItem(`${keyPrefix}_smtp_username`);
+    const savedUoms = localStorage.getItem(`${keyPrefix}_uoms`);
+    const savedRecHeader = localStorage.getItem(`${keyPrefix}_receipt_header`);
+    const savedRecFooter = localStorage.getItem(`${keyPrefix}_receipt_footer`);
+    const savedRecSize = localStorage.getItem(`${keyPrefix}_receipt_size`);
 
-    if (savedCompany) setCompanyName(savedCompany);
+    let defaultEntityName = activeBranch?.name || "";
+    let defaultEmail = "";
+    try {
+      const uStr = localStorage.getItem("user");
+      if (uStr) {
+        const u = JSON.parse(uStr);
+        if (!defaultEntityName) defaultEntityName = u.company_name || u.name || "My Company";
+        defaultEmail = u.email || "";
+      }
+    } catch {}
+
+    setCompanyName(savedCompany || defaultEntityName || "My Workspace");
     if (savedCurrency) setCurrency(savedCurrency);
+    else if (activeBranch?.currency) setCurrency(activeBranch.currency);
     if (savedTimezone) setTimezone(savedTimezone);
     if (savedCountry) setCountry(savedCountry);
     if (savedDateFormat) setDateFormat(savedDateFormat);
-    if (savedSmtp) setSmtpServer(savedSmtp);
+    setSmtpServer(savedSmtp || "");
     if (savedPort) setSmtpPort(savedPort);
     if (savedEnc) setEncryption(savedEnc);
-    if (savedUser) setSmtpUser(savedUser);
-    if (savedRecHeader) setReceiptHeader(savedRecHeader);
+    setSmtpUser(savedUser || defaultEmail);
+    setReceiptHeader(savedRecHeader || `Welcome to ${savedCompany || defaultEntityName || "Our Workspace"}`);
     if (savedRecFooter) setReceiptFooter(savedRecFooter);
     if (savedRecSize) setReceiptPaperSize(savedRecSize);
     if (savedUoms) {
@@ -208,28 +223,31 @@ export default function SettingsPage() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [activeBranch, getEntityStorageKey]);
 
   const handleSave = () => {
     setSaving(true);
     setTimeout(() => {
-      localStorage.setItem("settings_company_name", companyName);
-      localStorage.setItem("settings_currency", currency);
-      localStorage.setItem("settings_timezone", timezone);
-      localStorage.setItem("settings_country", country);
-      localStorage.setItem("settings_date_format", dateFormat);
-      localStorage.setItem("settings_smtp_server", smtpServer);
-      localStorage.setItem("settings_smtp_port", smtpPort);
-      localStorage.setItem("settings_encryption", encryption);
-      localStorage.setItem("settings_smtp_username", smtpUser);
-      localStorage.setItem("settings_uoms", JSON.stringify(uoms));
-      localStorage.setItem("settings_receipt_header", receiptHeader);
-      localStorage.setItem("settings_receipt_footer", receiptFooter);
-      localStorage.setItem("settings_receipt_size", receiptPaperSize);
-      
+      const keyPrefix = getEntityStorageKey("settings");
+      localStorage.setItem(`${keyPrefix}_company_name`, companyName);
+      localStorage.setItem(`${keyPrefix}_currency`, currency);
+      localStorage.setItem(`${keyPrefix}_timezone`, timezone);
+      localStorage.setItem(`${keyPrefix}_country`, country);
+      localStorage.setItem(`${keyPrefix}_date_format`, dateFormat);
+      localStorage.setItem(`${keyPrefix}_smtp_server`, smtpServer);
+      localStorage.setItem(`${keyPrefix}_smtp_port`, smtpPort);
+      localStorage.setItem(`${keyPrefix}_encryption`, encryption);
+      localStorage.setItem(`${keyPrefix}_smtp_username`, smtpUser);
+      localStorage.setItem(`${keyPrefix}_uoms`, JSON.stringify(uoms));
+      localStorage.setItem(`${keyPrefix}_receipt_header`, receiptHeader);
+      localStorage.setItem(`${keyPrefix}_receipt_footer`, receiptFooter);
+      localStorage.setItem(`${keyPrefix}_receipt_size`, receiptPaperSize);
+      if (activeBranch && companyName.trim()) {
+        updateBranch(activeBranch.id, { name: companyName.trim(), currency });
+      }
       setSaving(false);
-      alert("Settings saved successfully!");
-    }, 800);
+      alert("Settings saved for your entity!");
+    }, 500);
   };
 
   const handleSelectLocale = (item: any) => {

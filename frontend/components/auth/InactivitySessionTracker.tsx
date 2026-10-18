@@ -86,8 +86,33 @@ export default function InactivitySessionTracker() {
             window.addEventListener(evt, handleUserActivity, { passive: true });
         });
 
-        // 1-second interval ticker for inactivity
+        // 1-second interval ticker for inactivity & 12-second single-session heartbeat
+        let tickCount = 0;
         intervalRef.current = setInterval(() => {
+            tickCount += 1;
+            if (tickCount % 12 === 0) {
+                const currentToken = localStorage.getItem("token");
+                const currentSid = localStorage.getItem("beraxis_session_id");
+                if (currentToken && currentSid) {
+                    fetch("/api/v1/auth/me", {
+                        headers: {
+                            "Authorization": `Bearer ${currentToken}`,
+                            "X-Session-Id": currentSid
+                        }
+                    }).then(async (res) => {
+                        if (res.status === 401) {
+                            const data = await res.json().catch(() => ({}));
+                            if (String(data?.detail || "").includes("SESSION_SUPERSEDED")) {
+                                localStorage.removeItem("token");
+                                localStorage.removeItem("refresh_token");
+                                localStorage.removeItem("beraxis_session_id");
+                                router.push("/login?reason=concurrent_login");
+                            }
+                        }
+                    }).catch(() => {});
+                }
+            }
+
             setIdleSeconds(prev => {
                 const nextVal = prev + 1;
                 if (nextVal >= INACTIVITY_TIMEOUT_SECONDS - WARNING_THRESHOLD_SECONDS && nextVal < INACTIVITY_TIMEOUT_SECONDS) {
@@ -99,8 +124,19 @@ export default function InactivitySessionTracker() {
             });
         }, 1000);
 
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === "beraxis_session_id" && e.newValue) {
+                const tabSid = sessionStorage.getItem("beraxis_tab_session_id");
+                if (tabSid && e.newValue !== tabSid) {
+                    router.push("/login?reason=concurrent_login");
+                }
+            }
+        };
+        window.addEventListener("storage", handleStorageChange);
+
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
+            window.removeEventListener("storage", handleStorageChange);
             activityEvents.forEach(evt => {
                 window.removeEventListener(evt, handleUserActivity);
             });

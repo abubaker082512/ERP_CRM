@@ -28,7 +28,7 @@ const ALL_MODULES = [
     "Project", "Timesheets", "Planning", "Helpdesk", "Documents",
     "Point of Sale", "Contacts", "Knowledge", "Discuss", "Surveys",
     "Sign", "Barcode", "Calendar", "Appointments", "To Do",
-    "Team", "Dashboards", "Settings",
+    "Team", "Dashboards", "NGOs & Grants", "Club Hub",
 ];
 
 interface Plan {
@@ -51,18 +51,18 @@ const PLANS: Plan[] = [
     {
         id: "free",
         name: "One App Free",
-        tagline: "Pick any 1 module, use it forever",
+        tagline: "Pick any 1 major app (+ Settings), use it forever",
         monthlyPrice: 0.00,
         annualPrice: 0.00,
         freemiusPlanId: "51030",
         highlight: false,
         isFree: true,
         features: [
-            "1 module of your choice",
-            "Unlimited user seats",
-            "Single Company Workspace (1 Company)",
-            "50 Starter Lead Pool Previews",
-            "Managed cloud hosting",
+            "1 Major App of your choice (+ Settings included)",
+            "1 Single User / Individual Session",
+            "Single Company Workspace (1 Independent Entity)",
+            "Leads Pool NOT included (Paid plans only)",
+            "100% Isolated Private Company Data",
             "Community support",
         ],
         cryptoPlanKey: "free",
@@ -80,7 +80,7 @@ const PLANS: Plan[] = [
         badge: "Early Bird Special (96% OFF)",
         features: [
             "Single Company Workspace (1 Company)",
-            "1,500 Verified Lead Credits / user / mo",
+            "1,500 Verified Lead Credits / user / mo (25.8M+ Pool)",
             "Buy extra lead packs in Lead Pool ($10 / 1,000)",
             "All 28 ERP/CRM modules unlocked",
             "Antigravity AI Brain & Voice Pilot",
@@ -101,7 +101,7 @@ const PLANS: Plan[] = [
         badge: "Multi-Company & Custom APIs",
         features: [
             "Multi-Company: 3 Companies included (+ $15/mo per extra company)",
-            "5,000+ Custom Lead Credits / user / mo",
+            "5,000+ Custom Lead Credits / user / mo (25.8M+ Pool)",
             "Beraxis Studio Customizer app",
             "External APIs & Webhooks",
             "Dedicated account manager & 24/7 hotline",
@@ -129,8 +129,11 @@ function ModuleSelectorModal({
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-white/5">
                     <div>
-                        <h2 className="text-xl font-black text-white">Choose Your Free Module</h2>
-                        <p className="text-sm text-gray-400 mt-1">Select 1 module to use forever, free. You can upgrade anytime.</p>
+                        <h2 className="text-xl font-black text-white">Choose Your 1 Free Major App</h2>
+                        <p className="text-xs text-gray-400 mt-1">
+                            Select <strong className="text-white">1 major app</strong> to use forever for free (Settings is included automatically).{" "}
+                            <span className="text-amber-300 font-semibold">Note: Leads Pool is only available on Paid Plans.</span>
+                        </p>
                     </div>
                     <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5">
                         <X size={20} />
@@ -155,6 +158,13 @@ function ModuleSelectorModal({
                             <span className="leading-tight">{mod}</span>
                         </button>
                     ))}
+                    <div
+                        className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-center text-[10px] font-semibold text-amber-300/60 gap-1 cursor-not-allowed"
+                        title="Leads Pool requires a Paid Plan"
+                    >
+                        <Lock size={12} className="text-amber-400" />
+                        <span className="leading-tight">Leads Pool (Paid Only)</span>
+                    </div>
                 </div>
 
                 {/* Footer */}
@@ -171,9 +181,9 @@ function ModuleSelectorModal({
                         className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {selected ? (
-                            <>Start Free with {selected} <ArrowRight size={14} /></>
+                            <>Start Free with {selected} + Settings <ArrowRight size={14} /></>
                         ) : (
-                            "Select a module first"
+                            "Select 1 major app first"
                         )}
                     </button>
                 </div>
@@ -474,14 +484,21 @@ function BillingPageContent() {
     const [success, setSuccess] = useState(false);
 
     useEffect(() => {
+        const userStr = localStorage.getItem("user");
+        let uKey = "guest";
+        if (userStr) {
+            try {
+                const u = JSON.parse(userStr);
+                setUserEmail(u?.email || "");
+                uKey = (u?.id || u?.email || "guest").toString().toLowerCase().trim();
+            } catch {}
+        }
         // Check billing_success from Freemius/Plisio redirect
         if (searchParams.get("billing_success") === "true") {
+            localStorage.setItem(`beraxis_plan_${uKey}`, "standard");
+            window.dispatchEvent(new Event("beraxis_auth_changed"));
             setSuccess(true);
-            setTimeout(() => router.push("/"), 3000);
-        }
-        const userStr = localStorage.getItem("user");
-        if (userStr) {
-            try { setUserEmail(JSON.parse(userStr)?.email || ""); } catch {}
+            setTimeout(() => router.push("/apps"), 2500);
         }
     }, [searchParams, router]);
 
@@ -489,6 +506,41 @@ function BillingPageContent() {
 
     const handleModuleSelected = (mod: string) => {
         localStorage.setItem("selectedModule", mod);
+        try {
+            const userStr = localStorage.getItem("user");
+            if (userStr) {
+                const u = JSON.parse(userStr);
+                const uKey = (u?.id || u?.email || "guest").toString().toLowerCase().trim();
+                const modMap: Record<string, string> = {
+                    "CRM": "/crm", "Sales": "/sales", "Accounting": "/accounting",
+                    "Inventory": "/inventory", "Purchase": "/purchase", "Manufacturing": "/manufacturing",
+                    "Payroll": "/payroll", "Recruitment": "/recruitment", "Employees": "/employees",
+                    "Attendances": "/attendances", "Project": "/project", "Timesheets": "/timesheets",
+                    "Planning": "/planning", "Helpdesk": "/helpdesk", "Documents": "/documents",
+                    "Point of Sale": "/pos", "Contacts": "/contacts", "Knowledge": "/knowledge",
+                    "Discuss": "/discuss", "Surveys": "/surveys", "Sign": "/sign",
+                    "Barcode": "/barcode", "Calendar": "/calendar", "Appointments": "/appointments",
+                    "To Do": "/todo", "Team": "/team", "Dashboards": "/dashboard",
+                    "NGOs & Grants": "/ngos", "Club Hub": "/club"
+                };
+                const targetHref = modMap[mod] || `/${mod.toLowerCase().replace(/\s+/g, "-")}`;
+                localStorage.setItem(`beraxis_plan_${uKey}`, "free");
+                localStorage.setItem(`beraxis_free_app_${uKey}`, targetHref);
+                // Also update existing branch if present
+                const branchesStr = localStorage.getItem(`beraxis_branches_${uKey}`);
+                if (branchesStr) {
+                    const parsedBranches = JSON.parse(branchesStr);
+                    if (Array.isArray(parsedBranches) && parsedBranches.length > 0) {
+                        const updatedBranches = parsedBranches.map((b: any) => ({
+                            ...b,
+                            enabledModules: [targetHref, "/settings"]
+                        }));
+                        localStorage.setItem(`beraxis_branches_${uKey}`, JSON.stringify(updatedBranches));
+                    }
+                }
+                window.dispatchEvent(new Event("beraxis_auth_changed"));
+            }
+        } catch {}
         setShowModuleModal(false);
         setSuccess(true);
         setTimeout(() => router.push("/apps"), 1500);
@@ -515,7 +567,21 @@ function BillingPageContent() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ promo_code: promoCode }),
             });
-            if (res.ok) { setSuccess(true); setTimeout(() => router.push("/"), 2500); }
+            if (res.ok) {
+                try {
+                    const userStr = localStorage.getItem("user");
+                    if (userStr) {
+                        const u = JSON.parse(userStr);
+                        const uKey = (u?.id || u?.email || "guest").toString().toLowerCase().trim();
+                        localStorage.setItem(`beraxis_plan_${uKey}`, "standard");
+                        u.tenant = { ...(u.tenant || {}), subscription_status: "active" };
+                        localStorage.setItem("user", JSON.stringify(u));
+                        window.dispatchEvent(new Event("beraxis_auth_changed"));
+                    }
+                } catch {}
+                setSuccess(true);
+                setTimeout(() => router.push("/apps"), 2500);
+            }
             else { const err = await res.json(); setPromoError(err.detail || "Activation failed."); }
         } catch { setPromoError("Network error."); }
         finally { setPromoLoading(false); }

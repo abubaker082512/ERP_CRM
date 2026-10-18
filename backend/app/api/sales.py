@@ -176,12 +176,7 @@ def read_sales_orders(skip: int = 0, limit: int = 100, client: Client = Depends(
         response = client.table("sale_order").select("*, sale_order_line(*)").order("date_order", desc=True).range(skip, skip + limit - 1).execute()
         rows = response.data or []
     except Exception:
-        try:
-            svc = get_service_role_client()
-            response = svc.table("sale_order").select("*, sale_order_line(*)").order("date_order", desc=True).range(skip, skip + limit - 1).execute()
-            rows = response.data or []
-        except Exception:
-            rows = []
+        rows = []
     return [_map_sale_order(r, client) for r in rows]
 
 @router.get("/quotations", response_model=List[SalesOrder])
@@ -195,12 +190,7 @@ def read_confirmed_orders(skip: int = 0, limit: int = 100, client: Client = Depe
         response = client.table("sale_order").select("*, sale_order_line(*)").eq("state", "sale").order("date_order", desc=True).range(skip, skip + limit - 1).execute()
         rows = response.data or []
     except Exception:
-        try:
-            svc = get_service_role_client()
-            response = svc.table("sale_order").select("*, sale_order_line(*)").eq("state", "sale").order("date_order", desc=True).range(skip, skip + limit - 1).execute()
-            rows = response.data or []
-        except Exception:
-            rows = []
+        rows = []
     return [_map_sale_order(r, client) for r in rows]
 
 @router.get("/{order_id}", response_model=SalesOrder)

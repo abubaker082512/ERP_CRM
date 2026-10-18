@@ -129,24 +129,27 @@ const WORLD_LOCALE_DATA = [
   { country: "Uzbekistan", code: "UZ", currency: "UZS", currencyName: "Uzbekistani Som", timezone: "Asia/Tashkent" },
   { country: "Venezuela", code: "VE", currency: "VES", currencyName: "Venezuelan Bolívar", timezone: "America/Caracas" },
   { country: "Vietnam", code: "VN", currency: "VND", currencyName: "Vietnamese Dong", timezone: "Asia/Ho_Chi_Minh" },
-  { country: "Yemen", code: "YE", currency: "YER", currencyName: "Yemeni Rial", timezone: "Asia/Aden" },
+  { country: "Yemen", code: "YE", currency: "YER", timezone: "Yemeni Rial", timezone: "Asia/Aden" },
   { country: "Zimbabwe", code: "ZW", currency: "ZWL", currencyName: "Zimbabwean Dollar", timezone: "Africa/Harare" }
 ];
 
+import { useBranchContext } from "@/lib/branchContext";
+
 export default function SettingsPage() {
+  const { activeBranch, getEntityStorageKey, updateBranch } = useBranchContext();
   const [activeTab, setActiveTab] = useState("general");
   const [saving, setSaving] = useState(false);
 
-  // General settings state
-  const [companyName, setCompanyName] = useState("Galaxy Technologies Inc.");
+  // General settings state (isolated per entity)
+  const [companyName, setCompanyName] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [timezone, setTimezone] = useState("UTC");
   const [country, setCountry] = useState("US");
   const [dateFormat, setDateFormat] = useState("YYYY-MM-DD");
 
   // POS Receipt template states
-  const [receiptHeader, setReceiptHeader] = useState("Welcome to Beraxis Cloud ERP");
-  const [receiptFooter, setReceiptFooter] = useState("Thank you for shopping with us!");
+  const [receiptHeader, setReceiptHeader] = useState("Welcome to Our Store");
+  const [receiptFooter, setReceiptFooter] = useState("Thank you for your business!");
   const [receiptPaperSize, setReceiptPaperSize] = useState("58mm");
 
   // Search filter query for general locale search
@@ -154,10 +157,10 @@ export default function SettingsPage() {
   const [isLocaleDropdownOpen, setIsLocaleDropdownOpen] = useState(false);
 
   // Email settings state
-  const [smtpServer, setSmtpServer] = useState("smtp.galaxy.com");
+  const [smtpServer, setSmtpServer] = useState("");
   const [smtpPort, setSmtpPort] = useState("587");
   const [encryption, setEncryption] = useState("tls");
-  const [smtpUser, setSmtpUser] = useState("admin@galaxy.com");
+  const [smtpUser, setSmtpUser] = useState("");
 
   // Units of Measure state
   const [uoms, setUoms] = useState<any[]>(DEFAULT_UOMS);
@@ -166,51 +169,48 @@ export default function SettingsPage() {
   const [newUomRatio, setNewUomRatio] = useState("1.0");
   const [isAddUomOpen, setIsAddUomOpen] = useState(false);
 
-  // DirectPay Payment Gateway Settings
-  const [directPayClientId, setDirectPayClientId] = useState("pwa_ci_k1qlq54hv4gw5pr0khux");
-  const [directPayClientSecret, setDirectPayClientSecret] = useState("pwa_secret_zp5rai8z02zr3o5sebm1co6uxci58uca");
-  const [directPayEnabled, setDirectPayEnabled] = useState(true);
-  const [directPayTesting, setDirectPayTesting] = useState(false);
-  const [directPayTestResult, setDirectPayTestResult] = useState<string | null>(null);
-
   const localeDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load persisted settings on mount
-    const savedCompany = localStorage.getItem("settings_company_name");
-    const savedCurrency = localStorage.getItem("settings_currency");
-    const savedTimezone = localStorage.getItem("settings_timezone");
-    const savedCountry = localStorage.getItem("settings_country");
-    const savedDateFormat = localStorage.getItem("settings_date_format");
-    const savedSmtp = localStorage.getItem("settings_smtp_server");
-    const savedPort = localStorage.getItem("settings_smtp_port");
-    const savedEnc = localStorage.getItem("settings_encryption");
-    const savedUser = localStorage.getItem("settings_smtp_username");
-    const savedUoms = localStorage.getItem("settings_uoms");
-    const savedRecHeader = localStorage.getItem("settings_receipt_header");
-    const savedRecFooter = localStorage.getItem("settings_receipt_footer");
-    const savedRecSize = localStorage.getItem("settings_receipt_size");
+    const keyPrefix = getEntityStorageKey("settings");
+    const savedCompany = localStorage.getItem(`${keyPrefix}_company_name`);
+    const savedCurrency = localStorage.getItem(`${keyPrefix}_currency`);
+    const savedTimezone = localStorage.getItem(`${keyPrefix}_timezone`);
+    const savedCountry = localStorage.getItem(`${keyPrefix}_country`);
+    const savedDateFormat = localStorage.getItem(`${keyPrefix}_date_format`);
+    const savedSmtp = localStorage.getItem(`${keyPrefix}_smtp_server`);
+    const savedPort = localStorage.getItem(`${keyPrefix}_smtp_port`);
+    const savedEnc = localStorage.getItem(`${keyPrefix}_encryption`);
+    const savedUser = localStorage.getItem(`${keyPrefix}_smtp_username`);
+    const savedUoms = localStorage.getItem(`${keyPrefix}_uoms`);
+    const savedRecHeader = localStorage.getItem(`${keyPrefix}_receipt_header`);
+    const savedRecFooter = localStorage.getItem(`${keyPrefix}_receipt_footer`);
+    const savedRecSize = localStorage.getItem(`${keyPrefix}_receipt_size`);
 
-    if (savedCompany) setCompanyName(savedCompany);
+    let defaultEntityName = activeBranch?.name || "";
+    let defaultEmail = "";
+    try {
+      const uStr = localStorage.getItem("user");
+      if (uStr) {
+        const u = JSON.parse(uStr);
+        if (!defaultEntityName) defaultEntityName = u.company_name || u.name || "My Company";
+        defaultEmail = u.email || "";
+      }
+    } catch {}
+
+    setCompanyName(savedCompany || defaultEntityName || "My Workspace");
     if (savedCurrency) setCurrency(savedCurrency);
+    else if (activeBranch?.currency) setCurrency(activeBranch.currency);
     if (savedTimezone) setTimezone(savedTimezone);
     if (savedCountry) setCountry(savedCountry);
     if (savedDateFormat) setDateFormat(savedDateFormat);
-    if (savedSmtp) setSmtpServer(savedSmtp);
+    setSmtpServer(savedSmtp || "");
     if (savedPort) setSmtpPort(savedPort);
     if (savedEnc) setEncryption(savedEnc);
-    if (savedUser) setSmtpUser(savedUser);
-    if (savedRecHeader) setReceiptHeader(savedRecHeader);
+    setSmtpUser(savedUser || defaultEmail);
+    setReceiptHeader(savedRecHeader || `Welcome to ${savedCompany || defaultEntityName || "Our Workspace"}`);
     if (savedRecFooter) setReceiptFooter(savedRecFooter);
     if (savedRecSize) setReceiptPaperSize(savedRecSize);
-    
-    const savedDpId = localStorage.getItem("settings_directpay_client_id");
-    const savedDpSecret = localStorage.getItem("settings_directpay_client_secret");
-    const savedDpEn = localStorage.getItem("settings_directpay_enabled");
-    if (savedDpId) setDirectPayClientId(savedDpId);
-    if (savedDpSecret) setDirectPayClientSecret(savedDpSecret);
-    if (savedDpEn !== null) setDirectPayEnabled(savedDpEn === "true");
-
     if (savedUoms) {
       try { setUoms(JSON.parse(savedUoms)); } catch (e) {}
     }
@@ -223,59 +223,31 @@ export default function SettingsPage() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleTestDirectPay = async () => {
-    setDirectPayTesting(true);
-    setDirectPayTestResult(null);
-    try {
-      const res = await fetch("/api/payments/directpay/initiate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amountInPKR: 100,
-          description: "Gateway Connection Health Check",
-          payer_name: "Beraxis Admin",
-          email: "admin@beraxis.online",
-          msisdn: "03001234567"
-        })
-      });
-      const data = await res.json();
-      if (data.success && data.paymentUrl) {
-        setDirectPayTestResult("✅ DirectPay Gateway Connected & Active! HMAC-SHA256 Checksum generation verified.");
-      } else {
-        setDirectPayTestResult(`❌ Connection Failed: ${data.error || "Unknown response"}`);
-      }
-    } catch (err: any) {
-      setDirectPayTestResult(`❌ Connection Error: ${err.message}`);
-    } finally {
-      setDirectPayTesting(false);
-    }
-  };
+  }, [activeBranch, getEntityStorageKey]);
 
   const handleSave = () => {
     setSaving(true);
     setTimeout(() => {
-      localStorage.setItem("settings_company_name", companyName);
-      localStorage.setItem("settings_currency", currency);
-      localStorage.setItem("settings_timezone", timezone);
-      localStorage.setItem("settings_country", country);
-      localStorage.setItem("settings_date_format", dateFormat);
-      localStorage.setItem("settings_smtp_server", smtpServer);
-      localStorage.setItem("settings_smtp_port", smtpPort);
-      localStorage.setItem("settings_encryption", encryption);
-      localStorage.setItem("settings_smtp_username", smtpUser);
-      localStorage.setItem("settings_uoms", JSON.stringify(uoms));
-      localStorage.setItem("settings_receipt_header", receiptHeader);
-      localStorage.setItem("settings_receipt_footer", receiptFooter);
-      localStorage.setItem("settings_receipt_size", receiptPaperSize);
-      localStorage.setItem("settings_directpay_client_id", directPayClientId);
-      localStorage.setItem("settings_directpay_client_secret", directPayClientSecret);
-      localStorage.setItem("settings_directpay_enabled", directPayEnabled.toString());
-      
+      const keyPrefix = getEntityStorageKey("settings");
+      localStorage.setItem(`${keyPrefix}_company_name`, companyName);
+      localStorage.setItem(`${keyPrefix}_currency`, currency);
+      localStorage.setItem(`${keyPrefix}_timezone`, timezone);
+      localStorage.setItem(`${keyPrefix}_country`, country);
+      localStorage.setItem(`${keyPrefix}_date_format`, dateFormat);
+      localStorage.setItem(`${keyPrefix}_smtp_server`, smtpServer);
+      localStorage.setItem(`${keyPrefix}_smtp_port`, smtpPort);
+      localStorage.setItem(`${keyPrefix}_encryption`, encryption);
+      localStorage.setItem(`${keyPrefix}_smtp_username`, smtpUser);
+      localStorage.setItem(`${keyPrefix}_uoms`, JSON.stringify(uoms));
+      localStorage.setItem(`${keyPrefix}_receipt_header`, receiptHeader);
+      localStorage.setItem(`${keyPrefix}_receipt_footer`, receiptFooter);
+      localStorage.setItem(`${keyPrefix}_receipt_size`, receiptPaperSize);
+      if (activeBranch && companyName.trim()) {
+        updateBranch(activeBranch.id, { name: companyName.trim(), currency });
+      }
       setSaving(false);
-      alert("Settings saved successfully!");
-    }, 800);
+      alert("Settings saved for your entity!");
+    }, 500);
   };
 
   const handleSelectLocale = (item: any) => {
@@ -702,109 +674,12 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Payment Gateways & DirectPay Tab */}
-            {(activeTab === "billing" || activeTab === "integrations") && (
-              <div className="space-y-6 max-w-3xl">
-                <div className="flex items-center justify-between p-4 bg-purple-600/10 border border-purple-500/20 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-600/20 flex items-center justify-center text-purple-400 font-bold text-lg">
-                      ⚡
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold text-white">DirectPay Payment Gateway (Payin PWA)</h3>
-                      <p className="text-xs text-gray-400">Integrated instant checkout for JazzCash, Easypaisa, 1Link & Raast Bank Transfer</p>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={directPayEnabled} 
-                      onChange={e => setDirectPayEnabled(e.target.checked)} 
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                  </label>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">DirectPay Client ID</label>
-                    <input 
-                      type="text" 
-                      value={directPayClientId} 
-                      onChange={e => setDirectPayClientId(e.target.value)}
-                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white font-mono text-xs focus:border-purple-500 outline-none" 
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">DirectPay Client Secret</label>
-                    <input 
-                      type="password" 
-                      value={directPayClientSecret} 
-                      onChange={e => setDirectPayClientSecret(e.target.value)}
-                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white font-mono text-xs focus:border-purple-500 outline-none" 
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Payin Landing Page URL</label>
-                      <input 
-                        type="text" 
-                        readOnly
-                        value="https://payin-pwa.directpay.pro/pay" 
-                        className="w-full bg-[#1E293B]/60 border border-gray-800 rounded-xl px-4 py-3 text-gray-400 font-mono text-xs outline-none cursor-not-allowed" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Inquiry / Status URL</label>
-                      <input 
-                        type="text" 
-                        readOnly
-                        value="https://payin-pwa.directpay.pro/pay/status" 
-                        className="w-full bg-[#1E293B]/60 border border-gray-800 rounded-xl px-4 py-3 text-gray-400 font-mono text-xs outline-none cursor-not-allowed" 
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Webhook Notification URL</label>
-                    <input 
-                      type="text" 
-                      readOnly
-                      value="https://erp-crm-puce.vercel.app/api/payments/directpay/webhook" 
-                      className="w-full bg-[#1E293B]/60 border border-gray-800 rounded-xl px-4 py-3 text-emerald-400 font-mono text-xs outline-none cursor-not-allowed" 
-                    />
-                    <p className="text-[11px] text-gray-500 mt-1">Provide this webhook URL in your DirectPay Merchant Console to receive real-time IPN settlement notifications.</p>
-                  </div>
-
-                  <div className="pt-2 flex items-center justify-between border-t border-gray-800">
-                    <button
-                      type="button"
-                      onClick={handleTestDirectPay}
-                      disabled={directPayTesting}
-                      className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-bold transition-all border border-white/10 flex items-center gap-2 cursor-pointer"
-                    >
-                      {directPayTesting ? "Testing Gateway..." : "🧪 Test DirectPay Gateway Connection"}
-                    </button>
-
-                    {directPayTestResult && (
-                      <span className={`text-xs font-medium ${directPayTestResult.startsWith('✅') ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {directPayTestResult}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Users Tab */}
-            {activeTab === "users" && (
+            {/* Other tabs */}
+            {["users", "integrations", "billing"].includes(activeTab) && (
               <div className="py-12 flex flex-col items-center justify-center text-center">
                 <Settings size={48} className="text-gray-600 mb-4 animate-[spin_10s_linear_infinite]" />
-                <h3 className="text-lg font-medium text-white mb-2">Users & Permissions</h3>
-                <p className="text-gray-400 max-w-xs">RBAC management and team invitations are managed via Super Admin and Employees.</p>
+                <h3 className="text-lg font-medium text-white mb-2">Coming Soon</h3>
+                <p className="text-gray-400 max-w-xs">This configuration area is currently under active SaaS subscription packaging development.</p>
               </div>
             )}
 

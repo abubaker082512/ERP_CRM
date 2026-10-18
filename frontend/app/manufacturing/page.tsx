@@ -23,11 +23,7 @@ type ManufacturingOrder = {
     source: string;
 };
 
-const mockOrders: ManufacturingOrder[] = [
-    { id: "MO/001", product: "Office Chair", quantity: 50, status: "confirmed", deadline: "2025-12-10", source: "SO/005" },
-    { id: "MO/002", product: "Wooden Desk", quantity: 20, status: "in_progress", deadline: "2025-12-08", source: "Stock" },
-    { id: "MO/003", product: "Cabinet", quantity: 15, status: "done", deadline: "2025-12-01", source: "SO/002" },
-];
+const mockOrders: ManufacturingOrder[] = [];
 
 export default function ManufacturingPage() {
     const [orders] = useState<ManufacturingOrder[]>(mockOrders);

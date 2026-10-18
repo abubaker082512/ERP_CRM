@@ -15,16 +15,19 @@ import {
     Sparkles
 } from "lucide-react";
 
+import { useBranchContext } from "@/lib/branchContext";
+
 export default function UserProfileDropdown() {
     const [isOpen, setIsOpen] = useState(false);
-    const [fullName, setFullName] = useState<string>("Administrator");
-    const [email, setEmail] = useState<string>("admin@beraxis.online");
-    const [companyName, setCompanyName] = useState<string>("Barexis Technologies");
-    const [planLabel, setPlanLabel] = useState<string>("FREE PLAN");
+    const [fullName, setFullName] = useState<string>("User");
+    const [email, setEmail] = useState<string>("");
+    const [companyName, setCompanyName] = useState<string>("My Workspace");
+    const [planLabel, setPlanLabel] = useState<string>("ONE APP FREE");
     const [isAdmin, setIsAdmin] = useState<boolean>(false);
-    const [userInitial, setUserInitial] = useState<string>("A");
+    const [userInitial, setUserInitial] = useState<string>("U");
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+    const { activeBranch, planTier, isFreePlan } = useBranchContext();
 
     useEffect(() => {
         try {
@@ -33,17 +36,21 @@ export default function UserProfileDropdown() {
                 const user = JSON.parse(userStr);
                 
                 // Determine user full name
-                const name = user.name || user.full_name || user.user_metadata?.full_name || user.user_metadata?.name || (user.email ? user.email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Administrator");
+                const name = user.name || user.full_name || user.user_metadata?.full_name || user.user_metadata?.name || (user.email ? user.email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "User");
                 setFullName(name);
-                setUserInitial(name.charAt(0).toUpperCase() || "A");
+                setUserInitial(name.charAt(0).toUpperCase() || "U");
 
                 if (user.email) setEmail(user.email);
 
-                // Determine company / tenant name
-                if (user.tenant?.name) {
-                    setCompanyName(user.tenant.name);
+                // Determine company / entity name (isolated per user)
+                if (activeBranch?.name) {
+                    setCompanyName(activeBranch.name);
                 } else if (user.company_name) {
                     setCompanyName(user.company_name);
+                } else if (user.tenant?.name) {
+                    setCompanyName(user.tenant.name);
+                } else {
+                    setCompanyName(`${name}'s Entity`);
                 }
 
                 // Check Super Admin
@@ -54,12 +61,14 @@ export default function UserProfileDropdown() {
                 // Determine Plan Badge
                 if (isSuper) {
                     setPlanLabel("ENTERPRISE");
-                } else if (user.tenant?.subscription_status === "active" || user.plan === "pro") {
-                    setPlanLabel("PRO PLAN");
-                } else if (user.tenant?.trial_ends_at) {
-                    setPlanLabel("TRIAL");
+                } else if (planTier === "premium") {
+                    setPlanLabel("PREMIUM PLAN");
+                } else if (planTier === "standard") {
+                    setPlanLabel("STANDARD PLAN");
+                } else if (isFreePlan) {
+                    setPlanLabel("ONE APP FREE");
                 } else {
-                    setPlanLabel("FREE PLAN");
+                    setPlanLabel("ONE APP FREE");
                 }
             }
         } catch (e) {
@@ -74,11 +83,14 @@ export default function UserProfileDropdown() {
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+    }, [activeBranch, planTier, isFreePlan]);
 
     const handleLogout = () => {
         localStorage.removeItem("token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("beraxis_session_id");
         localStorage.removeItem("user");
+        window.dispatchEvent(new Event("beraxis_auth_changed"));
         router.push("/login");
     };
 

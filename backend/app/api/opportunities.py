@@ -122,12 +122,7 @@ def read_opportunities(skip: int = 0, limit: int = 100, client: Client = Depends
         response = client.table("crm_lead").select("*").eq("type", "opportunity").order("created_at", desc=True).range(skip, skip + limit - 1).execute()
         rows = response.data or []
     except Exception:
-        try:
-            svc = get_service_role_client()
-            response = svc.table("crm_lead").select("*").eq("type", "opportunity").order("created_at", desc=True).range(skip, skip + limit - 1).execute()
-            rows = response.data or []
-        except Exception:
-            rows = []
+        rows = []
     return [_map_opportunity(r) for r in rows]
 
 @router.get("/{opp_id}", response_model=Opportunity)

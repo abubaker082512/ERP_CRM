@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Target, Bot, MessageSquare, Plus, Settings, ArrowLeft, LayoutGrid, Globe } from 'lucide-react';
+import { Target, Bot, MessageSquare, Plus, Settings, ArrowLeft, LayoutGrid, Globe, Lock } from 'lucide-react';
 import UniversalModuleSearch from '@/components/shared/UniversalModuleSearch';
+import { useBranchContext } from '@/lib/branchContext';
 
 interface CRMHeaderProps {
     onNewClick?: () => void;
@@ -14,14 +15,18 @@ interface CRMHeaderProps {
 export default function CRMHeader({ onNewClick, searchTerm = '', onSearchChange }: CRMHeaderProps) {
     const pathname = usePathname();
     const router = useRouter();
+    const { activeBranch, isFreePlan } = useBranchContext();
+
+    const entityDisplayName = activeBranch?.name || "My Workspace";
+    const entityInitial = entityDisplayName.charAt(0).toUpperCase() || "W";
 
     const navItems = [
-        { name: 'Pipeline', href: '/crm' },
-        { name: 'Lead Bank 🌐', href: '/crm/lead-bank' },
-        { name: 'Activities & History', href: '/crm/activities' },
-        { name: 'Sales', href: '/sales' },
-        { name: 'Reporting', href: '/crm/reporting' },
-        { name: 'Configuration', href: '/crm/configuration' },
+        { name: 'Pipeline', href: '/crm', paidOnly: false },
+        { name: isFreePlan ? 'Leads Pool 🔒 (Paid)' : 'Leads Pool 🌐', href: '/crm/leads-pool', paidOnly: true },
+        { name: 'Activities & History', href: '/crm/activities', paidOnly: false },
+        { name: 'Sales', href: '/sales', paidOnly: false },
+        { name: 'Reporting', href: '/crm/reporting', paidOnly: false },
+        { name: 'Configuration', href: '/crm/configuration', paidOnly: false },
     ];
 
     return (
@@ -80,9 +85,11 @@ export default function CRMHeader({ onNewClick, searchTerm = '', onSearchChange 
                                 <Link
                                     key={item.name}
                                     href={item.href}
-                                    className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+                                    className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1 ${
                                         isActive
                                             ? 'text-white bg-white/10 border border-white/10'
+                                            : item.paidOnly && isFreePlan
+                                            ? 'text-amber-400/90 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20'
                                             : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                                     }`}
                                 >
@@ -133,9 +140,9 @@ export default function CRMHeader({ onNewClick, searchTerm = '', onSearchChange 
                         title="Company Settings"
                         className="flex items-center gap-2 border-l border-gray-700 pl-3 hover:opacity-90 transition-opacity"
                     >
-                        <span className="text-xs text-gray-300 font-medium hidden xl:inline">ABT IT Innovation</span>
+                        <span className="text-xs text-gray-300 font-medium hidden xl:inline">{entityDisplayName}</span>
                         <div className="w-7 h-7 bg-cyan-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm">
-                            A
+                            {entityInitial}
                         </div>
                     </Link>
                 </div>

@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException, Security
+from fastapi import APIRouter, HTTPException, Security, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.schemas.auth import UserSignup, UserLogin
 from app.core.supabase_client import supabase, get_service_role_client
+from app.api.deps import register_active_session, verify_single_active_session, ACTIVE_USER_SESSIONS
+import uuid
 
 router = APIRouter()
 security = HTTPBearer()
@@ -88,16 +90,28 @@ def login(user: UserLogin):
         if not res.session:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        # Automatically ensure tenant record exists upon login
+        uid = str(res.user.id)
+        session_id = str(uuid.uuid4())
+        user_meta = dict(res.user.user_metadata or {})
+
+        # Register single active session worldwide (invalidates any previous login anywhere in the world)
+        register_active_session(uid, session_id, res.session.access_token)
+
+        # Automatically ensure tenant record exists upon login & persist active_session_id in user_metadata
         try:
             svc = get_service_role_client()
-            t_resp = svc.table("tenants").select("id").eq("id", str(res.user.id)).execute()
+            t_resp = svc.table("tenants").select("id").eq("id", uid).execute()
             if not t_resp.data:
                 svc.table("tenants").insert({
-                    "id": str(res.user.id),
+                    "id": uid,
                     "email": res.user.email,
                     "subscription_status": "trialing"
                 }).execute()
+            try:
+                updated_meta = {**user_meta, "active_session_id": session_id}
+                svc.auth.admin.update_user_by_id(uid, {"user_metadata": updated_meta})
+            except Exception:
+                pass
         except Exception as t_err:
             print(f"[Login] Tenant sync warning: {t_err}")
 
@@ -105,10 +119,14 @@ def login(user: UserLogin):
             "access_token": res.session.access_token,
             "refresh_token": res.session.refresh_token,
             "token_type": "bearer",
+            "session_id": session_id,
             "user": {
-                "id": str(res.user.id),
+                "id": uid,
                 "email": res.user.email,
-                "name": res.user.user_metadata.get("name", "") if res.user.user_metadata else ""
+                "name": user_meta.get("name", ""),
+                "account_type": user_meta.get("account_type", "individual"),
+                "company_name": user_meta.get("company_name", ""),
+                "session_id": session_id
             }
         }
     except HTTPException:
@@ -120,8 +138,8 @@ def login(user: UserLogin):
         raise HTTPException(status_code=400, detail=f"Authentication failed: {error_msg}")
 
 @router.get("/me")
-def get_me(credentials: HTTPAuthorizationCredentials = Security(security)):
-    """Verify token and return current user info without crashing on tenant lookups."""
+def get_me(request: Request, credentials: HTTPAuthorizationCredentials = Security(security)):
+    """Verify token, enforce single active session worldwide, and return current user info."""
     token = credentials.credentials
     
     # 1. Verify user JWT token with Supabase Auth
@@ -135,18 +153,25 @@ def get_me(credentials: HTTPAuthorizationCredentials = Security(security)):
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Token verification failed: {e}")
 
-    # 2. Fetch tenant info safely using Service Role Client (bypasses RLS)
+    uid = str(user.id)
+    user_meta = user.user_metadata if hasattr(user, "user_metadata") and user.user_metadata else {}
+
+    # 2. Verify Single Concurrent Login Session Worldwide
+    req_session_id = request.headers.get("X-Session-Id")
+    verify_single_active_session(uid, req_session_id, token, user_meta)
+
+    # 3. Fetch tenant info safely using Service Role Client (bypasses RLS)
     tenant_info = None
     try:
         svc = get_service_role_client()
-        tenant_resp = svc.table("tenants").select("*").eq("id", str(user.id)).execute()
+        tenant_resp = svc.table("tenants").select("*").eq("id", uid).execute()
         if tenant_resp.data:
             tenant_info = tenant_resp.data[0]
         else:
             # Auto-provision tenant record if missing for a valid auth user
             try:
                 new_tenant = {
-                    "id": str(user.id),
+                    "id": uid,
                     "email": user.email,
                     "subscription_status": "trialing"
                 }
@@ -155,21 +180,24 @@ def get_me(credentials: HTTPAuthorizationCredentials = Security(security)):
             except Exception as insert_err:
                 print(f"[get_me] Auto tenant insertion warning: {insert_err}")
                 tenant_info = {
-                    "id": str(user.id),
+                    "id": uid,
                     "email": user.email,
                     "subscription_status": "trialing"
                 }
     except Exception as e:
         print(f"[get_me] Tenant fetch warning (graceful fallback): {e}")
         tenant_info = {
-            "id": str(user.id),
+            "id": uid,
             "email": user.email,
             "subscription_status": "trialing"
         }
 
+    active_sid = ACTIVE_USER_SESSIONS.get(uid, {}).get("session_id") or user_meta.get("active_session_id")
+
     return {
-        "id": str(user.id),
+        "id": uid,
         "email": user.email,
-        "metadata": user.user_metadata,
-        "tenant": tenant_info
+        "metadata": user_meta,
+        "tenant": tenant_info,
+        "session_id": active_sid
     }
