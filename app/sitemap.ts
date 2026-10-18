@@ -1,26 +1,54 @@
 import { MetadataRoute } from 'next';
 import { BLOG_POSTS } from '@/lib/blog-data';
+import { COMPARISONS } from '@/lib/comparisonData';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://www.beraxis.online';
+  const now = new Date().toISOString();
 
-  const staticRoutes = [
-    { url: `${baseUrl}`, lastModified: new Date().toISOString(), changeFrequency: 'daily' as const, priority: 1.0 },
-    { url: `${baseUrl}/leads-pool`, lastModified: new Date().toISOString(), changeFrequency: 'daily' as const, priority: 0.95 },
-    { url: `${baseUrl}/pricing`, lastModified: new Date().toISOString(), changeFrequency: 'daily' as const, priority: 0.9 },
-    { url: `${baseUrl}/blog`, lastModified: new Date().toISOString(), changeFrequency: 'daily' as const, priority: 0.85 },
-    { url: `${baseUrl}/about`, lastModified: new Date().toISOString(), changeFrequency: 'weekly' as const, priority: 0.8 },
-    { url: `${baseUrl}/contact`, lastModified: new Date().toISOString(), changeFrequency: 'weekly' as const, priority: 0.8 },
-    { url: `${baseUrl}/signup`, lastModified: new Date().toISOString(), changeFrequency: 'weekly' as const, priority: 0.8 },
-    { url: `${baseUrl}/login`, lastModified: new Date().toISOString(), changeFrequency: 'monthly' as const, priority: 0.7 },
+  // Core Static Routes
+  const staticRoutes: MetadataRoute.Sitemap = [
+    { url: `${baseUrl}`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
+    { url: `${baseUrl}/leads-pool`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },
+    { url: `${baseUrl}/compare`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },
+    { url: `${baseUrl}/pricing`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${baseUrl}/blog`, lastModified: now, changeFrequency: 'daily', priority: 0.85 },
+    { url: `${baseUrl}/about`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/contact`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/apps`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
+    { url: `${baseUrl}/signup`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/login`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
   ];
 
-  const blogRoutes = BLOG_POSTS.map(post => ({
+  // Programmatic Competitor Comparison Routes
+  const comparisonRoutes: MetadataRoute.Sitemap = Object.keys(COMPARISONS).map(slug => ({
+    url: `${baseUrl}/compare/${slug}`,
+    lastModified: now,
+    changeFrequency: 'daily',
+    priority: 0.90,
+  }));
+
+  // Industry Archetype Dedicated Landing Routes
+  const industryRoutes: MetadataRoute.Sitemap = [
+    'automotive',
+    'club',
+    'education',
+    'ngos',
+    'real-estate',
+  ].map(ind => ({
+    url: `${baseUrl}/${ind}`,
+    lastModified: now,
+    changeFrequency: 'weekly',
+    priority: 0.85,
+  }));
+
+  // Blog Routes
+  const blogRoutes: MetadataRoute.Sitemap = BLOG_POSTS.map(post => ({
     url: `${baseUrl}/blog/${post.slug}`,
-    lastModified: new Date().toISOString(),
-    changeFrequency: 'weekly' as const,
+    lastModified: now,
+    changeFrequency: 'weekly',
     priority: 0.8,
   }));
 
-  return [...staticRoutes, ...blogRoutes];
+  return [...staticRoutes, ...comparisonRoutes, ...industryRoutes, ...blogRoutes];
 }
