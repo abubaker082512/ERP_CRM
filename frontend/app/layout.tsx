@@ -109,6 +109,9 @@ export const metadata: Metadata = {
             "max-snippet": -1,
         },
     },
+    verification: {
+        google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "googlee82f70b2be8b7b20",
+    },
 };
 
 export default function RootLayout({
@@ -255,6 +258,42 @@ export default function RootLayout({
                     "https://www.beraxis.online/about",
                     "https://www.beraxis.online/contact",
                     "https://www.beraxis.online/signup"
+                ]
+            },
+            {
+                "@type": "BreadcrumbList",
+                "@id": "https://www.beraxis.online/#breadcrumbs",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": "Home",
+                        "item": "https://www.beraxis.online"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": "Pricing ($1/mo)",
+                        "item": "https://www.beraxis.online/pricing"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 3,
+                        "name": "25M+ Leads Directory",
+                        "item": "https://www.beraxis.online/leads-pool"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 4,
+                        "name": "12 Industry Solutions",
+                        "item": "https://www.beraxis.online/industries"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 5,
+                        "name": "Software Comparisons",
+                        "item": "https://www.beraxis.online/compare"
+                    }
                 ]
             }
         ]

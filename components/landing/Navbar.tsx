@@ -38,7 +38,7 @@ export default function Navbar() {
                 <div className="flex justify-between items-center h-16 sm:h-20">
                     {/* Logo */}
                     <Link href="/" className="flex-shrink-0 flex items-center hover:opacity-90 transition-opacity">
-                        <img src="/logo-full.png" onError={(e) => { (e.target as HTMLImageElement).src = '/logo2.png'; }} alt="Beraxis Logo" className="h-8 sm:h-9 w-auto object-contain" />
+                        <img src="/logo-full.png" onError={(e) => { (e.target as HTMLImageElement).src = '/logo2.png'; }} alt="Beraxis Autonomous AI ERP & CRM Platform" className="h-8 sm:h-9 w-auto object-contain" />
                     </Link>
  
                     {/* Desktop Menu */}

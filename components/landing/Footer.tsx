@@ -18,7 +18,7 @@ export default function Footer() {
                             <img 
                                 src="/logo-full.png" 
                                 onError={(e) => { (e.target as HTMLImageElement).src = '/logo2.png'; }} 
-                                alt="Beraxis Logo" 
+                                alt="Beraxis Autonomous AI ERP & CRM Platform" 
                                 className="h-8 w-auto object-contain" 
                             />
                         </Link>
