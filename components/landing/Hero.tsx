@@ -44,6 +44,18 @@ export default function Hero() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(true);
 
+    // Interactive Hero Headline Carousel State (Auto-rotates every 6s, pauses on hover)
+    const [activeSlide, setActiveSlide] = useState(0);
+    const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+
+    useEffect(() => {
+        if (isCarouselPaused) return;
+        const timer = setInterval(() => {
+            setActiveSlide((prev) => (prev + 1) % 3);
+        }, 6000);
+        return () => clearInterval(timer);
+    }, [isCarouselPaused]);
+
     // Interactive Leads Search State (Variant C of Media Exp)
     const [leadSearchQuery, setLeadSearchQuery] = useState("Padel Clubs");
     const [importedLeads, setImportedLeads] = useState<Record<string, boolean>>({});
@@ -79,56 +91,103 @@ export default function Hero() {
         mediaExp.trackConversion("lead_preview_clicked", { lead_email: leadEmail });
     };
 
+    const heroSlides = [
+        {
+            id: "erp_crm_suite",
+            tabLabel: "All-in-One AI ERP & CRM",
+            badgeHref: "/pricing",
+            badgeText: (
+                <>
+                    All-in-One <span className="text-white font-extrabold underline decoration-purple-400">AI ERP &amp; CRM Suite</span> · 28 Modules for $1/mo
+                </>
+            ),
+            badgeClasses: "from-purple-500/25 via-pink-500/20 to-amber-500/25 border-purple-500/50 text-purple-200 hover:border-purple-400 shadow-purple-950/30",
+            headline: (
+                <>
+                    The All-in-One <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400">AI ERP &amp; CRM</span><br />
+                    With 25M+ B2B Leads Built-In
+                </>
+            ),
+            subheadline: (
+                <>
+                    The complete <strong className="text-white font-semibold">Cloud ERP and CRM</strong> powerhouse built to outpace Odoo &amp; HubSpot. Unify <strong className="text-white font-semibold">28 integrated ERP &amp; CRM modules</strong> — automate quotes, <strong className="text-white font-semibold">CRM pipelines</strong>, smart inventory, POS, HRMS, and double-entry accounting while discovering verified corporate decision-makers from our built-in <strong className="text-cyan-300 font-semibold">25M+ B2B Leads Pool</strong>. Complete access for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
+                </>
+            )
+        },
+        {
+            id: "odoo_competitor",
+            tabLabel: "Odoo & HubSpot Alternative",
+            badgeHref: "/compare",
+            badgeText: (
+                <>
+                    #1 <span className="text-white font-extrabold underline decoration-rose-400">AI ERP &amp; CRM Alternative</span> to Odoo &amp; HubSpot · Save $400/mo
+                </>
+            ),
+            badgeClasses: "from-rose-500/25 via-amber-500/20 to-purple-500/25 border-rose-500/50 text-rose-200 hover:border-rose-400 shadow-rose-950/30",
+            headline: (
+                <>
+                    Replace 5 Disconnected Tools<br />
+                    With One Unified <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-400 to-purple-400">AI ERP &amp; CRM</span>
+                </>
+            ),
+            subheadline: (
+                <>
+                    Stop overpaying the $400/mo SaaS tax across separate <strong className="text-white font-semibold">ERP, CRM</strong>, accounting, POS, and lead tools. Beraxis unifies <strong className="text-white font-semibold">Enterprise Resource Planning (ERP)</strong>, <strong className="text-white font-semibold">AI CRM pipelines</strong>, Voice Operations, Double-Entry Accounting, and a built-in <strong className="text-cyan-300 font-semibold">25M+ B2B Leads Pool</strong> in one cloud command deck for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
+                </>
+            )
+        },
+        {
+            id: "leads_erp_crm",
+            tabLabel: "25M+ B2B Leads + ERP/CRM",
+            badgeHref: "/leads-pool",
+            badgeText: (
+                <>
+                    Customer Engine + <span className="text-white font-extrabold underline decoration-cyan-400">Full ERP &amp; CRM</span>: 25M+ B2B Leads Included
+                </>
+            ),
+            badgeClasses: "from-cyan-500/25 via-blue-500/20 to-purple-500/25 border-cyan-500/50 text-cyan-200 hover:border-cyan-400 shadow-cyan-950/30",
+            headline: (
+                <>
+                    Acquire Customers &amp; Run Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-400">ERP &amp; CRM</span><br />
+                    With 25M+ B2B Leads Built-In
+                </>
+            ),
+            subheadline: (
+                <>
+                    Discover verified corporate decision-makers, import them into your <strong className="text-white font-semibold">AI CRM pipeline</strong> in one click, book meetings, and automate <strong className="text-white font-semibold">ERP quotes, smart inventory, POS, payroll, and double-entry accounting</strong> in one cohesive cloud command deck. Complete access for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
+                </>
+            )
+        }
+    ];
+
+    const currentSlide = heroSlides[activeSlide] || heroSlides[0];
+
     return (
         <div className="relative min-h-screen flex items-center justify-center pt-32 sm:pt-36 pb-16 overflow-hidden transform-gpu">
             {/* Lightweight Background Radial Orbs */}
             <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-pink-600/10 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                
+            <div
+                className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+                onMouseEnter={() => setIsCarouselPaused(true)}
+                onMouseLeave={() => setIsCarouselPaused(false)}
+            >
                 {/* ── High-Converting Pricing & Launch Badges ── */}
-                <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-                    {/* Badge 1: Dynamic based on Headline Experiment */}
-                    {headlineExp.variant === "saas_tax" ? (
-                        <Link 
-                            href="/compare"
-                            onClick={() => headlineExp.trackConversion("badge_click", { badge: "anti_saas_tax" })}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-rose-500/25 via-amber-500/20 to-purple-500/25 border border-rose-500/50 backdrop-blur-sm shadow-lg shadow-rose-950/30 hover:border-rose-400 transition-all group cursor-pointer"
-                        >
-                            <Flame size={14} className="text-rose-400 animate-pulse" />
-                            <span className="text-xs sm:text-sm font-bold text-rose-200 tracking-wide flex items-center gap-1.5">
-                                Anti-SaaS Tax: <span className="text-white font-extrabold underline decoration-rose-400">Save $400/mo</span> vs Fragmented Stacks
-                            </span>
-                            <ArrowRight size={13} className="text-rose-300 group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                    ) : headlineExp.variant === "leads_engine" ? (
-                        <Link 
-                            href="/leads-pool"
-                            onClick={() => headlineExp.trackConversion("badge_click", { badge: "leads_pool" })}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/25 via-blue-500/20 to-purple-500/25 border border-cyan-500/50 backdrop-blur-sm shadow-lg shadow-cyan-950/30 hover:border-cyan-400 transition-all group cursor-pointer"
-                        >
-                            <Globe size={14} className="text-cyan-400 animate-pulse" />
-                            <span className="text-xs sm:text-sm font-bold text-cyan-200 tracking-wide flex items-center gap-1.5">
-                                Customer Engine: <span className="text-white font-extrabold underline decoration-cyan-400">25M+ Verified B2B Leads</span> Included
-                            </span>
-                            <ArrowRight size={13} className="text-cyan-300 group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                    ) : (
-                        <Link 
-                            href="/pricing"
-                            onClick={() => headlineExp.trackConversion("badge_click", { badge: "early_bird" })}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/25 via-rose-500/20 to-purple-500/25 border border-amber-500/50 backdrop-blur-sm shadow-lg shadow-amber-950/30 hover:border-amber-400 transition-all group cursor-pointer"
-                        >
-                            <Flame size={14} className="text-amber-400 animate-pulse" />
-                            <span className="text-xs sm:text-sm font-bold text-amber-200 tracking-wide flex items-center gap-1.5">
-                                Early Bird Deal: <span className="text-white font-extrabold underline decoration-amber-400">$1/mo ($12/year)</span> or $5/mo · 1,500 Leads Included
-                            </span>
-                            <ArrowRight size={13} className="text-amber-300 group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                    )}
+                <div className="flex flex-wrap items-center justify-center gap-3 mb-5">
+                    <Link 
+                        href={currentSlide.badgeHref}
+                        onClick={() => headlineExp.trackConversion("badge_click", { badge: currentSlide.id })}
+                        className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r ${currentSlide.badgeClasses} border backdrop-blur-sm shadow-lg transition-all group cursor-pointer`}
+                    >
+                        <Flame size={14} className="text-amber-400 animate-pulse" />
+                        <span className="text-xs sm:text-sm font-bold tracking-wide flex items-center gap-1.5">
+                            {currentSlide.badgeText}
+                        </span>
+                        <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
 
-                    {/* Badge 2: Leads Pool / Parity */}
+                    {/* Badge 2: Leads Pool + ERP/CRM Parity */}
                     <Link
                         href="/leads-pool" 
                         onClick={() => headlineExp.trackConversion("leads_badge_click")}
@@ -138,43 +197,38 @@ export default function Hero() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
                         </span>
-                        <span>25M+ Leads Directory & 1-Click Import</span>
+                        <span>25M+ Leads Directory &amp; 1-Click CRM Import</span>
                     </Link>
                 </div>
 
-                {/* ── Main Headline (Experiment 1: hero_headline_v1) ── */}
-                {headlineExp.variant === "saas_tax" ? (
-                    <>
-                        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.08]">
-                            Stop Paying The <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-400 to-purple-400">$400/mo SaaS Tax</span><br />
-                            Replace 5 Tools With One AI Cockpit
-                        </h1>
-                        <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-10 font-light leading-relaxed">
-                            Ditch HubSpot, QuickBooks, Toast, and Apollo. Unify CRM with a built-in <strong className="text-white font-semibold">25M+ Leads Pool</strong>, Point of Sale, Smart Inventory, Accounting, and Voice Pilot for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
-                        </p>
-                    </>
-                ) : headlineExp.variant === "leads_engine" ? (
-                    <>
-                        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.08]">
-                            Acquire Customers On <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-400">Autopilot</span><br />
-                            With 25M+ B2B Leads Built-In
-                        </h1>
-                        <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-10 font-light leading-relaxed">
-                            Discover verified corporate decision-makers, book meetings, and automate quotes, inventory, and double-entry accounting in one cohesive glassmorphic command deck. Complete access for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
-                        </p>
-                    </>
-                ) : (
-                    /* Canonical Control (Preserves 100% SEO & Stable Crawling) */
-                    <>
-                        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.08]">
-                            Manage Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-amber-400">Universe</span><br />
-                            With AI, Voice & Leads Pool
-                        </h1>
-                        <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-10 font-light leading-relaxed">
-                            Unify CRM with a built-in <strong className="text-white font-semibold">25M+ Leads Pool</strong>, Point of Sale, Smart Inventory, Accounting, HRMS, and Voice Pilot. Unlock all 28 business modules for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
-                        </p>
-                    </>
-                )}
+                {/* ── Interactive Carousel Selector Pills ── */}
+                <div className="inline-flex items-center gap-1.5 p-1 rounded-full bg-white/[0.04] border border-white/10 mb-7 backdrop-blur-md">
+                    {heroSlides.map((slide, idx) => (
+                        <button
+                            key={slide.id}
+                            type="button"
+                            onClick={() => setActiveSlide(idx)}
+                            className={`px-3.5 py-1 rounded-full text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                activeSlide === idx
+                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/30"
+                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                            }`}
+                        >
+                            <span className={`w-1.5 h-1.5 rounded-full ${activeSlide === idx ? "bg-white animate-pulse" : "bg-gray-600"}`} />
+                            <span>{slide.tabLabel}</span>
+                        </button>
+                    ))}
+                </div>
+
+                {/* ── Main Headline Carousel Slide ── */}
+                <div key={currentSlide.id} className="animate-in fade-in duration-500">
+                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.08]">
+                        {currentSlide.headline}
+                    </h1>
+                    <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-10 font-light leading-relaxed">
+                        {currentSlide.subheadline}
+                    </p>
+                </div>
 
                 {/* ── Call To Actions (Experiment 2: hero_cta_v1) ── */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

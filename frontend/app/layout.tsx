@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     manifest: "/site.webmanifest",
     openGraph: {
         title: "Beraxis | Autonomous AI ERP & CRM · 25M+ B2B Leads Pool",
-        description: "The premier AI business operating system. Built-in 25M+ verified B2B leads directory, POS, multi-industry hubs, accounting & HRMS.",
+        description: "The premier All-in-One AI ERP & CRM Suite with 28 integrated modules, 25M+ verified B2B leads directory, POS, multi-industry hubs, accounting & HRMS.",
         url: "https://www.beraxis.online",
         siteName: "Beraxis",
         images: [
