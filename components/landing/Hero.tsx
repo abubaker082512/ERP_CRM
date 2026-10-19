@@ -94,14 +94,7 @@ export default function Hero() {
     const heroSlides = [
         {
             id: "erp_crm_suite",
-            tabLabel: "All-in-One AI ERP & CRM",
-            badgeHref: "/pricing",
-            badgeText: (
-                <>
-                    All-in-One <span className="text-white font-extrabold underline decoration-purple-400">AI ERP &amp; CRM Suite</span> · 28 Modules for $1/mo
-                </>
-            ),
-            badgeClasses: "from-purple-500/25 via-pink-500/20 to-amber-500/25 border-purple-500/50 text-purple-200 hover:border-purple-400 shadow-purple-950/30",
+            tabLabel: "AI ERP & CRM Suite",
             headline: (
                 <>
                     The All-in-One <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400">AI ERP &amp; CRM</span><br />
@@ -110,20 +103,13 @@ export default function Hero() {
             ),
             subheadline: (
                 <>
-                    The complete <strong className="text-white font-semibold">Cloud ERP and CRM</strong> powerhouse built to outpace Odoo &amp; HubSpot. Unify <strong className="text-white font-semibold">28 integrated ERP &amp; CRM modules</strong> — automate quotes, <strong className="text-white font-semibold">CRM pipelines</strong>, smart inventory, POS, HRMS, and double-entry accounting while discovering verified corporate decision-makers from our built-in <strong className="text-cyan-300 font-semibold">25M+ B2B Leads Pool</strong>. Complete access for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
+                    Unify <strong className="text-white font-medium">28 ERP &amp; CRM modules</strong> — Accounting, Inventory, POS, HRMS, Voice AI, and <strong className="text-cyan-300 font-medium">25M+ verified B2B leads</strong> — in one cloud command deck for <strong className="text-amber-300 font-semibold">$1/month</strong>.
                 </>
             )
         },
         {
             id: "odoo_competitor",
             tabLabel: "Odoo & HubSpot Alternative",
-            badgeHref: "/compare",
-            badgeText: (
-                <>
-                    #1 <span className="text-white font-extrabold underline decoration-rose-400">AI ERP &amp; CRM Alternative</span> to Odoo &amp; HubSpot · Save $400/mo
-                </>
-            ),
-            badgeClasses: "from-rose-500/25 via-amber-500/20 to-purple-500/25 border-rose-500/50 text-rose-200 hover:border-rose-400 shadow-rose-950/30",
             headline: (
                 <>
                     Replace 5 Disconnected Tools<br />
@@ -132,29 +118,22 @@ export default function Hero() {
             ),
             subheadline: (
                 <>
-                    Stop overpaying the $400/mo SaaS tax across separate <strong className="text-white font-semibold">ERP, CRM</strong>, accounting, POS, and lead tools. Beraxis unifies <strong className="text-white font-semibold">Enterprise Resource Planning (ERP)</strong>, <strong className="text-white font-semibold">AI CRM pipelines</strong>, Voice Operations, Double-Entry Accounting, and a built-in <strong className="text-cyan-300 font-semibold">25M+ B2B Leads Pool</strong> in one cloud command deck for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
+                    The modern <strong className="text-white font-medium">Cloud ERP &amp; CRM</strong> built to outpace Odoo and HubSpot. Eliminate $400/mo in fragmented SaaS bills and run your entire company for <strong className="text-amber-300 font-semibold">$1/month</strong>.
                 </>
             )
         },
         {
             id: "leads_erp_crm",
-            tabLabel: "25M+ B2B Leads + ERP/CRM",
-            badgeHref: "/leads-pool",
-            badgeText: (
-                <>
-                    Customer Engine + <span className="text-white font-extrabold underline decoration-cyan-400">Full ERP &amp; CRM</span>: 25M+ B2B Leads Included
-                </>
-            ),
-            badgeClasses: "from-cyan-500/25 via-blue-500/20 to-purple-500/25 border-cyan-500/50 text-cyan-200 hover:border-cyan-400 shadow-cyan-950/30",
+            tabLabel: "25M+ B2B Leads + CRM",
             headline: (
                 <>
-                    Acquire Customers &amp; Run Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-400">ERP &amp; CRM</span><br />
-                    With 25M+ B2B Leads Built-In
+                    Acquire Customers &amp; Run Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-400">ERP</span><br />
+                    With AI CRM &amp; 25M+ B2B Leads
                 </>
             ),
             subheadline: (
                 <>
-                    Discover verified corporate decision-makers, import them into your <strong className="text-white font-semibold">AI CRM pipeline</strong> in one click, book meetings, and automate <strong className="text-white font-semibold">ERP quotes, smart inventory, POS, payroll, and double-entry accounting</strong> in one cohesive cloud command deck. Complete access for just <strong className="text-amber-300 font-extrabold">$1/month</strong> ($12 billed annually) or <strong className="text-purple-300 font-bold">$5/month</strong> month-to-month.
+                    Discover verified decision-makers, import them into your <strong className="text-white font-medium">AI CRM pipeline</strong> in one click, and automate <strong className="text-white font-medium">ERP quotes, inventory, POS, and accounting</strong>.
                 </>
             )
         }
@@ -163,166 +142,75 @@ export default function Hero() {
     const currentSlide = heroSlides[activeSlide] || heroSlides[0];
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center pt-32 sm:pt-36 pb-16 overflow-hidden transform-gpu">
+        <div className="relative min-h-[85vh] flex items-center justify-center pt-28 sm:pt-32 pb-14 overflow-hidden transform-gpu">
             {/* Lightweight Background Radial Orbs */}
             <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-pink-600/10 rounded-full blur-3xl pointer-events-none" />
 
             <div
-                className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+                className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
                 onMouseEnter={() => setIsCarouselPaused(true)}
                 onMouseLeave={() => setIsCarouselPaused(false)}
             >
-                {/* ── High-Converting Pricing & Launch Badges ── */}
-                <div className="flex flex-wrap items-center justify-center gap-3 mb-5">
-                    <Link 
-                        href={currentSlide.badgeHref}
-                        onClick={() => headlineExp.trackConversion("badge_click", { badge: currentSlide.id })}
-                        className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r ${currentSlide.badgeClasses} border backdrop-blur-sm shadow-lg transition-all group cursor-pointer`}
-                    >
-                        <Flame size={14} className="text-amber-400 animate-pulse" />
-                        <span className="text-xs sm:text-sm font-bold tracking-wide flex items-center gap-1.5">
-                            {currentSlide.badgeText}
-                        </span>
-                        <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
-                    </Link>
-
-                    {/* Badge 2: Leads Pool + ERP/CRM Parity */}
-                    <Link
-                        href="/leads-pool" 
-                        onClick={() => headlineExp.trackConversion("leads_badge_click")}
-                        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs sm:text-sm font-semibold text-cyan-200 backdrop-blur-sm hover:border-cyan-400/50 transition-all"
-                    >
-                        <span className="flex h-2 w-2 relative">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-                        </span>
-                        <span>25M+ Leads Directory &amp; 1-Click CRM Import</span>
-                    </Link>
-                </div>
-
-                {/* ── Interactive Carousel Selector Pills ── */}
-                <div className="inline-flex items-center gap-1.5 p-1 rounded-full bg-white/[0.04] border border-white/10 mb-7 backdrop-blur-md">
+                {/* ── Single Clean Carousel Pill Switcher ── */}
+                <div className="inline-flex flex-wrap items-center justify-center gap-1 p-1 rounded-full bg-white/[0.04] border border-white/10 mb-6 backdrop-blur-md">
                     {heroSlides.map((slide, idx) => (
                         <button
                             key={slide.id}
                             type="button"
                             onClick={() => setActiveSlide(idx)}
-                            className={`px-3.5 py-1 rounded-full text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                            className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                                 activeSlide === idx
-                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/30"
+                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm"
                                     : "text-gray-400 hover:text-white hover:bg-white/5"
                             }`}
                         >
-                            <span className={`w-1.5 h-1.5 rounded-full ${activeSlide === idx ? "bg-white animate-pulse" : "bg-gray-600"}`} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${activeSlide === idx ? "bg-white" : "bg-gray-600"}`} />
                             <span>{slide.tabLabel}</span>
                         </button>
                     ))}
                 </div>
 
-                {/* ── Main Headline Carousel Slide ── */}
+                {/* ── Balanced, Clean 2-Line Headline & Concise Subheadline ── */}
                 <div key={currentSlide.id} className="animate-in fade-in duration-500">
-                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.08]">
+                    <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-5 leading-[1.15]">
                         {currentSlide.headline}
                     </h1>
-                    <p className="mt-6 text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-10 font-light leading-relaxed">
+                    <p className="text-sm sm:text-base md:text-lg text-gray-400 max-w-2xl mx-auto mb-8 font-normal leading-relaxed">
                         {currentSlide.subheadline}
                     </p>
                 </div>
 
-                {/* ── Call To Actions (Experiment 2: hero_cta_v1) ── */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    {ctaExp.variant === "frictionless" ? (
-                        <>
-                            <Link 
-                                href="/signup" 
-                                onClick={() => ctaExp.trackConversion("signup_click", { style: "frictionless" })}
-                                className="galaxy-btn-primary !px-9 !py-4 text-lg w-full sm:w-auto flex items-center justify-center gap-3 group shadow-xl shadow-purple-500/30 font-black"
-                            >
-                                Start Free — No Credit Card Required <ArrowRight className="group-hover:translate-x-1.5 transition-transform" size={20} />
-                            </Link>
+                {/* ── Streamlined 2-Button Call To Actions ── */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                    <Link 
+                        href="/pricing" 
+                        onClick={() => ctaExp.trackConversion("pricing_click", { style: "clean_hero" })}
+                        className="galaxy-btn-primary !px-6 !py-3 text-sm sm:text-base w-full sm:w-auto flex items-center justify-center gap-2 group shadow-lg shadow-purple-500/25 font-bold rounded-xl"
+                    >
+                        Claim $1/mo Early Bird <ArrowRight className="group-hover:translate-x-1 transition-transform" size={17} />
+                    </Link>
 
-                            <Link 
-                                href="/leads-pool" 
-                                onClick={() => ctaExp.trackConversion("leads_click", { style: "frictionless" })}
-                                className="px-7 py-4 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-cyan-400/50"
-                            >
-                                <Globe size={18} className="text-cyan-400" /> Explore 25M+ Leads Directory
-                            </Link>
+                    <Link 
+                        href="/signup" 
+                        onClick={() => ctaExp.trackConversion("signup_click", { style: "clean_hero" })}
+                        className="px-6 py-3 rounded-xl bg-white/[0.07] hover:bg-white/15 border border-white/15 text-white text-sm sm:text-base font-semibold transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-sm"
+                    >
+                        Start Free ($0)
+                    </Link>
 
-                            <Link 
-                                href="/pricing" 
-                                onClick={() => ctaExp.trackConversion("pricing_click", { style: "frictionless" })}
-                                className="px-7 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-purple-400/50"
-                            >
-                                View $1/mo Deal
-                            </Link>
-                        </>
-                    ) : ctaExp.variant === "savings_calc" ? (
-                        <>
-                            <button
-                                onClick={() => {
-                                    setIsCalcOpen(true);
-                                    ctaExp.trackConversion("calculator_opened");
-                                }}
-                                className="galaxy-btn-primary !px-9 !py-4 text-lg w-full sm:w-auto flex items-center justify-center gap-3 group shadow-xl shadow-purple-500/30 font-black cursor-pointer"
-                            >
-                                <Calculator size={20} className="text-amber-300" /> Calculate Your SaaS Savings ($399/mo) <ArrowRight className="group-hover:translate-x-1.5 transition-transform" size={20} />
-                            </button>
-
-                            <Link 
-                                href="/pricing" 
-                                onClick={() => ctaExp.trackConversion("pricing_click", { style: "savings_calc" })}
-                                className="px-7 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-purple-400/50"
-                            >
-                                Claim Early Bird Plan ($1/mo)
-                            </Link>
-
-                            <Link 
-                                href="/signup" 
-                                onClick={() => ctaExp.trackConversion("signup_click", { style: "savings_calc" })}
-                                className="px-7 py-4 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-cyan-400/50"
-                            >
-                                Deploy 1 App Free ($0)
-                            </Link>
-                        </>
-                    ) : (
-                        /* Canonical Control CTAs */
-                        <>
-                            <Link 
-                                href="/pricing" 
-                                onClick={() => ctaExp.trackConversion("pricing_click", { style: "control" })}
-                                className="galaxy-btn-primary !px-9 !py-4 text-lg w-full sm:w-auto flex items-center justify-center gap-3 group shadow-xl shadow-purple-500/30 font-black"
-                            >
-                                Claim Early Bird Plan ($1/mo) <ArrowRight className="group-hover:translate-x-1.5 transition-transform" size={20} />
-                            </Link>
-
-                            <Link 
-                                href="/signup" 
-                                onClick={() => ctaExp.trackConversion("signup_click", { style: "control" })}
-                                className="px-7 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-purple-400/50"
-                            >
-                                Deploy 1 App Free ($0)
-                            </Link>
-                            
-                            <Link 
-                                href="/leads-pool" 
-                                onClick={() => ctaExp.trackConversion("leads_click", { style: "control" })}
-                                className="px-7 py-4 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto backdrop-blur-sm hover:border-cyan-400/50"
-                            >
-                                <Globe size={18} className="text-cyan-400" /> Explore Leads Pool
-                            </Link>
-                        </>
-                    )}
+                    <Link 
+                        href="/leads-pool" 
+                        onClick={() => ctaExp.trackConversion("leads_click", { style: "clean_hero" })}
+                        className="px-5 py-3 rounded-xl text-cyan-300 hover:text-cyan-200 text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1.5"
+                    >
+                        <Globe size={15} className="text-cyan-400" /> Explore 25M+ Leads
+                    </Link>
                 </div>
 
-                {/* Price reassurance helper */}
-                <p className="text-xs text-gray-400 mt-4 font-medium flex items-center justify-center gap-2 flex-wrap">
-                    <span className="text-emerald-400 font-bold">✓ 1,500 Lead Credits/seat/mo included</span>
-                    <span className="text-gray-600">•</span>
-                    <span>Single company on Standard · 3 companies on Custom</span>
-                    <span className="text-gray-600">•</span>
-                    <span>No credit card required for Free tier</span>
+                {/* Subtle Single-Line Reassurance */}
+                <p className="text-[11px] sm:text-xs text-gray-500 mt-4 font-normal">
+                    28 AI ERP &amp; CRM Modules • 1,500 Lead Credits/mo Included • No Credit Card Required for Free Tier
                 </p>
 
                 {/* ── Visual Media Showcase (Experiment 3: hero_media_v1) ── */}
