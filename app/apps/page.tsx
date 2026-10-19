@@ -46,7 +46,8 @@ import {
     Settings,
     Lock,
     Crown,
-    User
+    User,
+    Mic
 } from "lucide-react";
 import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
 import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
@@ -379,6 +380,16 @@ export default function AppsDashboardPage() {
                             </button>
                         </>
                     )}
+
+                    <button
+                        type="button"
+                        onClick={() => window.dispatchEvent(new CustomEvent("open-voice-pilot"))}
+                        title="Launch Voice Operations (Alt+V)"
+                        className="flex items-center gap-1.5 text-pink-200 hover:text-white transition-all px-2.5 py-1.5 rounded-xl border border-pink-500/30 bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/35 hover:to-pink-600/35 text-xs font-bold cursor-pointer"
+                    >
+                        <Mic size={13} className="text-pink-400 animate-pulse" />
+                        <span className="hidden sm:inline">Voice Ops</span>
+                    </button>
 
                     <Link
                         href="/billing"

@@ -152,7 +152,21 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         };
         pingBackend();
 
-        return () => { if (warmupRef.current) clearTimeout(warmupRef.current); };
+        const handleOpenVoicePilot = () => setIsAntigravityOpen(true);
+        const handleGlobalShortcut = (e: KeyboardEvent) => {
+            if ((e.altKey && e.key.toLowerCase() === 'v') || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'v')) {
+                e.preventDefault();
+                setIsAntigravityOpen((prev) => !prev);
+            }
+        };
+        window.addEventListener('open-voice-pilot', handleOpenVoicePilot);
+        window.addEventListener('keydown', handleGlobalShortcut);
+
+        return () => {
+            if (warmupRef.current) clearTimeout(warmupRef.current);
+            window.removeEventListener('open-voice-pilot', handleOpenVoicePilot);
+            window.removeEventListener('keydown', handleGlobalShortcut);
+        };
     }, []);
 
     useEffect(() => {
@@ -182,10 +196,17 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
     const isExcludedPage = pathname === '/apps' || pathname === '/dashboard' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || (pathname && pathname.startsWith('/shop/')) || pathname === '/meet' || (pathname && pathname.startsWith('/meet/')) || (pathname && pathname.startsWith('/appointments/book/')) || isLandingPage;
     
     if (isExcludedPage) {
+        const isWorkspaceExcluded = pathname === '/apps' || pathname === '/dashboard' || pathname === '/billing';
         return (
             <BranchProvider>
                 {children}
-                {(pathname === '/apps' || pathname === '/dashboard' || pathname === '/billing') && <InactivitySessionTracker />}
+                {isWorkspaceExcluded && (
+                    <>
+                        {pathname !== '/apps' && <BeraxisSupportWidgets />}
+                        <InactivitySessionTracker />
+                        <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />
+                    </>
+                )}
             </BranchProvider>
         );
     }

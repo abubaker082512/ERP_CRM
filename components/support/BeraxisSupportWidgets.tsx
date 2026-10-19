@@ -19,7 +19,8 @@ import {
     ChevronRight,
     ExternalLink,
     Zap,
-    RotateCcw
+    RotateCcw,
+    Mic
 } from "lucide-react";
 
 interface Message {
@@ -260,9 +261,26 @@ export default function BeraxisSupportWidgets() {
             </div>
 
             {/* ========================================================= */}
-            {/* 2. AI SUPPORT BUTTON (ON THE BOTTOM-RIGHT)               */}
+            {/* 2. VOICE OPERATIONS + AI SUPPORT BUTTONS (BOTTOM-RIGHT)   */}
             {/* ========================================================= */}
-            <div className="fixed bottom-5 right-5 z-[90] flex items-center">
+            <div className="fixed bottom-5 right-5 z-[90] flex items-center gap-2.5">
+                <button
+                    onClick={() => {
+                        setIsOpen(false);
+                        window.dispatchEvent(new CustomEvent("open-voice-pilot"));
+                    }}
+                    className="flex items-center gap-2 text-white pl-3.5 pr-4 py-2.5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 border border-pink-400/30 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-rose-500 shadow-[0_4px_25px_rgba(236,72,153,0.45)] cursor-pointer"
+                    title="Launch Beraxis Voice Operations (Alt+V)"
+                >
+                    <div className="relative">
+                        <Mic className="w-4 h-4 animate-pulse" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-900" />
+                    </div>
+                    <span className="font-bold text-xs tracking-wide">
+                        Voice Ops
+                    </span>
+                </button>
+
                 <button
                     id="beraxis-ai-support-toggle"
                     onClick={() => setIsOpen(!isOpen)}
@@ -305,12 +323,24 @@ export default function BeraxisSupportWidgets() {
                                 <p className="text-[11px] text-slate-400">Ask any ERP question or click to redirect</p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-                        >
-                            <X size={16} />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                            <button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    window.dispatchEvent(new CustomEvent("open-voice-pilot"));
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg bg-purple-600/25 hover:bg-purple-600/40 border border-purple-500/40 text-purple-300 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
+                                title="Switch to Voice Operations"
+                            >
+                                <Mic size={13} /> Voice
+                            </button>
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Chat Messages Body */}
