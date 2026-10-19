@@ -305,12 +305,14 @@ export default function PricingPage() {
                             </ul>
                         </div>
 
-                        <Link 
-                            href={`/checkout?plan=standard&users=${usersCount}&billing=${billingCycle}`}
+                        <a 
+                            href="https://checkout.freemius.com/product/41307/plan/73255/"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95 text-center"
                         >
                             Claim Early Bird Standard (${standardRate.toFixed(2)}/mo) <ArrowRight size={16} />
-                        </Link>
+                        </a>
                     </div>
 
                     {/* Tier 3: Custom Plan */}
@@ -360,12 +362,14 @@ export default function PricingPage() {
                             </ul>
                         </div>
 
-                        <Link 
-                            href={`/checkout?plan=custom&users=${usersCount}&billing=${billingCycle}`}
+                        <a 
+                            href="https://checkout.freemius.com/product/41307/plan/73256/"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 flex items-center justify-center gap-2 hover:border-pink-500/30"
                         >
                             Subscribe Custom <ArrowRight size={16} />
-                        </Link>
+                        </a>
                     </div>
                 </div>
 

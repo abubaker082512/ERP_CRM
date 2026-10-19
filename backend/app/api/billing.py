@@ -408,28 +408,27 @@ async def freemius_callback(request: Request):
     user_id = tenant_resp.data[0]["id"]
     
     # Identify Plan Info from objects
-    # Freemius plans mapping:
-    # 51030 -> One App Free ($2.99)
-    # 51032 -> Standard ($31.10)
-    # 51034 -> Premium ($46.80)
+    # Freemius plans mapping (Product 41307):
+    # 73255 -> Standard Plan
+    # 73256 -> Custom Plan
     plan_id = str(objects.get("subscription", {}).get("plan_id", "")) or str(objects.get("license", {}).get("plan_id", ""))
     
     plan_key = "standard"
-    plan_title = "Standard"
-    plan_price = 31.10
+    plan_title = "Standard Plan"
+    plan_price = 12.00
     
     if plan_id == "51030":
         plan_key = "oneappfree"
         plan_title = "One App Free"
-        plan_price = 2.99
-    elif plan_id == "51034":
-        plan_key = "premium"
-        plan_title = "Premium"
-        plan_price = 46.80
-    elif plan_id == "51032":
+        plan_price = 0.00
+    elif plan_id in ["73256", "51034"]:
+        plan_key = "custom"
+        plan_title = "Custom Plan"
+        plan_price = 37.40
+    elif plan_id in ["73255", "51032"]:
         plan_key = "standard"
-        plan_title = "Standard"
-        plan_price = 31.10
+        plan_title = "Standard Plan"
+        plan_price = 12.00
         
     # Handle Activations/Cancellations
     if event_type in ["subscription.created", "subscription.updated", "license.created", "license.activated", "user.created"]:

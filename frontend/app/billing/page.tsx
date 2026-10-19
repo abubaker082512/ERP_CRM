@@ -40,6 +40,7 @@ interface Plan {
     originalMonthlyRate?: number;
     originalAnnualRate?: number;
     freemiusPlanId: string;
+    freemiusCheckoutUrl?: string;
     highlight: boolean;
     badge?: string;
     features: string[];
@@ -69,13 +70,14 @@ const PLANS: Plan[] = [
     },
     {
         id: "standard",
-        name: "Standard",
+        name: "Standard Plan",
         tagline: "Full suite — all 28 modules + Lead Pool",
         monthlyPrice: 5.00,
         annualPrice: 1.00,
         originalMonthlyRate: 31.10,
         originalAnnualRate: 24.90,
-        freemiusPlanId: "51032",
+        freemiusPlanId: "73255",
+        freemiusCheckoutUrl: "https://checkout.freemius.com/product/41307/plan/73255/",
         highlight: true,
         badge: "Early Bird Special (96% OFF)",
         features: [
@@ -90,13 +92,14 @@ const PLANS: Plan[] = [
     },
     {
         id: "premium",
-        name: "Custom Enterprise",
+        name: "Custom Plan",
         tagline: "Multi-company management & studio",
         monthlyPrice: 46.80,
         annualPrice: 37.40,
         originalMonthlyRate: 46.80,
         originalAnnualRate: 37.40,
-        freemiusPlanId: "51034",
+        freemiusPlanId: "73256",
+        freemiusCheckoutUrl: "https://checkout.freemius.com/product/41307/plan/73256/",
         highlight: false,
         badge: "Multi-Company & Custom APIs",
         features: [
@@ -336,7 +339,7 @@ function PlanCard({
         ? `${durationCount} ${durationCount === 1 ? 'Year' : 'Years'}`
         : `${durationCount} ${durationCount === 1 ? 'Month' : 'Months'}`;
 
-    const freemiusUrl = `https://checkout.freemius.com/product/31108/plan/${plan.freemiusPlanId}/?user_email=${encodeURIComponent(userEmail)}&billing_cycle=${billing === "annual" ? "annual" : "monthly"}&readonly_user=true`;
+    const freemiusUrl = plan.freemiusCheckoutUrl || `https://checkout.freemius.com/product/41307/plan/${plan.freemiusPlanId}/`;
 
     return (
         <div className={`relative flex flex-col rounded-3xl border p-7 transition-all duration-300 ${
@@ -443,7 +446,7 @@ function PlanCard({
                                     : "bg-white/10 hover:bg-white/15 text-white border border-white/15"
                             }`}
                         >
-                            <CreditCard size={14} /> Pay with Card via DirectPay <ArrowRight size={14} />
+                            <CreditCard size={14} /> Checkout with Freemius <ArrowRight size={14} />
                         </a>
 
                         <button

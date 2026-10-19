@@ -342,13 +342,15 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
-                        <button 
-                            onClick={() => router.push(`/checkout?plan=standard&billing=${billingCycle}`)}
+                        <a 
+                            href="https://checkout.freemius.com/product/41307/plan/73255/"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-black py-3.5 px-4 rounded-xl mt-8 transition-all shadow-xl shadow-purple-500/25 text-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                         >
                             <span>Claim Early Bird Standard (${standardRate.toFixed(2)}/mo)</span>
                             <ArrowRight size={14} />
-                        </button>
+                        </a>
                     </div>
 
                     {/* Custom Plan */}
@@ -386,12 +388,14 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
-                        <button 
-                            onClick={() => router.push(`/checkout?plan=custom&billing=${billingCycle}`)}
+                        <a 
+                            href="https://checkout.freemius.com/product/41307/plan/73256/"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 text-xs flex items-center justify-center gap-2 cursor-pointer hover:border-pink-500/40"
                         >
                             Configure Custom
-                        </button>
+                        </a>
                     </div>
                 </div>
 

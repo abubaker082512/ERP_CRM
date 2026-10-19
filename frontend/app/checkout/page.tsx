@@ -34,6 +34,18 @@ export default function CheckoutPage() {
     });
 
     useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const planParam = (params.get('plan') || '').toLowerCase();
+            if (planParam === 'standard') {
+                window.location.href = 'https://checkout.freemius.com/product/41307/plan/73255/';
+                return;
+            }
+            if (planParam === 'custom' || planParam === 'premium') {
+                window.location.href = 'https://checkout.freemius.com/product/41307/plan/73256/';
+                return;
+            }
+        }
         const savedCart = localStorage.getItem('erp_cart');
         if (savedCart) {
             try { 
