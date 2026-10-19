@@ -58,15 +58,15 @@ export const metadata: Metadata = {
     },
     icons: {
         icon: [
-            { url: "/favicon.ico", sizes: "any" },
-            { url: "/icon-48.png", type: "image/png", sizes: "48x48" },
-            { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
-            { url: "/icon.png", type: "image/png", sizes: "512x512" },
+            { url: "/favicon.ico?v=3", sizes: "any" },
+            { url: "/icon-48.png?v=3", type: "image/png", sizes: "48x48" },
+            { url: "/icon-192.png?v=3", type: "image/png", sizes: "192x192" },
+            { url: "/icon.png?v=3", type: "image/png", sizes: "512x512" },
         ],
         apple: [
-            { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+            { url: "/apple-touch-icon.png?v=3", sizes: "180x180", type: "image/png" },
         ],
-        shortcut: "/favicon.ico",
+        shortcut: "/favicon.ico?v=3",
     },
     manifest: "/site.webmanifest",
     openGraph: {
@@ -76,13 +76,13 @@ export const metadata: Metadata = {
         siteName: "Beraxis",
         images: [
             {
-                url: "https://www.beraxis.online/og-image.png",
+                url: "https://www.beraxis.online/og-image.png?v=3",
                 width: 1200,
                 height: 630,
                 alt: "Beraxis - Autonomous AI ERP & CRM Platform",
             },
             {
-                url: "https://www.beraxis.online/icon.png",
+                url: "https://www.beraxis.online/icon.png?v=3",
                 width: 512,
                 height: 512,
                 alt: "Beraxis Logo",
@@ -95,7 +95,7 @@ export const metadata: Metadata = {
         card: "summary_large_image",
         title: "Beraxis | Autonomous AI ERP & CRM · 25M+ B2B Leads Pool",
         description: "The AI-driven business command center. Built-in 25M+ verified B2B leads directory, POS, inventory, accounting & HRMS.",
-        images: ["https://www.beraxis.online/og-image.png"],
+        images: ["https://www.beraxis.online/og-image.png?v=3"],
         creator: "@beraxis",
     },
     robots: {
@@ -131,11 +131,11 @@ export default function RootLayout({
                 "url": "https://www.beraxis.online",
                 "logo": {
                     "@type": "ImageObject",
-                    "url": "https://www.beraxis.online/icon.png",
+                    "url": "https://www.beraxis.online/icon.png?v=3",
                     "width": "512",
                     "height": "512"
                 },
-                "image": "https://www.beraxis.online/og-image.png",
+                "image": "https://www.beraxis.online/og-image.png?v=3",
                 "description": "Beraxis Systems Inc. is an autonomous AI-driven enterprise ERP and CRM command center unifying business operations, CRM, 25M+ verified B2B Leads Pool, POS, multi-industry blueprints, inventory, and financial bookkeeping.",
                 "sameAs": [
                     "https://www.beraxis.online",
