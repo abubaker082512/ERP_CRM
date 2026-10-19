@@ -142,79 +142,82 @@ export default function Hero() {
     const currentSlide = heroSlides[activeSlide] || heroSlides[0];
 
     return (
-        <div className="relative min-h-[85vh] flex items-center justify-center pt-28 sm:pt-32 pb-14 overflow-hidden transform-gpu">
+        <div className="relative overflow-hidden transform-gpu">
             {/* Lightweight Background Radial Orbs */}
             <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-pink-600/10 rounded-full blur-3xl pointer-events-none" />
 
-            <div
-                className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
-                onMouseEnter={() => setIsCarouselPaused(true)}
-                onMouseLeave={() => setIsCarouselPaused(false)}
-            >
-                {/* ── Single Clean Carousel Pill Switcher ── */}
-                <div className="inline-flex flex-wrap items-center justify-center gap-1 p-1 rounded-full bg-white/[0.04] border border-white/10 mb-6 backdrop-blur-md">
-                    {heroSlides.map((slide, idx) => (
-                        <button
-                            key={slide.id}
-                            type="button"
-                            onClick={() => setActiveSlide(idx)}
-                            className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                activeSlide === idx
-                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                            }`}
-                        >
-                            <span className={`w-1.5 h-1.5 rounded-full ${activeSlide === idx ? "bg-white" : "bg-gray-600"}`} />
-                            <span>{slide.tabLabel}</span>
-                        </button>
-                    ))}
-                </div>
+            <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                {/* ── Dedicated Full-Viewport Centered Hero Stage ── */}
+                <div
+                    className="min-h-[88vh] flex flex-col items-center justify-center pt-36 pb-24 sm:pt-44 sm:pb-32"
+                    onMouseEnter={() => setIsCarouselPaused(true)}
+                    onMouseLeave={() => setIsCarouselPaused(false)}
+                >
+                    {/* ── Single Clean Carousel Pill Switcher ── */}
+                    <div className="inline-flex flex-wrap items-center justify-center gap-1 p-1 rounded-full bg-white/[0.04] border border-white/10 mb-8 backdrop-blur-md">
+                        {heroSlides.map((slide, idx) => (
+                            <button
+                                key={slide.id}
+                                type="button"
+                                onClick={() => setActiveSlide(idx)}
+                                className={`px-3.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                    activeSlide === idx
+                                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm"
+                                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                                }`}
+                            >
+                                <span className={`w-1.5 h-1.5 rounded-full ${activeSlide === idx ? "bg-white" : "bg-gray-600"}`} />
+                                <span>{slide.tabLabel}</span>
+                            </button>
+                        ))}
+                    </div>
 
-                {/* ── Balanced, Clean 2-Line Headline & Concise Subheadline ── */}
-                <div key={currentSlide.id} className="animate-in fade-in duration-500">
-                    <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-5 leading-[1.15]">
-                        {currentSlide.headline}
-                    </h1>
-                    <p className="text-sm sm:text-base md:text-lg text-gray-400 max-w-2xl mx-auto mb-8 font-normal leading-relaxed">
-                        {currentSlide.subheadline}
+                    {/* ── Centered, Refined 2-Line Headline & Secondary Heading ── */}
+                    <div key={currentSlide.id} className="animate-in fade-in duration-500 max-w-3xl mx-auto">
+                        <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-6 leading-[1.2]">
+                            {currentSlide.headline}
+                        </h1>
+                        <p className="text-sm sm:text-base text-gray-400 max-w-xl mx-auto mb-10 font-normal leading-relaxed">
+                            {currentSlide.subheadline}
+                        </p>
+                    </div>
+
+                    {/* ── Centered 3-Button Call To Actions ── */}
+                    <div className="flex flex-col sm:flex-row gap-3.5 justify-center items-center">
+                        <Link 
+                            href="/pricing" 
+                            onClick={() => ctaExp.trackConversion("pricing_click", { style: "clean_hero" })}
+                            className="galaxy-btn-primary !px-5 !py-2.5 text-xs sm:text-sm w-full sm:w-auto flex items-center justify-center gap-2 group shadow-lg shadow-purple-500/25 font-bold rounded-xl"
+                        >
+                            Claim $1/mo Early Bird <ArrowRight className="group-hover:translate-x-1 transition-transform" size={15} />
+                        </Link>
+
+                        <Link 
+                            href="/signup" 
+                            onClick={() => ctaExp.trackConversion("signup_click", { style: "clean_hero" })}
+                            className="px-5 py-2.5 rounded-xl bg-white/[0.07] hover:bg-white/15 border border-white/15 text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-sm"
+                        >
+                            Start Free ($0)
+                        </Link>
+
+                        <Link 
+                            href="/leads-pool" 
+                            onClick={() => ctaExp.trackConversion("leads_click", { style: "clean_hero" })}
+                            className="px-5 py-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto backdrop-blur-sm"
+                        >
+                            <Globe size={15} className="text-cyan-400" /> Explore 25M+ Leads
+                        </Link>
+                    </div>
+
+                    {/* Subtle Single-Line Reassurance */}
+                    <p className="text-[11px] text-gray-500 mt-6 font-normal">
+                        28 AI ERP &amp; CRM Modules • 1,500 Lead Credits/mo Included • No Credit Card Required for Free Tier
                     </p>
                 </div>
 
-                {/* ── Streamlined 2-Button Call To Actions ── */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                    <Link 
-                        href="/pricing" 
-                        onClick={() => ctaExp.trackConversion("pricing_click", { style: "clean_hero" })}
-                        className="galaxy-btn-primary !px-6 !py-3 text-sm sm:text-base w-full sm:w-auto flex items-center justify-center gap-2 group shadow-lg shadow-purple-500/25 font-bold rounded-xl"
-                    >
-                        Claim $1/mo Early Bird <ArrowRight className="group-hover:translate-x-1 transition-transform" size={17} />
-                    </Link>
-
-                    <Link 
-                        href="/signup" 
-                        onClick={() => ctaExp.trackConversion("signup_click", { style: "clean_hero" })}
-                        className="px-6 py-3 rounded-xl bg-white/[0.07] hover:bg-white/15 border border-white/15 text-white text-sm sm:text-base font-semibold transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-sm"
-                    >
-                        Start Free ($0)
-                    </Link>
-
-                    <Link 
-                        href="/leads-pool" 
-                        onClick={() => ctaExp.trackConversion("leads_click", { style: "clean_hero" })}
-                        className="px-5 py-3 rounded-xl text-cyan-300 hover:text-cyan-200 text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1.5"
-                    >
-                        <Globe size={15} className="text-cyan-400" /> Explore 25M+ Leads
-                    </Link>
-                </div>
-
-                {/* Subtle Single-Line Reassurance */}
-                <p className="text-[11px] sm:text-xs text-gray-500 mt-4 font-normal">
-                    28 AI ERP &amp; CRM Modules • 1,500 Lead Credits/mo Included • No Credit Card Required for Free Tier
-                </p>
-
                 {/* ── Visual Media Showcase (Experiment 3: hero_media_v1) ── */}
-                <div className="mt-16 max-w-5xl mx-auto relative">
+                <div className="mt-4 pb-16 max-w-5xl mx-auto relative">
                     
                     {/* VARIANT B: AI Female Founder Video Commercial */}
                     {mediaExp.variant === "ai_commercial" ? (
