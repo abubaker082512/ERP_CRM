@@ -97,13 +97,14 @@ export default function Hero() {
             tabLabel: "AI ERP & CRM Suite",
             headline: (
                 <>
-                    The All-in-One <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400">AI ERP &amp; CRM</span><br />
-                    With 25M+ B2B Leads Built-In
+                    The All-in-One <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400">AI ERP &amp; CRM</span>
+                    <span className="block mt-1.5">With 25M+ B2B Leads Built-In</span>
                 </>
             ),
             subheadline: (
                 <>
-                    Unify <strong className="text-white font-medium">28 ERP &amp; CRM modules</strong> — Accounting, Inventory, POS, HRMS, Voice AI, and <strong className="text-cyan-300 font-medium">25M+ verified B2B leads</strong> — in one cloud command deck for <strong className="text-amber-300 font-semibold">$1/month</strong>.
+                    Unify <strong className="text-gray-200 font-medium">28 ERP &amp; CRM modules</strong> — Accounting, Inventory, POS, HRMS &amp; Voice AI —
+                    <br className="hidden sm:inline" /> with <strong className="text-cyan-300 font-medium">25M+ verified B2B leads</strong> in one cloud command deck for <strong className="text-amber-300 font-semibold">$1/month</strong>.
                 </>
             )
         },
@@ -112,13 +113,16 @@ export default function Hero() {
             tabLabel: "Odoo & HubSpot Alternative",
             headline: (
                 <>
-                    Replace 5 Disconnected Tools<br />
-                    With One Unified <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-400 to-purple-400">AI ERP &amp; CRM</span>
+                    Replace 5 Disconnected Tools
+                    <span className="block mt-1.5">
+                        With One Unified <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-400 to-purple-400">AI ERP &amp; CRM</span>
+                    </span>
                 </>
             ),
             subheadline: (
                 <>
-                    The modern <strong className="text-white font-medium">Cloud ERP &amp; CRM</strong> built to outpace Odoo and HubSpot. Eliminate $400/mo in fragmented SaaS bills and run your entire company for <strong className="text-amber-300 font-semibold">$1/month</strong>.
+                    The modern <strong className="text-gray-200 font-medium">Cloud ERP &amp; CRM</strong> built to outpace Odoo and HubSpot.
+                    <br className="hidden sm:inline" /> Eliminate $400/mo in fragmented SaaS bills and run your entire company for <strong className="text-amber-300 font-semibold">$1/month</strong>.
                 </>
             )
         },
@@ -127,13 +131,14 @@ export default function Hero() {
             tabLabel: "25M+ B2B Leads + CRM",
             headline: (
                 <>
-                    Acquire Customers &amp; Run Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-400">ERP</span><br />
-                    With AI CRM &amp; 25M+ B2B Leads
+                    Acquire Customers &amp; Run Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-400">ERP</span>
+                    <span className="block mt-1.5">With AI CRM &amp; 25M+ B2B Leads</span>
                 </>
             ),
             subheadline: (
                 <>
-                    Discover verified decision-makers, import them into your <strong className="text-white font-medium">AI CRM pipeline</strong> in one click, and automate <strong className="text-white font-medium">ERP quotes, inventory, POS, and accounting</strong>.
+                    Discover verified decision-makers, import them into your <strong className="text-gray-200 font-medium">AI CRM pipeline</strong> in one click,
+                    <br className="hidden sm:inline" /> and automate <strong className="text-gray-200 font-medium">ERP quotes, smart inventory, POS, and double-entry accounting</strong>.
                 </>
             )
         }
@@ -150,35 +155,34 @@ export default function Hero() {
             <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 {/* ── Dedicated Full-Viewport Centered Hero Stage ── */}
                 <div
-                    className="min-h-[88vh] flex flex-col items-center justify-center pt-36 pb-24 sm:pt-44 sm:pb-32"
+                    className="min-h-screen flex flex-col items-center justify-center pt-28 pb-16"
                     onMouseEnter={() => setIsCarouselPaused(true)}
                     onMouseLeave={() => setIsCarouselPaused(false)}
                 >
-                    {/* ── Single Clean Carousel Pill Switcher ── */}
-                    <div className="inline-flex flex-wrap items-center justify-center gap-1 p-1 rounded-full bg-white/[0.04] border border-white/10 mb-8 backdrop-blur-md">
+                    {/* ── Refined Glass Carousel Switcher ── */}
+                    <div className="inline-flex flex-wrap items-center justify-center gap-1 p-1 rounded-full bg-white/[0.03] border border-white/10 mb-8 backdrop-blur-md">
                         {heroSlides.map((slide, idx) => (
                             <button
                                 key={slide.id}
                                 type="button"
                                 onClick={() => setActiveSlide(idx)}
-                                className={`px-3.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                                     activeSlide === idx
-                                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-sm"
-                                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                                        ? "bg-white/12 text-white border border-white/15 shadow-sm"
+                                        : "text-gray-400 hover:text-gray-200"
                                 }`}
                             >
-                                <span className={`w-1.5 h-1.5 rounded-full ${activeSlide === idx ? "bg-white" : "bg-gray-600"}`} />
-                                <span>{slide.tabLabel}</span>
+                                {slide.tabLabel}
                             </button>
                         ))}
                     </div>
 
-                    {/* ── Centered, Refined 2-Line Headline & Secondary Heading ── */}
-                    <div key={currentSlide.id} className="animate-in fade-in duration-500 max-w-3xl mx-auto">
-                        <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-6 leading-[1.2]">
+                    {/* ── Centered 2-Line Headline & Balanced 2-Line Subheadline ── */}
+                    <div key={currentSlide.id} className="animate-in fade-in duration-500 max-w-4xl mx-auto">
+                        <h1 className="text-3xl sm:text-5xl lg:text-[3.35rem] font-extrabold tracking-tight text-white mb-6 leading-[1.15]">
                             {currentSlide.headline}
                         </h1>
-                        <p className="text-sm sm:text-base text-gray-400 max-w-xl mx-auto mb-10 font-normal leading-relaxed">
+                        <p className="text-sm sm:text-base md:text-[17px] text-gray-400 max-w-2xl mx-auto mb-10 font-normal leading-relaxed">
                             {currentSlide.subheadline}
                         </p>
                     </div>
@@ -188,15 +192,15 @@ export default function Hero() {
                         <Link 
                             href="/pricing" 
                             onClick={() => ctaExp.trackConversion("pricing_click", { style: "clean_hero" })}
-                            className="galaxy-btn-primary !px-5 !py-2.5 text-xs sm:text-sm w-full sm:w-auto flex items-center justify-center gap-2 group shadow-lg shadow-purple-500/25 font-bold rounded-xl"
+                            className="galaxy-btn-primary !px-6 !py-3 text-sm w-full sm:w-auto flex items-center justify-center gap-2 group shadow-lg shadow-purple-500/25 font-bold rounded-xl"
                         >
-                            Claim $1/mo Early Bird <ArrowRight className="group-hover:translate-x-1 transition-transform" size={15} />
+                            Claim $1/mo Early Bird <ArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
                         </Link>
 
                         <Link 
                             href="/signup" 
                             onClick={() => ctaExp.trackConversion("signup_click", { style: "clean_hero" })}
-                            className="px-5 py-2.5 rounded-xl bg-white/[0.07] hover:bg-white/15 border border-white/15 text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-sm"
+                            className="px-6 py-3 rounded-xl bg-white/[0.06] hover:bg-white/12 border border-white/15 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-sm"
                         >
                             Start Free ($0)
                         </Link>
@@ -204,20 +208,28 @@ export default function Hero() {
                         <Link 
                             href="/leads-pool" 
                             onClick={() => ctaExp.trackConversion("leads_click", { style: "clean_hero" })}
-                            className="px-5 py-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto backdrop-blur-sm"
+                            className="px-6 py-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/15 border border-cyan-500/25 text-cyan-300 text-sm font-semibold transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-sm"
                         >
                             <Globe size={15} className="text-cyan-400" /> Explore 25M+ Leads
                         </Link>
                     </div>
 
-                    {/* Subtle Single-Line Reassurance */}
-                    <p className="text-[11px] text-gray-500 mt-6 font-normal">
-                        28 AI ERP &amp; CRM Modules • 1,500 Lead Credits/mo Included • No Credit Card Required for Free Tier
-                    </p>
+                    {/* Crisp Trust Reassurance */}
+                    <div className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-gray-400">
+                        <span className="flex items-center gap-1.5">
+                            <span className="text-emerald-400 font-bold">✓</span> 28 AI ERP &amp; CRM Modules
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            <span className="text-emerald-400 font-bold">✓</span> 1,500 Lead Credits/mo Included
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            <span className="text-emerald-400 font-bold">✓</span> No Credit Card Required for Free Tier
+                        </span>
+                    </div>
                 </div>
 
                 {/* ── Visual Media Showcase (Experiment 3: hero_media_v1) ── */}
-                <div className="mt-4 pb-16 max-w-5xl mx-auto relative">
+                <div className="pb-20 max-w-5xl mx-auto relative">
                     
                     {/* VARIANT B: AI Female Founder Video Commercial */}
                     {mediaExp.variant === "ai_commercial" ? (
