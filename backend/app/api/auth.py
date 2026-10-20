@@ -17,6 +17,7 @@ def signup(user: UserSignup):
             "options": {
                 "data": {
                     "name": user.name,
+                    "phone": user.phone or "",
                     "account_type": user.account_type,
                     "company_name": user.company_name if user.account_type == "company" else f"{user.name or 'My'} Workspace"
                 }
@@ -124,6 +125,7 @@ def login(user: UserLogin):
                 "id": uid,
                 "email": res.user.email,
                 "name": user_meta.get("name", ""),
+                "phone": user_meta.get("phone", ""),
                 "account_type": user_meta.get("account_type", "individual"),
                 "company_name": user_meta.get("company_name", ""),
                 "session_id": session_id

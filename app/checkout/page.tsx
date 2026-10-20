@@ -36,7 +36,7 @@ export default function CheckoutPage() {
         name: '',
         email: '',
         company: '',
-        phone: '03001234567',
+        phone: '',
         address: '',
         city: '',
         country: 'United States',
@@ -92,11 +92,108 @@ export default function CheckoutPage() {
                 setCartItems(JSON.parse(savedCart)); 
             } catch {}
         }
+
+        // 3. Pre-fill customer billing details from user's actual profile/session data
+        // (Full Name, Work Email, Company / Entity Name, Billing Phone)
+        try {
+            let loadedName = '';
+            let loadedEmail = '';
+            let loadedCompany = '';
+            let loadedPhone = '';
+
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const u = JSON.parse(userStr);
+                loadedName = u.name || u.full_name || u.user_metadata?.name || u.user_metadata?.full_name || '';
+                loadedEmail = u.email || u.user_metadata?.email || '';
+                loadedCompany = u.company_name || u.user_metadata?.company_name || u.tenant?.company_name || u.tenant?.name || '';
+                loadedPhone = u.phone || u.phone_number || u.mobile || u.user_metadata?.phone || u.user_metadata?.phone_number || '';
+                
+                // If name is still empty, derive a clean readable name from email
+                if (!loadedName && loadedEmail) {
+                    loadedName = loadedEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+                }
+
+                // If company is not set, fallback to user entity name
+                if (!loadedCompany && loadedName) {
+                    loadedCompany = `${loadedName}'s Entity`;
+                }
+            }
+
+            // Check active branch if company is still empty
+            const activeBranchStr = localStorage.getItem('beraxis_active_branch');
+            if (activeBranchStr) {
+                try {
+                    const ab = JSON.parse(activeBranchStr);
+                    if (!loadedCompany && ab.name) loadedCompany = ab.name;
+                    if (!loadedPhone && ab.phone) loadedPhone = ab.phone;
+                } catch {}
+            }
+
+            // Check dedicated profile phone or company keys in localStorage
+            const savedPhone = localStorage.getItem('beraxis_user_phone') || localStorage.getItem('billing_phone');
+            if (!loadedPhone && savedPhone) loadedPhone = savedPhone;
+
+            const savedCompany = localStorage.getItem('beraxis_company_name') || localStorage.getItem('settings_company_name');
+            if (!loadedCompany && savedCompany) loadedCompany = savedCompany;
+
+            setForm(prev => ({
+                ...prev,
+                name: prev.name || loadedName,
+                email: prev.email || loadedEmail,
+                company: prev.company || loadedCompany,
+                phone: prev.phone || loadedPhone,
+                cardHolder: prev.cardHolder || prev.name || loadedName,
+            }));
+
+            // Non-blocking fetch to /auth/me if token exists to get latest profile fields
+            const token = localStorage.getItem('token');
+            if (token) {
+                fetchAPI('/auth/me')
+                    .then(res => res.ok ? res.json() : null)
+                    .then(meData => {
+                        if (meData) {
+                            const meta = meData.metadata || {};
+                            const tenant = meData.tenant || {};
+                            const fetchedName = meta.name || meData.name || '';
+                            const fetchedEmail = meData.email || '';
+                            const fetchedCompany = meta.company_name || tenant.company_name || tenant.name || '';
+                            const fetchedPhone = meta.phone || tenant.phone || '';
+
+                            setForm(current => ({
+                                ...current,
+                                name: current.name || fetchedName,
+                                email: current.email || fetchedEmail,
+                                company: current.company || fetchedCompany,
+                                phone: current.phone || fetchedPhone,
+                                cardHolder: current.cardHolder || current.name || fetchedName,
+                            }));
+                        }
+                    })
+                    .catch(() => {});
+            }
+        } catch (e) {
+            console.error('Error pre-filling checkout details:', e);
+        }
+
         setLoading(false);
     }, [searchParams]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setForm({...form, [e.target.name]: e.target.value});
+        const { name, value } = e.target;
+        setForm(prev => {
+            const next = { ...prev, [name]: value };
+            if (name === 'name' && (!prev.cardHolder || prev.cardHolder === prev.name)) {
+                next.cardHolder = value;
+            }
+            return next;
+        });
+
+        // Persist to localStorage so entered details survive reloads and other steps
+        try {
+            if (name === 'phone') localStorage.setItem('beraxis_user_phone', value);
+            if (name === 'company') localStorage.setItem('beraxis_company_name', value);
+        } catch {}
     };
 
     const handleApplyPromo = async (e: React.MouseEvent) => {
@@ -155,6 +252,20 @@ export default function CheckoutPage() {
     const handleCheckout = async (e: React.FormEvent) => {
         e.preventDefault();
         setProcessing(true);
+
+        // Sync updated details back to user object in localStorage
+        try {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const u = JSON.parse(userStr);
+                if (form.name) u.name = form.name;
+                if (form.company) u.company_name = form.company;
+                if (form.phone) u.phone = form.phone;
+                localStorage.setItem('user', JSON.stringify(u));
+            }
+            if (form.phone) localStorage.setItem('beraxis_user_phone', form.phone);
+            if (form.company) localStorage.setItem('beraxis_company_name', form.company);
+        } catch {}
 
         const planDesc = subscriptionPlan 
             ? `${subscriptionPlan.name} ${subscriptionPlan.users} seats ${subscriptionPlan.billingCycle}`
@@ -279,29 +390,34 @@ export default function CheckoutPage() {
                             
                             {/* Customer & Company Details */}
                             <div className="galaxy-card p-6 bg-[#0F172A]/40 border border-white/5 space-y-4">
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
-                                    <Building2 size={16} className="text-purple-400" /> Account & Billing Details
-                                </h3>
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+                                        <Building2 size={16} className="text-purple-400" /> Account & Billing Details
+                                    </h3>
+                                    <span className="text-[11px] text-purple-400/90 bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 rounded-full font-medium">
+                                        Auto-linked from profile
+                                    </span>
+                                </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-400 mb-1.5">Full Name *</label>
-                                        <input required name="name" value={form.name} onChange={handleChange} type="text" placeholder="Alex Mercer" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs" />
+                                        <input required name="name" value={form.name} onChange={handleChange} type="text" placeholder="e.g. John Doe" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-400 mb-1.5">Work Email *</label>
-                                        <input required name="email" value={form.email} onChange={handleChange} type="email" placeholder="alex@company.com" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs" />
+                                        <input required name="email" value={form.email} onChange={handleChange} type="email" placeholder="name@company.com" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs" />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-400 mb-1.5">Company / Entity Name</label>
-                                        <input name="company" value={form.company} onChange={handleChange} type="text" placeholder="Apex Holdings LLC" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs" />
+                                        <input name="company" value={form.company} onChange={handleChange} type="text" placeholder="e.g. Acme Corp or Sole Proprietor" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-400 mb-1.5">Billing Phone *</label>
-                                        <input required name="phone" value={form.phone} onChange={handleChange} type="tel" placeholder="03001234567" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs font-mono" />
+                                        <input required name="phone" value={form.phone} onChange={handleChange} type="tel" placeholder="e.g. +1 555-0199 or 03001234567" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs font-mono" />
                                     </div>
                                 </div>
                             </div>

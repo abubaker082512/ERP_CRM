@@ -16,6 +16,7 @@ function SignupForm() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [accountType, setAccountType] = useState<"individual" | "company">("individual");
     const [companyName, setCompanyName] = useState("");
+    const [phone, setPhone] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -45,12 +46,16 @@ function SignupForm() {
                     password, 
                     invite_id,
                     account_type: accountType,
-                    company_name: accountType === 'company' ? companyName : undefined
+                    company_name: accountType === 'company' ? companyName : undefined,
+                    phone: phone.trim() || undefined
                 })
             });
 
             const data = await resp.json();
             if (resp.ok) {
+                if (phone.trim()) {
+                    try { localStorage.setItem("beraxis_user_phone", phone.trim()); } catch {}
+                }
                 setSuccess("Account created! Check your email to confirm, then log in.");
                 setTimeout(() => router.push("/login"), 3000);
             } else {
@@ -158,6 +163,17 @@ function SignupForm() {
                             placeholder="you@email.com"
                             className="w-full px-4 py-3 bg-[#0F172A]/80 border border-gray-600/50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
                             required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1.5">Billing / Mobile Phone (Optional)</label>
+                        <input
+                            type="tel"
+                            id="signup-phone"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="e.g. +1 555-0199 or 03001234567"
+                            className="w-full px-4 py-3 bg-[#0F172A]/80 border border-gray-600/50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all font-mono text-sm"
                         />
                     </div>
 
