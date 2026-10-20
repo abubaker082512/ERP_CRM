@@ -118,7 +118,7 @@ export default function CheckoutPage() {
 
     const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const discountAmount = subtotal * discount;
-    const tax = (subtotal - discountAmount) * 0.1; // 10% mock tax
+    const tax = 0; // 0 taxes for now
     const total = (subtotal - discountAmount) + tax;
 
     if (loading) return <div className="h-screen bg-[#0F172A] flex items-center justify-center text-white">Loading...</div>;
@@ -280,8 +280,8 @@ export default function CheckoutPage() {
                                     </div>
                                 )}
                                 <div className="flex justify-between text-gray-400 text-sm">
-                                    <span>Tax (10%)</span>
-                                    <span className="text-white">${tax.toFixed(2)}</span>
+                                    <span>Taxes</span>
+                                    <span className="text-emerald-400 font-medium">$0.00 (0% Tax)</span>
                                 </div>
                                 <div className="border-t border-gray-700 pt-3 flex justify-between items-center">
                                     <span className="text-lg font-bold text-white">Total</span>

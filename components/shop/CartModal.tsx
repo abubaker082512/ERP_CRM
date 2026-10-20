@@ -106,7 +106,7 @@ export default function CartModal({
                             <span className="text-gray-400 font-medium">Subtotal</span>
                             <span className="text-xl font-bold text-white">${total.toFixed(2)}</span>
                         </div>
-                        <p className="text-xs text-gray-500 mb-6">Taxes and shipping calculated at checkout</p>
+                        <p className="text-xs text-gray-500 mb-6">0% Tax · No hidden fees at checkout</p>
                         <button 
                             onClick={handleCheckout}
                             className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg shadow-purple-600/20 transition-all flex items-center justify-center gap-2"
