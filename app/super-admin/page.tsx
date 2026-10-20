@@ -258,8 +258,8 @@ export default function SuperAdminPage() {
     const [wsForm, setWsForm] = useState({
         name: "",
         owner_email: "",
-        plan: "Standard Plan",
-        member_count: 5
+        plan: "One App Free",
+        member_count: 1
     });
 
     const [userForm, setUserForm] = useState({
@@ -267,12 +267,38 @@ export default function SuperAdminPage() {
         email: "",
         password: "User@123456",
         role: "user",
-        plan: "Standard Plan",
+        plan: "One App Free",
         workspace_id: ""
     });
 
     const [newPasswordInput, setNewPasswordInput] = useState("");
-    const [selectedPlanInput, setSelectedPlanInput] = useState("Standard Plan ($199/mo)");
+    const [selectedPlanInput, setSelectedPlanInput] = useState("One App Free");
+
+    const isSuperAdminEmail = (email?: string) => {
+        if (!email) return false;
+        const e = email.toLowerCase().trim();
+        return (
+            e === "admin@beraxis.online" ||
+            e === "abubaker0825@gmail.com" ||
+            e === "admin2@erp-crm.com" ||
+            e === "beraxisai@gmail.com" ||
+            e === "snakeyes358@gmail.com" ||
+            e === "admin@galaxy.com" ||
+            e === "abubaker@galaxy.com" ||
+            e.endsWith("@beraxis.online") ||
+            e.endsWith("@erp-crm.com")
+        );
+    };
+
+    const getWorkspacePlanLabel = (ws: any) => {
+        if (isSuperAdminEmail(ws.owner_email)) {
+            return "Admin Full Control";
+        }
+        if (!ws.plan || ws.plan === "Standard Plan" || ws.plan === "Standard") {
+            return "One App Free";
+        }
+        return ws.plan;
+    };
 
     const [authChecked, setAuthChecked] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(true);
@@ -1034,13 +1060,19 @@ export default function SuperAdminPage() {
                                                     <button
                                                         onClick={() => {
                                                             setIsChangePlanOpen(ws);
-                                                            setSelectedPlanInput(ws.plan || "Standard Plan ($199/mo)");
+                                                            setSelectedPlanInput(getWorkspacePlanLabel(ws));
                                                         }}
-                                                        className="bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
-                                                        title="Click to upgrade plan"
+                                                        className={`${
+                                                            isSuperAdminEmail(ws.owner_email)
+                                                                ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
+                                                                : getWorkspacePlanLabel(ws).includes("Standard") || getWorkspacePlanLabel(ws).includes("Custom")
+                                                                ? "bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border-purple-500/30"
+                                                                : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                                        } border px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all`}
+                                                        title="Click to change plan"
                                                     >
-                                                        <Sparkles size={12} className="text-purple-400" />
-                                                        {ws.plan || "Standard Plan"}
+                                                        <Sparkles size={12} className={isSuperAdminEmail(ws.owner_email) ? "text-amber-400" : "text-purple-400"} />
+                                                        {getWorkspacePlanLabel(ws)}
                                                         <Edit3 size={11} className="opacity-60" />
                                                     </button>
                                                 </td>
@@ -2657,9 +2689,10 @@ export default function SuperAdminPage() {
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Plan Tier</label>
                                     <select value={wsForm.plan} onChange={e => setWsForm({...wsForm, plan: e.target.value})} className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-4 py-2.5 text-white text-xs focus:border-purple-500 outline-none">
-                                        <option value="Starter Plan">Starter Plan ($49/mo)</option>
-                                        <option value="Standard Plan">Standard Plan ($199/mo)</option>
-                                        <option value="Custom Enterprise">Custom Enterprise ($499/mo)</option>
+                                        <option value="One App Free">🌱 One App Free ($0/mo Forever)</option>
+                                        <option value="Standard Plan ($1/mo Early Bird)">💼 Standard Plan ($1/mo Early Bird)</option>
+                                        <option value="Custom Plan ($37.40/mo)">👑 Custom Plan ($37.40/mo)</option>
+                                        <option value="Admin Full Control">💎 Admin Full Control (Super Admin)</option>
                                     </select>
                                 </div>
                                 <div>
@@ -2778,10 +2811,11 @@ export default function SuperAdminPage() {
                                 onChange={e => setSelectedPlanInput(e.target.value)}
                                 className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-4 py-2.5 text-white text-xs font-semibold focus:border-purple-500 outline-none"
                             >
-                                <option value="Starter Plan ($49/mo)">⚡ Starter Plan ($49/mo)</option>
-                                <option value="Standard Plan ($199/mo)">💼 Standard Plan ($199/mo)</option>
-                                <option value="Custom Enterprise ($499/mo)">👑 Custom Enterprise ($499/mo)</option>
-                                <option value="VIP Lifetime Access">💎 VIP Lifetime Unlimited</option>
+                                <option value="One App Free">🌱 One App Free ($0/mo Forever)</option>
+                                <option value="Standard Plan ($1/mo Early Bird)">💼 Standard Plan ($1/mo Early Bird)</option>
+                                <option value="Standard Plan ($5/mo Monthly)">⚡ Standard Plan ($5/mo Monthly)</option>
+                                <option value="Custom Plan ($37.40/mo)">👑 Custom Plan (Multi-Company &amp; APIs)</option>
+                                <option value="Admin Full Control">💎 Admin Full Control (Super Admin VIP)</option>
                             </select>
                         </div>
                         <div className="flex justify-end gap-2 pt-2">

@@ -46,6 +46,7 @@ class WorkspaceSummary(BaseModel):
     owner_email: str
     member_count: int
     created_at: str
+    plan: Optional[str] = "One App Free"
 
 
 class UserSummary(BaseModel):
@@ -87,19 +88,52 @@ def list_all_workspaces(client: Client = Depends(get_supabase_client)):
 
     tenant_map = {}
     try:
-        tenant_resp = service_client.table("tenants").select("id, email").execute()
-        tenant_map = {t['id']: t['email'] for t in tenant_resp.data} if tenant_resp.data else {}
+        tenant_resp = service_client.table("tenants").select("id, email, stripe_customer_id, subscription_status").execute()
+        tenant_map = {t['id']: t for t in tenant_resp.data} if tenant_resp.data else {}
     except Exception as e:
         print(f"[SuperAdmin] Error querying tenants table in list_all_workspaces: {e}")
 
+    import json
     results = []
     for ws in workspaces:
+        owner_id = ws.get('owner_id')
+        tenant_info = tenant_map.get(owner_id, {})
+        owner_email = tenant_info.get('email') if isinstance(tenant_info, dict) else tenant_map.get(owner_id, "Unknown")
+        if not owner_email or owner_email == "Unknown":
+            owner_email = ws.get('owner_email') or "Unknown"
+
+        # Determine workspace plan
+        is_admin = owner_email and (
+            owner_email in SUPER_ADMIN_EMAILS or 
+            owner_email.endswith("@beraxis.online") or 
+            owner_email.endswith("@erp-crm.com")
+        )
+
+        plan = ws.get('plan')
+        if is_admin:
+            plan = "Admin Full Control"
+        elif not plan or plan == "Standard Plan":
+            # Check tenant stripe_customer_id metadata for explicit paid subscriptions
+            stripe_cust = tenant_info.get('stripe_customer_id') if isinstance(tenant_info, dict) else None
+            found_paid = False
+            if stripe_cust:
+                try:
+                    meta = json.loads(stripe_cust) if isinstance(stripe_cust, str) and stripe_cust.startswith('{') else {}
+                    if meta.get('plan') and meta.get('plan') != "Standard Plan":
+                        plan = meta.get('plan')
+                        found_paid = True
+                except Exception:
+                    pass
+            if not found_paid:
+                plan = "One App Free"
+
         results.append(WorkspaceSummary(
             id=str(ws.get('id', '')),
             name=ws.get('name') or "Unnamed Workspace",
-            owner_email=tenant_map.get(ws.get('owner_id'), "Unknown"),
-            member_count=len(ws.get('user_workspaces', []) or []),
-            created_at=str(ws.get('created_at', ''))
+            owner_email=owner_email,
+            member_count=len(ws.get('user_workspaces', []) or []) or 1,
+            created_at=str(ws.get('created_at', '')),
+            plan=plan
         ))
 
     # If workspaces was empty or table doesn't exist, build fallback from Supabase Auth users
@@ -110,12 +144,20 @@ def list_all_workspaces(client: Client = Depends(get_supabase_client)):
                 admin_client = create_client(settings.SUPABASE_URL, service_key)
                 auth_users = admin_client.auth.admin.list_users()
                 for u in auth_users:
+                    u_email = u.email or "Unknown"
+                    is_admin = (
+                        u_email in SUPER_ADMIN_EMAILS or 
+                        u_email.endswith("@beraxis.online") or 
+                        u_email.endswith("@erp-crm.com")
+                    )
+                    u_plan = "Admin Full Control" if is_admin else ((u.user_metadata.get('plan') if u.user_metadata else None) or "One App Free")
                     results.append(WorkspaceSummary(
                         id=str(u.id),
-                        name=f"{u.email.split('@')[0] if u.email else 'User'}'s Workspace",
-                        owner_email=u.email or "Unknown",
+                        name=f"{u_email.split('@')[0] if u_email else 'User'}'s Workspace",
+                        owner_email=u_email,
                         member_count=1,
-                        created_at=u.created_at.isoformat() if u.created_at else ""
+                        created_at=u.created_at.isoformat() if u.created_at else "",
+                        plan=u_plan
                     ))
         except Exception as e:
             print(f"[SuperAdmin] Fallback auth users for workspaces failed: {e}")
@@ -463,13 +505,13 @@ class CreateUserPayload(BaseModel):
     name: Optional[str] = "Enterprise User"
     role: Optional[str] = "user"
     workspace_id: Optional[str] = None
-    plan: Optional[str] = "Standard Plan"
+    plan: Optional[str] = "One App Free"
 
 class CreateWorkspacePayload(BaseModel):
     name: str
     owner_email: str
-    plan: Optional[str] = "Standard Plan"
-    member_count: Optional[int] = 5
+    plan: Optional[str] = "One App Free"
+    member_count: Optional[int] = 1
 
 class UpdateTenantPlanPayload(BaseModel):
     plan: str
@@ -591,7 +633,7 @@ def create_user_as_admin(payload: CreateUserPayload, client: Client = Depends(ge
                 "id": uid,
                 "email": payload.email,
                 "subscription_status": "active" if payload.plan else "trialing",
-                "stripe_customer_id": json.dumps({"plan": payload.plan, "gateway": "directpay_card", "amount": 199.0})
+                "stripe_customer_id": json.dumps({"plan": payload.plan, "gateway": "directpay_card", "amount": 1.0 if "Standard" in str(payload.plan) else (37.4 if "Custom" in str(payload.plan) else 0.0)})
             }).execute()
         except Exception:
             pass
@@ -658,7 +700,8 @@ def update_tenant_plan(tenant_id: str, payload: UpdateTenantPlanPayload, client:
     verify_super_admin(client)
     try:
         import json
-        metadata = json.dumps({"plan": payload.plan, "gateway": "super_admin_override", "amount": 199.0 if "Standard" in payload.plan else 499.0})
+        amount = 1.0 if "Standard" in str(payload.plan) else (37.4 if "Custom" in str(payload.plan) else 0.0)
+        metadata = json.dumps({"plan": payload.plan, "gateway": "super_admin_override", "amount": amount})
         try:
             service_client.table("tenants").update({
                 "subscription_status": payload.subscription_status or "active",
