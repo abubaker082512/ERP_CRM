@@ -343,7 +343,7 @@ export default function Home() {
                             </div>
                         </div>
                         <a 
-                            href="https://checkout.freemius.com/product/41307/plan/73255/"
+                            href="/checkout?plan=standard&billing=annually"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-black py-3.5 px-4 rounded-xl mt-8 transition-all shadow-xl shadow-purple-500/25 text-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95"
@@ -389,7 +389,7 @@ export default function Home() {
                             </div>
                         </div>
                         <a 
-                            href="https://checkout.freemius.com/product/41307/plan/73256/"
+                            href="/checkout?plan=custom&billing=annually"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 text-xs flex items-center justify-center gap-2 cursor-pointer hover:border-pink-500/40"

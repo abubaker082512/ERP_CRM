@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame, Building2 } from "lucide-react";
+import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame, Building2, CreditCard } from "lucide-react";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 
 export default function PricingPage() {
@@ -306,12 +306,12 @@ export default function PricingPage() {
                         </div>
 
                         <a 
-                            href="https://checkout.freemius.com/product/41307/plan/73255/"
+                            href={`/checkout?plan=standard&billing=${billingCycle}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95 text-center"
                         >
-                            Claim Early Bird Standard (${standardRate.toFixed(2)}/mo) <ArrowRight size={16} />
+                            Pay with Card via DirectPay (${standardRate.toFixed(2)}/mo) <ArrowRight size={16} />
                         </a>
                     </div>
 
@@ -363,12 +363,12 @@ export default function PricingPage() {
                         </div>
 
                         <a 
-                            href="https://checkout.freemius.com/product/41307/plan/73256/"
+                            href={`/checkout?plan=custom&billing=${billingCycle}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 flex items-center justify-center gap-2 hover:border-pink-500/30"
                         >
-                            Subscribe Custom <ArrowRight size={16} />
+                            Pay with Card via DirectPay <ArrowRight size={16} />
                         </a>
                     </div>
                 </div>

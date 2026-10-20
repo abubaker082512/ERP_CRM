@@ -761,12 +761,12 @@ export default function SettingsPage() {
                         <p className="text-xs text-gray-400 mb-4">All 28 ERP/CRM Apps + 1,500 Verified Leads Pool credits/mo.</p>
                       </div>
                       <a
-                        href="https://checkout.freemius.com/product/41307/plan/73255/"
+                        href="/checkout?plan=standard&billing=annual"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-center text-xs font-bold text-white transition-colors shadow-md"
                       >
-                        {planTier === "standard" ? "Manage / Renew Plan" : "Buy Standard Plan (Freemius) →"}
+                        {planTier === "standard" ? "Manage / Renew Plan" : "Buy Standard Plan (DirectPay Card) →"}
                       </a>
                     </div>
 
@@ -781,12 +781,12 @@ export default function SettingsPage() {
                         <p className="text-xs text-gray-400 mb-4">3 Companies included + 5,000+ Leads Pool credits/mo + Beraxis Studio.</p>
                       </div>
                       <a
-                        href="https://checkout.freemius.com/product/41307/plan/73256/"
+                        href="/checkout?plan=custom&billing=annual"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-center text-xs font-bold text-white transition-colors"
                       >
-                        {planTier === "premium" ? "Manage Custom Plan" : "Buy Custom Plan (Freemius) →"}
+                        {planTier === "premium" ? "Manage Custom Plan" : "Buy Custom Plan (DirectPay Card) →"}
                       </a>
                     </div>
                   </div>

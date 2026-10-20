@@ -437,7 +437,7 @@ function PlanCard({
                 ) : (
                     <>
                         <a
-                            href={freemiusUrl}
+                            href={`/checkout?plan=${plan.id}&billing=${billing}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all ${
@@ -446,7 +446,7 @@ function PlanCard({
                                     : "bg-white/10 hover:bg-white/15 text-white border border-white/15"
                             }`}
                         >
-                            <CreditCard size={14} /> Checkout with Freemius <ArrowRight size={14} />
+                            <CreditCard size={14} /> Checkout with Card via DirectPay <ArrowRight size={14} />
                         </a>
 
                         <button
