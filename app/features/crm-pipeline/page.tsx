@@ -5,16 +5,19 @@ import Footer from "@/components/landing/Footer";
 import { Users, Globe, Zap, CheckCircle2, ArrowRight, Sparkles, MessageSquare, BarChart3, Filter, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "AI CRM Pipeline & Lead Management Software | Beraxis",
-  description: "Accelerate deal velocity with Beraxis AI CRM. Includes visual Kanban stages, automated WhatsApp sync, and 25M+ built-in global verified B2B leads for $1/month.",
+  title: "Free AI CRM Pipeline & Lead Management Software | Beraxis",
+  description: "Accelerate deal velocity with Beraxis Free AI CRM. Includes visual Kanban stages, automated WhatsApp sync, and 25M+ built-in global verified B2B leads for $1/month.",
   keywords: [
-    "AI CRM pipeline",
-    "B2B CRM software",
+    "Free CRM",
+    "Free CRM software",
+    "Free AI CRM pipeline",
+    "Free B2B CRM software",
     "lead pipeline management",
-    "CRM with leads pool",
+    "Free CRM with leads pool",
     "Kanban deal tracking",
     "automated sales pipeline",
     "small business CRM",
+    "HubSpot free alternative",
     "Beraxis CRM"
   ],
   alternates: {

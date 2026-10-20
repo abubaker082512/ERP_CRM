@@ -27,7 +27,7 @@ export default function Navbar() {
                     <Flame size={11} className="text-amber-400 animate-pulse" /> Early Bird Special
                 </span>
                 <span className="text-gray-200">
-                    Get All 28 ERP Modules + 1,500 Lead Credits/mo for just <strong className="text-white font-extrabold underline decoration-amber-400">$1/mo ($12/year billed annually)</strong> or $5/mo month-to-month.
+                    Get All 28 AI ERP &amp; CRM Modules + 1,500 Lead Credits/mo for just <strong className="text-white font-extrabold underline decoration-amber-400">$1/mo ($12/year billed annually)</strong> or $5/mo month-to-month.
                 </span>
                 <Link href="/pricing" className="text-amber-300 hover:text-amber-200 font-extrabold ml-1 inline-flex items-center gap-0.5 hover:underline">
                     Claim Deal <ArrowRight size={11} />

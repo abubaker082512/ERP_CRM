@@ -10,11 +10,34 @@ import GalaxyAppShell from "@/components/layout/GalaxyAppShell";
 export const metadata: Metadata = {
     metadataBase: new URL("https://www.beraxis.online"),
     title: {
-        default: "Beraxis | Autonomous AI ERP & CRM · 25M+ B2B Leads",
+        default: "Beraxis | Free ERP, Free CRM & Free POS · Autonomous AI Suite",
         template: "%s | Beraxis"
     },
-    description: "Beraxis is the premier autonomous AI ERP & CRM command center. Unify CRM, 25M+ verified B2B leads directory, POS, multi-industry operations, accounting, inventory, and HRMS for just $1/month.",
+    description: "Forever Free Tier available for Free CRM, Free POS & Free ERP. Unify 28 AI modules — CRM, 25M+ verified B2B leads directory, POS, multi-industry operations, double-entry accounting, inventory, and HRMS for just $1/month.",
     keywords: [
+        "Free ERP",
+        "Free CRM",
+        "Free POS",
+        "Free Point of Sale",
+        "Free Accounting software",
+        "Free Inventory management software",
+        "Free HRMS Payroll system",
+        "Free Invoicing software",
+        "Free B2B Leads",
+        "Free Lead generation software",
+        "Free CRM for small business",
+        "Free POS for retail and restaurants",
+        "Best free ERP 2026",
+        "Best free CRM for startups",
+        "Best free POS system",
+        "Odoo free alternative",
+        "HubSpot free alternative",
+        "QuickBooks free alternative",
+        "Salesforce free alternative",
+        "Zoho CRM free alternative",
+        "Square POS free alternative",
+        "Toast POS free alternative",
+        "Open source ERP alternative",
         "Beraxis",
         "Beraxis ERP",
         "Beraxis CRM",
@@ -38,12 +61,10 @@ export const metadata: Metadata = {
         "Construction contractor project costing ERP",
         "Retail omnichannel multi-store POS",
         "School academy student LMS billing software",
-        "Accounting software",
-        "Inventory management software",
-        "HRMS Payroll system",
-        "POS software",
         "Voice AI business assistant",
-        "Enterprise Resource Planning"
+        "Enterprise Resource Planning",
+        "1 dollar ERP",
+        "Affordable ERP software"
     ],
     authors: [{ name: "Beraxis Team", url: "https://www.beraxis.online" }],
     creator: "Beraxis Platform",
@@ -70,8 +91,8 @@ export const metadata: Metadata = {
     },
     manifest: "/site.webmanifest",
     openGraph: {
-        title: "Beraxis | Autonomous AI ERP & CRM · 25M+ B2B Leads Pool",
-        description: "The premier All-in-One AI ERP & CRM Suite with 28 integrated modules, 25M+ verified B2B leads directory, POS, multi-industry hubs, accounting & HRMS.",
+        title: "Beraxis | Free ERP, Free CRM & Free POS · 25M+ B2B Leads Pool",
+        description: "Forever Free Tier available for Free CRM, Free POS & Free ERP. Unify 28 AI modules — CRM, 25M+ verified B2B leads directory, POS, accounting & HRMS for $1/month.",
         url: "https://www.beraxis.online",
         siteName: "Beraxis",
         images: [
@@ -79,7 +100,7 @@ export const metadata: Metadata = {
                 url: "https://www.beraxis.online/og-image.png?v=3",
                 width: 1200,
                 height: 630,
-                alt: "Beraxis - Autonomous AI ERP & CRM Platform",
+                alt: "Beraxis - Free ERP, Free CRM & Free POS Autonomous AI Platform",
             },
             {
                 url: "https://www.beraxis.online/icon.png?v=3",
@@ -93,8 +114,8 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: "summary_large_image",
-        title: "Beraxis | Autonomous AI ERP & CRM · 25M+ B2B Leads Pool",
-        description: "The AI-driven business command center. Built-in 25M+ verified B2B leads directory, POS, inventory, accounting & HRMS.",
+        title: "Beraxis | Free ERP, Free CRM & Free POS · 25M+ B2B Leads Pool",
+        description: "Forever Free Tier available. The AI-driven business command center: Free CRM, Free POS, 25M+ verified B2B leads directory, inventory, accounting & HRMS for $1/month.",
         images: ["https://www.beraxis.online/og-image.png?v=3"],
         creator: "@beraxis",
     },
@@ -178,21 +199,38 @@ export default function RootLayout({
                     "bestRating": "5",
                     "worstRating": "1"
                 },
-                "offers": {
-                    "@type": "Offer",
-                    "price": "1.00",
-                    "priceCurrency": "USD",
-                    "priceValidUntil": "2027-12-31",
-                    "availability": "https://schema.org/InStock",
-                    "description": "Early Bird Plan: $1/seat/month billed annually ($12/year) or $5/seat/month month-to-month. All 28 modules included with 1,500 lead credits/month."
-                },
-                "description": "Beraxis is an autonomous AI ERP & CRM platform featuring a built-in 25M+ B2B Leads Pool, POS, accounting, inventory, HRMS, and Voice Pilot for $1/month.",
+                "offers": [
+                    {
+                        "@type": "Offer",
+                        "price": "0.00",
+                        "priceCurrency": "USD",
+                        "availability": "https://schema.org/InStock",
+                        "description": "Forever Free Tier: 1 full business app (Free CRM, Free POS, or Free Inventory) with unlimited user seats and zero credit card required."
+                    },
+                    {
+                        "@type": "Offer",
+                        "price": "1.00",
+                        "priceCurrency": "USD",
+                        "priceValidUntil": "2027-12-31",
+                        "availability": "https://schema.org/InStock",
+                        "description": "Early Bird Plan: $1/seat/month billed annually ($12/year) or $5/seat/month month-to-month. All 28 enterprise modules included with 1,500 lead credits/month."
+                    }
+                ],
+                "description": "Beraxis is an autonomous AI ERP & CRM platform featuring Free CRM, Free POS, and Free ERP modules, 25M+ B2B Leads Pool, accounting, inventory, and Voice Pilot for $1/month.",
                 "url": "https://www.beraxis.online"
             },
             {
                 "@type": "FAQPage",
                 "@id": "https://www.beraxis.online/#faq",
                 "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": "Does Beraxis offer a Free CRM, Free POS, and Free ERP?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Yes! Beraxis offers a Forever Free tier that lets businesses deploy a complete core application—such as Free CRM, Free POS, or Free Inventory management—with unlimited user seats and zero credit card required. You can upgrade anytime to unlock all 28 enterprise modules and 1,500 lead credits/month for just $1.00/month."
+                        }
+                    },
                     {
                         "@type": "Question",
                         "name": "What is Beraxis?",

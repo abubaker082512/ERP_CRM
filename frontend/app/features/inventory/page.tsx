@@ -5,9 +5,12 @@ import Footer from "@/components/landing/Footer";
 import { Package, Layers, Barcode, Warehouse, CheckCircle2, ArrowRight, RefreshCw, AlertTriangle, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Smart Cloud Inventory & Multi-Warehouse Software | Beraxis",
-  description: "Track inventory across unlimited warehouses in real-time. Automated reorder points, barcode lot tracking, FIFO/LIFO costing, and POS integration for $1/month.",
+  title: "Free Smart Cloud Inventory & Multi-Warehouse Software | Beraxis",
+  description: "Track inventory across unlimited warehouses in real-time. Free inventory tier with automated reorder points, barcode tracking, and POS integration.",
   keywords: [
+    "Free inventory management software",
+    "Free cloud inventory",
+    "Free warehouse management",
     "smart cloud inventory",
     "multi warehouse inventory management",
     "automated reorder points",

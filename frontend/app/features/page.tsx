@@ -5,9 +5,14 @@ import Footer from "@/components/landing/Footer";
 import { Users, Package, Mic, Globe, ShoppingCart, BarChart3, ShieldCheck, CheckCircle2, ArrowRight, Zap, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Platform Features & Enterprise Modules | Beraxis AI",
-  description: "Explore all Beraxis AI enterprise capabilities: intelligent CRM pipeline, real-time multi-warehouse inventory, AI voice pilot, and native 25M+ leads pool for $1/month.",
+  title: "Platform Features & Enterprise Modules | Free ERP & CRM · Beraxis AI",
+  description: "Explore all Beraxis AI enterprise capabilities: Free CRM pipeline, real-time multi-warehouse inventory, Free POS, AI voice pilot, and native 25M+ leads pool for $1/month.",
   keywords: [
+    "Free ERP",
+    "Free CRM",
+    "Free POS",
+    "Free inventory management",
+    "Free CRM software",
     "Beraxis features",
     "cloud ERP modules",
     "AI CRM software",

@@ -22,7 +22,8 @@ import {
     Building2,
     Mail,
     Phone,
-    Check
+    Check,
+    ChevronDown
 } from "lucide-react";
 import { useExperiment, initSocialAttribution } from "@/lib/abTesting";
 
@@ -168,7 +169,7 @@ export default function Hero() {
                                 onClick={() => setActiveSlide(idx)}
                                 className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                                     activeSlide === idx
-                                        ? "bg-white/12 text-white border border-white/15 shadow-sm"
+                                        ? "bg-white/[0.14] text-white border border-white/20 shadow-sm backdrop-blur-md"
                                         : "text-gray-400 hover:text-gray-200"
                                 }`}
                             >
@@ -200,7 +201,7 @@ export default function Hero() {
                         <Link 
                             href="/signup" 
                             onClick={() => ctaExp.trackConversion("signup_click", { style: "clean_hero" })}
-                            className="px-6 py-3 rounded-xl bg-white/[0.06] hover:bg-white/12 border border-white/15 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-sm"
+                            className="px-6 py-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-sm"
                         >
                             Start Free ($0)
                         </Link>
@@ -226,10 +227,19 @@ export default function Hero() {
                             <span className="text-emerald-400 font-bold">✓</span> No Credit Card Required for Free Tier
                         </span>
                     </div>
+
+                    {/* Subtle Scroll Cue to Interactive Sandbox */}
+                    <a
+                        href="#live-sandbox"
+                        className="mt-8 inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                    >
+                        <span>Try Live 25M+ Leads &amp; ERP Sandbox Below</span>
+                        <ChevronDown size={14} className="text-gray-400 animate-bounce" />
+                    </a>
                 </div>
 
                 {/* ── Visual Media Showcase (Experiment 3: hero_media_v1) ── */}
-                <div className="pb-20 max-w-5xl mx-auto relative">
+                <div id="live-sandbox" className="pb-20 max-w-5xl mx-auto relative">
                     
                     {/* VARIANT B: AI Female Founder Video Commercial */}
                     {mediaExp.variant === "ai_commercial" ? (
