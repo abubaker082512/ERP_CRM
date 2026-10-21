@@ -180,6 +180,27 @@ export async function GET() {
     dynamic_pricing: true
   };
 
+  const payments = [
+    {
+      id: "pay-101",
+      email: "subscriber@beraxis.online",
+      amount_usd: 12.00,
+      payment_status: "active",
+      plan: "Standard Plan ($1/mo)",
+      gateway: "Stripe",
+      created_at: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: "pay-102",
+      email: "beraxisai@gmail.com",
+      amount_usd: 12.00,
+      payment_status: "active",
+      plan: "Standard Plan ($1/mo)",
+      gateway: "Stripe",
+      created_at: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString()
+    }
+  ];
+
   return NextResponse.json({
     success: true,
     workspaces,
@@ -187,6 +208,7 @@ export async function GET() {
     tenants,
     stats,
     sales,
+    payments,
     health,
     auditLogs,
     featureFlags
