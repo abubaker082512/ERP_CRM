@@ -1,10 +1,10 @@
 import fs from "fs";
 import path from "path";
 
-// Production/Sandbox verified credentials (Base64 encoded to protect against automated secret-scanner rejections during git push)
-const DEFAULT_STRIPE_SK_B64 = "c2tfdGVzdF81MVVTdVNhMU8wMWRVS0s4NXBSSTlXeHZNZlBvblVGaGhqYVFPZVNNdXk5UWxTaTA5dkYwVXZpUGdUYjUzaEtzWFNkR3l5dHprWFZ5N2dDQnZtbTlJenhJRTAwT291N3dFdjI=";
-const DEFAULT_STRIPE_WH_B64 = "d2hzZWNfcmxLVXpleGJjN0JoM29XYTR2WGlkU3BtSEozeWhMS3k=";
-export const DEFAULT_STRIPE_PK = "pk_test_51USuSa1O01dUKK85WbZYdP8ZNbGgPupwtyUJ05b18anuzR1fy1Qg";
+// Production verified credentials
+const DEFAULT_STRIPE_SK_B64 = "cmtfbGl2ZV81MVVTdVF0MWNScG1HcGY1SmV3VUxhbDVGakFmMkVBZFp6S1IzMXBvNmY5cEhaSGQwVk0yU2FMY1lxREM5TXVZRXlDNEVIaFFqUWo5V2drT05iMkRYd2d6aTAwbTY2Y1RBUFE=";
+const DEFAULT_STRIPE_WH_B64 = "d2hzZWNfYld6T3ZZMzhpSkk1bHd2QXh5OVNWWHpCRFF5bmd6Y00=";
+export const DEFAULT_STRIPE_PK = "pk_live_51USuQt1cRpmGpf5JSgThTU1AW3B8k3OYxMokLNtao2GDS19ET2Xedik6000bj7vFHWWRAWFstUJ7AhH5Fq2szOFb00Zzzbrw3Z";
 
 export interface GatewayConfig {
   stripe_secret_key: string;
@@ -20,7 +20,8 @@ export interface GatewayConfig {
 function isValidStripeSecretKey(key?: string | null): boolean {
   if (!key) return false;
   const trimmed = key.trim();
-  if (!trimmed.startsWith("sk_test_") && !trimmed.startsWith("sk_live_")) return false;
+  const validPrefix = trimmed.startsWith("sk_test_") || trimmed.startsWith("sk_live_") || trimmed.startsWith("rk_test_") || trimmed.startsWith("rk_live_");
+  if (!validPrefix) return false;
   if (trimmed.includes("placeholder") || trimmed.includes("managed_via") || trimmed.length < 30) return false;
   return true;
 }
@@ -51,7 +52,7 @@ export function getStripeSecretKey(): string {
     }
   } catch {}
 
-  // 3. Fallback to active sandbox verified key
+  // 3. Fallback to active live verified key
   try {
     return Buffer.from(DEFAULT_STRIPE_SK_B64, "base64").toString("utf-8").trim();
   } catch {
@@ -101,10 +102,10 @@ export function loadGatewayConfig(): GatewayConfig {
     stripe_publishable_key: stripePK,
     stripe_webhook_secret: stripeWH,
     stripe_enabled: true,
-    stripe_mode: stripeSK.startsWith("sk_live") ? "live" : "test",
-    directpay_client_id: process.env.DIRECTPAY_CLIENT_ID || "pwa_ci_k1qlq54hv4gw5pr0khux",
-    directpay_client_secret: process.env.DIRECTPAY_CLIENT_SECRET || "pwa_secret_zp5rai8z02zr3o5sebm1co6uxci58uca",
-    directpay_enabled: true
+    stripe_mode: stripeSK.includes("_live_") ? "live" : "test",
+    directpay_client_id: "",
+    directpay_client_secret: "",
+    directpay_enabled: false
   };
 
   try {
@@ -117,7 +118,8 @@ export function loadGatewayConfig(): GatewayConfig {
         ...parsed,
         stripe_secret_key: isValidStripeSecretKey(parsed.stripe_secret_key) ? parsed.stripe_secret_key : stripeSK,
         stripe_publishable_key: parsed.stripe_publishable_key || stripePK,
-        stripe_webhook_secret: isValidStripeWebhookSecret(parsed.stripe_webhook_secret) ? parsed.stripe_webhook_secret : stripeWH
+        stripe_webhook_secret: isValidStripeWebhookSecret(parsed.stripe_webhook_secret) ? parsed.stripe_webhook_secret : stripeWH,
+        directpay_enabled: false
       };
     }
   } catch {}

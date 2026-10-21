@@ -1090,7 +1090,7 @@ export default function SuperAdminPage() {
                     <TabBtn active={activeTab === "overview"}    onClick={() => setActiveTab("overview")}    label="🏢 Companies" count={safeWorkspaces.length} />
                     <TabBtn active={activeTab === "pricing"}     onClick={() => setActiveTab("pricing")}     label="💰 Plan Pricing ($1 Early Bird)" />
                     <TabBtn active={activeTab === "promocodes"}  onClick={() => setActiveTab("promocodes")}  label="🎟️ Promo Codes" count={safePromocodes.length} />
-                    <TabBtn active={activeTab === "payments"}    onClick={() => setActiveTab("payments")}    label="💳 Payment Gateways (Stripe & DirectPay)" count={safePayments.length} />
+                    <TabBtn active={activeTab === "payments"}    onClick={() => setActiveTab("payments")}    label="💳 Payment Gateways (Stripe Global)" count={safePayments.length} />
                     <TabBtn active={activeTab === "billing"}     onClick={() => setActiveTab("billing")}     label="⚖️ Billing Ctrl" count={safeTenants.length} />
                     <TabBtn active={activeTab === "users"}       onClick={() => setActiveTab("users")}       label="👥 Users" count={safeUsers.length} />
                     <TabBtn active={activeTab === "sales"}       onClick={() => setActiveTab("sales")}       label="🛒 ERP Sales" count={safeSales.length} />

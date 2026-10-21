@@ -15,7 +15,6 @@ export default function CheckoutPage() {
     const [processing, setProcessing] = useState(false);
     const [success, setSuccess] = useState(false);
     const [verifiedTxId, setVerifiedTxId] = useState<string | null>(null);
-    const [paymentGateway, setPaymentGateway] = useState<'stripe' | 'directpay'>('stripe');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     // Subscription plan details (if arriving from pricing/billing page)
@@ -48,8 +47,7 @@ export default function CheckoutPage() {
         cvv: ''
     });
 
-    // Exchange rate USD -> PKR (approx 278 PKR per USD)
-    const PKR_RATE = 278;
+
 
     useEffect(() => {
         // 1. Check if returning from DirectPay Gateway redirect
@@ -310,7 +308,6 @@ export default function CheckoutPage() {
     const discountAmount = Math.min(subtotal, discountAmountUSD);
     const tax = 0; // 0% tax for now
     const total = Math.max(0, (subtotal - discountAmount) + tax);
-    const totalPKR = Math.max(0, Math.round(total * PKR_RATE));
 
     const handleCheckout = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -334,102 +331,63 @@ export default function CheckoutPage() {
         const currentPlanKey = subscriptionPlan?.tier || 'standard';
         const isAnnual = (subscriptionPlan?.billingCycle || '').toLowerCase().includes('annual');
 
-        // 1. STRIPE SECURE CHECKOUT FLOW (Opens official Stripe checkout to enter card)
-        if (paymentGateway === 'stripe') {
-            try {
-                const res = await fetch('/api/payments/stripe/create-checkout-session', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        plan: currentPlanKey,
-                        billing: isAnnual ? 'annual' : 'monthly',
-                        users: subscriptionPlan?.users || 1,
-                        email: form.email || 'customer@beraxis.online',
-                        name: form.name || 'Beraxis Subscriber',
-                        company: form.company,
-                        phone: form.phone,
-                        return_url: `${window.location.origin}/checkout`
-                    })
-                });
+    // 1. STRIPE SECURE CHECKOUT FLOW (Directly launches Stripe Checkout)
+    const handleCheckout = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setErrorMessage(null);
+        setProcessing(true);
 
-                const data = await res.json();
-
-                if (!res.ok || !data.success || !data.url) {
-                    setProcessing(false);
-                    setErrorMessage(data.error || "Failed to initialize Stripe payment. Please check your Stripe keys in Super Admin (/super-admin).");
-                    return;
-                }
-
-                // Redirect to official Stripe Checkout portal!
-                window.location.href = data.url;
-                return;
-            } catch (stripeErr: any) {
-                console.error('Stripe Checkout error:', stripeErr);
-                setProcessing(false);
-                setErrorMessage(stripeErr.message || "Network error while connecting to Stripe. Please try again.");
-                return;
+        // Sync details to localStorage
+        try {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const u = JSON.parse(userStr);
+                if (form.name) u.name = form.name;
+                if (form.company) u.company_name = form.company;
+                if (form.phone) u.phone = form.phone;
+                localStorage.setItem('user', JSON.stringify(u));
             }
-        }
+            if (form.phone) localStorage.setItem('beraxis_user_phone', form.phone);
+            if (form.company) localStorage.setItem('beraxis_company_name', form.company);
+        } catch {}
 
-        // 2. DIRECTPAY CARD GATEWAY FLOW (Card only, no wallets)
-        const rawCard = form.cardNumber.replace(/\s+/g, '');
-        if (!rawCard || rawCard.length < 13) {
-            setErrorMessage("Please enter a valid 15 or 16-digit card number.");
-            setProcessing(false);
-            return;
-        }
-
-        if (!form.expiry || form.expiry.length < 5 || !form.expiry.includes('/')) {
-            setErrorMessage("Please enter a valid expiry date (MM/YY).");
-            setProcessing(false);
-            return;
-        }
-
-        if (!form.cvv || form.cvv.length < 3) {
-            setErrorMessage("Please enter a valid 3 or 4-digit CVV / Security code.");
-            setProcessing(false);
-            return;
-        }
-
-        const planDesc = subscriptionPlan 
-            ? `${subscriptionPlan.name} ${subscriptionPlan.users} seats ${subscriptionPlan.billingCycle}`
-            : cartItems.map(i => i.name).join(' ');
-
-        const safeDescription = `Beraxis Subscription ${planDesc}`
-            .replace(/[^a-zA-Z0-9 ]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .substring(0, 80);
+        const currentPlanKey = subscriptionPlan?.tier || 'standard';
+        const isAnnual = (subscriptionPlan?.billingCycle || '').toLowerCase().includes('annual');
 
         try {
-            const res = await fetch('/api/payments/directpay/initiate', {
+            const res = await fetch('/api/payments/stripe/create-checkout-session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    amountInPKR: totalPKR,
-                    description: safeDescription,
-                    payer_name: (form.cardHolder || form.name || 'Beraxis Subscriber').replace(/[^a-zA-Z0-9 ]/g, ' ').trim(),
-                    email: form.email || 'subscriber@beraxis.online',
-                    msisdn: form.phone || '03001234567',
-                    currency: 'PKR',
-                    return_url: `${window.location.origin}/checkout?plan=${currentPlanKey}`
+                    plan: currentPlanKey,
+                    billing: isAnnual ? 'annual' : 'monthly',
+                    users: subscriptionPlan?.users || 1,
+                    email: form.email || 'customer@beraxis.online',
+                    name: form.name || 'Beraxis Subscriber',
+                    company: form.company,
+                    phone: form.phone,
+                    return_url: `${window.location.origin}/checkout`
                 })
             });
 
             const data = await res.json();
 
-            if (data.success && data.paymentUrl) {
-                window.location.href = data.paymentUrl;
-                return;
-            } else {
+            if (!res.ok || !data.success || !data.url) {
                 setProcessing(false);
-                setErrorMessage(data.error || 'Failed to initiate DirectPay card gateway. Please try Stripe or contact support.');
+                setErrorMessage(data.error || "Failed to initialize Stripe payment. Please check your Stripe keys in Super Admin (/super-admin).");
+                return;
             }
-        } catch (err: any) {
-            console.error('DirectPay Card checkout error:', err);
+
+            // Redirect to official Stripe Checkout portal!
+            window.location.href = data.url;
+            return;
+        } catch (stripeErr: any) {
+            console.error('Stripe Checkout error:', stripeErr);
             setProcessing(false);
-            setErrorMessage('Unable to connect to DirectPay gateway. Please check your network or try Stripe.');
+            setErrorMessage(stripeErr.message || "Network error while connecting to Stripe. Please try again.");
+            return;
         }
+    };
     };
 
     const handleSuccess = () => {
@@ -513,7 +471,7 @@ export default function CheckoutPage() {
                         Beraxis Platform <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Checkout</span>
                     </h1>
                     <p className="text-xs text-gray-400 mt-1">
-                        Secure card payment powered by Stripe Global &amp; DirectPay Enterprise
+                        Secure card payment powered by Stripe Global Enterprise (Visa, Mastercard, Amex, Apple Pay)
                     </p>
                 </div>
 
@@ -557,178 +515,41 @@ export default function CheckoutPage() {
                                 </div>
                             </div>
 
-                            {/* Payment Gateway Selector */}
-                            <div className="space-y-3">
-                                <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider">
-                                    Select Card Processing Gateway
-                                </label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => { setPaymentGateway('stripe'); setErrorMessage(null); }}
-                                        className={`p-4 rounded-2xl border text-left transition-all ${
-                                            paymentGateway === 'stripe'
-                                                ? 'bg-purple-600/15 border-purple-500 text-white shadow-lg shadow-purple-500/10 ring-1 ring-purple-500/30'
-                                                : 'bg-[#0F172A]/40 border-white/10 text-gray-400 hover:border-white/20'
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <Globe size={18} className="text-purple-400" />
-                                                <span className="font-extrabold text-sm text-white">Stripe</span>
-                                            </div>
-                                            <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded font-bold uppercase">USD Global</span>
-                                        </div>
-                                        <p className="text-[11px] text-gray-400 leading-snug">
-                                            Cards &amp; Wallets processed directly in USD via Stripe Global Gateway.
-                                        </p>
-                                    </button>
+                            {/* Stripe Global Card Payments Container */}
+                            <div className="galaxy-card p-6 bg-[#0F172A]/40 border border-purple-500/30 space-y-4 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600/30 to-transparent px-4 py-1 text-[10px] font-bold text-purple-300 uppercase tracking-widest">
+                                    Stripe Global Checkout
+                                </div>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => { setPaymentGateway('directpay'); setErrorMessage(null); }}
-                                        className={`p-4 rounded-2xl border text-left transition-all ${
-                                            paymentGateway === 'directpay'
-                                                ? 'bg-purple-600/15 border-purple-500 text-white shadow-lg shadow-purple-500/10 ring-1 ring-purple-500/30'
-                                                : 'bg-[#0F172A]/40 border-white/10 text-gray-400 hover:border-white/20'
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <CreditCard size={18} className="text-purple-400" />
-                                                <span className="font-extrabold text-sm text-white">DirectPay</span>
-                                            </div>
-                                            <span className="text-[10px] bg-white/10 text-gray-300 px-2 py-0.5 rounded font-bold uppercase">PKR Card</span>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                                            <Globe size={18} />
                                         </div>
-                                        <p className="text-[11px] text-gray-400 leading-snug">
-                                            Visa, Mastercard &amp; PayPak cards billed via DirectPay in PKR.
-                                        </p>
-                                    </button>
+                                        <div>
+                                            <h3 className="text-sm font-bold text-white">Stripe Global Card Payments</h3>
+                                            <p className="text-[11px] text-gray-400">Visa, Mastercard, Amex, Discover, Apple Pay, Google Pay • 3D Secure</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">VISA</span>
+                                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">MC</span>
+                                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">AMEX</span>
+                                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">DISCOVER</span>
+                                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">APPLE PAY</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 space-y-2 text-xs text-gray-300">
+                                    <div className="flex items-center justify-between">
+                                        <span>Amount to be charged in USD:</span>
+                                        <strong className="text-white font-mono text-sm">${total.toFixed(2)} USD</strong>
+                                    </div>
+                                    <p className="text-[11px] text-gray-400 leading-relaxed">
+                                        Clicking <strong className="text-white">Pay via Stripe Checkout</strong> below securely opens the official Stripe Checkout portal pre-populated with your verified email (<strong className="text-purple-300">{form.email || 'your email'}</strong>) where you will enter your card details with instant activation.
+                                    </p>
                                 </div>
                             </div>
-
-                            {/* Gateway Specific Card Payment Box */}
-                            {paymentGateway === 'stripe' ? (
-                                <div className="galaxy-card p-6 bg-[#0F172A]/40 border border-purple-500/30 space-y-4 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600/30 to-transparent px-4 py-1 text-[10px] font-bold text-purple-300 uppercase tracking-widest">
-                                        Stripe Global Checkout
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                                                <Globe size={18} />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-sm font-bold text-white">Stripe Global Card Payments</h3>
-                                                <p className="text-[11px] text-gray-400">Visa, Mastercard, Amex, Apple Pay, Google Pay • 3D Secure</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">VISA</span>
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">MC</span>
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">AMEX</span>
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">APPLE PAY</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 space-y-2 text-xs text-gray-300">
-                                        <div className="flex items-center justify-between">
-                                            <span>Amount to be charged in USD:</span>
-                                            <strong className="text-white font-mono text-sm">${total.toFixed(2)} USD</strong>
-                                        </div>
-                                        <p className="text-[11px] text-gray-400 leading-relaxed">
-                                            Clicking <strong className="text-white">Pay via Stripe Checkout</strong> below securely opens the official Stripe Checkout portal pre-populated with your verified email (<strong className="text-purple-300">{form.email || 'your email'}</strong>) where you will enter your card details with instant activation.
-                                        </p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="galaxy-card p-6 bg-[#0F172A]/40 border border-purple-500/30 space-y-4 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600/30 to-transparent px-4 py-1 text-[10px] font-bold text-purple-300 uppercase tracking-widest">
-                                        DirectPay Card Gateway
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                                                <CreditCard size={18} />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-sm font-bold text-white">Enter Credit / Debit Card Details</h3>
-                                                <p className="text-[11px] text-gray-400">Visa, Mastercard, PayPak • Direct Card Gateway (PKR)</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">VISA</span>
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">MC</span>
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">PAYPAK</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-3 pt-2">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-gray-400 mb-1.5">Cardholder Name *</label>
-                                            <input
-                                                required={paymentGateway === 'directpay'}
-                                                name="cardHolder"
-                                                value={form.cardHolder}
-                                                onChange={handleChange}
-                                                type="text"
-                                                placeholder="Full name as printed on card"
-                                                className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-gray-400 mb-1.5">Card Number *</label>
-                                            <div className="relative">
-                                                <input
-                                                    required={paymentGateway === 'directpay'}
-                                                    name="cardNumber"
-                                                    value={form.cardNumber}
-                                                    onChange={handleCardNumberChange}
-                                                    type="text"
-                                                    maxLength={19}
-                                                    placeholder="4242  ••••  ••••  4242"
-                                                    className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs font-mono tracking-wider"
-                                                />
-                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-                                                    <Lock size={14} />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Expiry Date *</label>
-                                                <input
-                                                    required={paymentGateway === 'directpay'}
-                                                    name="expiry"
-                                                    value={form.expiry}
-                                                    onChange={handleExpiryChange}
-                                                    type="text"
-                                                    maxLength={5}
-                                                    placeholder="MM/YY"
-                                                    className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs font-mono"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-semibold text-gray-400 mb-1.5">CVV / Security Code *</label>
-                                                <input
-                                                    required={paymentGateway === 'directpay'}
-                                                    name="cvv"
-                                                    value={form.cvv}
-                                                    onChange={handleCvvChange}
-                                                    type="password"
-                                                    maxLength={4}
-                                                    placeholder="•••"
-                                                    className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs font-mono"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* Error Alert Banner */}
                             {errorMessage && (
@@ -749,11 +570,11 @@ export default function CheckoutPage() {
                                 {processing ? (
                                     <>
                                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Connecting to {paymentGateway === 'stripe' ? 'Stripe Gateway' : 'DirectPay Gateway'}...
+                                        Connecting to Stripe Gateway...
                                     </>
                                 ) : (
                                     <>
-                                        <Lock size={18} /> {paymentGateway === 'stripe' ? `Pay $${total.toFixed(2)} USD via Stripe Checkout →` : `Pay Rs ${totalPKR.toLocaleString()} PKR with Card via DirectPay →`}
+                                        <Lock size={18} /> Pay ${total.toFixed(2)} USD via Stripe Checkout →
                                     </>
                                 )}
                             </button>
@@ -875,7 +696,7 @@ export default function CheckoutPage() {
                                     <div>
                                         <span className="text-sm font-bold text-white block">Total Billed</span>
                                         <span className="text-[11px] text-gray-400 font-mono">
-                                            {paymentGateway === 'stripe' ? `$${total.toFixed(2)} USD` : `≈ Rs ${totalPKR.toLocaleString()} PKR`}
+                                            ${total.toFixed(2)} USD
                                         </span>
                                     </div>
                                     <span className="text-2xl font-black text-purple-400">${total.toFixed(2)}</span>

@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
 
     // 4. Create Stripe Checkout Session (0% tax - direct clean subscription)
     const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
       mode: "subscription",
       customer_email: email,
       line_items: [
