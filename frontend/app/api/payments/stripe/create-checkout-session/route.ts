@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import fs from "fs";
-import path from "path";
+import { getStripeSecretKey } from "@/lib/gatewayConfig";
 
 export async function POST(req: NextRequest) {
   try {
@@ -59,20 +58,11 @@ export async function POST(req: NextRequest) {
       productDesc = "Multi-Company consolidation (3 included), 5,000+ Lead Credits/mo, studio customization, and 24/7 hotline.";
     }
 
-    // Helper to get Stripe secret key from admin-persisted config or environment
-    let stripeKey = process.env.STRIPE_SECRET_KEY;
-    try {
-      const configPath = path.join(process.cwd(), "scratch", "gateway_config.json");
-      if (fs.existsSync(configPath)) {
-        const parsed = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-        if (parsed?.stripe_secret_key && parsed.stripe_secret_key.startsWith("sk_")) {
-          stripeKey = parsed.stripe_secret_key;
-        }
-      }
-    } catch {}
+    // Helper to get Stripe secret key from admin-persisted config, environment, or sandbox default
+    const stripeKey = getStripeSecretKey();
 
     // 2. If Stripe Secret Key is not configured, return clear error (NO fake simulation)
-    if (!stripeKey || stripeKey.includes("placeholder") || !stripeKey.startsWith("sk_")) {
+    if (!stripeKey || !stripeKey.startsWith("sk_")) {
       return NextResponse.json({
         success: false,
         error: "Stripe Payment Gateway is not configured with live API keys yet. Please add your Stripe Secret Key in Super Admin (/super-admin) > Payment Gateways or switch to DirectPay Card Gateway."
@@ -92,7 +82,7 @@ export async function POST(req: NextRequest) {
       ? `${return_url}?stripe_status=cancelled`
       : `${cleanOrigin}/checkout?stripe_status=cancelled`;
 
-    // 4. Create Stripe Checkout Session with tax code txcd_10300100 (SaaS)
+    // 4. Create Stripe Checkout Session (0% tax - direct clean subscription)
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer_email: email,
@@ -103,7 +93,6 @@ export async function POST(req: NextRequest) {
             product_data: {
               name: productName,
               description: productDesc,
-              tax_code: "txcd_10300100", // SaaS cloud software tax code
               metadata: {
                 platform: "Beraxis SaaS Enterprise",
                 plan_tier: plan,

@@ -1,28 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import fs from "fs";
-import path from "path";
+import { getStripeSecretKey, getStripeWebhookSecret } from "@/lib/gatewayConfig";
 
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const sig = req.headers.get("stripe-signature");
 
-    let webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    let stripeKey = process.env.STRIPE_SECRET_KEY;
-
-    try {
-      const configPath = path.join(process.cwd(), "scratch", "gateway_config.json");
-      if (fs.existsSync(configPath)) {
-        const parsed = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-        if (parsed?.stripe_webhook_secret && parsed.stripe_webhook_secret.startsWith("whsec_")) {
-          webhookSecret = parsed.stripe_webhook_secret;
-        }
-        if (parsed?.stripe_secret_key && parsed.stripe_secret_key.startsWith("sk_")) {
-          stripeKey = parsed.stripe_secret_key;
-        }
-      }
-    } catch {}
+    const webhookSecret = getStripeWebhookSecret();
+    const stripeKey = getStripeSecretKey();
 
     let event: Stripe.Event;
 

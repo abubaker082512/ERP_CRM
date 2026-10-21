@@ -2,46 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import fs from "fs";
 import path from "path";
+import { loadGatewayConfig, GatewayConfig, getStripeSecretKey } from "@/lib/gatewayConfig";
+
+export { loadGatewayConfig, type GatewayConfig };
 
 const CONFIG_FILE_PATH = path.join(process.cwd(), "scratch", "gateway_config.json");
 const ENV_LOCAL_PATH = path.join(process.cwd(), ".env.local");
-
-export interface GatewayConfig {
-  stripe_secret_key: string;
-  stripe_publishable_key: string;
-  stripe_webhook_secret: string;
-  stripe_enabled: boolean;
-  stripe_mode: "test" | "live";
-  directpay_client_id: string;
-  directpay_client_secret: string;
-  directpay_enabled: boolean;
-}
-
-export function loadGatewayConfig(): GatewayConfig {
-  const pubKeyEnvName = ["NEXT", "PUBLIC", "STRIPE", "PUBLISHABLE", "KEY"].join("_");
-  const defaultConfig: GatewayConfig = {
-    stripe_secret_key: process.env.STRIPE_SECRET_KEY || "",
-    stripe_publishable_key: (process.env as any)[pubKeyEnvName] || "",
-    stripe_webhook_secret: process.env.STRIPE_WEBHOOK_SECRET || "",
-    stripe_enabled: true,
-    stripe_mode: (process.env.STRIPE_SECRET_KEY || "").startsWith("sk_live") ? "live" : "test",
-    directpay_client_id: process.env.DIRECTPAY_CLIENT_ID || "pwa_ci_k1qlq54hv4gw5pr0khux",
-    directpay_client_secret: process.env.DIRECTPAY_CLIENT_SECRET || "pwa_secret_zp5rai8z02zr3o5sebm1co6uxci58uca",
-    directpay_enabled: true
-  };
-
-  try {
-    if (fs.existsSync(CONFIG_FILE_PATH)) {
-      const data = fs.readFileSync(CONFIG_FILE_PATH, "utf-8");
-      const parsed = JSON.parse(data);
-      return { ...defaultConfig, ...parsed };
-    }
-  } catch (err) {
-    console.error("[Gateway Settings API] Error reading gateway_config.json:", err);
-  }
-
-  return defaultConfig;
-}
 
 function saveGatewayConfig(config: GatewayConfig) {
   try {

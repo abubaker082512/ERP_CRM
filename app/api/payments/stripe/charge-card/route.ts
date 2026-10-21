@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import fs from "fs";
-import path from "path";
+import { getStripeSecretKey } from "@/lib/gatewayConfig";
 
 export async function POST(req: NextRequest) {
   try {
@@ -76,18 +75,9 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Load Stripe Secret Key
-    let stripeKey = process.env.STRIPE_SECRET_KEY;
-    try {
-      const configPath = path.join(process.cwd(), "scratch", "gateway_config.json");
-      if (fs.existsSync(configPath)) {
-        const parsed = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-        if (parsed?.stripe_secret_key && parsed.stripe_secret_key.startsWith("sk_")) {
-          stripeKey = parsed.stripe_secret_key;
-        }
-      }
-    } catch {}
+    const stripeKey = getStripeSecretKey();
 
-    if (!stripeKey || stripeKey.includes("placeholder") || !stripeKey.startsWith("sk_")) {
+    if (!stripeKey || !stripeKey.startsWith("sk_")) {
       return NextResponse.json({
         success: false,
         error: "Stripe Payment Gateway is not configured with live API keys yet. Please add your Stripe Secret Key in Super Admin (/super-admin) > Payment Gateways or switch to DirectPay Card Gateway."
