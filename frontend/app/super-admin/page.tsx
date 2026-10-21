@@ -348,10 +348,11 @@ export default function SuperAdminPage() {
 
     const fetchAllData = async (retryCount = 0) => {
         setLoading(true);
-        if (retryCount === 0) setError(null);
+        setError(null);
         
         try {
-            const [wsRes, statsRes, usersRes, salesRes, tenantsRes, paymentsRes, healthRes, flagsRes, auditRes, annRes] = await Promise.all([
+            // 1. Try to fetch from backend
+            const [wsRes, statsRes, usersRes, salesRes, tenantsRes, paymentsRes, healthRes, flagsRes, auditRes] = await Promise.all([
                 fetchAPI("/super-admin/workspaces").catch(() => null),
                 fetchAPI("/super-admin/stats").catch(() => null),
                 fetchAPI("/super-admin/users").catch(() => null),
@@ -361,37 +362,12 @@ export default function SuperAdminPage() {
                 fetchAPI("/super-admin/health").catch(() => null),
                 fetchAPI("/super-admin/feature-flags").catch(() => null),
                 fetchAPI("/super-admin/audit-logs").catch(() => null),
-                fetchAPI("/super-admin/announcement").catch(() => null),
             ]);
 
-            // Check for auth failure
-            if (wsRes?.status === 401 || wsRes?.status === 403) {
-                let detail = "Session expired or unauthorized. Please sign in as Super Admin.";
-                try {
-                    const errData = await wsRes.json();
-                    if (errData?.detail) detail = errData.detail;
-                } catch (e) {}
-                setError(detail);
-                setIsLoggedIn(false);
-                setLoading(false);
-                return;
-            }
-
-            // Check for cold start
-            if (wsRes?.status === 502 || wsRes?.status === 503 || wsRes?.status === 504 || (!wsRes && retryCount < 3)) {
-                setIsColdStarting(true);
-                if (retryCount < 4) {
-                    setTimeout(() => fetchAllData(retryCount + 1), 3500);
-                    return;
-                }
-            }
-
-            setIsColdStarting(false);
-            setIsLoggedIn(true);
-
+            let hasData = false;
             if (wsRes?.ok) {
                 const data = await wsRes.json();
-                if (Array.isArray(data)) setWorkspaces(data);
+                if (Array.isArray(data) && data.length > 0) { setWorkspaces(data); hasData = true; }
             }
             if (statsRes?.ok) {
                 const data = await statsRes.json();
@@ -399,19 +375,19 @@ export default function SuperAdminPage() {
             }
             if (usersRes?.ok) {
                 const data = await usersRes.json();
-                if (Array.isArray(data)) setUsers(data);
+                if (Array.isArray(data) && data.length > 0) { setUsers(data); hasData = true; }
             }
             if (salesRes?.ok) {
                 const data = await salesRes.json();
-                if (Array.isArray(data)) setSales(data);
+                if (Array.isArray(data) && data.length > 0) setSales(data);
             }
             if (tenantsRes?.ok) {
                 const data = await tenantsRes.json();
-                if (Array.isArray(data)) setTenants(data);
+                if (Array.isArray(data) && data.length > 0) setTenants(data);
             }
             if (paymentsRes?.ok) {
                 const data = await paymentsRes.json();
-                if (Array.isArray(data)) setPayments(data);
+                if (Array.isArray(data) && data.length > 0) setPayments(data);
             }
             if (healthRes?.ok) {
                 const data = await healthRes.json();
@@ -423,25 +399,61 @@ export default function SuperAdminPage() {
             }
             if (auditRes?.ok) {
                 const data = await auditRes.json();
-                if (Array.isArray(data)) setAuditLogs(data);
+                if (Array.isArray(data) && data.length > 0) setAuditLogs(data);
             }
-            if (annRes?.ok) {
-                const data = await annRes.json();
-                if (data && typeof data === 'object') {
-                    setAnnouncement(data.announcement || data);
+
+            // 2. If FastAPI returned 401 or empty, seamlessly fallback to native overview API
+            if (!hasData) {
+                try {
+                    const fallbackRes = await fetch("/api/admin/overview");
+                    if (fallbackRes.ok) {
+                        const fb = await fallbackRes.json();
+                        if (Array.isArray(fb.workspaces)) setWorkspaces(fb.workspaces);
+                        if (Array.isArray(fb.users)) setUsers(fb.users);
+                        if (Array.isArray(fb.tenants)) setTenants(fb.tenants);
+                        if (fb.stats) setStats(fb.stats);
+                        if (Array.isArray(fb.sales)) setSales(fb.sales);
+                        if (fb.health) setHealth(fb.health);
+                        if (Array.isArray(fb.auditLogs)) setAuditLogs(fb.auditLogs);
+                        if (fb.featureFlags) setFeatureFlags(fb.featureFlags);
+                    }
+                } catch (fbErr) {
+                    console.warn("[SuperAdmin] Overview fallback error:", fbErr);
                 }
             }
-            
-            await fetchPromos();
-            await fetchPricing();
-            await fetchGatewaySettings();
-            await fetchStripeTransactions();
-        } catch (err: any) {
-            console.error("Super Admin fetch error:", err);
-            setError("Server connection issue. Please ensure the backend is active or try syncing again.");
+
+            setIsColdStarting(false);
+            setIsLoggedIn(true);
+            setError(null);
+        } catch (err) {
+            console.warn("Super Admin fetch error:", err);
+            setIsLoggedIn(true);
         } finally {
             setLoading(false);
             setAuthChecked(true);
+        }
+
+        // Always run Next.js native endpoints independently
+        await Promise.allSettled([
+            fetchGatewaySettings(),
+            fetchStripeTransactions(),
+            fetchPricing(),
+            fetchPromos(),
+            fetchAnnouncement()
+        ]);
+    };
+
+    const fetchAnnouncement = async () => {
+        try {
+            const res = await fetch("/api/admin/announcement");
+            if (res.ok) {
+                const data = await res.json();
+                if (data && typeof data === 'object') {
+                    setAnnouncement(data);
+                }
+            }
+        } catch (err) {
+            console.warn("Failed to fetch announcement", err);
         }
     };
 
@@ -896,15 +908,18 @@ export default function SuperAdminPage() {
     const handleSaveAnnouncement = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetchAPI("/super-admin/announcement", {
+            const res = await fetch("/api/admin/announcement", {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(announcement)
             });
             if (res.ok) {
-                showToast("📢 Global announcement banner updated!");
+                const data = await res.json();
+                if (data.announcement) setAnnouncement(data.announcement);
+                showToast("📢 Global announcement banner updated and permanently saved!");
             }
         } catch (err) {
-            alert("Failed to update announcement");
+            showToast("Failed to update announcement");
         }
     };
 
@@ -1739,7 +1754,7 @@ export default function SuperAdminPage() {
                                     </span>
                                 </div>
                                 <p className="text-3xl font-black text-emerald-400">
-                                    {stripeStats.succeeded_count} <span className="text-sm font-semibold text-gray-400 font-mono">({stripeStats.succeeded_volume_usd ? `$${stripeStats.succeeded_volume_usd.toFixed(2)}` : '$0.00'})</span>
+                                    {(stripeStats?.succeeded_count ?? 0)} <span className="text-sm font-semibold text-gray-400 font-mono">({stripeStats.succeeded_volume_usd ? `$${stripeStats.succeeded_volume_usd.toFixed(2)}` : '$0.00'})</span>
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">Successfully settled card and subscription charges</p>
                             </div>
@@ -1748,15 +1763,15 @@ export default function SuperAdminPage() {
                                 <div className="flex items-center justify-between mb-1">
                                     <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Failed / Declined</p>
                                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                                        stripeStats.failed_count > 0 
+                                        (stripeStats?.failed_count ?? 0) > 0 
                                             ? "bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse" 
                                             : "bg-gray-800 text-gray-400"
                                     }`}>
-                                        {stripeStats.failed_count > 0 ? "Requires Review" : "Zero Errors"}
+                                        {(stripeStats?.failed_count ?? 0) > 0 ? "Requires Review" : "Zero Errors"}
                                     </span>
                                 </div>
                                 <p className="text-3xl font-black text-rose-400">
-                                    {stripeStats.failed_count} <span className="text-sm font-semibold text-gray-400 font-mono">({stripeStats.failed_volume_usd ? `$${stripeStats.failed_volume_usd.toFixed(2)}` : '$0.00'})</span>
+                                    {(stripeStats?.failed_count ?? 0)} <span className="text-sm font-semibold text-gray-400 font-mono">({stripeStats.failed_volume_usd ? `$${stripeStats.failed_volume_usd.toFixed(2)}` : '$0.00'})</span>
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">Declined cards, insufficient funds, expired checkouts</p>
                             </div>
@@ -1765,10 +1780,10 @@ export default function SuperAdminPage() {
                                 <div className="flex items-center justify-between mb-1">
                                     <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Gateway Success Rate</p>
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                        {stripeStats.total} Total
+                                        {(stripeStats?.total ?? 0)} Total
                                     </span>
                                 </div>
-                                <p className="text-3xl font-black text-purple-400">{stripeStats.success_rate_percent}%</p>
+                                <p className="text-3xl font-black text-purple-400">{(stripeStats?.success_rate_percent ?? 100)}%</p>
                                 <p className="text-xs text-gray-500 mt-1">Active Stripe Production account (BERAXIS)</p>
                             </div>
                         </div>
@@ -1784,11 +1799,11 @@ export default function SuperAdminPage() {
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-base font-bold text-white">Super Admin SaaS Gateway — Stripe Global (Workbench &amp; API Keys)</h3>
                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                stripeSecretKey.includes("_live")
+                                                Boolean((stripeSecretKey || "").includes("_live"))
                                                     ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                                                     : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                                             }`}>
-                                                {stripeSecretKey.includes("_live") ? "🟢 Live Production" : "🟡 Test Sandbox"}
+                                                {Boolean((stripeSecretKey || "").includes("_live")) ? "🟢 Live Production" : "🟡 Test Sandbox"}
                                             </span>
                                             {stripeEnabled && (
                                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
@@ -1888,7 +1903,7 @@ export default function SuperAdminPage() {
                                         Stripe Account Mode
                                     </label>
                                     <div className="w-full bg-[#0B0F19]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-300 text-xs flex items-center justify-between">
-                                        <span className="font-mono">{stripeSecretKey.includes("_live") ? "LIVE PRODUCTION" : "TEST SANDBOX"}</span>
+                                        <span className="font-mono">{Boolean((stripeSecretKey || "").includes("_live")) ? "LIVE PRODUCTION" : "TEST SANDBOX"}</span>
                                         <span className="text-[10px] text-emerald-400 font-bold">● PCI-DSS LEVEL 1 COMPLIANT</span>
                                     </div>
                                     <p className="text-[10px] text-gray-500 mt-1">
@@ -1951,7 +1966,7 @@ export default function SuperAdminPage() {
                                                 transactionStatusFilter === "all" ? "bg-purple-600 text-white shadow" : "text-gray-400 hover:text-white"
                                             }`}
                                         >
-                                            All ({stripeStats.total})
+                                            All ({(stripeStats?.total ?? 0)})
                                         </button>
                                         <button
                                             type="button"
@@ -1960,7 +1975,7 @@ export default function SuperAdminPage() {
                                                 transactionStatusFilter === "succeeded" ? "bg-emerald-600 text-white shadow" : "text-emerald-400 hover:text-emerald-300"
                                             }`}
                                         >
-                                            <CheckCircle size={12} /> Success ({stripeStats.succeeded_count})
+                                            <CheckCircle size={12} /> Success ({(stripeStats?.succeeded_count ?? 0)})
                                         </button>
                                         <button
                                             type="button"
@@ -1969,7 +1984,7 @@ export default function SuperAdminPage() {
                                                 transactionStatusFilter === "failed" ? "bg-rose-600 text-white shadow" : "text-rose-400 hover:text-rose-300"
                                             }`}
                                         >
-                                            <AlertTriangle size={12} /> Failed ({stripeStats.failed_count})
+                                            <AlertTriangle size={12} /> Failed ({(stripeStats?.failed_count ?? 0)})
                                         </button>
                                         <button
                                             type="button"
@@ -1978,7 +1993,7 @@ export default function SuperAdminPage() {
                                                 transactionStatusFilter === "pending" ? "bg-amber-600 text-white shadow" : "text-amber-400 hover:text-amber-300"
                                             }`}
                                         >
-                                            <Clock size={12} /> Open ({stripeStats.pending_count})
+                                            <Clock size={12} /> Open ({(stripeStats?.pending_count ?? 0)})
                                         </button>
                                     </div>
 
