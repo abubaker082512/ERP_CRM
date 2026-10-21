@@ -69,6 +69,25 @@ const PLANS: Plan[] = [
         cryptoPlanKey: "free",
     },
     {
+        id: "leadspool",
+        name: "Leads Pool Solo",
+        tagline: "Dedicated 25.8M+ B2B Contacts Database",
+        monthlyPrice: 10.00,
+        annualPrice: 10.00,
+        freemiusPlanId: "leadspool",
+        highlight: false,
+        badge: "1,500 Contacts / Mo",
+        features: [
+            "1,500 Verified Contacts / mo included",
+            "Direct Mobile & WhatsApp numbers",
+            "Verified direct corporate emails",
+            "Filter by Industry, Country & City",
+            "CSV / Excel 1-click export & CRM sync",
+            "Dedicated Leads Pool + Contacts apps",
+        ],
+        cryptoPlanKey: "leadspool",
+    },
+    {
         id: "standard",
         name: "Standard Plan",
         tagline: "Full suite — all 28 modules + Lead Pool",
@@ -446,7 +465,7 @@ function PlanCard({
                                     : "bg-white/10 hover:bg-white/15 text-white border border-white/15"
                             }`}
                         >
-                            <CreditCard size={14} /> Checkout with Card via DirectPay <ArrowRight size={14} />
+                            <CreditCard size={14} /> Checkout with Card (Stripe / DirectPay) <ArrowRight size={14} />
                         </a>
 
                         <button
@@ -746,7 +765,7 @@ function BillingPageContent() {
                 </div>
 
                 {/* Plan Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl w-full mb-12">
                     {PLANS.map(plan => (
                         <PlanCard
                             key={plan.id}

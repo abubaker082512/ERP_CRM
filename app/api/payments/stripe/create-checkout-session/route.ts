@@ -1,0 +1,138 @@
+import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const {
+      plan = "leadspool",
+      billing = "monthly",
+      users = 1,
+      email = "customer@beraxis.online",
+      name = "Beraxis Subscriber",
+      phone = "",
+      company = "",
+      return_url
+    } = body;
+
+    const origin = req.headers.get("origin") || req.headers.get("referer") || "https://beraxis.online";
+    const cleanOrigin = origin.replace(/\/$/, "");
+
+    // 1. Calculate pricing and product details based on selected plan
+    let unitAmountCents = 1000; // Default $10.00 for leadspool
+    let productName = "Beraxis Leads Pool Solo (1,500 Contacts/mo)";
+    let productDesc = "Full access to 25.8M+ B2B Leads Directory, Live Chamber Scraper, and 1,500 Verified Monthly Contacts.";
+    let interval: "month" | "year" = "month";
+
+    const isAnnual = billing === "annual" || billing === "annually";
+
+    if (plan === "leadspool" || plan === "leads-pool") {
+      unitAmountCents = 1000; // $10.00 USD/mo
+      productName = "Beraxis Leads Pool Solo (1,500 Contacts/mo)";
+      productDesc = "Dedicated access to 25.8M+ Global B2B Leads Pool, direct dials, WhatsApp links, and 1,500 monthly export contacts.";
+      interval = "month";
+    } else if (plan === "standard") {
+      // Standard: $1/mo billed annually ($12/yr) or $5/mo monthly
+      if (isAnnual) {
+        unitAmountCents = Math.round(users * 1200); // $12.00/yr per seat
+        interval = "year";
+        productName = `Beraxis Standard Plan - Annual (${users} seat${users > 1 ? 's' : ''})`;
+      } else {
+        unitAmountCents = Math.round(users * 500); // $5.00/mo per seat
+        interval = "month";
+        productName = `Beraxis Standard Plan - Monthly (${users} seat${users > 1 ? 's' : ''})`;
+      }
+      productDesc = "All 28 ERP/CRM modules, 1,500 Lead Credits/mo per user, cloud instance, and daily backups.";
+    } else if (plan === "custom" || plan === "premium") {
+      // Custom: $37.40/mo billed annually ($448.80/yr) or $46.80/mo monthly
+      if (isAnnual) {
+        unitAmountCents = Math.round(users * 44880);
+        interval = "year";
+        productName = `Beraxis Custom Enterprise - Annual (${users} seat${users > 1 ? 's' : ''})`;
+      } else {
+        unitAmountCents = Math.round(users * 4680);
+        interval = "month";
+        productName = `Beraxis Custom Enterprise - Monthly (${users} seat${users > 1 ? 's' : ''})`;
+      }
+      productDesc = "Multi-Company consolidation (3 included), 5,000+ Lead Credits/mo, studio customization, and 24/7 hotline.";
+    }
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+
+    // 2. If Stripe Secret Key is not yet configured, return graceful development simulation
+    if (!stripeKey || stripeKey.includes("placeholder") || !stripeKey.startsWith("sk_")) {
+      const fallbackTxnId = `STRIPE-SIM-${Date.now().toString(36).toUpperCase()}`;
+      const simulatedSuccessUrl = return_url
+        ? `${return_url}?stripe_status=success&session_id=${fallbackTxnId}&plan=${encodeURIComponent(plan)}`
+        : `${cleanOrigin}/checkout?stripe_status=success&session_id=${fallbackTxnId}&plan=${encodeURIComponent(plan)}`;
+
+      return NextResponse.json({
+        success: true,
+        isSimulation: true,
+        url: simulatedSuccessUrl,
+        sessionId: fallbackTxnId,
+        message: "Stripe Secret Key not found in environment. Please add STRIPE_SECRET_KEY to .env.local for live processing."
+      });
+    }
+
+    // 3. Initialize real Stripe SDK
+    const stripe = new Stripe(stripeKey, {
+      apiVersion: "2023-10-16" as any
+    });
+
+    const successRedirectUrl = return_url
+      ? `${return_url}?stripe_status=success&session_id={CHECKOUT_SESSION_ID}&plan=${encodeURIComponent(plan)}`
+      : `${cleanOrigin}/checkout?stripe_status=success&session_id={CHECKOUT_SESSION_ID}&plan=${encodeURIComponent(plan)}`;
+
+    const cancelRedirectUrl = return_url
+      ? `${return_url}?stripe_status=cancelled`
+      : `${cleanOrigin}/checkout?stripe_status=cancelled`;
+
+    // 4. Create Stripe Checkout Session with tax code txcd_10300100 (SaaS)
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "subscription",
+      customer_email: email,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: productName,
+              description: productDesc,
+              tax_code: "txcd_10300100" // SaaS business use
+            },
+            unit_amount: unitAmountCents,
+            recurring: {
+              interval: interval
+            }
+          },
+          quantity: 1
+        }
+      ],
+      metadata: {
+        plan: plan,
+        billing: billing,
+        users: String(users),
+        customer_name: name,
+        customer_phone: phone,
+        customer_company: company,
+        lead_contacts: plan === "leadspool" ? "1500" : (plan === "custom" ? "5000" : "1500")
+      },
+      success_url: successRedirectUrl,
+      cancel_url: cancelRedirectUrl
+    });
+
+    return NextResponse.json({
+      success: true,
+      url: session.url,
+      sessionId: session.id
+    });
+  } catch (error: any) {
+    console.error("Stripe Checkout Session error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to create Stripe Checkout session" },
+      { status: 500 }
+    );
+  }
+}

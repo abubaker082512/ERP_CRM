@@ -30,7 +30,7 @@ export type BusinessBranch = {
   entityType?: "individual" | "company";
 };
 
-export type UserPlanType = "free" | "standard" | "premium";
+export type UserPlanType = "free" | "leadspool" | "standard" | "premium";
 
 export const MODULE_NAME_TO_HREF: Record<string, string> = {
   "Accounting": "/accounting",
@@ -125,6 +125,7 @@ export type BranchContextType = {
   isModuleActive: (moduleHref: string) => boolean;
   isModuleEnabled: (moduleHref: string) => boolean;
   isLeadPoolUnlocked: () => boolean;
+  hasLeadsPoolAccess: boolean;
   getEntityStorageKey: (resourceType: string) => string;
   refreshUserContext: () => void;
 };
@@ -215,9 +216,11 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
       let resolvedPlan: UserPlanType = "free";
       if (info.isSuperAdmin) {
         resolvedPlan = "premium";
+      } else if (info.subscriptionStatus === "leadspool" || savedPlan === "leadspool") {
+        resolvedPlan = "leadspool";
       } else if (info.subscriptionStatus === "active" || info.subscriptionStatus === "pro" || info.subscriptionStatus === "standard") {
-        resolvedPlan = savedPlan === "premium" ? "premium" : "standard";
-      } else if (savedPlan && ["free", "standard", "premium"].includes(savedPlan)) {
+        resolvedPlan = savedPlan === "premium" ? "premium" : (savedPlan === "leadspool" ? "leadspool" : "standard");
+      } else if (savedPlan && ["free", "leadspool", "standard", "premium"].includes(savedPlan)) {
         resolvedPlan = savedPlan;
       } else {
         resolvedPlan = "free";
@@ -489,14 +492,19 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
     // Settings is always available
     if (moduleHref === "/settings") return true;
 
-    // Lead Pool is strictly ONLY available on Paid Plans
+    // Lead Pool is strictly ONLY available on Paid Plans (Standard, Custom, or Leads Pool Solo)
     if (
       moduleHref === "/crm/leads-pool" ||
       moduleHref === "/crm/lead-bank" ||
       moduleHref === "/leads-pool" ||
       moduleHref === "/lead-pool"
     ) {
-      return !isFreePlan;
+      return userPlan === "leadspool" || !isFreePlan;
+    }
+
+    if (userPlan === "leadspool") {
+      const allowed = ["/crm/leads-pool", "/crm/lead-bank", "/crm", "/contacts", "/settings"];
+      return allowed.some(a => moduleHref === a || moduleHref.startsWith(`${a}/`));
     }
 
     // On Free Plan, ONLY the 1 chosen major app (plus Settings) is active!
@@ -549,6 +557,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         isModuleActive,
         isModuleEnabled: isModuleActive,
         isLeadPoolUnlocked,
+        hasLeadsPoolAccess: userPlan === "leadspool" || userPlan === "standard" || userPlan === "premium",
         getEntityStorageKey,
         refreshUserContext: loadUserScopedContext
       }}

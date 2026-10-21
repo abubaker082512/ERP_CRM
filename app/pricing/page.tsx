@@ -311,7 +311,7 @@ export default function PricingPage() {
                             rel="noopener noreferrer"
                             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95 text-center"
                         >
-                            Pay with Card via DirectPay (${standardRate.toFixed(2)}/mo) <ArrowRight size={16} />
+                            Pay with Card (${standardRate.toFixed(2)}/mo) <ArrowRight size={16} />
                         </a>
                     </div>
 
@@ -368,8 +368,49 @@ export default function PricingPage() {
                             rel="noopener noreferrer"
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 flex items-center justify-center gap-2 hover:border-pink-500/30"
                         >
-                            Pay with Card via DirectPay <ArrowRight size={16} />
+                            Pay with Card <ArrowRight size={16} />
                         </a>
+                    </div>
+                </div>
+
+                
+                {/* Dedicated Leads Pool Solo Spotlight Banner */}
+                <div className="max-w-5xl mx-auto mb-16 relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 p-8 backdrop-blur-xl shadow-2xl shadow-amber-500/5">
+                    <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-rose-500 text-white font-extrabold text-[10px] uppercase tracking-widest px-4 py-1 rounded-bl-xl shadow-md">
+                        Standalone Lead Generation
+                    </div>
+                    <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+                        <div className="space-y-3 text-center lg:text-left flex-1">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold">
+                                <span>🎯 Only Need Leads? Standalone Tier Available</span>
+                            </div>
+                            <h3 className="text-2xl md:text-3xl font-black text-white">
+                                Leads Pool Solo — <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-400">$10/month</span>
+                            </h3>
+                            <p className="text-sm text-gray-300 max-w-2xl leading-relaxed">
+                                Get dedicated monthly access to our <strong className="text-white">25.8M+ verified global B2B contacts database</strong> without subscribing to full ERP suites. Includes <span className="text-amber-300 font-bold">1,500 direct contacts every month</span> with direct phone, WhatsApp dials, and deliverable corporate emails.
+                            </p>
+                            <div className="flex flex-wrap gap-4 pt-1 justify-center lg:justify-start text-xs text-gray-300">
+                                <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> 1,500 Contacts / Month</span>
+                                <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> WhatsApp &amp; Mobile Dials</span>
+                                <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> 1-Click CSV/Excel Export</span>
+                                <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> Stripe &amp; DirectPay Supported</span>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-center sm:items-end shrink-0 gap-3">
+                            <div className="text-right">
+                                <span className="text-4xl font-black text-white">$10</span>
+                                <span className="text-gray-400 text-xs"> / month</span>
+                            </div>
+                            <a
+                                href="/checkout?plan=leadspool&billing=monthly"
+                                className="bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white font-extrabold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-amber-500/20 text-center text-sm flex items-center justify-center gap-2"
+                            >
+                                Get Leads Pool Solo <ArrowRight size={16} />
+                            </a>
+                            <span className="text-[11px] text-gray-400">Cancel anytime • Instant access</span>
+                        </div>
                     </div>
                 </div>
 

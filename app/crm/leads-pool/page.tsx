@@ -796,53 +796,111 @@ export default function LeadsPoolPage() {
         }
     };
 
-    const { isFreePlan } = useBranchContext();
+    const { isFreePlan, userPlan, hasLeadsPoolAccess } = useBranchContext();
+    const isLocked = isFreePlan && userPlan !== "leadspool" && !hasLeadsPoolAccess;
 
-    if (isFreePlan) {
+    if (isLocked) {
         return (
             <div className="min-h-screen bg-[#020205] text-white flex flex-col">
                 <CRMHeader />
                 <main className="flex-1 flex items-center justify-center p-6">
-                    <div className="max-w-xl w-full bg-[#0F172A] border border-amber-500/40 rounded-3xl p-8 text-center shadow-2xl space-y-5">
-                        <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto shadow-lg shadow-amber-500/10">
+                    <div className="max-w-2xl w-full bg-[#0F172A] border border-cyan-500/30 rounded-3xl p-8 text-center shadow-2xl space-y-6">
+                        <div className="w-16 h-16 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mx-auto shadow-lg shadow-cyan-500/10">
                             <ShieldCheck size={32} />
                         </div>
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
-                            🔒 Paid Plan Exclusive Feature
+                        
+                        <div>
+                            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-bold uppercase tracking-wider mb-3">
+                                🎯 25,000,000+ Inbound B2B Lead Pool
+                            </div>
+                            <h1 className="text-2xl sm:text-3xl font-black text-white">
+                                Unlock Global B2B Leads Pool & Live Scraper
+                            </h1>
+                            <p className="text-gray-300 text-xs sm:text-sm mt-2 max-w-lg mx-auto leading-relaxed">
+                                Access verified worldwide executive contacts, direct business phone lines, WhatsApp dials, and live chamber scraper.
+                            </p>
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-black text-white">
-                            Global Leads Pool & Live Business Scraper
-                        </h1>
-                        <p className="text-gray-300 text-sm leading-relaxed">
-                            The <strong className="text-white">25.8M+ Global B2B Leads Pool & Live Chamber Scraper</strong> is not available on the <strong className="text-amber-300">One App Free Plan</strong>.
-                            Upgrade to the <strong className="text-cyan-300">Standard Plan ($18/mo)</strong> or <strong className="text-purple-300">Premium Plan ($25/mo)</strong> to unlock verified worldwide business leads, direct phone numbers, WhatsApp dials, and 1,500+ monthly lead credits.
-                        </p>
-                        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 text-left text-xs text-gray-300 space-y-2">
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
-                                <span>Unlock all 30+ Enterprise Apps (CRM, Accounting, Sales, Inventory, POS, HR)</span>
+
+                        {/* Two Upgrade Options Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                            {/* Option 1: Leads Pool Solo */}
+                            <div className="p-5 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 hover:border-cyan-400/60 transition-all flex flex-col justify-between">
+                                <div>
+                                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 tracking-wider">
+                                        Solo Dedicated Access
+                                    </span>
+                                    <h3 className="text-base font-bold text-white mt-2">Leads Pool Only</h3>
+                                    <div className="flex items-baseline gap-1 my-2">
+                                        <span className="text-2xl font-black text-cyan-400">$10</span>
+                                        <span className="text-xs text-gray-400">/ month</span>
+                                    </div>
+                                    <ul className="text-xs text-gray-300 space-y-1.5 my-3">
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-cyan-400 shrink-0" />
+                                            <span><strong>1,500 contacts / month</strong></span>
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-cyan-400 shrink-0" />
+                                            <span>Direct phone & WhatsApp dials</span>
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-cyan-400 shrink-0" />
+                                            <span>1-Click CSV & CRM Export</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <Link
+                                    href="/checkout?plan=leadspool&billing=monthly"
+                                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-cyan-600/20 block"
+                                >
+                                    Get Leads Pool ($10/mo) →
+                                </Link>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
-                                <span>Full access to 25.8M+ Verified Global B2B Leads Pool & Live Web Scraper</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
-                                <span>1,500 Verified Lead Credits / user / month included</span>
+
+                            {/* Option 2: All 28 Apps Standard */}
+                            <div className="p-5 rounded-2xl bg-purple-950/30 border border-purple-500/40 hover:border-purple-400/60 transition-all flex flex-col justify-between relative overflow-hidden">
+                                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-500 to-rose-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full">
+                                    96% OFF EARLY BIRD
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 tracking-wider">
+                                        Full Suite Cockpit
+                                    </span>
+                                    <h3 className="text-base font-bold text-white mt-2">Standard Plan</h3>
+                                    <div className="flex items-baseline gap-1 my-2">
+                                        <span className="text-2xl font-black text-purple-400">$1</span>
+                                        <span className="text-xs text-gray-400">/ mo ($12/yr upfront)</span>
+                                    </div>
+                                    <ul className="text-xs text-gray-300 space-y-1.5 my-3">
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-purple-400 shrink-0" />
+                                            <span><strong>All 28 ERP/CRM modules</strong></span>
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-purple-400 shrink-0" />
+                                            <span><strong>1,500 Lead Credits / mo</strong></span>
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-purple-400 shrink-0" />
+                                            <span>Accounting, POS, Inventory & HR</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <Link
+                                    href="/checkout?plan=standard&billing=annual"
+                                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-purple-600/20 block"
+                                >
+                                    Get Full Suite ($1/mo) →
+                                </Link>
                             </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+
+                        <div className="pt-2">
                             <Link
                                 href="/apps"
-                                className="flex-1 py-3 px-4 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold text-xs transition-all"
+                                className="text-xs text-gray-400 hover:text-white transition-colors"
                             >
-                                ← Back to Workspace
-                            </Link>
-                            <Link
-                                href="/billing"
-                                className="flex-1 py-3 px-5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-xs shadow-lg shadow-amber-600/30 transition-all"
-                            >
-                                Upgrade to Paid Plan →
+                                ← Back to My Workspace Apps
                             </Link>
                         </div>
                     </div>
