@@ -252,6 +252,21 @@ export default function SuperAdminPage() {
     const [savingGateways, setSavingGateways] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+    // Stripe Live Transactions & Stats
+    const [stripeTransactions, setStripeTransactions] = useState<any[]>([]);
+    const [stripeStats, setStripeStats] = useState<any>({
+        total: 0,
+        succeeded_count: 0,
+        failed_count: 0,
+        pending_count: 0,
+        succeeded_volume_usd: 0,
+        failed_volume_usd: 0,
+        success_rate_percent: 100
+    });
+    const [transactionsLoading, setTransactionsLoading] = useState(false);
+    const [transactionStatusFilter, setTransactionStatusFilter] = useState<"all" | "succeeded" | "failed" | "pending">("all");
+    const [transactionSearchTerm, setTransactionSearchTerm] = useState("");
+
     // Form inputs
     const [promoForm, setPromoForm] = useState({
         code: "",
@@ -420,12 +435,31 @@ export default function SuperAdminPage() {
             await fetchPromos();
             await fetchPricing();
             await fetchGatewaySettings();
+            await fetchStripeTransactions();
         } catch (err: any) {
             console.error("Super Admin fetch error:", err);
             setError("Server connection issue. Please ensure the backend is active or try syncing again.");
         } finally {
             setLoading(false);
             setAuthChecked(true);
+        }
+    };
+
+    const fetchStripeTransactions = async () => {
+        setTransactionsLoading(true);
+        try {
+            const res = await fetch("/api/admin/transactions");
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success) {
+                    setStripeTransactions(data.transactions || []);
+                    if (data.stats) setStripeStats(data.stats);
+                }
+            }
+        } catch (err) {
+            console.error("Failed to fetch Stripe transactions", err);
+        } finally {
+            setTransactionsLoading(false);
         }
     };
 
@@ -1695,21 +1729,47 @@ export default function SuperAdminPage() {
                 {/* ── TAB 3: DIRECTPAY CARD SUBSCRIPTIONS ── */}
                 {activeTab === "payments" && (
                     <div className="space-y-6">
+                        {/* Top 3 Stat Cards: Success, Failures, Health */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="bg-[#111827] rounded-3xl p-6 border-l-4 border-emerald-500 border border-gray-800 shadow-xl">
-                                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">DirectPay Card Active</p>
-                                <p className="text-3xl font-black text-emerald-400">{paidPayments.length}</p>
-                                <p className="text-xs text-gray-500 mt-1">Verified card subscriptions with recurring access</p>
+                                <div className="flex items-center justify-between mb-1">
+                                    <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Succeeded Payments</p>
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                        Live Stripe
+                                    </span>
+                                </div>
+                                <p className="text-3xl font-black text-emerald-400">
+                                    {stripeStats.succeeded_count} <span className="text-sm font-semibold text-gray-400 font-mono">({stripeStats.succeeded_volume_usd ? `$${stripeStats.succeeded_volume_usd.toFixed(2)}` : '$0.00'})</span>
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">Successfully settled card and subscription charges</p>
                             </div>
-                            <div className="bg-[#111827] rounded-3xl p-6 border-l-4 border-amber-500 border border-gray-800 shadow-xl">
-                                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Trial / Pending</p>
-                                <p className="text-3xl font-black text-amber-400">{pendingPayments.length}</p>
-                                <p className="text-xs text-gray-500 mt-1">Free 7-day evaluation tenants</p>
+
+                            <div className="bg-[#111827] rounded-3xl p-6 border-l-4 border-rose-500 border border-gray-800 shadow-xl">
+                                <div className="flex items-center justify-between mb-1">
+                                    <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Failed / Declined</p>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                        stripeStats.failed_count > 0 
+                                            ? "bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse" 
+                                            : "bg-gray-800 text-gray-400"
+                                    }`}>
+                                        {stripeStats.failed_count > 0 ? "Requires Review" : "Zero Errors"}
+                                    </span>
+                                </div>
+                                <p className="text-3xl font-black text-rose-400">
+                                    {stripeStats.failed_count} <span className="text-sm font-semibold text-gray-400 font-mono">({stripeStats.failed_volume_usd ? `$${stripeStats.failed_volume_usd.toFixed(2)}` : '$0.00'})</span>
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">Declined cards, insufficient funds, expired checkouts</p>
                             </div>
+
                             <div className="bg-[#111827] rounded-3xl p-6 border-l-4 border-purple-500 border border-gray-800 shadow-xl">
-                                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Monthly Card Revenue</p>
-                                <p className="text-3xl font-black text-purple-400">${monthlySaaSRevenue.toLocaleString()}</p>
-                                <p className="text-xs text-gray-500 mt-1">DirectPay gateway card transactions</p>
+                                <div className="flex items-center justify-between mb-1">
+                                    <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Gateway Success Rate</p>
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                        {stripeStats.total} Total
+                                    </span>
+                                </div>
+                                <p className="text-3xl font-black text-purple-400">{stripeStats.success_rate_percent}%</p>
+                                <p className="text-xs text-gray-500 mt-1">Active Stripe Production account (BERAXIS)</p>
                             </div>
                         </div>
 
@@ -1724,11 +1784,11 @@ export default function SuperAdminPage() {
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-base font-bold text-white">Super Admin SaaS Gateway — Stripe Global (Workbench &amp; API Keys)</h3>
                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                stripeSecretKey.startsWith("sk_live")
+                                                stripeSecretKey.includes("_live")
                                                     ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                                                     : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                                             }`}>
-                                                {stripeSecretKey.startsWith("sk_live") ? "🟢 Live Production" : "🟡 Test Sandbox"}
+                                                {stripeSecretKey.includes("_live") ? "🟢 Live Production" : "🟡 Test Sandbox"}
                                             </span>
                                             {stripeEnabled && (
                                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
@@ -1758,50 +1818,53 @@ export default function SuperAdminPage() {
                                         type="button"
                                         disabled={savingGateways}
                                         onClick={handleSaveGatewaySettings}
-                                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-600/20 cursor-pointer flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-600/20 cursor-pointer disabled:opacity-50"
                                     >
-                                        <Save size={14} /> {savingGateways ? "Saving Keys..." : "Save Stripe Keys"}
+                                        {savingGateways ? "Saving..." : "Save Stripe Settings"}
                                     </button>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="md:col-span-2">
+                                <div>
                                     <div className="flex items-center justify-between mb-1.5">
                                         <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">
-                                            Stripe Secret Key (sk_test_... or sk_live_...) *
+                                            Stripe Secret Key (Secret / Restricted Key)
                                         </label>
                                         <button
                                             type="button"
                                             onClick={() => setShowStripeSecret(!showStripeSecret)}
-                                            className="text-[11px] text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
+                                            className="text-[10px] text-purple-400 hover:text-purple-300 font-mono"
                                         >
-                                            {showStripeSecret ? "Hide Secret" : "Show Secret"}
+                                            {showStripeSecret ? "Hide Key" : "Show Key"}
                                         </button>
                                     </div>
                                     <input
                                         type={showStripeSecret ? "text" : "password"}
                                         value={stripeSecretKey}
                                         onChange={e => setStripeSecretKey(e.target.value)}
-                                        placeholder="sk_test_51... or sk_live_51..."
+                                        placeholder="sk_live_... or rk_live_..."
                                         className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
                                     />
-                                    <p className="text-[11px] text-gray-500 mt-1">
-                                        Found in your Stripe Dashboard under <strong className="text-gray-400">Developers &gt; API keys &gt; Secret key</strong>.
+                                    <p className="text-[10px] text-gray-500 mt-1">
+                                        Standard secret key or restricted key with Charges, Sessions, and Webhooks permissions.
                                     </p>
                                 </div>
 
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                                        Stripe Publishable Key (pk_test_... or pk_live_...) *
+                                        Stripe Publishable Key (Client Elements)
                                     </label>
                                     <input
                                         type="text"
                                         value={stripePublishableKey}
                                         onChange={e => setStripePublishableKey(e.target.value)}
-                                        placeholder="pk_test_51... or pk_live_51..."
+                                        placeholder="pk_live_..."
                                         className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
                                     />
+                                    <p className="text-[10px] text-gray-500 mt-1">
+                                        Client-side key used for secure Stripe Checkout redirect and UI Elements.
+                                    </p>
                                 </div>
 
                                 <div>
@@ -1809,224 +1872,314 @@ export default function SuperAdminPage() {
                                         Stripe Webhook Signing Secret (whsec_...)
                                     </label>
                                     <input
-                                        type="text"
+                                        type="password"
                                         value={stripeWebhookSecret}
                                         onChange={e => setStripeWebhookSecret(e.target.value)}
                                         placeholder="whsec_..."
                                         className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
                                     />
+                                    <p className="text-[10px] text-gray-500 mt-1">
+                                        Used by <code className="text-purple-300">/api/payments/stripe/webhook</code> to verify event signatures.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                                        Stripe Account Mode
+                                    </label>
+                                    <div className="w-full bg-[#0B0F19]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-300 text-xs flex items-center justify-between">
+                                        <span className="font-mono">{stripeSecretKey.includes("_live") ? "LIVE PRODUCTION" : "TEST SANDBOX"}</span>
+                                        <span className="text-[10px] text-emerald-400 font-bold">● PCI-DSS LEVEL 1 COMPLIANT</span>
+                                    </div>
+                                    <p className="text-[10px] text-gray-500 mt-1">
+                                        Automatically switches based on the key prefix.
+                                    </p>
                                 </div>
                             </div>
 
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2 border-t border-gray-800/80">
                                 <div className="flex-1">
                                     <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
-                                        Stripe Webhook Endpoint URL (Configure in Stripe Workbench / Webhooks)
+                                        Stripe Webhook Destination URL (Paste this in Stripe Dashboard &gt; Webhooks)
                                     </label>
-                                    <div className="flex items-center gap-2">
-                                        <code className="text-xs text-purple-300 font-mono bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/20">
-                                            https://beraxis.online/api/payments/stripe/webhook
-                                        </code>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                navigator.clipboard.writeText("https://beraxis.online/api/payments/stripe/webhook");
-                                                showToast("📋 Webhook URL copied to clipboard!");
-                                            }}
-                                            className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-lg text-xs font-medium border border-white/10 flex items-center gap-1 cursor-pointer"
-                                        >
-                                            <Copy size={12} /> Copy
-                                        </button>
-                                    </div>
-                                    <p className="text-[10px] text-gray-500 mt-1">
-                                        Listening events: <span className="text-gray-400 font-mono">checkout.session.completed</span>, <span className="text-gray-400 font-mono">customer.subscription.created</span>
-                                    </p>
+                                    <code className="text-xs text-emerald-400 font-mono bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
+                                        https://beraxis.online/api/payments/stripe/webhook
+                                    </code>
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={handleTestStripe}
-                                    className="px-4 py-2.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-xl text-xs font-bold transition-all border border-purple-500/30 flex items-center gap-2 cursor-pointer shrink-0"
+                                    disabled={stripeTesting}
+                                    onClick={handleTestStripeConnection}
+                                    className="px-4 py-2.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-purple-500/40 flex items-center gap-2 cursor-pointer shrink-0 disabled:opacity-50"
                                 >
-                                    🧪 Test Stripe Connection
+                                    {stripeTesting ? (
+                                        <>
+                                            <div className="w-3.5 h-3.5 border-2 border-purple-300 border-t-transparent rounded-full animate-spin"></div>
+                                            Testing Stripe...
+                                        </>
+                                    ) : (
+                                        <>
+                                            🧪 Test Stripe Connection
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>
 
-                        <div className="bg-[#111827] rounded-3xl border border-purple-500/30 p-6 shadow-2xl space-y-5">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-11 h-11 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold text-lg">
-                                        ⚡
+                        {/* Real-Time Stripe Transactions Table (Success & Failures) */}
+                        <div className="bg-[#111827] rounded-3xl border border-gray-800 overflow-hidden shadow-2xl">
+                            <div className="p-6 border-b border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="text-lg font-black text-white">Stripe Live Transaction Feed</h2>
+                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                            Success &amp; Failures
+                                        </span>
                                     </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="text-base font-bold text-white">Super Admin SaaS Payment Gateway — DirectPay (Payin PWA)</h3>
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                                Super Admin Exclusive
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-gray-400 mt-0.5">
-                                            Platform gateway used exclusively by Beraxis Super Admin to collect $1/$5 Standard and $37.40/$46.80 Enterprise subscription plan payments from users.
-                                        </p>
-                                    </div>
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                        Real-time audit log of customer charges, subscription checkouts, card declines, and settlement statuses.
+                                    </p>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={directPayEnabled}
-                                            onChange={e => setDirectPayEnabled(e.target.checked)}
-                                            className="sr-only peer"
-                                        />
-                                        <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                                    </label>
+
+                                <div className="flex items-center gap-3 flex-wrap">
+                                    {/* Status filter pills */}
+                                    <div className="flex items-center gap-1 bg-[#0B0F19] p-1 rounded-xl border border-gray-800 text-xs">
+                                        <button
+                                            type="button"
+                                            onClick={() => setTransactionStatusFilter("all")}
+                                            className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                                                transactionStatusFilter === "all" ? "bg-purple-600 text-white shadow" : "text-gray-400 hover:text-white"
+                                            }`}
+                                        >
+                                            All ({stripeStats.total})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setTransactionStatusFilter("succeeded")}
+                                            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1 ${
+                                                transactionStatusFilter === "succeeded" ? "bg-emerald-600 text-white shadow" : "text-emerald-400 hover:text-emerald-300"
+                                            }`}
+                                        >
+                                            <CheckCircle size={12} /> Success ({stripeStats.succeeded_count})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setTransactionStatusFilter("failed")}
+                                            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1 ${
+                                                transactionStatusFilter === "failed" ? "bg-rose-600 text-white shadow" : "text-rose-400 hover:text-rose-300"
+                                            }`}
+                                        >
+                                            <AlertTriangle size={12} /> Failed ({stripeStats.failed_count})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setTransactionStatusFilter("pending")}
+                                            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1 ${
+                                                transactionStatusFilter === "pending" ? "bg-amber-600 text-white shadow" : "text-amber-400 hover:text-amber-300"
+                                            }`}
+                                        >
+                                            <Clock size={12} /> Open ({stripeStats.pending_count})
+                                        </button>
+                                    </div>
+
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            localStorage.setItem("superadmin_directpay_client_id", directPayClientId);
-                                            localStorage.setItem("superadmin_directpay_client_secret", directPayClientSecret);
-                                            localStorage.setItem("superadmin_directpay_enabled", String(directPayEnabled));
-                                            showToast("Super Admin DirectPay SaaS Gateway settings saved!");
-                                        }}
-                                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-600/20 cursor-pointer"
+                                        onClick={fetchStripeTransactions}
+                                        disabled={transactionsLoading}
+                                        className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-bold border border-white/10 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                                     >
-                                        Save Gateway Keys
+                                        <RefreshCw size={13} className={transactionsLoading ? "animate-spin" : ""} />
+                                        Refresh Live
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">DirectPay Client ID</label>
-                                    <input
-                                        type="text"
-                                        value={directPayClientId}
-                                        onChange={e => setDirectPayClientId(e.target.value)}
-                                        className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">DirectPay Client Secret</label>
-                                    <input
-                                        type="password"
-                                        value={directPayClientSecret}
-                                        onChange={e => setDirectPayClientSecret(e.target.value)}
-                                        className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Payin Landing Page URL</label>
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value="https://payin-pwa.directpay.pro/pay"
-                                        className="w-full bg-[#0B0F19]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-400 font-mono text-xs outline-none cursor-not-allowed"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Inquiry / Status URL</label>
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value="https://payin-pwa.directpay.pro/pay/status"
-                                        className="w-full bg-[#0B0F19]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-400 font-mono text-xs outline-none cursor-not-allowed"
-                                    />
-                                </div>
+                            {/* Search Box */}
+                            <div className="px-6 py-3 bg-[#0B0F19]/60 border-b border-gray-800/80 flex items-center gap-3">
+                                <Search size={14} className="text-gray-500 shrink-0" />
+                                <input
+                                    type="text"
+                                    value={transactionSearchTerm}
+                                    onChange={e => setTransactionSearchTerm(e.target.value)}
+                                    placeholder="Search by customer email, name, transaction ID (cs_live_ / ch_), or failure reason..."
+                                    className="w-full bg-transparent text-xs text-white placeholder-gray-500 outline-none"
+                                />
+                                {transactionSearchTerm && (
+                                    <button onClick={() => setTransactionSearchTerm("")} className="text-gray-400 hover:text-white text-xs">
+                                        Clear
+                                    </button>
+                                )}
                             </div>
 
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2 border-t border-gray-800/80">
-                                <div className="flex-1">
-                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Webhook Notification URL (IPN Settlement)</label>
-                                    <code className="text-xs text-emerald-400 font-mono">https://beraxis.online/api/payments/directpay/webhook</code>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleTestDirectPay}
-                                    className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-bold transition-all border border-white/10 flex items-center gap-2 cursor-pointer shrink-0"
-                                >
-                                    🧪 Test DirectPay Gateway Connection
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="bg-[#111827] rounded-3xl border border-gray-800 overflow-hidden shadow-2xl">
-                            <TableHeader title="Subscription Payment Records" subtitle="Platform subscriber payments processed via DirectPay Card">
-                                <SearchBox value={paymentSearchTerm} onChange={setPaymentSearchTerm} placeholder="Search by email or status..." />
-                            </TableHeader>
+                            {/* Table */}
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead className="bg-[#0B0F19] text-gray-500 text-xs uppercase tracking-widest font-bold border-b border-gray-800">
                                         <tr>
-                                            <th className="px-6 py-4">User / Tenant</th>
-                                            <th className="px-6 py-4">Plan</th>
+                                            <th className="px-6 py-4">Transaction / Status</th>
+                                            <th className="px-6 py-4">Customer Details</th>
+                                            <th className="px-6 py-4">Plan / Purpose</th>
                                             <th className="px-6 py-4">Amount</th>
-                                            <th className="px-6 py-4">Gateway</th>
-                                            <th className="px-6 py-4">Status</th>
-                                            <th className="px-6 py-4">Registered</th>
-                                            <th className="px-6 py-4 text-right">Actions</th>
+                                            <th className="px-6 py-4">Outcome / Failure Reason</th>
+                                            <th className="px-6 py-4">Date &amp; Time</th>
+                                            <th className="px-6 py-4 text-right">Stripe Record</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-800/50">
-                                        {loading ? <LoadingRow cols={7} /> : filteredPayments.length === 0 ? <EmptyRow cols={7} /> :
-                                            filteredPayments.map(p => {
-                                                const isPaid = p.payment_status === "active";
+                                        {transactionsLoading ? (
+                                            <tr>
+                                                <td colSpan={7} className="px-6 py-12 text-center text-gray-400 text-xs font-mono">
+                                                    <div className="inline-block w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mr-2 align-middle"></div>
+                                                    Syncing transactions live from Stripe API...
+                                                </td>
+                                            </tr>
+                                        ) : stripeTransactions.filter(t => {
+                                            if (transactionStatusFilter !== "all" && t.status !== transactionStatusFilter) return false;
+                                            if (transactionSearchTerm) {
+                                                const q = transactionSearchTerm.toLowerCase();
+                                                const emailMatch = (t.customer_email || "").toLowerCase().includes(q);
+                                                const nameMatch = (t.customer_name || "").toLowerCase().includes(q);
+                                                const idMatch = (t.id || "").toLowerCase().includes(q);
+                                                const planMatch = (t.plan || "").toLowerCase().includes(q);
+                                                const reasonMatch = (t.failure_reason || "").toLowerCase().includes(q);
+                                                return emailMatch || nameMatch || idMatch || planMatch || reasonMatch;
+                                            }
+                                            return true;
+                                        }).length === 0 ? (
+                                            <tr>
+                                                <td colSpan={7} className="px-6 py-12 text-center text-gray-500 text-xs">
+                                                    No transactions found matching the selected filter.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            stripeTransactions.filter(t => {
+                                                if (transactionStatusFilter !== "all" && t.status !== transactionStatusFilter) return false;
+                                                if (transactionSearchTerm) {
+                                                    const q = transactionSearchTerm.toLowerCase();
+                                                    const emailMatch = (t.customer_email || "").toLowerCase().includes(q);
+                                                    const nameMatch = (t.customer_name || "").toLowerCase().includes(q);
+                                                    const idMatch = (t.id || "").toLowerCase().includes(q);
+                                                    const planMatch = (t.plan || "").toLowerCase().includes(q);
+                                                    const reasonMatch = (t.failure_reason || "").toLowerCase().includes(q);
+                                                    return emailMatch || nameMatch || idMatch || planMatch || reasonMatch;
+                                                }
+                                                return true;
+                                            }).map(tx => {
+                                                const isSuccess = tx.status === "succeeded";
+                                                const isFail = tx.status === "failed";
+
                                                 return (
-                                                    <tr key={p.tenant_id} className="hover:bg-white/3 transition-colors">
+                                                    <tr key={tx.id} className="hover:bg-white/3 transition-colors">
                                                         <td className="px-6 py-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold border text-sm ${isPaid ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-gray-700/30 text-gray-400 border-gray-700"}`}>
-                                                                    {(p.email || "U").charAt(0).toUpperCase()}
+                                                            <div className="flex items-center gap-2.5">
+                                                                <span className={`px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider inline-flex items-center gap-1 ${
+                                                                    isSuccess
+                                                                        ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                                                                        : isFail
+                                                                            ? "bg-rose-500/15 text-rose-300 border border-rose-500/30"
+                                                                            : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                                                                }`}>
+                                                                    {isSuccess && <CheckCircle size={11} />}
+                                                                    {isFail && <AlertTriangle size={11} />}
+                                                                    {!isSuccess && !isFail && <Clock size={11} />}
+                                                                    {tx.status}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[10px] text-gray-500 font-mono block mt-1">
+                                                                {tx.id}
+                                                            </span>
+                                                        </td>
+
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs border ${
+                                                                    isSuccess
+                                                                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                                                        : isFail
+                                                                            ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                                                                            : "bg-gray-800 text-gray-400 border-gray-700"
+                                                                }`}>
+                                                                    {(tx.customer_email || "U").charAt(0).toUpperCase()}
                                                                 </div>
                                                                 <div>
-                                                                    <span className="font-semibold text-gray-200 block text-sm">{p.email || "Unknown"}</span>
-                                                                    <span className="text-[10px] text-gray-600 font-mono">{(p.tenant_id || "").slice(0, 16)}...</span>
+                                                                    <span className="font-semibold text-gray-200 block text-xs">
+                                                                        {tx.customer_email}
+                                                                    </span>
+                                                                    {tx.customer_name && tx.customer_name !== "Subscriber" && (
+                                                                        <span className="text-[11px] text-gray-400 block">
+                                                                            {tx.customer_name}
+                                                                        </span>
+                                                                    )}
+                                                                    <span className="text-[10px] text-gray-500 font-mono">
+                                                                        {tx.payment_method || "Stripe"}
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                         </td>
+
                                                         <td className="px-6 py-4">
-                                                            <span className="text-sm font-semibold text-gray-300">{p.plan || "Standard"}</span>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className={`font-mono font-bold text-base ${isPaid ? "text-emerald-400" : "text-gray-600"}`}>
-                                                                {isPaid ? `$${Number(p.amount_usd || 0).toFixed(2)}` : "—"}
+                                                            <span className="text-xs font-semibold text-gray-300 block">
+                                                                {tx.plan || "Standard Plan"}
                                                             </span>
                                                         </td>
+
                                                         <td className="px-6 py-4">
-                                                            <div className="flex items-center gap-1.5 text-xs text-gray-300 font-medium">
-                                                                <CreditCard size={14} className="text-cyan-400 shrink-0" />
-                                                                <span>DirectPay Card</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 ${STATUS_STYLES[p.payment_status] || STATUS_STYLES.new}`}>
-                                                                {isPaid && <CheckCircle size={10} />}
-                                                                {p.payment_status}
+                                                            <span className={`font-mono font-bold text-sm ${
+                                                                isSuccess ? "text-emerald-400" : isFail ? "text-rose-400" : "text-gray-400"
+                                                            }`}>
+                                                                ${Number(tx.amount_usd || 0).toFixed(2)} USD
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 text-xs text-gray-500 font-mono">{fmtDate(p.registered_at)}</td>
-                                                        <td className="px-6 py-4 text-right">
-                                                            {!isPaid ? (
-                                                                <button
-                                                                    onClick={() => handleTenantAction(p.tenant_id, "activate")}
-                                                                    disabled={actionLoading !== null}
-                                                                    className="px-3 py-1.5 rounded-xl bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
-                                                                >
-                                                                    {actionLoading === `${p.tenant_id}-activate` ? "..." : "Activate"}
-                                                                </button>
+
+                                                        <td className="px-6 py-4">
+                                                            {isSuccess ? (
+                                                                <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+                                                                    <Check size={13} className="shrink-0" />
+                                                                    <span>Payment captured &amp; subscription active</span>
+                                                                </div>
+                                                            ) : isFail ? (
+                                                                <div className="space-y-0.5">
+                                                                    <div className="flex items-center gap-1.5 text-xs text-rose-400 font-semibold">
+                                                                        <AlertTriangle size={13} className="shrink-0 text-rose-400" />
+                                                                        <span>{tx.failure_reason || "Payment declined / failed"}</span>
+                                                                    </div>
+                                                                    {tx.failure_code && (
+                                                                        <span className="text-[10px] text-rose-300/80 font-mono bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 inline-block">
+                                                                            Code: {tx.failure_code}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             ) : (
-                                                                <button
-                                                                    onClick={() => handleTenantAction(p.tenant_id, "deactivate")}
-                                                                    disabled={actionLoading !== null}
-                                                                    className="px-3 py-1.5 rounded-xl bg-red-600/10 text-red-400 hover:bg-red-600 hover:text-white border border-red-500/30 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
-                                                                >
-                                                                    {actionLoading === `${p.tenant_id}-deactivate` ? "..." : "Revoke"}
-                                                                </button>
+                                                                <span className="text-xs text-amber-400/90 flex items-center gap-1">
+                                                                    <Clock size={12} /> Checkout session open (waiting for customer)
+                                                                </span>
                                                             )}
+                                                        </td>
+
+                                                        <td className="px-6 py-4 text-xs text-gray-400 font-mono">
+                                                            {new Date(tx.created_at).toLocaleString("en-US", {
+                                                                month: "short",
+                                                                day: "numeric",
+                                                                hour: "2-digit",
+                                                                minute: "2-digit"
+                                                            })}
+                                                        </td>
+
+                                                        <td className="px-6 py-4 text-right">
+                                                            <a
+                                                                href={tx.stripe_url}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-600/10 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-bold transition-all"
+                                                            >
+                                                                <span>View in Stripe</span>
+                                                                <ExternalLink size={12} />
+                                                            </a>
                                                         </td>
                                                     </tr>
                                                 );
                                             })
-                                        }
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
