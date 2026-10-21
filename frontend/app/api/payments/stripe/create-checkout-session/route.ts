@@ -94,7 +94,6 @@ export async function POST(req: NextRequest) {
 
     // 4. Create Stripe Checkout Session with tax code txcd_10300100 (SaaS)
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
       mode: "subscription",
       customer_email: email,
       line_items: [
