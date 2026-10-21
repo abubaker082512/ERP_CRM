@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
     LayoutDashboard,
+    Grid3x3,
+    Lock,
+    ExternalLink,
+    Maximize2,
     Calendar,
     ClipboardList,
     CheckSquare,
@@ -30,9 +34,46 @@ import Testimonials from "@/components/landing/Testimonials";
 import IndustryShowcase from "@/components/landing/IndustryShowcase";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 
+const SHOWCASE_SCREENS = {
+    apps: {
+        title: "All 28 Unified Business Apps",
+        subtitle: "One-click access to Accounting, CRM, POS, Inventory, Payroll, Sign, and Leads Pool",
+        url: "https://beraxis.online/apps",
+        imageWebp: "/images/showcase/apps-screen.webp",
+        imagePng: "/images/showcase/apps-screen.png",
+        alt: "Beraxis 28 Unified Business Apps Cockpit",
+        ctaText: "Launch Free Apps Cockpit",
+        ctaHref: "/apps",
+        tag: "Apps Cockpit"
+    },
+    industry: {
+        title: "12 Global Industry Archetypes",
+        subtitle: "Pre-configured workflows, POS layouts, and modules tailored for F&B, Clinics, Auto, Real Estate, and more",
+        url: "https://beraxis.online/apps?onboarding=true",
+        imageWebp: "/images/showcase/industry-screen.webp",
+        imagePng: "/images/showcase/industry-screen.png",
+        alt: "Beraxis 12 Global Business Industries Setup",
+        ctaText: "Explore 12 Industry Engines",
+        ctaHref: "#industries",
+        tag: "Industry Engine"
+    },
+    dashboard: {
+        title: "Executive Overview & AI Copilot",
+        subtitle: "Real-time revenue, CRM conversion, sales pipelines, and natural-language Galaxy AI query bar",
+        url: "https://beraxis.online/dashboard",
+        imageWebp: "/images/showcase/dashboard-screen.webp",
+        imagePng: "/images/showcase/dashboard-screen.png",
+        alt: "Beraxis Real Executive Dashboard with AI Copilot",
+        ctaText: "Explore Live Dashboard",
+        ctaHref: "/dashboard",
+        tag: "Executive Dashboard"
+    }
+};
+
 export default function Home() {
     const router = useRouter();
     const [billingCycle, setBillingCycle] = useState<"annually" | "monthly">("annually");
+    const [activeShowcaseTab, setActiveShowcaseTab] = useState<"apps" | "industry" | "dashboard">("apps");
     const [pricing, setPricing] = useState<PricingConfig>(DEFAULT_PRICING_CONFIG);
 
     useEffect(() => {
@@ -54,137 +95,141 @@ export default function Home() {
     const customRate = isAnnual 
         ? pricing.custom.annual_monthly_rate 
         : pricing.custom.monthly_rate;
+    const activeScreen = SHOWCASE_SCREENS[activeShowcaseTab];
 
     return (
         <main className="min-h-screen bg-[#020205] text-white overflow-hidden">
             <Navbar />
             <Hero />
             
-            {/* Product Preview Section */}
+            {/* Real Product Showcase Section (Replaces mock dashboard with real product pictures) */}
             <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-28 animate-in fade-in duration-1000">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-4">
-                        Experience the <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Beraxis Command Center</span>
+                <div className="text-center mb-8">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wider mb-4 shadow-lg shadow-purple-500/10">
+                        <Sparkles size={14} className="text-purple-400" />
+                        <span>Real System Interface & Production Cockpit</span>
+                    </div>
+                    <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-4">
+                        Experience the Real <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400">Beraxis Cockpit</span>
                     </h2>
-                    <p className="text-gray-400 text-lg max-w-2xl mx-auto font-light leading-relaxed">
-                        A glassmorphic, hyper-responsive command deck that consolidates all your business and customer operations into a single cohesive cockpit.
+                    <p className="text-gray-300 text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed">
+                        No dummy mockups or conceptual wireframes. See the actual command deck running 28 enterprise modules with multi-entity isolation and AI copilots.
                     </p>
                 </div>
 
-                {/* CSS-based Glassmorphic Mockup Dashboard */}
-                <div className="relative border border-white/10 bg-[#0F172A]/70 backdrop-blur-2xl shadow-[0_0_50px_rgba(139,92,246,0.15)] rounded-3xl overflow-hidden aspect-[16/9] w-full p-4 md:p-6 group hover:border-purple-500/30 transition-all duration-500">
-                    <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent pointer-events-none"></div>
+                {/* Interactive Screen Selector Tabs */}
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-6">
+                    <button
+                        type="button"
+                        onClick={() => setActiveShowcaseTab("apps")}
+                        className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer border ${
+                            activeShowcaseTab === "apps"
+                                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-purple-400/50 shadow-lg shadow-purple-500/25 scale-[1.02]"
+                                : "bg-[#0F172A]/80 text-gray-400 hover:text-white border-white/10 hover:border-white/20"
+                        }`}
+                    >
+                        <Grid3x3 size={15} className={activeShowcaseTab === "apps" ? "text-white" : "text-purple-400"} />
+                        <span>Apps Screen (28 Modules)</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setActiveShowcaseTab("industry")}
+                        className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer border ${
+                            activeShowcaseTab === "industry"
+                                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-purple-400/50 shadow-lg shadow-purple-500/25 scale-[1.02]"
+                                : "bg-[#0F172A]/80 text-gray-400 hover:text-white border-white/10 hover:border-white/20"
+                        }`}
+                    >
+                        <Building2 size={15} className={activeShowcaseTab === "industry" ? "text-white" : "text-pink-400"} />
+                        <span>Industry Setup (12 Archetypes)</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setActiveShowcaseTab("dashboard")}
+                        className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer border ${
+                            activeShowcaseTab === "dashboard"
+                                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-purple-400/50 shadow-lg shadow-purple-500/25 scale-[1.02]"
+                                : "bg-[#0F172A]/80 text-gray-400 hover:text-white border-white/10 hover:border-white/20"
+                        }`}
+                    >
+                        <LayoutDashboard size={15} className={activeShowcaseTab === "dashboard" ? "text-white" : "text-cyan-400"} />
+                        <span>Executive Dashboard & AI</span>
+                    </button>
+                </div>
+
+                {/* Glassmorphic Application Browser Window with Real System Picture */}
+                <div className="relative border border-white/15 bg-[#0F172A]/90 backdrop-blur-2xl shadow-[0_0_80px_rgba(139,92,246,0.2)] rounded-3xl overflow-hidden group hover:border-purple-500/40 transition-all duration-500">
                     
-                    {/* Mock App Shell layout */}
-                    <div className="h-full flex gap-4 text-xs font-sans">
-                        {/* Sidebar Mockup */}
-                        <div className="w-1/5 bg-[#141A28]/80 border border-white/5 rounded-2xl p-4 flex flex-col justify-between shrink-0 hidden sm:flex">
-                            <div className="space-y-4">
-                                <div className="flex items-center mb-6 border-b border-white/5 pb-3">
-                                    <img src="/logo-full.png" alt="Beraxis Logo" className="h-4 w-auto object-contain" />
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2.5 px-3 py-2 bg-purple-500/20 text-purple-300 rounded-lg font-bold"><LayoutDashboard size={14}/> Dashboard</div>
-                                    <div className="flex items-center gap-2.5 px-3 py-2 text-gray-500 hover:text-gray-300 rounded-lg"><Users size={14}/> CRM Pipeline</div>
-                                    <div className="flex items-center gap-2.5 px-3 py-2 text-gray-500 hover:text-gray-300 rounded-lg"><ShoppingCart size={14}/> Sales Orders</div>
-                                    <div className="flex items-center gap-2.5 px-3 py-2 text-gray-500 hover:text-gray-300 rounded-lg"><Package size={14}/> Inventory</div>
-                                    <div className="flex items-center gap-2.5 px-3 py-2 text-gray-500 hover:text-gray-300 rounded-lg"><BarChart3 size={14}/> Accounting</div>
-                                </div>
-                            </div>
-                            <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/10">
-                                <span className="text-[9px] font-bold text-purple-400 block mb-1">PRO SERVICE ACTIVE</span>
-                                <span className="text-[10px] text-gray-400">whatsapp_sync_enabled</span>
-                            </div>
+                    {/* Window Title Bar */}
+                    <div className="bg-[#141A28]/95 border-b border-white/10 px-4 py-3 flex items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2 shrink-0">
+                            <span className="w-3 h-3 rounded-full bg-[#EF4444]/90 inline-block shadow-sm"></span>
+                            <span className="w-3 h-3 rounded-full bg-[#F59E0B]/90 inline-block shadow-sm"></span>
+                            <span className="w-3 h-3 rounded-full bg-[#10B981]/90 inline-block shadow-sm"></span>
                         </div>
 
-                        {/* Main Mock Content */}
-                        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-                            {/* Header Mockup */}
-                            <div className="h-12 bg-[#141A28]/60 border border-white/5 rounded-2xl px-4 flex items-center justify-between shrink-0">
-                                <div className="flex items-center gap-3">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    <span className="font-bold text-gray-300">Live Enterprise Overview</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400"><Bell size={12}/></div>
-                                    <div className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-[10px] font-bold">A</div>
-                                </div>
-                            </div>
+                        {/* URL / Location Bar */}
+                        <div className="flex-1 max-w-xl mx-auto flex items-center justify-center gap-2 bg-[#070B16] border border-white/10 rounded-xl px-3 py-1.5 text-gray-300 text-[11px] font-mono shadow-inner">
+                            <Lock size={12} className="text-emerald-400 shrink-0" />
+                            <span className="truncate">{activeScreen.url}</span>
+                        </div>
 
-                            {/* Dashboard Grid Mockup */}
-                            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
-                                {/* Stat Card 1 */}
-                                <div className="bg-[#1E293B]/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-between hover:border-purple-500/20 transition-colors">
-                                    <div>
-                                        <span className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">MONTHLY REVENUE</span>
-                                        <h3 className="text-xl font-bold text-white mt-1">$48,251.00</h3>
-                                    </div>
-                                    <div className="h-1 bg-white/5 rounded-full mt-3 overflow-hidden">
-                                        <div className="w-3/4 h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
-                                    </div>
-                                </div>
-
-                                {/* Stat Card 2 */}
-                                <div className="bg-[#1E293B]/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-between hover:border-pink-500/20 transition-colors">
-                                    <div>
-                                        <span className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">CRM CONVERSION RATE</span>
-                                        <h3 className="text-xl font-bold text-white mt-1">24.8%</h3>
-                                    </div>
-                                    <div className="h-1 bg-white/5 rounded-full mt-3 overflow-hidden">
-                                        <div className="w-1/2 h-full bg-gradient-to-r from-pink-500 to-red-500 rounded-full"></div>
-                                    </div>
-                                </div>
-
-                                {/* Stat Card 3 */}
-                                <div className="bg-[#1E293B]/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-between hover:border-emerald-500/20 transition-colors">
-                                    <div>
-                                        <span className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">ACTIVE SUPPORT CHATS</span>
-                                        <h3 className="text-xl font-bold text-emerald-400 mt-1">99.8% SLA</h3>
-                                    </div>
-                                    <div className="h-1 bg-white/5 rounded-full mt-3 overflow-hidden">
-                                        <div className="w-[95%] h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></div>
-                                    </div>
-                                </div>
-
-                                {/* Chart / Activity Simulator */}
-                                <div className="col-span-full md:col-span-2 bg-[#1E293B]/30 border border-white/5 rounded-2xl p-4 flex flex-col justify-between h-48 sm:h-auto">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="font-bold text-gray-300">Sales Forecast vs Realization</span>
-                                        <span className="text-[10px] text-gray-500">Real-time</span>
-                                    </div>
-                                    <div className="flex-1 flex items-end gap-3 pt-4 justify-between">
-                                        <div className="w-12 bg-purple-500/20 rounded-t-lg h-2/5 relative group"><div className="absolute inset-x-0 bottom-0 bg-purple-500 rounded-t-lg h-3/5 group-hover:scale-y-110 transition-transform origin-bottom"></div></div>
-                                        <div className="w-12 bg-purple-500/20 rounded-t-lg h-3/5 relative group"><div className="absolute inset-x-0 bottom-0 bg-purple-500 rounded-t-lg h-4/5 group-hover:scale-y-110 transition-transform origin-bottom"></div></div>
-                                        <div className="w-12 bg-purple-500/20 rounded-t-lg h-4/5 relative group"><div className="absolute inset-x-0 bottom-0 bg-purple-500 rounded-t-lg h-2/3 group-hover:scale-y-110 transition-transform origin-bottom"></div></div>
-                                        <div className="w-12 bg-purple-500/20 rounded-t-lg h-3/4 relative group"><div className="absolute inset-x-0 bottom-0 bg-purple-500 rounded-t-lg h-5/6 group-hover:scale-y-110 transition-transform origin-bottom"></div></div>
-                                        <div className="w-12 bg-purple-500/20 rounded-t-lg h-[95%] relative group"><div className="absolute inset-x-0 bottom-0 bg-purple-500 rounded-t-lg h-4/5 group-hover:scale-y-110 transition-transform origin-bottom"></div></div>
-                                        <div className="w-12 bg-purple-500/20 rounded-t-lg h-[85%] relative group"><div className="absolute inset-x-0 bottom-0 bg-purple-500 rounded-t-lg h-[90%] group-hover:scale-y-110 transition-transform origin-bottom"></div></div>
-                                    </div>
-                                </div>
-
-                                {/* CRM Pipeline Activity feed */}
-                                <div className="bg-[#1E293B]/30 border border-white/5 rounded-2xl p-4 flex flex-col justify-between hidden md:flex">
-                                    <span className="font-bold text-gray-300 mb-3">Active Deal Leads</span>
-                                    <div className="space-y-3 flex-1 overflow-y-auto">
-                                        <div className="bg-[#0F172A]/50 border border-white/5 rounded-xl p-2.5 flex items-center justify-between">
-                                            <span className="font-bold text-white">Acme Corp Ltd</span>
-                                            <span className="text-[9px] bg-purple-500/20 text-purple-400 font-bold px-2 py-0.5 rounded">Closed Won</span>
-                                        </div>
-                                        <div className="bg-[#0F172A]/50 border border-white/5 rounded-xl p-2.5 flex items-center justify-between">
-                                            <span className="font-bold text-white">X-Enterprise</span>
-                                            <span className="text-[9px] bg-yellow-500/20 text-yellow-400 font-bold px-2 py-0.5 rounded">Negotiation</span>
-                                        </div>
-                                        <div className="bg-[#0F172A]/50 border border-white/5 rounded-xl p-2.5 flex items-center justify-between">
-                                            <span className="font-bold text-white">Novus Solutions</span>
-                                            <span className="text-[9px] bg-blue-500/20 text-blue-400 font-bold px-2 py-0.5 rounded">Proposition</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-semibold">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                Live Production Screen
+                            </span>
+                            <Link
+                                href={activeScreen.ctaHref}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-purple-600/20"
+                            >
+                                <span>{activeScreen.ctaText}</span>
+                                <ArrowRight size={12} />
+                            </Link>
                         </div>
                     </div>
-                </div>
-            </section>
+
+                    {/* Image Container with Ambient Glow and Hover Zoom */}
+                    <div className="relative overflow-hidden bg-[#070B16] aspect-[16/10] sm:aspect-[16/9]">
+                        <picture>
+                            <source srcSet={activeScreen.imageWebp} type="image/webp" />
+                            <img
+                                key={activeShowcaseTab}
+                                src={activeScreen.imagePng}
+                                alt={activeScreen.alt}
+                                className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.015]"
+                                loading="eager"
+                            />
+                        </picture>
+
+                        {/* Subtle bottom gradient overlay for smooth visual blending */}
+                        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#020205] via-[#020205]/40 to-transparent pointer-events-none"></div>
+
+                        {/* Caption floating card */}
+                        <div className="absolute bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-md bg-[#0F172A]/95 backdrop-blur-md border border-white/15 rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4">
+                            <div>
+                                <span className="text-[10px] font-mono uppercase tracking-wider text-purple-400 font-extrabold block mb-0.5">
+                                    {activeScreen.tag}
+                                </span>
+                                <h4 className="text-xs sm:text-sm font-bold text-white leading-tight">
+                                    {activeScreen.title}
+                                </h4>
+                                <p className="text-[11px] text-gray-400 mt-1 leading-snug line-clamp-1">
+                                    {activeScreen.subtitle}
+                                </p>
+                            </div>
+                            <Link
+                                href={activeScreen.ctaHref}
+                                className="shrink-0 bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-xl border border-white/10 transition-colors"
+                                title="Open Live View"
+                            >
+                                <ArrowRight size={14} />
+                            </Link>
+                        </div>
+                    </div>
+                </div></section>
 
             <Stats />
             <Features />
