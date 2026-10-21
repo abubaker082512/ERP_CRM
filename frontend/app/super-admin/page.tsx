@@ -240,6 +240,16 @@ export default function SuperAdminPage() {
     const [directPayClientId, setDirectPayClientId] = useState("pwa_ci_k1qlq54hv4gw5pr0khux");
     const [directPayClientSecret, setDirectPayClientSecret] = useState("pwa_secret_zp5rai8z02zr3o5sebm1co6uxci58uca");
     const [directPayEnabled, setDirectPayEnabled] = useState(true);
+    const [stripeSecretKey, setStripeSecretKey] = useState("");
+    const [stripePublishableKey, setStripePublishableKey] = useState("");
+    const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
+    const [stripeEnabled, setStripeEnabled] = useState(true);
+    const [stripeMode, setStripeMode] = useState<"test" | "live">("test");
+    const [showStripeSecret, setShowStripeSecret] = useState(false);
+    const [isTestStripeOpen, setIsTestStripeOpen] = useState(false);
+    const [stripeTestResult, setStripeTestResult] = useState<any>(null);
+    const [stripeTesting, setStripeTesting] = useState(false);
+    const [savingGateways, setSavingGateways] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     // Form inputs
@@ -409,12 +419,89 @@ export default function SuperAdminPage() {
             
             await fetchPromos();
             await fetchPricing();
+            await fetchGatewaySettings();
         } catch (err: any) {
             console.error("Super Admin fetch error:", err);
             setError("Server connection issue. Please ensure the backend is active or try syncing again.");
         } finally {
             setLoading(false);
             setAuthChecked(true);
+        }
+    };
+
+    const fetchGatewaySettings = async () => {
+        try {
+            const res = await fetch("/api/admin/gateway-settings");
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.config) {
+                    setStripeSecretKey(data.config.stripe_secret_key || "");
+                    setStripePublishableKey(data.config.stripe_publishable_key || "");
+                    setStripeWebhookSecret(data.config.stripe_webhook_secret || "");
+                    setStripeEnabled(data.config.stripe_enabled !== false);
+                    setStripeMode(data.config.stripe_mode || "test");
+                    if (data.config.directpay_client_id) setDirectPayClientId(data.config.directpay_client_id);
+                    if (data.config.directpay_client_secret) setDirectPayClientSecret(data.config.directpay_client_secret);
+                    if (data.config.directpay_enabled !== undefined) setDirectPayEnabled(data.config.directpay_enabled);
+                }
+            }
+        } catch (err) {
+            console.error("Failed to fetch gateway settings", err);
+        }
+    };
+
+    const handleSaveGatewaySettings = async () => {
+        setSavingGateways(true);
+        try {
+            const res = await fetch("/api/admin/gateway-settings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    stripe_secret_key: stripeSecretKey,
+                    stripe_publishable_key: stripePublishableKey,
+                    stripe_webhook_secret: stripeWebhookSecret,
+                    stripe_enabled: stripeEnabled,
+                    stripe_mode: stripeSecretKey.startsWith("sk_live") ? "live" : "test",
+                    directpay_client_id: directPayClientId,
+                    directpay_client_secret: directPayClientSecret,
+                    directpay_enabled: directPayEnabled
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast("✅ Gateway settings & Stripe keys saved successfully!");
+            } else {
+                showToast("❌ " + (data.error || "Failed to save gateway settings"));
+            }
+        } catch (err) {
+            showToast("❌ Network error saving gateway settings");
+        } finally {
+            setSavingGateways(false);
+        }
+    };
+
+    const handleTestStripe = async () => {
+        setIsTestStripeOpen(true);
+        setStripeTesting(true);
+        setStripeTestResult(null);
+        try {
+            const res = await fetch(`/api/admin/gateway-settings?test=stripe&key=${encodeURIComponent(stripeSecretKey)}`);
+            const data = await res.json();
+            setStripeTestResult({
+                status: res.status,
+                ok: res.ok,
+                data: data,
+                timestamp: new Date().toISOString()
+            });
+        } catch (err: any) {
+            setStripeTestResult({
+                status: 500,
+                ok: false,
+                error: err.message,
+                timestamp: new Date().toISOString()
+            });
+        } finally {
+            setStripeTesting(false);
         }
     };
 
@@ -1003,7 +1090,7 @@ export default function SuperAdminPage() {
                     <TabBtn active={activeTab === "overview"}    onClick={() => setActiveTab("overview")}    label="🏢 Companies" count={safeWorkspaces.length} />
                     <TabBtn active={activeTab === "pricing"}     onClick={() => setActiveTab("pricing")}     label="💰 Plan Pricing ($1 Early Bird)" />
                     <TabBtn active={activeTab === "promocodes"}  onClick={() => setActiveTab("promocodes")}  label="🎟️ Promo Codes" count={safePromocodes.length} />
-                    <TabBtn active={activeTab === "payments"}    onClick={() => setActiveTab("payments")}    label="💳 DirectPay Subscriptions" count={safePayments.length} />
+                    <TabBtn active={activeTab === "payments"}    onClick={() => setActiveTab("payments")}    label="💳 Payment Gateways (Stripe & DirectPay)" count={safePayments.length} />
                     <TabBtn active={activeTab === "billing"}     onClick={() => setActiveTab("billing")}     label="⚖️ Billing Ctrl" count={safeTenants.length} />
                     <TabBtn active={activeTab === "users"}       onClick={() => setActiveTab("users")}       label="👥 Users" count={safeUsers.length} />
                     <TabBtn active={activeTab === "sales"}       onClick={() => setActiveTab("sales")}       label="🛒 ERP Sales" count={safeSales.length} />
@@ -1623,6 +1710,145 @@ export default function SuperAdminPage() {
                                 <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Monthly Card Revenue</p>
                                 <p className="text-3xl font-black text-purple-400">${monthlySaaSRevenue.toLocaleString()}</p>
                                 <p className="text-xs text-gray-500 mt-1">DirectPay gateway card transactions</p>
+                            </div>
+                        </div>
+
+                        {/* Stripe Global Payments Gateway Card */}
+                        <div className="bg-[#111827] rounded-3xl border border-purple-500/30 p-6 shadow-2xl space-y-5">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-purple-600/30 to-indigo-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300 font-bold text-lg">
+                                        <Globe size={22} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-base font-bold text-white">Super Admin SaaS Gateway — Stripe Global (Workbench &amp; API Keys)</h3>
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                                stripeSecretKey.startsWith("sk_live")
+                                                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                                    : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                            }`}>
+                                                {stripeSecretKey.startsWith("sk_live") ? "🟢 Live Production" : "🟡 Test Sandbox"}
+                                            </span>
+                                            {stripeEnabled && (
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                                    Active on Checkout
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-0.5">
+                                            Manage your Stripe keys for global subscriptions (USD), Apple Pay, Google Pay, and Leads Pool Solo ($10/mo) automated recurring payments.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                                        <span>{stripeEnabled ? "Gateway Enabled" : "Gateway Disabled"}</span>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={stripeEnabled}
+                                                onChange={e => setStripeEnabled(e.target.checked)}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                        </label>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        disabled={savingGateways}
+                                        onClick={handleSaveGatewaySettings}
+                                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-600/20 cursor-pointer flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                                    >
+                                        <Save size={14} /> {savingGateways ? "Saving Keys..." : "Save Stripe Keys"}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2">
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">
+                                            Stripe Secret Key (sk_test_... or sk_live_...) *
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowStripeSecret(!showStripeSecret)}
+                                            className="text-[11px] text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
+                                        >
+                                            {showStripeSecret ? "Hide Secret" : "Show Secret"}
+                                        </button>
+                                    </div>
+                                    <input
+                                        type={showStripeSecret ? "text" : "password"}
+                                        value={stripeSecretKey}
+                                        onChange={e => setStripeSecretKey(e.target.value)}
+                                        placeholder="sk_test_51... or sk_live_51..."
+                                        className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
+                                    />
+                                    <p className="text-[11px] text-gray-500 mt-1">
+                                        Found in your Stripe Dashboard under <strong className="text-gray-400">Developers &gt; API keys &gt; Secret key</strong>.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                                        Stripe Publishable Key (pk_test_... or pk_live_...) *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={stripePublishableKey}
+                                        onChange={e => setStripePublishableKey(e.target.value)}
+                                        placeholder="pk_test_51... or pk_live_51..."
+                                        className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                                        Stripe Webhook Signing Secret (whsec_...)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={stripeWebhookSecret}
+                                        onChange={e => setStripeWebhookSecret(e.target.value)}
+                                        placeholder="whsec_..."
+                                        className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2 border-t border-gray-800/80">
+                                <div className="flex-1">
+                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                        Stripe Webhook Endpoint URL (Configure in Stripe Workbench / Webhooks)
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <code className="text-xs text-purple-300 font-mono bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/20">
+                                            https://beraxis.online/api/payments/stripe/webhook
+                                        </code>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText("https://beraxis.online/api/payments/stripe/webhook");
+                                                showToast("📋 Webhook URL copied to clipboard!");
+                                            }}
+                                            className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-lg text-xs font-medium border border-white/10 flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <Copy size={12} /> Copy
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-gray-500 mt-1">
+                                        Listening events: <span className="text-gray-400 font-mono">checkout.session.completed</span>, <span className="text-gray-400 font-mono">customer.subscription.created</span>
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleTestStripe}
+                                    className="px-4 py-2.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-xl text-xs font-bold transition-all border border-purple-500/30 flex items-center gap-2 cursor-pointer shrink-0"
+                                >
+                                    🧪 Test Stripe Connection
+                                </button>
                             </div>
                         </div>
 
@@ -2827,6 +3053,49 @@ export default function SuperAdminPage() {
             )}
 
             {/* ── MODAL 6: DIRECTPAY DIAGNOSTICS & PING TEST ── */}
+            {isTestStripeOpen && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[99999] p-4 animate-in fade-in">
+                    <div className="bg-[#141C2E] border border-purple-500/30 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 text-white">
+                        <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                            <h3 className="text-base font-bold flex items-center gap-2 text-purple-300">
+                                <Globe size={18} /> Stripe Global API Connection Test
+                            </h3>
+                            <button onClick={() => setIsTestStripeOpen(false)}><X size={18}/></button>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="bg-[#0F172A] p-3.5 rounded-xl border border-gray-800 text-xs font-mono space-y-1">
+                                <p className="text-gray-400">Target Key: <span className="text-purple-300">{stripeSecretKey ? stripeSecretKey.slice(0, 12) + "..." : "Not Configured"}</span></p>
+                                <p className="text-gray-400">Endpoint: <span className="text-emerald-400 font-bold">api.stripe.com/v1/balance</span></p>
+                                <p className="text-gray-400">Protocol: <span className="text-cyan-300">Stripe REST API (TLS 1.3)</span></p>
+                            </div>
+
+                            {stripeTesting ? (
+                                <div className="p-8 text-center text-gray-400 text-xs flex items-center justify-center gap-2">
+                                    <RefreshCw className="animate-spin text-purple-400" size={16} /> Connecting to Stripe API &amp; verifying credentials...
+                                </div>
+                            ) : stripeTestResult ? (
+                                <div className={`p-4 rounded-xl border text-xs font-mono ${stripeTestResult.ok ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" : "bg-red-500/10 border-red-500/30 text-red-300"}`}>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="font-bold">{stripeTestResult.ok ? "✅ STRIPE CONNECTED" : "❌ CONNECTION FAILED"}</p>
+                                        <span className="text-[10px] px-2 py-0.5 rounded bg-black/40 font-mono">HTTP {stripeTestResult.status}</span>
+                                    </div>
+                                    <pre className="overflow-x-auto text-[11px] p-2 bg-black/40 rounded-lg whitespace-pre-wrap">
+                                        {JSON.stringify(stripeTestResult.data || stripeTestResult.error, null, 2)}
+                                    </pre>
+                                </div>
+                            ) : null}
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                            <button onClick={() => setIsTestStripeOpen(false)} className="bg-gray-800 hover:bg-gray-700 text-white px-5 py-2 rounded-xl text-xs font-bold cursor-pointer">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {isTestDirectPayOpen && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[99999] p-4 animate-in fade-in">
                     <div className="bg-[#141C2E] border border-cyan-500/30 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 text-white">

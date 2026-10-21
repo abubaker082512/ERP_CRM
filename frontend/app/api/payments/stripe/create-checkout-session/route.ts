@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import fs from "fs";
+import path from "path";
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,7 +59,17 @@ export async function POST(req: NextRequest) {
       productDesc = "Multi-Company consolidation (3 included), 5,000+ Lead Credits/mo, studio customization, and 24/7 hotline.";
     }
 
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    // Helper to get Stripe secret key from admin-persisted config or environment
+    let stripeKey = process.env.STRIPE_SECRET_KEY;
+    try {
+      const configPath = path.join(process.cwd(), "scratch", "gateway_config.json");
+      if (fs.existsSync(configPath)) {
+        const parsed = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+        if (parsed?.stripe_secret_key && parsed.stripe_secret_key.startsWith("sk_")) {
+          stripeKey = parsed.stripe_secret_key;
+        }
+      }
+    } catch {}
 
     // 2. If Stripe Secret Key is not yet configured, return graceful development simulation
     if (!stripeKey || stripeKey.includes("placeholder") || !stripeKey.startsWith("sk_")) {
@@ -71,7 +83,7 @@ export async function POST(req: NextRequest) {
         isSimulation: true,
         url: simulatedSuccessUrl,
         sessionId: fallbackTxnId,
-        message: "Stripe Secret Key not found in environment. Please add STRIPE_SECRET_KEY to .env.local for live processing."
+        message: "Stripe Secret Key not found in environment. Please add STRIPE_SECRET_KEY in Admin Settings for live processing."
       });
     }
 
@@ -100,7 +112,13 @@ export async function POST(req: NextRequest) {
             product_data: {
               name: productName,
               description: productDesc,
-              tax_code: "txcd_10300100" // SaaS business use
+              tax_code: "txcd_10300100", // SaaS cloud software tax code
+              metadata: {
+                platform: "Beraxis SaaS Enterprise",
+                plan_tier: plan,
+                billing_interval: interval,
+                seat_count: String(users)
+              }
             },
             unit_amount: unitAmountCents,
             recurring: {
@@ -111,13 +129,14 @@ export async function POST(req: NextRequest) {
         }
       ],
       metadata: {
-        plan: plan,
-        billing: billing,
-        users: String(users),
         customer_name: name,
-        customer_phone: phone,
         customer_company: company,
-        lead_contacts: plan === "leadspool" ? "1500" : (plan === "custom" ? "5000" : "1500")
+        customer_phone: phone,
+        user_email: email,
+        plan_tier: plan,
+        billing_cycle: billing,
+        seats: String(users),
+        tax_applied: "0%"
       },
       success_url: successRedirectUrl,
       cancel_url: cancelRedirectUrl
@@ -129,9 +148,9 @@ export async function POST(req: NextRequest) {
       sessionId: session.id
     });
   } catch (error: any) {
-    console.error("Stripe Checkout Session error:", error);
+    console.error("[Stripe Session Error]:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to create Stripe Checkout session" },
+      { error: error?.message || "Failed to create Stripe Checkout session" },
       { status: 500 }
     );
   }

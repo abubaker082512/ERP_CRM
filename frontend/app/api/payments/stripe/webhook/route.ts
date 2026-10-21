@@ -1,16 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import fs from "fs";
+import path from "path";
 
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const sig = req.headers.get("stripe-signature");
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    let webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    let stripeKey = process.env.STRIPE_SECRET_KEY;
+
+    try {
+      const configPath = path.join(process.cwd(), "scratch", "gateway_config.json");
+      if (fs.existsSync(configPath)) {
+        const parsed = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+        if (parsed?.stripe_webhook_secret && parsed.stripe_webhook_secret.startsWith("whsec_")) {
+          webhookSecret = parsed.stripe_webhook_secret;
+        }
+        if (parsed?.stripe_secret_key && parsed.stripe_secret_key.startsWith("sk_")) {
+          stripeKey = parsed.stripe_secret_key;
+        }
+      }
+    } catch {}
 
     let event: Stripe.Event;
 
-    if (webhookSecret && sig && process.env.STRIPE_SECRET_KEY) {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    if (webhookSecret && sig && stripeKey) {
+      const stripe = new Stripe(stripeKey, {
         apiVersion: "2023-10-16" as any
       });
       try {
@@ -34,8 +51,8 @@ export async function POST(req: NextRequest) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const metadata = session.metadata || {};
-      const plan = metadata.plan || "standard";
-      const customerEmail = session.customer_email || metadata.customer_email || "";
+      const plan = metadata.plan_tier || metadata.plan || "standard";
+      const customerEmail = session.customer_email || metadata.user_email || metadata.customer_email || "";
       const customerId = session.customer ? String(session.customer) : "";
 
       console.log(`[Stripe Webhook] Subscription activated for ${customerEmail} (Plan: ${plan}, Customer: ${customerId})`);
@@ -50,25 +67,28 @@ export async function POST(req: NextRequest) {
             headers: {
               "Content-Type": "application/json",
               "apikey": supabaseKey,
-              "Authorization": `Bearer ${supabaseKey}`,
-              "Prefer": "return=minimal"
+              "Authorization": `Bearer ${supabaseKey}`
             },
             body: JSON.stringify({
               subscription_status: "active",
-              stripe_customer_id: customerId || JSON.stringify({ plan, gateway: "stripe", customer_id: customerId }),
-              trial_ends_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+              plan: plan,
+              stripe_customer_id: customerId,
+              updated_at: new Date().toISOString()
             })
           });
-          console.log(`[Stripe Webhook] Supabase tenant update status: ${res.status}`);
+          console.log(`[Stripe Webhook] Supabase updated status: ${res.status}`);
         }
       } catch (dbErr) {
-        console.warn(`[Stripe Webhook] Non-critical DB sync notice: ${dbErr}`);
+        console.error("[Stripe Webhook] DB Sync failed:", dbErr);
       }
     }
 
     return NextResponse.json({ received: true });
   } catch (error: any) {
-    console.error("[Stripe Webhook] Error:", error);
-    return NextResponse.json({ error: error.message || "Webhook handler failed" }, { status: 500 });
+    console.error("[Stripe Webhook Error]:", error);
+    return NextResponse.json(
+      { error: error?.message || "Webhook processing error" },
+      { status: 500 }
+    );
   }
 }
