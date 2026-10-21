@@ -6,9 +6,9 @@ import path from "path";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const plan = body.plan || body.planId || "standard";
+    const billing = body.billing || body.billingCycle || "monthly";
     const {
-      plan = "leadspool",
-      billing = "monthly",
       users = 1,
       email = "customer@beraxis.online",
       name = "Beraxis Subscriber",
@@ -71,20 +71,12 @@ export async function POST(req: NextRequest) {
       }
     } catch {}
 
-    // 2. If Stripe Secret Key is not yet configured, return graceful development simulation
+    // 2. If Stripe Secret Key is not configured, return clear error (NO fake simulation)
     if (!stripeKey || stripeKey.includes("placeholder") || !stripeKey.startsWith("sk_")) {
-      const fallbackTxnId = `STRIPE-SIM-${Date.now().toString(36).toUpperCase()}`;
-      const simulatedSuccessUrl = return_url
-        ? `${return_url}?stripe_status=success&session_id=${fallbackTxnId}&plan=${encodeURIComponent(plan)}`
-        : `${cleanOrigin}/checkout?stripe_status=success&session_id=${fallbackTxnId}&plan=${encodeURIComponent(plan)}`;
-
       return NextResponse.json({
-        success: true,
-        isSimulation: true,
-        url: simulatedSuccessUrl,
-        sessionId: fallbackTxnId,
-        message: "Stripe Secret Key not found in environment. Please add STRIPE_SECRET_KEY in Admin Settings for live processing."
-      });
+        success: false,
+        error: "Stripe Payment Gateway is not configured with live API keys yet. Please add your Stripe Secret Key in Super Admin (/super-admin) > Payment Gateways or switch to DirectPay Card Gateway."
+      }, { status: 400 });
     }
 
     // 3. Initialize real Stripe SDK

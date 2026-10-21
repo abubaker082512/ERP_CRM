@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ShopHeader from '@/components/shop/ShopHeader';
 import { CartItem } from '@/components/shop/CartModal';
-import { CreditCard, CheckCircle, ArrowLeft, ShieldCheck, Lock, Zap, Building2, Check, Globe } from 'lucide-react';
+import { CreditCard, CheckCircle, ArrowLeft, ShieldCheck, Lock, Zap, Building2, Check, Globe, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CheckoutPage() {
@@ -16,6 +16,7 @@ export default function CheckoutPage() {
     const [success, setSuccess] = useState(false);
     const [verifiedTxId, setVerifiedTxId] = useState<string | null>(null);
     const [paymentGateway, setPaymentGateway] = useState<'stripe' | 'directpay'>('stripe');
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     // Subscription plan details (if arriving from pricing/billing page)
     const [subscriptionPlan, setSubscriptionPlan] = useState<{
@@ -72,13 +73,21 @@ export default function CheckoutPage() {
             return;
         }
 
-        // 2. Check if returning from Stripe Checkout redirect
-        const stripeStatus = searchParams?.get('stripe_status') || (searchParams?.get('session_id') ? 'success' : null);
+        // 2. Check if returning from Stripe Checkout redirect (only accept real Stripe sessions, never fake simulation)
+        const stripeStatus = searchParams?.get('stripe_status');
         const stripeSessionId = searchParams?.get('session_id');
 
-        if (stripeStatus === 'success') {
+        if (stripeSessionId && stripeSessionId.startsWith('STRIPE-SIM-')) {
+            // Dismiss invalid test simulation URL
+            const planClean = searchParams?.get('plan') || 'standard';
+            router.replace(`/checkout?plan=${planClean}&billing=annual`);
+            setLoading(false);
+            return;
+        }
+
+        if (stripeStatus === 'success' && stripeSessionId && (stripeSessionId.startsWith('cs_') || stripeSessionId.startsWith('sub_'))) {
             const planParam = searchParams?.get('plan') || 'standard';
-            setVerifiedTxId(stripeSessionId || `STRIPE-${Date.now().toString(36).toUpperCase()}`);
+            setVerifiedTxId(stripeSessionId);
             setSuccess(true);
             try {
                 localStorage.setItem('user_plan', planParam);
@@ -110,8 +119,6 @@ export default function CheckoutPage() {
                     price: 10.00
                 });
             } else {
-                // Standard: $1/mo ($12 billed annually) or $5/mo monthly
-                // Custom: $37.40/mo ($448.80 billed annually) or $46.80/mo monthly
                 const rate = (planParam === 'standard')
                     ? (isAnnual ? 12.00 : 5.00)
                     : (isAnnual ? 448.80 : 46.80);
@@ -134,8 +141,7 @@ export default function CheckoutPage() {
             } catch {}
         }
 
-        // 4. Pre-fill customer billing details from user's actual profile/session data
-        // (Full Name, Work Email, Company / Entity Name, Billing Phone)
+        // 4. Pre-fill customer billing details from user's profile/session
         try {
             let loadedName = '';
             let loadedEmail = '';
@@ -150,18 +156,15 @@ export default function CheckoutPage() {
                 loadedCompany = u.company_name || u.user_metadata?.company_name || u.tenant?.company_name || u.tenant?.name || '';
                 loadedPhone = u.phone || u.phone_number || u.mobile || u.user_metadata?.phone || u.user_metadata?.phone_number || '';
                 
-                // If name is still empty, derive a clean readable name from email
                 if (!loadedName && loadedEmail) {
                     loadedName = loadedEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
                 }
 
-                // If company is not set, fallback to user entity name
                 if (!loadedCompany && loadedName) {
                     loadedCompany = `${loadedName}'s Entity`;
                 }
             }
 
-            // Check active branch if company is still empty
             const activeBranchStr = localStorage.getItem('beraxis_active_branch');
             if (activeBranchStr) {
                 try {
@@ -171,7 +174,6 @@ export default function CheckoutPage() {
                 } catch {}
             }
 
-            // Check dedicated profile phone or company keys in localStorage
             const savedPhone = localStorage.getItem('beraxis_user_phone') || localStorage.getItem('billing_phone');
             if (!loadedPhone && savedPhone) loadedPhone = savedPhone;
 
@@ -187,7 +189,6 @@ export default function CheckoutPage() {
                 cardHolder: prev.cardHolder || prev.name || loadedName,
             }));
 
-            // Non-blocking fetch to /auth/me if token exists to get latest profile fields
             const token = localStorage.getItem('token');
             if (token) {
                 fetchAPI('/auth/me')
@@ -230,11 +231,33 @@ export default function CheckoutPage() {
             return next;
         });
 
-        // Persist to localStorage so entered details survive reloads and other steps
         try {
             if (name === 'phone') localStorage.setItem('beraxis_user_phone', value);
             if (name === 'company') localStorage.setItem('beraxis_company_name', value);
         } catch {}
+    };
+
+    // Card Input Formatters
+    const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setErrorMessage(null);
+        const raw = e.target.value.replace(/\D/g, '').substring(0, 16);
+        const formatted = raw.match(/.{1,4}/g)?.join(' ') || raw;
+        setForm(prev => ({ ...prev, cardNumber: formatted }));
+    };
+
+    const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setErrorMessage(null);
+        let raw = e.target.value.replace(/\D/g, '').substring(0, 4);
+        if (raw.length >= 3) {
+            raw = raw.substring(0, 2) + '/' + raw.substring(2);
+        }
+        setForm(prev => ({ ...prev, expiry: raw }));
+    };
+
+    const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setErrorMessage(null);
+        const raw = e.target.value.replace(/\D/g, '').substring(0, 4);
+        setForm(prev => ({ ...prev, cvv: raw }));
     };
 
     const handleApplyPromo = async (e: React.MouseEvent) => {
@@ -268,7 +291,6 @@ export default function CheckoutPage() {
                 setAppliedPromoDetails(null);
             }
         } catch (err) {
-            // Fallback promo codes
             if (["FREE100", "BERAXIS100", "BERAXIS"].includes(code)) {
                 setDiscountAmountUSD(subtotal);
                 setPromoSuccess("🎉 100% Promo applied! Plan is $0.00.");
@@ -292,9 +314,28 @@ export default function CheckoutPage() {
 
     const handleCheckout = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrorMessage(null);
+
+        // Validate Card Details
+        const rawCard = form.cardNumber.replace(/\s+/g, '');
+        if (!rawCard || rawCard.length < 13) {
+            setErrorMessage("Please enter a valid 15 or 16-digit card number.");
+            return;
+        }
+
+        if (!form.expiry || form.expiry.length < 5 || !form.expiry.includes('/')) {
+            setErrorMessage("Please enter a valid expiry date (MM/YY).");
+            return;
+        }
+
+        if (!form.cvv || form.cvv.length < 3) {
+            setErrorMessage("Please enter a valid 3 or 4-digit CVV / Security code.");
+            return;
+        }
+
         setProcessing(true);
 
-        // Sync updated details back to user object in localStorage
+        // Sync details to localStorage
         try {
             const userStr = localStorage.getItem('user');
             if (userStr) {
@@ -309,50 +350,64 @@ export default function CheckoutPage() {
         } catch {}
 
         const currentPlanKey = subscriptionPlan?.tier || 'standard';
+        const isAnnual = (subscriptionPlan?.billingCycle || '').toLowerCase().includes('annual');
 
-        // 1. STRIPE GATEWAY FLOW
+        // 1. STRIPE DIRECT CARD PROCESSING
         if (paymentGateway === 'stripe') {
             try {
-                const res = await fetch('/api/payments/stripe/create-checkout-session', {
+                const res = await fetch('/api/payments/stripe/charge-card', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        planId: currentPlanKey,
-                        billingCycle: (subscriptionPlan?.billingCycle || '').toLowerCase().includes('annual') ? 'annual' : 'monthly',
-                        email: form.email || 'subscriber@beraxis.online',
-                        companyName: form.company || 'Enterprise Workspace',
-                        customerName: form.name || 'Beraxis Subscriber',
-                        usersCount: subscriptionPlan?.users || 1,
-                        returnUrl: `${window.location.origin}/checkout?stripe_status=success&plan=${currentPlanKey}`
+                        cardNumber: form.cardNumber,
+                        cardHolder: form.cardHolder || form.name,
+                        expiry: form.expiry,
+                        cvv: form.cvv,
+                        email: form.email,
+                        phone: form.phone,
+                        name: form.name,
+                        company: form.company,
+                        plan: currentPlanKey,
+                        billing: isAnnual ? 'annual' : 'monthly',
+                        users: subscriptionPlan?.users || 1
                     })
                 });
 
                 const data = await res.json();
-                if (data.url) {
-                    window.location.href = data.url;
+
+                if (!res.ok || !data.success) {
+                    setProcessing(false);
+                    setErrorMessage(data.error || "Payment was declined by Stripe. Please verify your card details or try another card.");
                     return;
-                } else {
-                    throw new Error(data.error || 'Failed to initiate Stripe Checkout session');
                 }
+
+                if (data.requiresAction && data.actionUrl) {
+                    // Redirect for 3D Secure Verification
+                    window.location.href = data.actionUrl;
+                    return;
+                }
+
+                // Payment successfully processed and verified!
+                setVerifiedTxId(data.subscriptionId || data.txnId || `STRIPE-${Date.now().toString(36).toUpperCase()}`);
+                try {
+                    localStorage.setItem('user_plan', currentPlanKey);
+                    localStorage.setItem('beraxis_user_plan', currentPlanKey);
+                    if (currentPlanKey === 'leadspool' || currentPlanKey === 'leads-pool') {
+                        localStorage.setItem('has_leads_pool_access', 'true');
+                    }
+                } catch {}
+
+                handleSuccess();
+                return;
             } catch (stripeErr: any) {
-                console.error('Stripe Checkout error:', stripeErr);
-                // Fallback simulation mode
-                setTimeout(() => {
-                    setVerifiedTxId(`STRIPE-SIM-${Date.now().toString(36).toUpperCase()}`);
-                    try {
-                        localStorage.setItem('user_plan', currentPlanKey);
-                        localStorage.setItem('beraxis_user_plan', currentPlanKey);
-                        if (currentPlanKey === 'leadspool' || currentPlanKey === 'leads-pool') {
-                            localStorage.setItem('has_leads_pool_access', 'true');
-                        }
-                    } catch {}
-                    handleSuccess();
-                }, 1200);
+                console.error('Stripe card charge error:', stripeErr);
+                setProcessing(false);
+                setErrorMessage(stripeErr.message || "Network error while connecting to Stripe. Please try again.");
                 return;
             }
         }
 
-        // 2. DIRECTPAY CARD GATEWAY FLOW (Card only, no wallets)
+        // 2. DIRECTPAY CARD GATEWAY
         const planDesc = subscriptionPlan 
             ? `${subscriptionPlan.name} ${subscriptionPlan.users} seats ${subscriptionPlan.billingCycle}`
             : cartItems.map(i => i.name).join(' ');
@@ -384,21 +439,13 @@ export default function CheckoutPage() {
                 window.location.href = data.paymentUrl;
                 return;
             } else {
-                throw new Error(data.error || 'Failed to initiate DirectPay card gateway');
+                setProcessing(false);
+                setErrorMessage(data.error || 'Failed to initiate DirectPay card gateway. Please try Stripe or contact support.');
             }
         } catch (err: any) {
             console.error('DirectPay Card checkout error:', err);
-            setTimeout(() => {
-                setVerifiedTxId(`DP-CARD-${Date.now().toString(36).toUpperCase()}`);
-                try {
-                    localStorage.setItem('user_plan', currentPlanKey);
-                    localStorage.setItem('beraxis_user_plan', currentPlanKey);
-                    if (currentPlanKey === 'leadspool' || currentPlanKey === 'leads-pool') {
-                        localStorage.setItem('has_leads_pool_access', 'true');
-                    }
-                } catch {}
-                handleSuccess();
-            }, 1500);
+            setProcessing(false);
+            setErrorMessage('Unable to connect to DirectPay gateway. Please check your network or try Stripe.');
         }
     };
 
@@ -426,7 +473,7 @@ export default function CheckoutPage() {
                     </div>
                 )}
                 <p className="text-gray-400 mb-8 max-w-md text-sm leading-relaxed">
-                    Thank you, <strong className="text-white">{form.name || 'valued customer'}</strong>. Your Beraxis subscription has been confirmed and activated with instant cloud provisioning.
+                    Thank you, <strong className="text-white">{form.name || 'valued customer'}</strong>. Your payment has been confirmed and your subscription is active.
                     {isLeadsPool && (
                         <span className="block mt-2 text-amber-300 font-medium">
                             🎯 1,500 Lead credits have been assigned to your workspace. The 25.8M+ Leads Pool is now fully unlocked!
@@ -530,12 +577,12 @@ export default function CheckoutPage() {
                             {/* Payment Gateway Selector */}
                             <div className="space-y-3">
                                 <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider">
-                                    Select Card Payment Gateway
+                                    Select Card Processing Gateway
                                 </label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         type="button"
-                                        onClick={() => setPaymentGateway('stripe')}
+                                        onClick={() => { setPaymentGateway('stripe'); setErrorMessage(null); }}
                                         className={`p-4 rounded-2xl border text-left transition-all ${
                                             paymentGateway === 'stripe'
                                                 ? 'bg-purple-600/15 border-purple-500 text-white shadow-lg shadow-purple-500/10 ring-1 ring-purple-500/30'
@@ -547,16 +594,16 @@ export default function CheckoutPage() {
                                                 <Globe size={18} className="text-purple-400" />
                                                 <span className="font-extrabold text-sm text-white">Stripe</span>
                                             </div>
-                                            <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded font-bold uppercase">Global (USD)</span>
+                                            <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded font-bold uppercase">USD Global</span>
                                         </div>
                                         <p className="text-[11px] text-gray-400 leading-snug">
-                                            Cards, Apple Pay, Google Pay, Amex &amp; International cards billed directly in USD.
+                                            Cards processed directly in USD via Stripe Global Gateway.
                                         </p>
                                     </button>
 
                                     <button
                                         type="button"
-                                        onClick={() => setPaymentGateway('directpay')}
+                                        onClick={() => { setPaymentGateway('directpay'); setErrorMessage(null); }}
                                         className={`p-4 rounded-2xl border text-left transition-all ${
                                             paymentGateway === 'directpay'
                                                 ? 'bg-purple-600/15 border-purple-500 text-white shadow-lg shadow-purple-500/10 ring-1 ring-purple-500/30'
@@ -568,94 +615,111 @@ export default function CheckoutPage() {
                                                 <CreditCard size={18} className="text-purple-400" />
                                                 <span className="font-extrabold text-sm text-white">DirectPay</span>
                                             </div>
-                                            <span className="text-[10px] bg-white/10 text-gray-300 px-2 py-0.5 rounded font-bold uppercase">Card (PKR)</span>
+                                            <span className="text-[10px] bg-white/10 text-gray-300 px-2 py-0.5 rounded font-bold uppercase">PKR Card</span>
                                         </div>
                                         <p className="text-[11px] text-gray-400 leading-snug">
-                                            Visa, Mastercard &amp; PayPak cards billed via DirectPay Gateway in PKR.
+                                            Visa, Mastercard &amp; PayPak cards billed via DirectPay in PKR.
                                         </p>
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Gateway Specific Card Payment Box */}
-                            {paymentGateway === 'stripe' ? (
-                                <div className="galaxy-card p-6 bg-[#0F172A]/40 border border-purple-500/30 space-y-4 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600/30 to-transparent px-4 py-1 text-[10px] font-bold text-purple-300 uppercase tracking-widest">
-                                        Stripe Hosted Checkout
-                                    </div>
+                            {/* Card Details Inputs (ALWAYS VISIBLE for both Stripe & DirectPay) */}
+                            <div className="galaxy-card p-6 bg-[#0F172A]/40 border border-purple-500/30 space-y-4 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600/30 to-transparent px-4 py-1 text-[10px] font-bold text-purple-300 uppercase tracking-widest">
+                                    {paymentGateway === 'stripe' ? 'Stripe Card Processing' : 'DirectPay Card Gateway'}
+                                </div>
 
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                                                <Globe size={18} />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-sm font-bold text-white">Stripe Global Card Payments</h3>
-                                                <p className="text-[11px] text-gray-400">Instant activation • 135+ Currencies • 3D Secure</p>
-                                            </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                                            <CreditCard size={18} />
                                         </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">VISA</span>
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">MC</span>
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">AMEX</span>
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">APPLE PAY</span>
+                                        <div>
+                                            <h3 className="text-sm font-bold text-white">Credit / Debit Card Details</h3>
+                                            <p className="text-[11px] text-gray-400">
+                                                {paymentGateway === 'stripe' ? 'Billed in USD via Stripe' : 'Billed in PKR via DirectPay'} • 256-bit SSL Encrypted
+                                            </p>
                                         </div>
                                     </div>
-
-                                    <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2 text-xs text-gray-300">
-                                        <div className="flex items-center justify-between">
-                                            <span>Billed in USD:</span>
-                                            <strong className="text-white font-mono text-sm">${total.toFixed(2)} USD</strong>
-                                        </div>
-                                        <p className="text-[11px] text-gray-400">
-                                            Clicking Proceed will open the Stripe Checkout portal pre-populated with your verified details (<strong className="text-white">{form.email || 'your email'}</strong>).
-                                        </p>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">VISA</span>
+                                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">MASTERCARD</span>
+                                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">AMEX</span>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="galaxy-card p-6 bg-[#0F172A]/40 border border-purple-500/30 space-y-4 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600/30 to-transparent px-4 py-1 text-[10px] font-bold text-purple-300 uppercase tracking-widest">
-                                        DirectPay Card Gateway
+
+                                <div className="space-y-3 pt-2">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-400 mb-1.5">Cardholder Name *</label>
+                                        <input
+                                            required
+                                            name="cardHolder"
+                                            value={form.cardHolder}
+                                            onChange={handleChange}
+                                            type="text"
+                                            placeholder="Full name as printed on card"
+                                            className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs"
+                                        />
                                     </div>
 
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                                                <CreditCard size={18} />
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-400 mb-1.5">Card Number *</label>
+                                        <div className="relative">
+                                            <input
+                                                required
+                                                name="cardNumber"
+                                                value={form.cardNumber}
+                                                onChange={handleCardNumberChange}
+                                                type="text"
+                                                maxLength={19}
+                                                placeholder="4242  ••••  ••••  4242"
+                                                className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs font-mono tracking-wider"
+                                            />
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                                                <Lock size={14} />
                                             </div>
-                                            <div>
-                                                <h3 className="text-sm font-bold text-white">Credit / Debit Card</h3>
-                                                <p className="text-[11px] text-gray-400">Visa, Mastercard, PayPak, UnionPay (Card Only)</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">VISA</span>
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">MC</span>
-                                            <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded font-mono font-bold text-gray-300">PAYPAK</span>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-3 pt-2">
+                                    <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-gray-400 mb-1.5">Cardholder Name *</label>
-                                            <input required={paymentGateway === 'directpay'} name="cardHolder" value={form.cardHolder} onChange={handleChange} type="text" placeholder="Cardholder full name" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs" />
+                                            <label className="block text-xs font-semibold text-gray-400 mb-1.5">Expiry Date *</label>
+                                            <input
+                                                required
+                                                name="expiry"
+                                                value={form.expiry}
+                                                onChange={handleExpiryChange}
+                                                type="text"
+                                                maxLength={5}
+                                                placeholder="MM/YY"
+                                                className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs font-mono"
+                                            />
                                         </div>
-
                                         <div>
-                                            <label className="block text-xs font-semibold text-gray-400 mb-1.5">Card Number *</label>
-                                            <input required={paymentGateway === 'directpay'} name="cardNumber" value={form.cardNumber} onChange={handleChange} type="text" maxLength={19} placeholder="4242 •••• •••• 4242" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs font-mono" />
+                                            <label className="block text-xs font-semibold text-gray-400 mb-1.5">CVV / Security Code *</label>
+                                            <input
+                                                required
+                                                name="cvv"
+                                                value={form.cvv}
+                                                onChange={handleCvvChange}
+                                                type="password"
+                                                maxLength={4}
+                                                placeholder="•••"
+                                                className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs font-mono"
+                                            />
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Expiry Date *</label>
-                                                <input required={paymentGateway === 'directpay'} name="expiry" value={form.expiry} onChange={handleChange} type="text" maxLength={5} placeholder="MM/YY" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs font-mono" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-semibold text-gray-400 mb-1.5">CVV / Security Code *</label>
-                                                <input required={paymentGateway === 'directpay'} name="cvv" value={form.cvv} onChange={handleChange} type="password" maxLength={4} placeholder="•••" className="w-full bg-[#070B16] border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 text-xs font-mono" />
-                                            </div>
-                                        </div>
+                            {/* Error Alert Banner */}
+                            {errorMessage && (
+                                <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs flex items-start gap-2.5 animate-in fade-in">
+                                    <AlertCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
+                                    <div className="leading-relaxed">
+                                        <strong className="block font-bold text-rose-200 mb-0.5">Payment Failed</strong>
+                                        {errorMessage}
                                     </div>
                                 </div>
                             )}
@@ -663,23 +727,23 @@ export default function CheckoutPage() {
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-purple-500/25 flex justify-center items-center gap-2 cursor-pointer transition-all active:scale-[0.99]"
+                                className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-purple-500/25 flex justify-center items-center gap-2 cursor-pointer transition-all active:scale-[0.99] disabled:opacity-60"
                             >
                                 {processing ? (
                                     <>
                                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Connecting to {paymentGateway === 'stripe' ? 'Stripe Gateway' : 'DirectPay Gateway'}...
+                                        Processing Card Payment securely...
                                     </>
                                 ) : (
                                     <>
-                                        <Lock size={18} /> {paymentGateway === 'stripe' ? `Pay $${total.toFixed(2)} USD via Stripe Checkout` : `Pay Rs ${totalPKR.toLocaleString()} PKR via DirectPay Card`}
+                                        <Lock size={18} /> {paymentGateway === 'stripe' ? `Pay $${total.toFixed(2)} USD with Card (Stripe)` : `Pay Rs ${totalPKR.toLocaleString()} PKR with Card (DirectPay)`}
                                     </>
                                 )}
                             </button>
 
                             <p className="text-center text-xs text-gray-500 flex items-center justify-center gap-1.5">
                                 <ShieldCheck size={14} className="text-emerald-400" /> 
-                                256-Bit SSL Encrypted Session (Zero Wallets • Direct Card Processing)
+                                256-Bit SSL Encrypted Session • Real-time 3D Secure Protection
                             </p>
                         </form>
                     </div>
