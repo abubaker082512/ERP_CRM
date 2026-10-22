@@ -1,13 +1,13 @@
 "use client";
 import { fetchAPI } from '@/lib/api';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ShopHeader from '@/components/shop/ShopHeader';
 import { CartItem } from '@/components/shop/CartModal';
-import { CreditCard, CheckCircle, ArrowLeft, ShieldCheck, Lock, Zap, Building2, Check, Globe, AlertCircle } from 'lucide-react';
+import { CreditCard, CheckCircle, ArrowLeft, ShieldCheck, Lock, Zap, Building2, Check, Globe, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -710,3 +710,16 @@ export default function CheckoutPage() {
         </div>
     );
 }
+
+export default function CheckoutPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#020205] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+            </div>
+        }>
+            <CheckoutPageContent />
+        </Suspense>
+    );
+}
+

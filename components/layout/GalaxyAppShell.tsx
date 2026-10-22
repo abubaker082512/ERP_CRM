@@ -177,32 +177,62 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         }
     }, [pathname]);
 
-    if (!mounted) return null;
+    const cleanPath = pathname || '';
 
-    // Don't show shell on landing, public demo, blog, login, signup, shop, checkout, billing, apps dashboard, main dashboard, meet room, or public booking page
-    const isLandingPage = 
-        pathname === '/' || 
-        pathname === '/pricing' || 
-        pathname === '/about' || 
-        pathname === '/contact' || 
-        pathname === '/leads-pool' || 
-        pathname === '/lead-pool' || 
-        pathname === '/blog' || 
-        (pathname && pathname.startsWith('/blog/')) ||
-        pathname === '/team' || 
-        pathname === '/pitch-deck' || 
-        pathname === '/presentation' || 
-        pathname === '/launch-creatives';
-    const isExcludedPage = pathname === '/apps' || pathname === '/dashboard' || pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/billing' || pathname === '/checkout' || pathname === '/shop' || (pathname && pathname.startsWith('/shop/')) || pathname === '/meet' || (pathname && pathname.startsWith('/meet/')) || (pathname && pathname.startsWith('/appointments/book/')) || isLandingPage;
-    
-    if (isExcludedPage) {
-        const isWorkspaceExcluded = pathname === '/apps' || pathname === '/dashboard' || pathname === '/billing';
+    // 1. All Public Marketing, SEO, Comparison, Industry, Feature, Blog, Legal, and Public Flow Pages
+    // These must render clean <BranchProvider>{children}</BranchProvider> on BOTH Server (SSR) and Client immediately!
+    // No hydration gates, no null returns — guarantees 100% full HTML output for crawlers (Semrush, Googlebot, etc.)
+    const isPublicMarketingPage = 
+        cleanPath === '' ||
+        cleanPath === '/' || 
+        cleanPath === '/pricing' || 
+        cleanPath === '/about' || 
+        cleanPath === '/contact' || 
+        cleanPath === '/team' || 
+        cleanPath === '/leads-pool' || 
+        cleanPath === '/lead-pool' || 
+        cleanPath === '/pitch-deck' || 
+        cleanPath === '/presentation' || 
+        cleanPath === '/launch-creatives' || 
+        cleanPath === '/privacy' || 
+        cleanPath === '/terms' || 
+        cleanPath === '/sla' || 
+        cleanPath === '/security' || 
+        cleanPath === '/cookies' || 
+        cleanPath === '/login' || 
+        cleanPath === '/signup' || 
+        cleanPath === '/forgot-password' || 
+        cleanPath === '/checkout' || 
+        cleanPath.startsWith('/blog') || 
+        cleanPath.startsWith('/compare') || 
+        cleanPath.startsWith('/features') || 
+        cleanPath.startsWith('/industries') || 
+        cleanPath.startsWith('/shop') || 
+        cleanPath.startsWith('/meet') || 
+        cleanPath.startsWith('/appointments/book');
+
+    if (isPublicMarketingPage) {
         return (
             <BranchProvider>
                 {children}
-                {isWorkspaceExcluded && (
+            </BranchProvider>
+        );
+    }
+
+    // 2. Standalone Workspace Cockpits (e.g. /apps, /dashboard, /billing)
+    // Render full-bleed page with children; mount interactive client floating widgets only when mounted on client.
+    const isStandaloneWorkspace = 
+        cleanPath === '/apps' || 
+        cleanPath === '/dashboard' || 
+        cleanPath === '/billing';
+
+    if (isStandaloneWorkspace) {
+        return (
+            <BranchProvider>
+                {children}
+                {mounted && (
                     <>
-                        {pathname !== '/apps' && <BeraxisSupportWidgets />}
+                        {cleanPath !== '/apps' && <BeraxisSupportWidgets />}
                         <InactivitySessionTracker />
                         <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />
                     </>
@@ -284,10 +314,10 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                         </div>
                         <div className="flex items-center gap-2 mb-2">
                             <ShieldCheck size={14} className="text-purple-400" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">{planLabel}</span>
+                            <span suppressHydrationWarning className="text-[10px] font-bold uppercase tracking-widest text-purple-400">{planLabel}</span>
                         </div>
-                        <p className="text-xs text-gray-300 font-medium">{planTitle}</p>
-                        <p className="text-[10px] text-gray-500 mt-1">{planSubtitle}</p>
+                        <p suppressHydrationWarning className="text-xs text-gray-300 font-medium">{planTitle}</p>
+                        <p suppressHydrationWarning className="text-[10px] text-gray-500 mt-1">{planSubtitle}</p>
                     </div>
                 </div>
 
@@ -310,7 +340,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                     <div className="fixed bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-pink-600/5 blur-[120px] rounded-full pointer-events-none" style={{zIndex:0}}></div>
                     
                     <div className="relative z-10 p-8 min-h-full">
-                        <WorkspaceModuleGuard pathname={pathname || ""}>
+                        <WorkspaceModuleGuard pathname={cleanPath}>
                             {children}
                         </WorkspaceModuleGuard>
                     </div>
@@ -318,13 +348,13 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
             </main>
 
             {/* Persistent Support Widgets: WhatsApp on Left, AI Support on Right */}
-            <BeraxisSupportWidgets />
+            {mounted && <BeraxisSupportWidgets />}
 
             {/* Inactivity Auto-Logout & Session Tracker (1 minute idle limit) */}
-            <InactivitySessionTracker />
+            {mounted && <InactivitySessionTracker />}
 
             {/* Antigravity Cockpit Overlay */}
-            <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />
+            {mounted && <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />}
                 </div>{/* end flex-1 overflow-hidden */}
             </div>
         </BranchProvider>
