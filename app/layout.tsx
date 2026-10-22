@@ -10,7 +10,7 @@ import GalaxyAppShell from "@/components/layout/GalaxyAppShell";
 export const metadata: Metadata = {
     metadataBase: new URL("https://www.beraxis.online"),
     title: {
-        default: "Beraxis | Free ERP, Free CRM & Free POS · Autonomous AI Suite",
+        default: "Beraxis | Free ERP, Free CRM & Free POS · 25M+ B2B Leads Pool ($1/mo)",
         template: "%s | Beraxis"
     },
     description: "Forever Free Tier available for Free CRM, Free POS & Free ERP. Unify 28 AI modules — CRM, 25M+ verified B2B leads directory, POS, multi-industry operations, double-entry accounting, inventory, and HRMS for just $1/month.",
@@ -64,8 +64,34 @@ export const metadata: Metadata = {
         "Voice AI business assistant",
         "Enterprise Resource Planning",
         "1 dollar ERP",
+        "one dollar ERP software",
+        "free ERP with B2B leads pool",
+        "free CRM with unlimited users",
+        "free retail POS software",
+        "Odoo alternative",
+        "Odoo free alternative 2026",
+        "HubSpot free alternative",
+        "QuickBooks alternative with CRM",
+        "Toast POS alternative",
+        "Square POS alternative for small business",
+        "Apollo alternative with built-in CRM",
+        "padel club management software",
+        "padel court booking and POS system",
+        "automotive garage workshop ERP",
+        "dental clinic patient management software",
+        "bakery recipe costing POS system",
+        "real estate lease management CRM",
+        "subcontractor project costing ERP",
+        "non-profit grant tracking CRM",
+        "ERP with 25 million B2B leads",
+        "Voice AI autonomous ERP copilot",
         "Affordable ERP software"
     ],
+    other: {
+        "revisit-after": "1 days",
+        "rating": "General",
+        "distribution": "Global",
+    },
     authors: [{ name: "Beraxis Team", url: "https://www.beraxis.online" }],
     creator: "Beraxis Platform",
     publisher: "Beraxis Systems",
@@ -216,6 +242,16 @@ export default function RootLayout({
                         "description": "Early Bird Plan: $1/seat/month billed annually ($12/year) or $5/seat/month month-to-month. All 28 enterprise modules included with 1,500 lead credits/month."
                     }
                 ],
+                "featureList": [
+                    "Autonomous AI Voice Pilot Cockpit",
+                    "25M+ Verified B2B Leads Pool Directory",
+                    "Double-Entry General Ledger & Accounting",
+                    "Visual Kanban CRM & Sales Pipeline",
+                    "Omnichannel Touch Point of Sale (POS)",
+                    "Multi-Warehouse Inventory & Barcode Tracking",
+                    "HRMS, Attendance & Payroll Management",
+                    "12 Industry Operational Blueprints"
+                ],
                 "description": "Beraxis is an autonomous AI ERP & CRM platform featuring Free CRM, Free POS, and Free ERP modules, 25M+ B2B Leads Pool, accounting, inventory, and Voice Pilot for $1/month.",
                 "url": "https://www.beraxis.online"
             },
@@ -223,6 +259,38 @@ export default function RootLayout({
                 "@type": "FAQPage",
                 "@id": "https://www.beraxis.online/#faq",
                 "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": "What is the best free ERP and CRM in 2026?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Beraxis is rated one of the best free ERP and CRM platforms in 2026, offering a Forever Free tier that unifies CRM pipelines, double-entry accounting, point of sale (POS), and inventory management with an AI Voice Pilot and 25M+ verified B2B leads."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "How does Beraxis compare to Odoo and HubSpot?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Unlike Odoo (which charges high fees per module) and HubSpot (which imposes steep pricing tiers based on contact counts), Beraxis includes all 28 modules, unlimited user seats, and 1,500 monthly lead generation credits for just $1.00/month."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Is there really an ERP for $1 per month?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Yes! Beraxis provides an Early Bird Standard Plan for $1.00 per month ($12 billed annually) that unlocks all 28 business applications—including accounting, payroll, CRM, multi-warehouse inventory, touch POS, and 1,500 lead credits per month."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Does Beraxis offer software for padel clubs and sports venues?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Yes! Beraxis includes a specialized padel and fitness archetype featuring automated court booking, member subscriptions, racket rental inventory, and front-desk touch POS."
+                        }
+                    },
                     {
                         "@type": "Question",
                         "name": "Does Beraxis offer a Free CRM, Free POS, and Free ERP?",
