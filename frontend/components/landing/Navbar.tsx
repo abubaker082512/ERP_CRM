@@ -99,8 +99,8 @@ export default function Navbar() {
  
             {/* Mobile Menu */}
             {isOpen && (
-                <div className="md:hidden bg-[#0F172A]/95 backdrop-blur-xl border-b border-white/10 absolute w-full">
-                    <div className="px-4 pt-2 pb-6 space-y-2 flex flex-col">
+                <div className="md:hidden bg-[#0F172A]/98 backdrop-blur-2xl border-b border-white/10 absolute top-full left-0 right-0 w-full shadow-2xl max-h-[calc(100vh-80px)] overflow-y-auto">
+                    <div className="px-4 pt-3 pb-8 space-y-2 flex flex-col">
                         <Link href="/" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Home</Link>
                         <Link href="/leads-pool" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-semibold text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 rounded-md">
                             🎯 Lead Pool (25M+ Directory)

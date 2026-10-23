@@ -15,8 +15,20 @@ export default function InactivitySessionTracker() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Skip inactivity timer on public / auth pages
-    const isAuthPage = pathname === "/login" || pathname === "/signup" || pathname.startsWith("/appointments/book");
+    // Skip inactivity timer on public, landing, and auth pages
+    const isPublicPage = pathname === "/" || 
+        pathname === "/login" || 
+        pathname === "/signup" || 
+        pathname === "/pricing" || 
+        pathname.startsWith("/compare") || 
+        pathname.startsWith("/industries") || 
+        pathname.startsWith("/features") || 
+        pathname.startsWith("/blog") || 
+        pathname.startsWith("/about") || 
+        pathname.startsWith("/contact") || 
+        pathname.startsWith("/leads-pool") || 
+        pathname.startsWith("/lead-pool") || 
+        pathname.startsWith("/appointments/book");
 
     const resetIdleTimer = () => {
         setIdleSeconds(0);
@@ -66,7 +78,7 @@ export default function InactivitySessionTracker() {
         const token = localStorage.getItem("token");
         setIsLoggedIn(!!token);
 
-        if (!token || isAuthPage) {
+        if (!token || isPublicPage) {
             if (intervalRef.current) clearInterval(intervalRef.current);
             return;
         }

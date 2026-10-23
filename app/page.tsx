@@ -160,39 +160,38 @@ export default function Home() {
                 </div>
 
                 {/* Glassmorphic Application Browser Window with Real System Picture */}
-                <div className="relative border border-white/15 bg-[#0F172A]/90 backdrop-blur-2xl shadow-[0_0_80px_rgba(139,92,246,0.2)] rounded-3xl overflow-hidden group hover:border-purple-500/40 transition-all duration-500">
-                    
-                    {/* Window Title Bar */}
-                    <div className="bg-[#141A28]/95 border-b border-white/10 px-4 py-3 flex items-center justify-between gap-3 text-xs">
-                        <div className="flex items-center gap-2 shrink-0">
-                            <span className="w-3 h-3 rounded-full bg-[#EF4444]/90 inline-block shadow-sm"></span>
-                            <span className="w-3 h-3 rounded-full bg-[#F59E0B]/90 inline-block shadow-sm"></span>
-                            <span className="w-3 h-3 rounded-full bg-[#10B981]/90 inline-block shadow-sm"></span>
+                <div className="relative border border-white/15 bg-[#0F172A]/90 backdrop-blur-2xl shadow-[0_0_80px_rgba(139,92,246,0.2)] rounded-3xl overflow-hidden group hover:border-purple-500/40 transition-all duration-500">                    {/* Window Title Bar */}
+                    <div className="bg-[#141A28]/95 border-b border-white/10 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3 text-xs">
+                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                            <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#EF4444]/90 inline-block shadow-sm"></span>
+                            <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#F59E0B]/90 inline-block shadow-sm"></span>
+                            <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#10B981]/90 inline-block shadow-sm"></span>
                         </div>
 
                         {/* URL / Location Bar */}
-                        <div className="flex-1 max-w-xl mx-auto flex items-center justify-center gap-2 bg-[#070B16] border border-white/10 rounded-xl px-3 py-1.5 text-gray-300 text-[11px] font-mono shadow-inner">
-                            <Lock size={12} className="text-emerald-400 shrink-0" />
+                        <div className="flex-1 max-w-xl mx-auto flex items-center justify-center gap-1.5 sm:gap-2 bg-[#070B16] border border-white/10 rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 text-gray-300 text-[10px] sm:text-[11px] font-mono shadow-inner min-w-0">
+                            <Lock size={11} className="text-emerald-400 shrink-0" />
                             <span className="truncate">{activeScreen.url}</span>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
-                            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-semibold">
+                            <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-semibold">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                                 Live Production Screen
                             </span>
                             <Link
                                 href={activeScreen.ctaHref}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-purple-600/20"
+                                className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-purple-600/20 whitespace-nowrap"
                             >
-                                <span>{activeScreen.ctaText}</span>
+                                <span className="hidden sm:inline">{activeScreen.ctaText}</span>
+                                <span className="inline sm:hidden">Open</span>
                                 <ArrowRight size={12} />
                             </Link>
                         </div>
                     </div>
 
                     {/* Image Container with Ambient Glow and Hover Zoom */}
-                    <div className="relative overflow-hidden bg-[#070B16] aspect-[16/10] sm:aspect-[16/9]">
+                    <div className="relative overflow-hidden bg-[#070B16] aspect-[4/3] sm:aspect-[16/9]">
                         <picture>
                             <source srcSet={activeScreen.imageWebp} type="image/webp" />
                             <img
@@ -205,24 +204,24 @@ export default function Home() {
                         </picture>
 
                         {/* Subtle bottom gradient overlay for smooth visual blending */}
-                        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#020205] via-[#020205]/40 to-transparent pointer-events-none"></div>
+                        <div className="absolute inset-x-0 bottom-0 h-20 sm:h-28 bg-gradient-to-t from-[#020205] via-[#020205]/60 to-transparent pointer-events-none"></div>
 
                         {/* Caption floating card */}
-                        <div className="absolute bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-md bg-[#0F172A]/95 backdrop-blur-md border border-white/15 rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4">
-                            <div>
-                                <span className="text-[10px] font-mono uppercase tracking-wider text-purple-400 font-extrabold block mb-0.5">
+                        <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-6 sm:right-auto sm:max-w-md bg-[#0F172A]/95 backdrop-blur-md border border-white/15 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-2xl flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                                <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-purple-400 font-extrabold block mb-0.5">
                                     {activeScreen.tag}
                                 </span>
-                                <h4 className="text-xs sm:text-sm font-bold text-white leading-tight">
+                                <h4 className="text-xs sm:text-sm font-bold text-white leading-tight truncate sm:whitespace-normal">
                                     {activeScreen.title}
                                 </h4>
-                                <p className="text-[11px] text-gray-400 mt-1 leading-snug line-clamp-1">
+                                <p className="text-[10px] sm:text-[11px] text-gray-400 mt-0.5 sm:mt-1 leading-snug line-clamp-1">
                                     {activeScreen.subtitle}
                                 </p>
                             </div>
                             <Link
                                 href={activeScreen.ctaHref}
-                                className="shrink-0 bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-xl border border-white/10 transition-colors"
+                                className="shrink-0 bg-white/10 hover:bg-white/20 text-white p-2 sm:p-2.5 rounded-lg sm:rounded-xl border border-white/10 transition-colors"
                                 title="Open Live View"
                             >
                                 <ArrowRight size={14} />

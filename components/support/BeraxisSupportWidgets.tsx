@@ -242,12 +242,12 @@ export default function BeraxisSupportWidgets() {
             {/* ========================================================= */}
             {/* 1. WHATSAPP SUPPORT BUTTON (ON THE BOTTOM-LEFT)           */}
             {/* ========================================================= */}
-            <div className="fixed bottom-5 left-5 z-[90] flex items-center group">
+            <div className="fixed bottom-4 left-4 sm:bottom-5 sm:left-5 z-[90] flex items-center group">
                 <a
                     href="https://wa.me/19707807993?text=Hi%20Beraxis%20Support%2C%20I%20need%20assistance%20with%20my%20workspace"
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-2.5 bg-[#25D366] hover:bg-[#20BA56] text-white pl-3.5 pr-4 py-2.5 rounded-full shadow-[0_4px_25px_rgba(37,211,102,0.45)] hover:shadow-[0_6px_30px_rgba(37,211,102,0.6)] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20"
+                    className="flex items-center gap-2 bg-[#25D366] hover:bg-[#20BA56] text-white p-2.5 sm:pl-3.5 sm:pr-4 py-2.5 rounded-full shadow-[0_4px_25px_rgba(37,211,102,0.45)] hover:shadow-[0_6px_30px_rgba(37,211,102,0.6)] transition-all duration-300 hover:scale-105 active:scale-95 border border-white/20"
                     title="Chat with WhatsApp Support"
                 >
                     {/* Official WhatsApp SVG Logo */}
@@ -263,20 +263,20 @@ export default function BeraxisSupportWidgets() {
             {/* ========================================================= */}
             {/* 2. VOICE OPERATIONS + AI SUPPORT BUTTONS (BOTTOM-RIGHT)   */}
             {/* ========================================================= */}
-            <div className="fixed bottom-5 right-5 z-[90] flex items-center gap-2.5">
+            <div className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-[90] flex items-center gap-2 sm:gap-2.5">
                 <button
                     onClick={() => {
                         setIsOpen(false);
                         window.dispatchEvent(new CustomEvent("open-voice-pilot"));
                     }}
-                    className="flex items-center gap-2 text-white pl-3.5 pr-4 py-2.5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 border border-pink-400/30 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-rose-500 shadow-[0_4px_25px_rgba(236,72,153,0.45)] cursor-pointer"
+                    className="flex items-center gap-1.5 sm:gap-2 text-white p-2.5 sm:pl-3.5 sm:pr-4 py-2.5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 border border-pink-400/30 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-rose-500 shadow-[0_4px_25px_rgba(236,72,153,0.45)] cursor-pointer"
                     title="Launch Beraxis Voice Operations (Alt+V)"
                 >
                     <div className="relative">
                         <Mic className="w-4 h-4 animate-pulse" />
                         <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-900" />
                     </div>
-                    <span className="font-bold text-xs tracking-wide">
+                    <span className="font-bold text-xs tracking-wide hidden sm:inline">
                         Voice Ops
                     </span>
                 </button>
@@ -284,7 +284,7 @@ export default function BeraxisSupportWidgets() {
                 <button
                     id="beraxis-ai-support-toggle"
                     onClick={() => setIsOpen(!isOpen)}
-                    className={`flex items-center gap-2 text-white pl-4 pr-4 sm:pr-5 py-2.5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 border cursor-pointer ${
+                    className={`flex items-center gap-1.5 sm:gap-2 text-white p-2.5 sm:pl-4 sm:pr-5 py-2.5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 border cursor-pointer ${
                         isOpen 
                             ? "bg-purple-700 border-purple-400 shadow-[0_0_25px_rgba(168,85,247,0.6)]" 
                             : "bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:from-sky-400 hover:to-purple-500 border-white/20 shadow-[0_4px_25px_rgba(99,102,241,0.45)]"
@@ -295,7 +295,7 @@ export default function BeraxisSupportWidgets() {
                         <Bot className="w-5 h-5 animate-pulse" />
                         <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-900" />
                     </div>
-                    <span className="font-bold text-xs tracking-wide">
+                    <span className="font-bold text-xs tracking-wide hidden sm:inline">
                         {isOpen ? "Close AI" : "AI Support"}
                     </span>
                 </button>
@@ -307,7 +307,7 @@ export default function BeraxisSupportWidgets() {
             {isOpen && (
                 <div 
                     ref={widgetRef}
-                    className="fixed bottom-20 right-4 sm:right-6 z-[100] w-[94vw] sm:w-[420px] max-h-[82vh] h-[540px] bg-[#0A0E1A]/98 backdrop-blur-2xl rounded-2xl border border-purple-500/40 shadow-[0_20px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
+                    className="fixed bottom-16 inset-x-3 sm:inset-x-auto sm:right-6 sm:bottom-20 z-[100] sm:w-[420px] max-h-[82vh] h-[540px] bg-[#0A0E1A]/98 backdrop-blur-2xl rounded-2xl border border-purple-500/40 shadow-[0_20px_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
                 >
                     {/* Header */}
                     <div className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0">
