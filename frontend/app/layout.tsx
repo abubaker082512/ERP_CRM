@@ -6,6 +6,8 @@ const inter = Inter({ subsets: ["latin"] });
 
 import CosmicBackground from "@/components/CosmicBackground";
 import GalaxyAppShell from "@/components/layout/GalaxyAppShell";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
     metadataBase: new URL("https://www.beraxis.online"),
@@ -426,6 +428,8 @@ export default function RootLayout({
                 <div className="aurora-bg" />
                 <CosmicBackground />
                 <GalaxyAppShell>{children}</GalaxyAppShell>
+                <Analytics />
+                <SpeedInsights />
             </body>
         </html>
     );
