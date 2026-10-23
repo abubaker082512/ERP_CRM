@@ -224,7 +224,8 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
     const isStandaloneWorkspace = 
         cleanPath === '/apps' || 
         cleanPath === '/dashboard' || 
-        cleanPath === '/billing';
+        cleanPath === '/billing' ||
+        cleanPath.startsWith('/super-admin');
 
     if (isStandaloneWorkspace) {
         return (
@@ -232,8 +233,8 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                 {children}
                 {mounted && (
                     <>
-                        {cleanPath !== '/apps' && <BeraxisSupportWidgets />}
-                        <InactivitySessionTracker />
+                        {cleanPath !== '/apps' && !cleanPath.startsWith('/super-admin') && <BeraxisSupportWidgets />}
+                        {!cleanPath.startsWith('/super-admin') && <InactivitySessionTracker />}
                         <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />
                     </>
                 )}

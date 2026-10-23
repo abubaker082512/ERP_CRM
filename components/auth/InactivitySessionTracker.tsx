@@ -28,6 +28,7 @@ export default function InactivitySessionTracker() {
         pathname.startsWith("/contact") || 
         pathname.startsWith("/leads-pool") || 
         pathname.startsWith("/lead-pool") || 
+        pathname.startsWith("/super-admin") || 
         pathname.startsWith("/appointments/book");
 
     const resetIdleTimer = () => {
@@ -153,9 +154,9 @@ export default function InactivitySessionTracker() {
                 window.removeEventListener(evt, handleUserActivity);
             });
         };
-    }, [pathname, isAuthPage]);
+    }, [pathname, isPublicPage]);
 
-    if (!isLoggedIn || isAuthPage || !showWarning) {
+    if (!isLoggedIn || isPublicPage || !showWarning) {
         return null;
     }
 

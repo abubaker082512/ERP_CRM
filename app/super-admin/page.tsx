@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { fetchAPI } from '@/lib/api';
 import { useEffect, useState } from 'react';
 import {
@@ -109,7 +110,65 @@ const STATUS_STYLES: Record<string, string> = {
     new:       "bg-gray-700/40 text-gray-400 border border-gray-700",
 };
 
-export default function SuperAdminPage() {
+
+class SuperAdminErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error };
+    }
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.error("[SuperAdmin caught error]:", error, errorInfo);
+    }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="min-h-screen bg-[#0A0E17] text-white flex items-center justify-center p-6">
+                    <div className="max-w-xl w-full bg-[#111827] border border-purple-500/40 rounded-3xl p-8 shadow-2xl text-center space-y-5">
+                        <div className="w-16 h-16 rounded-2xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-400 mx-auto">
+                            <ShieldCheck size={32} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-white">Super Admin Command Center</h2>
+                            <p className="text-xs text-gray-400 mt-1">A client-side state issue was safely contained. You can reset local cache and reload:</p>
+                            <p className="text-xs text-purple-300 font-mono bg-purple-950/40 p-3 rounded-xl border border-purple-500/20 mt-3 text-left overflow-x-auto whitespace-pre-wrap">
+                                {this.state.error?.message || "Super Admin view refreshed"}
+                            </p>
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                            <button
+                                onClick={() => {
+                                    this.setState({ hasError: false, error: null });
+                                    window.location.reload();
+                                }}
+                                className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-lg shadow-purple-600/30 cursor-pointer"
+                            >
+                                Reload Dashboard
+                            </button>
+                            <button
+                                onClick={() => {
+                                    try {
+                                        localStorage.removeItem("beraxis_global_announcement");
+                                        localStorage.removeItem("token");
+                                    } catch {}
+                                    window.location.reload();
+                                }}
+                                className="bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-xs px-5 py-2.5 rounded-xl border border-gray-700 cursor-pointer"
+                            >
+                                Reset Cache & Reload
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+function SuperAdminPageContent() {
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [users, setUsers] = useState<GlobalUser[]>([]);
     const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -329,11 +388,13 @@ export default function SuperAdminPage() {
     const [isLoggedIn, setIsLoggedIn] = useState(true);
     const [isColdStarting, setIsColdStarting] = useState(false);
 
-    const formatTxDate = (d) => {
+    const formatTxDate = (d: any): string => {
         if (!d) return "Recently";
         try {
-            const date = new Date(d);
-            if (isNaN(date.getTime())) return "Recently";
+            const val = typeof d === "object" ? (d?.toISOString ? d.toISOString() : (d?.date || d?.created_at || String(d))) : d;
+            const num = typeof val === "number" && val < 10000000000 ? val * 1000 : val;
+            const date = new Date(num);
+            if (isNaN(date.getTime())) return typeof val === "string" ? val : "Recently";
             return date.toLocaleString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -341,7 +402,7 @@ export default function SuperAdminPage() {
                 minute: "2-digit"
             });
         } catch {
-            return "Recently";
+            return typeof d === "string" ? d : "Recently";
         }
     };
 
@@ -467,6 +528,23 @@ export default function SuperAdminPage() {
             if (res.ok) {
                 const data = await res.json();
                 if (data && typeof data === 'object' && data.message) {
+                    const localSaved = typeof window !== 'undefined' ? localStorage.getItem("beraxis_global_announcement") : null;
+                    if (localSaved) {
+                        try {
+                            const localParsed = JSON.parse(localSaved);
+                            if (localParsed?.message && localParsed?.updated_at && data.updated_at) {
+                                if (new Date(localParsed.updated_at) > new Date(data.updated_at)) {
+                                    fetch("/api/admin/announcement", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify(localParsed)
+                                    }).catch(() => null);
+                                    setAnnouncement(localParsed);
+                                    return;
+                                }
+                            }
+                        } catch {}
+                    }
                     setAnnouncement(data);
                     if (typeof window !== 'undefined') {
                         localStorage.setItem("beraxis_global_announcement", JSON.stringify(data));
@@ -929,26 +1007,37 @@ export default function SuperAdminPage() {
     // ── ANNOUNCEMENT BANNER SAVE ──────────────────────────────────────
     const handleSaveAnnouncement = async (e: React.FormEvent) => {
         e.preventDefault();
+        const updatedAnn = {
+            ...announcement,
+            updated_at: new Date().toISOString()
+        };
+        setAnnouncement(updatedAnn);
         try {
             if (typeof window !== 'undefined') {
-                localStorage.setItem("beraxis_global_announcement", JSON.stringify(announcement));
+                localStorage.setItem("beraxis_global_announcement", JSON.stringify(updatedAnn));
+                window.dispatchEvent(new CustomEvent("beraxis-announcement-updated", { detail: updatedAnn }));
             }
             const res = await fetch("/api/admin/announcement", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(announcement)
+                body: JSON.stringify(updatedAnn)
             });
             if (res.ok) {
                 const data = await res.json();
-                if (data.announcement) setAnnouncement(data.announcement);
+                if (data.announcement) {
+                    setAnnouncement(data.announcement);
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem("beraxis_global_announcement", JSON.stringify(data.announcement));
+                    }
+                }
             }
             fetchAPI("/super-admin/announcement", {
                 method: "POST",
-                body: JSON.stringify(announcement)
+                body: JSON.stringify(updatedAnn)
             }).catch(() => null);
-            showToast("📢 Global announcement banner updated and permanently saved!");
+            showToast("📢 Global announcement broadcast saved and published live!");
         } catch (err) {
-            showToast("📢 Global announcement banner updated locally!");
+            showToast("📢 Global announcement broadcast saved locally!");
         }
     };
 
@@ -1019,13 +1108,13 @@ export default function SuperAdminPage() {
     };
 
     // Safe filtered lists
-    const safeWorkspaces = Array.isArray(workspaces) ? workspaces : [];
-    const safePromocodes = Array.isArray(promocodes) ? promocodes : [];
-    const safeUsers = Array.isArray(users) ? users : [];
-    const safeSales = Array.isArray(sales) ? sales : [];
-    const safeTenants = Array.isArray(tenants) ? tenants : [];
-    const safePayments = Array.isArray(payments) ? payments : [];
-    const safeAuditLogs = Array.isArray(auditLogs) ? auditLogs : [];
+    const safeWorkspaces = Array.isArray(workspaces) ? workspaces.filter(Boolean) : [];
+    const safePromocodes = Array.isArray(promocodes) ? promocodes.filter(Boolean) : [];
+    const safeUsers = Array.isArray(users) ? users.filter(Boolean) : [];
+    const safeSales = Array.isArray(sales) ? sales.filter(Boolean) : [];
+    const safeTenants = Array.isArray(tenants) ? tenants.filter(Boolean) : [];
+    const safePayments = Array.isArray(payments) ? payments.filter(Boolean) : [];
+    const safeAuditLogs = Array.isArray(auditLogs) ? auditLogs.filter(Boolean) : [];
 
     const filteredWorkspaces = safeWorkspaces.filter(ws =>
         (ws?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1050,9 +1139,9 @@ export default function SuperAdminPage() {
         (p?.email || "").toLowerCase().includes(paymentSearchTerm.toLowerCase()) ||
         (p?.payment_status || "").toLowerCase().includes(paymentSearchTerm.toLowerCase()));
 
-    const paidPayments = filteredPayments.filter(p => p.payment_status === "active");
-    const pendingPayments = filteredPayments.filter(p => p.payment_status !== "active");
-    const monthlySaaSRevenue = paidPayments.reduce((acc, p) => acc + (Number(p.amount_usd) || 0), 0);
+    const paidPayments = filteredPayments.filter(p => p && p.payment_status === "active");
+    const pendingPayments = filteredPayments.filter(p => p && p.payment_status !== "active");
+    const monthlySaaSRevenue = paidPayments.reduce((acc, p) => acc + (Number(p?.amount_usd) || 0), 0);
 
     return (
         <div className="space-y-8 pb-20 text-slate-100 min-h-screen bg-[#0A0E17]">
@@ -1157,10 +1246,10 @@ export default function SuperAdminPage() {
                     <StatCard label="Total Users"     value={stats?.total_users ?? safeUsers.length}                                        icon={<Users size={18}/>}       color="text-purple-400" bg="bg-purple-500/10" />
                     <StatCard label="Active Promos"   value={safePromocodes.filter(p => p?.status === 'active').length}                      icon={<Tag size={18}/>}         color="text-pink-400"   bg="bg-pink-500/10" />
                     <StatCard label="Paid Subs"       value={stats?.paid_subscribers ?? paidPayments.length}                           icon={<CheckCircle size={18}/>} color="text-emerald-400" bg="bg-emerald-500/10" />
-                    <StatCard label="DirectPay Card"  value={`$${(stats?.cc_revenue ?? monthlySaaSRevenue).toLocaleString()}`}         icon={<CreditCard size={18}/>}  color="text-cyan-400"    bg="bg-cyan-500/10" />
-                    <StatCard label="Monthly MRR"     value={`$${(stats?.total_saas_revenue ?? monthlySaaSRevenue).toLocaleString()}`}  icon={<TrendingUp size={18}/>}  color="text-amber-400"  bg="bg-amber-500/10" />
-                    <StatCard label="ERP Volume"      value={`$${(stats?.platform_revenue ?? 0).toLocaleString(undefined,{minimumFractionDigits:0})}`} icon={<DollarSign size={18}/>} color="text-green-400" bg="bg-green-500/10" title="Total gross sales invoiced and transacted by all tenant businesses inside their ERP modules" />
-                    <StatCard label="API Latency"     value={`${health?.services?.api_server?.latency_ms ?? 18}ms`}                    icon={<Activity size={18}/>}    color="text-indigo-400" bg="bg-indigo-500/10" />
+                    <StatCard label="DirectPay Card"  value={`$${Number(stats?.cc_revenue ?? monthlySaaSRevenue ?? 0).toLocaleString()}`}         icon={<CreditCard size={18}/>}  color="text-cyan-400"    bg="bg-cyan-500/10" />
+                    <StatCard label="Monthly MRR"     value={`$${Number(stats?.total_saas_revenue ?? stats?.mrr ?? monthlySaaSRevenue ?? 0).toLocaleString()}`}  icon={<TrendingUp size={18}/>}  color="text-amber-400"  bg="bg-amber-500/10" />
+                    <StatCard label="ERP Volume"      value={`$${Number(stats?.platform_revenue ?? stats?.total_revenue ?? 0).toLocaleString(undefined,{minimumFractionDigits:0})}`} icon={<DollarSign size={18}/>} color="text-green-400" bg="bg-green-500/10" title="Total gross sales invoiced and transacted by all tenant businesses inside their ERP modules" />
+                    <StatCard label="API Latency"     value={`${health?.services?.api_server?.latency_ms ?? health?.latency_ms ?? 18}ms`}                    icon={<Activity size={18}/>}    color="text-indigo-400" bg="bg-indigo-500/10" />
                 </div>
 
                 {/* ── NAVIGATION TABS ── */}
@@ -3333,10 +3422,17 @@ export default function SuperAdminPage() {
 }
 
 // ── SUB-COMPONENTS & HELPERS ───────────────────────────────────────────
-function fmtDate(d: string) {
+function fmtDate(d: any): string {
     if (!d) return "—";
-    try { return new Date(d).toLocaleDateString(undefined, { dateStyle: "medium" }); }
-    catch { return d; }
+    try {
+        const val = typeof d === "object" ? (d?.toISOString ? d.toISOString() : (d?.date || d?.created_at || String(d))) : d;
+        const num = typeof val === "number" && val < 10000000000 ? val * 1000 : val;
+        const date = new Date(num);
+        if (isNaN(date.getTime())) return typeof val === "string" ? val : "—";
+        return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    } catch {
+        return typeof d === "string" ? d : "—";
+    }
 }
 
 function StatCard({ label, value, icon, color, bg }: any) {
@@ -3453,4 +3549,12 @@ function LoadingRow({ cols }: { cols: number }) {
 }
 function EmptyRow({ cols }: { cols: number }) {
     return <tr><td colSpan={cols} className="px-6 py-14 text-center text-gray-500 text-xs">No records found.</td></tr>;
+}
+
+export default function SuperAdminPage() {
+    return (
+        <SuperAdminErrorBoundary>
+            <SuperAdminPageContent />
+        </SuperAdminErrorBoundary>
+    );
 }
