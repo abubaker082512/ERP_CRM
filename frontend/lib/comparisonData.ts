@@ -271,5 +271,55 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
       { q: "How does end-of-day register closing work?", a: "When cashiers close their register shift, Beraxis auto-generates a shift report, reconciles cash and card payments, and posts journal entries directly to your general ledger." },
       { q: "Can I use Beraxis for both retail and restaurant dining?", a: "Yes. Our Food & Beverage archetype supports table floor plans, split checks, and kitchen display queues, while our Retail archetype supports barcode scanning, serial numbers, and wholesale orders." }
     ]
+  },
+
+  "zoho-crm-alternative": {
+    slug: "zoho-crm-alternative",
+    competitorName: "Zoho CRM & Zoho One",
+    competitorTagline: "Fragmented 45-App Ecosystem with Deluge Script Overhead and Slow Sync",
+    badge: "The Unified CRM & Operating System",
+    heroHeadline: "The Modern Zoho CRM Alternative Without 45 Disjointed Apps or Deluge Script",
+    heroSubheadline: "Tired of syncing disjointed apps between Zoho CRM, Zoho Books, and Zoho Inventory? Frustrated with slow page loads and paying developers for proprietary Deluge code? Beraxis gives you a unified, real-time command center with double-entry accounting, point of sale, and 25M+ built-in B2B leads for $1/month.",
+    competitorCostAnnual: "$1,680 - $7,200/yr",
+    beraxisCostAnnual: "$12/yr (Early Bird)",
+    annualSavings: "$1,668+/yr",
+    keySummary: "Zoho offers dozens of individual tools, but stitching them together creates a maintenance nightmare: delayed sync across apps, proprietary Deluge script roadblocks, storage and API caps, and slow customer support. Beraxis runs your entire company on a single, lightning-fast PostgreSQL schema with built-in leads and zero scripting.",
+    competitorFlaws: [
+      "Fragmented architecture across 45+ separate apps with frequent cross-app sync delays",
+      "Proprietary Deluge scripting required for standard automations and custom business rules",
+      "Hidden overage charges for data storage, API call limits, and email marketing quotas",
+      "Zero built-in outbound lead pool — requires external ZoomInfo or Apollo subscriptions ($100+/mo)",
+      "Clunky, dated user interface with sluggish response times on complex pipelines"
+    ],
+    beraxisWins: [
+      "Single unified database architecture: CRM deals instantly convert into general ledger invoices and inventory reservations",
+      "Built-in 25,000,000+ verified B2B leads directory with AI buyer intent scoring",
+      "Dual-Brain AI Copilot and Voice Pilot for instant conversational operations (no scripting needed)",
+      "Full GAAP/IFRS compliant double-entry accounting and retail/restaurant touch POS included",
+      "Transparent $1/month Early Bird pricing ($12/year) with 1 App 100% Free Forever"
+    ],
+    matrix: [
+      { feature: "Unified Single-Database Architecture", beraxis: true, competitor: "Fragmented Across 45+ Apps", note: "Beraxis guarantees zero desynchronization between CRM, Books, and Inventory" },
+      { feature: "Built-in 25M+ Verified B2B Leads Engine", beraxis: true, competitor: false, note: "Zoho requires third-party prospecting extensions" },
+      { feature: "AI Voice Pilot & Natural Language Commands", beraxis: true, competitor: false, note: "Execute pipeline moves, quotes, and reports with natural speech" },
+      { feature: "No Proprietary Scripting Language", beraxis: "Zero Code Needed", competitor: "Requires Deluge Script ($)", note: "Beraxis auto-configures workflows without proprietary scripting" },
+      { feature: "Full Double-Entry Accounting Sync", beraxis: true, competitor: "Requires Zoho Books Integration", note: "Native general ledger, trial balance, and tax reconciliation" },
+      { feature: "Integrated Touch Point of Sale (POS)", beraxis: true, competitor: "Separate Zoho POS App ($)", note: "Sync counter sales with warehouse stock and CRM records" },
+      { feature: "Sub-Second Page Load Times", beraxis: "Next.js 15 & RSC (< 50ms)", competitor: "Sluggish Legacy Web App", note: "Ultra-fast modern cloud experience" },
+      { feature: "Storage & API Overage Fees", beraxis: "Zero Overage Penalties", competitor: "Strict Data & API Limits", note: "Scale your contact database without sudden rate spikes" },
+      { feature: "1 App Free Forever", beraxis: true, competitor: "Free Tier Heavily Restricted", note: "Beraxis free tier includes full enterprise feature sets" },
+      { feature: "Standard Annual Pricing", beraxis: "$1.00 / month ($12/yr)", competitor: "$14 - $40 / user / mo", note: "Save up to 98% compared to Zoho CRM Enterprise or Zoho One" }
+    ],
+    migrationSteps: [
+      { step: "01", title: "Export Zoho Leads, Contacts & Deals", desc: "Download your contacts, accounts, and deal stages as standard CSV files from Zoho CRM." },
+      { step: "02", title: "1-Click Beraxis CRM Import", desc: "Use our intelligent CSV mapper to instantly recreate your sales pipeline and assign deal values." },
+      { step: "03", title: "Activate 25M+ Prospecting Engine", desc: "Filter pre-verified industry decision-makers to fill your new pipeline from day one." }
+    ],
+    faqs: [
+      { q: "Why is Beraxis better than using Zoho One?", a: "Zoho One is a collection of 45+ separate apps acquired over decades that often fail to talk to each other seamlessly. Beraxis was engineered from the ground up as a single, ultra-fast cloud command center. Your CRM, invoices, inventory, and POS run on one database without sync delays or Deluge scripts." },
+      { q: "Do I need to hire a developer to build workflows like I did in Zoho Deluge?", a: "No. In Beraxis, workflows, stage transitions, and notification triggers are completely visual and no-code. You can also use our AI Voice Pilot to command custom reports and invoice generation using plain English." },
+      { q: "Can I transfer our product inventory and customer balances from Zoho Books?", a: "Yes. Our universal data importer brings over your Chart of Accounts, opening trial balance, vendor bills, and inventory SKUs in under three minutes." },
+      { q: "How much can our business save by switching from Zoho CRM to Beraxis?", a: "A 5-user sales team on Zoho CRM Professional or Zoho One typically spends $1,800 to $4,500 annually. On Beraxis, your team can lock in the Early Bird Standard Plan for just $12/year ($1/month), saving over $1,700 every single year." }
+    ]
   }
 };

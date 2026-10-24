@@ -113,6 +113,7 @@ export default function Footer() {
                             <li><Link href="/compare/quickbooks-alternative" className="hover:text-white transition-colors">QuickBooks Alternative</Link></li>
                             <li><Link href="/compare/odoo-alternative" className="hover:text-white transition-colors">Odoo ERP Alternative</Link></li>
                             <li><Link href="/compare/hubspot-alternative" className="hover:text-white transition-colors">HubSpot CRM Alternative</Link></li>
+                            <li><Link href="/compare/zoho-crm-alternative" className="hover:text-white transition-colors">Zoho CRM Alternative</Link></li>
                             <li><Link href="/compare/toast-square-pos-alternative" className="hover:text-white transition-colors">Toast &amp; Square Alternative</Link></li>
                             <li><Link href="/compare/traditional-erp-vs-beraxis" className="hover:text-white transition-colors">Traditional ERP vs Beraxis</Link></li>
                             <li><Link href="/compare" className="hover:text-amber-300 font-semibold text-amber-400 flex items-center gap-1">All Comparisons Hub &rarr;</Link></li>

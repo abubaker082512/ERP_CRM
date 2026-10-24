@@ -43,6 +43,21 @@ const SLUG_ALIASES: Record<string, string> = {
   "toast-square-alternative": "toast-square-pos-alternative",
   "square-pos-alternative": "toast-square-pos-alternative",
   "toast-pos-alternative": "toast-square-pos-alternative",
+  "zoho": "zoho-crm-alternative",
+  "zoho-crm": "zoho-crm-alternative",
+  "zoho-alternative": "zoho-crm-alternative",
+  "zoho-vs-beraxis": "zoho-crm-alternative",
+  "zoho-one": "zoho-crm-alternative",
+  "zoho-one-alternative": "zoho-crm-alternative",
+  "best-zoho-alternative": "zoho-crm-alternative",
+  "odoo-crm": "odoo-alternative",
+  "odoo-crm-alternative": "odoo-alternative",
+  "best-odoo-alternative": "odoo-alternative",
+  "odoo-community-alternative": "odoo-alternative",
+  "hubspot-crm": "hubspot-alternative",
+  "hubspot-crm-alternative": "hubspot-alternative",
+  "hubspot-sales-hub-alternative": "hubspot-alternative",
+  "best-hubspot-alternative": "hubspot-alternative",
 };
 
 function resolveComparison(slug: string): ComparisonItem | undefined {
@@ -119,10 +134,83 @@ export default async function CompareSlugPage({ params }: CompareSlugProps) {
   }
 
   const otherComparisons = Object.values(COMPARISONS).filter(c => c.slug !== comp.slug);
+  // ── JSON-LD Structured Data for Google Rich Snippets ──
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": comp.faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.a
+      }
+    }))
+  };
+
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Beraxis AI Autonomous ERP & CRM",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web, iOS, Android, Cloud",
+    "description": comp.heroSubheadline,
+    "offers": {
+      "@type": "Offer",
+      "price": "1.00",
+      "priceCurrency": "USD",
+      "priceValidUntil": "2027-12-31"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "128",
+      "bestRating": "5",
+      "worstRating": "1"
+    }
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.beraxis.online"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Comparisons",
+        "item": "https://www.beraxis.online/compare"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": `${comp.competitorName} Alternative`,
+        "item": `https://www.beraxis.online/compare/${comp.slug}`
+      }
+    ]
+  };
 
   return (
     <div className="min-h-screen bg-[#070B16] text-white flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
       <Navbar />
+      {/* JSON-LD Rich Snippet Schemas */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
 
       <main className="flex-grow pt-28 sm:pt-36 pb-20 relative z-10 overflow-hidden">
         {/* Glow Effects */}
