@@ -384,6 +384,38 @@ function SuperAdminPageContent() {
         return ws.plan;
     };
 
+    const [outboundCountry, setOutboundCountry] = useState("United States");
+    const [outboundIndustry, setOutboundIndustry] = useState("SaaS / Cloud Infrastructure");
+    const [outboundSequence, setOutboundSequence] = useState("saas-tax-breakdown");
+    const [outboundLimit, setOutboundLimit] = useState(25);
+    const [isOutboundRunning, setIsOutboundRunning] = useState(false);
+    const [outboundResult, setOutboundResult] = useState<any>(null);
+
+    const handleRunOutbound = async (dryRun: boolean) => {
+        setIsOutboundRunning(true);
+        try {
+            const res = await fetch("/api/admin/outbound-campaign", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    persona_id: "smb-founders-us-uk",
+                    sequence_id: outboundSequence,
+                    country: outboundCountry,
+                    industry: outboundIndustry,
+                    limit: outboundLimit,
+                    dry_run: dryRun
+                })
+            });
+            const data = await res.json();
+            setOutboundResult(data);
+            showToast(dryRun ? "Outbound preview generated successfully" : "Outbound queue launched!");
+        } catch (err: any) {
+            showToast("Failed to run outbound campaign: " + err.message);
+        } finally {
+            setIsOutboundRunning(false);
+        }
+    };
+
     const [authChecked, setAuthChecked] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(true);
     const [isColdStarting, setIsColdStarting] = useState(false);
@@ -1290,7 +1322,8 @@ function SuperAdminPageContent() {
                     <TabBtn active={activeTab === "broadcast"}   onClick={() => setActiveTab("broadcast")}   label="📢 Broadcast" />
                     <TabBtn active={activeTab === "audit"}       onClick={() => setActiveTab("audit")}       label="🛡️ Audit Logs" count={safeAuditLogs.length} />
                     <TabBtn active={activeTab === "diagnostics"} onClick={() => setActiveTab("diagnostics")} label="🩺 System Health" />
-                    <TabBtn active={activeTab === "experiments"} onClick={() => { setActiveTab("experiments"); fetchExperimentsData(); }} label="🧪 A/B Testing & Optimization" />
+                                        <TabBtn active={activeTab === "experiments"} onClick={() => { setActiveTab("experiments"); fetchExperimentsData(); }} label="🧪 A/B Testing & Optimization" />
+                    <TabBtn active={activeTab === "outbound"}    onClick={() => setActiveTab("outbound")}    label="🚀 Outbound Campaigns (25M+ Leads)" />
                 </div>
 
                 {/* ── TAB 1: WORKSPACES & TENANT DATABASES ── */}

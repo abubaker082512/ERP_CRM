@@ -4,11 +4,20 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { fetchAPI } from "@/lib/api";
+import { trackReferralVisit, getActiveReferralCode } from "@/lib/referral-service";
+import { useEffect } from "react";
 
 function SignupForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const invite_id = searchParams.get('invite_id');
+    const [referralCode, setReferralCode] = useState<string | null>(null);
+
+    useEffect(() => {
+        const tracked = trackReferralVisit();
+        const active = tracked || getActiveReferralCode();
+        if (active) setReferralCode(active);
+    }, []);
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -47,7 +56,8 @@ function SignupForm() {
                     invite_id,
                     account_type: accountType,
                     company_name: accountType === 'company' ? companyName : undefined,
-                    phone: phone.trim() || undefined
+                    phone: phone.trim() || undefined,
+                    referral_code: referralCode || undefined
                 })
             });
 
@@ -84,6 +94,12 @@ function SignupForm() {
                 </p>
             </div>
 
+            {referralCode && (
+                <div className="mb-4 p-3 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center gap-2 text-xs text-purple-300">
+                    <span className="text-base">🎁</span>
+                    <span>Referred by partner code <strong className="text-white font-mono">{referralCode}</strong>. 1 Month Free benefit attached to your account!</span>
+                </div>
+            )}
             <div className="glass-card p-8 shadow-2xl">
                 {error && (
                     <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg mb-5">

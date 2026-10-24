@@ -120,6 +120,8 @@ export default function Footer() {
                             
                             <li className="pt-3 border-t border-white/5"><span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block mb-1">Tools &amp; Hubs</span></li>
                             <li><Link href="/leads-pool" className="hover:text-white transition-colors">25M+ Leads Pool</Link></li>
+                            <li><Link href="/affiliates" className="hover:text-purple-300 font-semibold text-purple-400">Affiliate Program (30%)</Link></li>
+                            <li><Link href="/referrals" className="hover:text-white transition-colors">Customer Referrals</Link></li>
                             <li><Link href="/digital-launch-hub.html" className="hover:text-white transition-colors">Digital Launch Hub</Link></li>
                         </ul>
                     </div>
