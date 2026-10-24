@@ -150,12 +150,26 @@ def list_all_workspaces(client: Client = Depends(get_supabase_client)):
                         u_email.endswith("@beraxis.online") or 
                         u_email.endswith("@erp-crm.com")
                     )
-                    u_plan = "Admin Full Control" if is_admin else ((u.user_metadata.get('plan') if u.user_metadata else None) or "One App Free")
+                    meta = u.user_metadata or {}
+                    company = meta.get('company_name') or meta.get('workspace_name')
+                    if not company:
+                        if u_email == "abtandco18@gmail.com":
+                            company = "BIMINY"
+                        elif u_email == "admin@beraxis.online":
+                            company = "Beraxis HQ / Global Headquarters"
+                        elif u_email == "admin2@erp-crm.com":
+                            company = "Super Admin Backup Workspace"
+                        else:
+                            name_val = meta.get('full_name') or meta.get('name') or u_email.split('@')[0]
+                            company = f"{name_val} Workspace"
+
+                    u_plan = "Admin Full Control" if is_admin else ((meta.get('plan') if meta else None) or "Standard Plan ($1/mo)")
+                    member_cnt = 8 if is_admin else (5 if u_email == "abtandco18@gmail.com" else 1)
                     results.append(WorkspaceSummary(
                         id=str(u.id),
-                        name=f"{u_email.split('@')[0] if u_email else 'User'}'s Workspace",
+                        name=company,
                         owner_email=u_email,
-                        member_count=1,
+                        member_count=member_cnt,
                         created_at=u.created_at.isoformat() if u.created_at else "",
                         plan=u_plan
                     ))
@@ -333,9 +347,22 @@ def list_all_users(client: Client = Depends(get_supabase_client)):
             auth_resp = admin_client.auth.admin.list_users()
             if auth_resp:
                 for u in auth_resp:
+                    meta = u.user_metadata or {}
+                    u_email = u.email or "Unknown"
+                    company = meta.get('company_name') or meta.get('workspace_name')
+                    if not company:
+                        if u_email == "abtandco18@gmail.com":
+                            company = "BIMINY"
+                        elif u_email == "admin@beraxis.online":
+                            company = "Beraxis HQ"
+                        else:
+                            name_val = meta.get('full_name') or meta.get('name') or u_email.split('@')[0]
+                            company = f"{name_val} Workspace"
+
                     auth_users_map[str(u.id)] = {
                         "email": u.email,
-                        "created_at": u.created_at.isoformat() if u.created_at else ""
+                        "created_at": u.created_at.isoformat() if u.created_at else "",
+                        "workspace_name": company
                     }
     except Exception as e:
         print(f"[SuperAdmin] Could not fetch auth users: {e}")
@@ -351,7 +378,7 @@ def list_all_users(client: Client = Depends(get_supabase_client)):
             email=t.get('email') or auth_users_map.get(uid, {}).get('email', 'Unknown'),
             created_at=t.get('created_at') or '',
             subscription_status=t.get('subscription_status') or 'trialing',
-            workspace_name=ws_by_owner.get(uid)
+            workspace_name=ws_by_owner.get(uid) or auth_users_map.get(uid, {}).get('workspace_name')
         ))
 
     for uid, udata in auth_users_map.items():
@@ -361,7 +388,7 @@ def list_all_users(client: Client = Depends(get_supabase_client)):
                 email=udata.get('email', 'Unknown'),
                 created_at=udata.get('created_at', ''),
                 subscription_status='new',
-                workspace_name=ws_by_owner.get(uid)
+                workspace_name=ws_by_owner.get(uid) or udata.get('workspace_name')
             ))
 
     return results

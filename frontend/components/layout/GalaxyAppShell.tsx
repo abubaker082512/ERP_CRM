@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { 
     LayoutDashboard, ShoppingCart, Users, Package, 
     BarChart3, MessageSquare, BookOpen, Settings, 
-    Menu, X, Sparkles, Database, ShieldCheck, Wifi, WifiOff, Loader2
+    Menu, X, Sparkles, Database, ShieldCheck, Wifi, WifiOff, Loader2, LogOut
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import GalaxyTopBar from './GalaxyTopBar';
@@ -319,6 +319,26 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                         </div>
                         <p suppressHydrationWarning className="text-xs text-gray-300 font-medium">{planTitle}</p>
                         <p suppressHydrationWarning className="text-[10px] text-gray-500 mt-1">{planSubtitle}</p>
+                        <button
+                            onClick={() => {
+                                try {
+                                    localStorage.removeItem('token');
+                                    localStorage.removeItem('refresh_token');
+                                    localStorage.removeItem('user');
+                                    localStorage.removeItem('auth_data');
+                                    localStorage.removeItem('beraxis_session_id');
+                                    sessionStorage.clear();
+                                    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                                    document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                                    document.cookie = "sb-access-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                                    document.cookie = "sb-refresh-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                                } catch (e) {}
+                                window.location.href = '/login';
+                            }}
+                            className="mt-3 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 text-[11px] font-semibold transition-all cursor-pointer"
+                        >
+                            <LogOut size={12} /> Sign Out
+                        </button>
                     </div>
                 </div>
 

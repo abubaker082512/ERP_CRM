@@ -10,7 +10,7 @@ import {
     Percent, Sparkles, X, Check, Copy, ToggleLeft, ToggleRight,
     Edit3, Activity, Server, Database, Globe, Megaphone, Lock,
     Key, Download, Cpu, HardDrive, Bell, CheckSquare, Play,
-    Sliders, LogIn, ChevronRight, Flame, Save
+    Sliders, LogIn, LogOut, ChevronRight, Flame, Save
 } from 'lucide-react';
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from '@/lib/pricingConfig';
 
@@ -479,7 +479,7 @@ function SuperAdminPageContent() {
 
             if (wsRes?.ok) {
                 const data = await wsRes.json();
-                if (Array.isArray(data) && data.length > 0) setWorkspaces(data);
+                if (Array.isArray(data) && data.length > 0) setWorkspaces(prev => (data.length >= prev.length ? data : prev));
             }
             if (statsRes?.ok) {
                 const data = await statsRes.json();
@@ -487,7 +487,7 @@ function SuperAdminPageContent() {
             }
             if (usersRes?.ok) {
                 const data = await usersRes.json();
-                if (Array.isArray(data) && data.length > 0) setUsers(data);
+                if (Array.isArray(data) && data.length > 0) setUsers(prev => (data.length >= prev.length ? data : prev));
             }
             if (salesRes?.ok) {
                 const data = await salesRes.json();
@@ -1143,6 +1143,24 @@ function SuperAdminPageContent() {
     const pendingPayments = filteredPayments.filter(p => p && p.payment_status !== "active");
     const monthlySaaSRevenue = paidPayments.reduce((acc, p) => acc + (Number(p?.amount_usd) || 0), 0);
 
+    const handleLogout = () => {
+        try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('auth_data');
+            localStorage.removeItem('beraxis_session_id');
+            sessionStorage.clear();
+            document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "sb-access-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "sb-refresh-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        } catch (e) {
+            console.error("Logout error:", e);
+        }
+        window.location.href = '/login';
+    };
+
     return (
         <div className="space-y-8 pb-20 text-slate-100 min-h-screen bg-[#0A0E17]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
@@ -1202,6 +1220,13 @@ function SuperAdminPageContent() {
                             className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-lg shadow-purple-600/30 transition-all cursor-pointer"
                         >
                             <RefreshCw size={15} className={loading ? "animate-spin" : ""} /> Sync Matrix
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-2 bg-red-600/20 hover:bg-red-600/30 px-3.5 py-2 rounded-xl text-xs font-bold text-red-300 border border-red-500/30 transition-all cursor-pointer shadow-md"
+                            title="Sign out of Super Admin"
+                        >
+                            <LogOut size={15} /> Logout
                         </button>
                     </div>
                 </div>
