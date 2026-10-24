@@ -591,7 +591,7 @@ function SuperAdminPageContent() {
     const fetchStripeTransactions = async () => {
         setTransactionsLoading(true);
         try {
-            const res = await fetch("/api/admin/transactions");
+            const res = await fetch("/api/admin/paddle/transactions");
             if (res.ok) {
                 const data = await res.json();
                 if (data.success) {
@@ -663,7 +663,7 @@ function SuperAdminPageContent() {
         setStripeTesting(true);
         setStripeTestResult(null);
         try {
-            const res = await fetch(`/api/admin/gateway-settings?test=stripe&key=${encodeURIComponent(stripeSecretKey)}`);
+            const res = await fetch("/api/admin/paddle/transactions");
             const data = await res.json();
             setStripeTestResult({
                 status: res.status,
@@ -1314,7 +1314,7 @@ function SuperAdminPageContent() {
                     <TabBtn active={activeTab === "overview"}    onClick={() => setActiveTab("overview")}    label="🏢 Companies" count={safeWorkspaces.length} />
                     <TabBtn active={activeTab === "pricing"}     onClick={() => setActiveTab("pricing")}     label="💰 Plan Pricing ($1 Early Bird)" />
                     <TabBtn active={activeTab === "promocodes"}  onClick={() => setActiveTab("promocodes")}  label="🎟️ Promo Codes" count={safePromocodes.length} />
-                    <TabBtn active={activeTab === "payments"}    onClick={() => setActiveTab("payments")}    label="💳 Payment Gateways (Stripe Global)" count={(stripeStats?.total || stripeTransactions?.length || safePayments.length || 0)} />
+                    <TabBtn active={activeTab === "payments"}    onClick={() => setActiveTab("payments")}    label="💳 Payment Gateways (Paddle Live)" count={(stripeStats?.total || stripeTransactions?.length || safePayments.length || 0)} />
                     <TabBtn active={activeTab === "billing"}     onClick={() => setActiveTab("billing")}     label="⚖️ Billing Ctrl" count={safeTenants.length} />
                     <TabBtn active={activeTab === "users"}       onClick={() => setActiveTab("users")}       label="👥 Users" count={safeUsers.length} />
                     <TabBtn active={activeTab === "sales"}       onClick={() => setActiveTab("sales")}       label="🛒 ERP Sales" count={safeSales.length} />
@@ -1926,7 +1926,7 @@ function SuperAdminPageContent() {
                                 <div className="flex items-center justify-between mb-1">
                                     <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Succeeded Payments</p>
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                        Live Stripe
+                                        Live Paddle
                                     </span>
                                 </div>
                                 <p className="text-3xl font-black text-emerald-400">
@@ -1960,157 +1960,123 @@ function SuperAdminPageContent() {
                                     </span>
                                 </div>
                                 <p className="text-3xl font-black text-purple-400">{(stripeStats?.success_rate_percent ?? 100)}%</p>
-                                <p className="text-xs text-gray-500 mt-1">Active Stripe Production account (BERAXIS)</p>
+                                <p className="text-xs text-gray-500 mt-1">Active Paddle Production account (BERAXIS)</p>
                             </div>
                         </div>
 
-                        {/* Stripe Global Payments Gateway Card */}
-                        <div className="bg-[#111827] rounded-3xl border border-purple-500/30 p-6 shadow-2xl space-y-5">
+                        {/* Paddle Live SaaS Merchant of Record Gateway Card */}
+                        <div className="bg-[#111827] rounded-3xl border border-cyan-500/30 p-6 shadow-2xl space-y-5">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-purple-600/30 to-indigo-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300 font-bold text-lg">
+                                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 flex items-center justify-center text-cyan-300 font-bold text-lg">
                                         <Globe size={22} />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <h3 className="text-base font-bold text-white">Super Admin SaaS Gateway — Stripe Global (Workbench &amp; API Keys)</h3>
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                Boolean((stripeSecretKey || "").includes("_live"))
-                                                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                                                    : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                                            }`}>
-                                                {Boolean((stripeSecretKey || "").includes("_live")) ? "🟢 Live Production" : "🟡 Test Sandbox"}
+                                            <h3 className="text-base font-bold text-white">Super Admin SaaS Gateway — Paddle Live (Merchant of Record &amp; Catalog)</h3>
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                                🟢 Live Production
                                             </span>
-                                            {stripeEnabled && (
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                                    Active on Checkout
-                                                </span>
-                                            )}
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                                Active Sole Gateway
+                                            </span>
                                         </div>
                                         <p className="text-xs text-gray-400 mt-0.5">
-                                            Manage your Stripe keys for global subscriptions (USD), Apple Pay, Google Pay, and Leads Pool Solo ($10/mo) automated recurring payments.
+                                            Paddle handles global SaaS compliance, multi-currency processing (USD, EUR, GBP), tax &amp; VAT calculation, Apple Pay, Google Pay, Cards, and PayPal.
                                         </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                                        <span>{stripeEnabled ? "Gateway Enabled" : "Gateway Disabled"}</span>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={stripeEnabled}
-                                                onChange={e => setStripeEnabled(e.target.checked)}
-                                                className="sr-only peer"
-                                            />
-                                            <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                                        </label>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        disabled={savingGateways}
-                                        onClick={handleSaveGatewaySettings}
-                                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-600/20 cursor-pointer disabled:opacity-50"
+                                    <a
+                                        href="https://vendors.paddle.com"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-cyan-600/20 cursor-pointer flex items-center gap-1.5 transition-all"
                                     >
-                                        {savingGateways ? "Saving..." : "Save Stripe Settings"}
-                                    </button>
+                                        <span>Paddle Dashboard</span>
+                                        <ExternalLink size={13} />
+                                    </a>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">
-                                            Stripe Secret Key (Secret / Restricted Key)
-                                        </label>
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowStripeSecret(!showStripeSecret)}
-                                            className="text-[10px] text-purple-400 hover:text-purple-300 font-mono"
-                                        >
-                                            {showStripeSecret ? "Hide Key" : "Show Key"}
-                                        </button>
-                                    </div>
-                                    <input
-                                        type={showStripeSecret ? "text" : "password"}
-                                        value={stripeSecretKey}
-                                        onChange={e => setStripeSecretKey(e.target.value)}
-                                        placeholder="sk_live_... or rk_live_..."
-                                        className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
-                                    />
-                                    <p className="text-[10px] text-gray-500 mt-1">
-                                        Standard secret key or restricted key with Charges, Sessions, and Webhooks permissions.
-                                    </p>
-                                </div>
-
-                                <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                                        Stripe Publishable Key (Client Elements)
+                                        Live Client-Side Token (Paddle.js Overlay)
                                     </label>
                                     <input
                                         type="text"
-                                        value={stripePublishableKey}
-                                        onChange={e => setStripePublishableKey(e.target.value)}
-                                        placeholder="pk_live_..."
-                                        className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
+                                        readOnly
+                                        value="live_6645496fe6160096b0d5e7c19fe"
+                                        className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-cyan-300 font-mono text-xs outline-none"
                                     />
                                     <p className="text-[10px] text-gray-500 mt-1">
-                                        Client-side key used for secure Stripe Checkout redirect and UI Elements.
+                                        Used by <code className="text-cyan-300">@paddle/paddle-js</code> on <code className="text-gray-300">/checkout</code> for zero-redirect overlay.
                                     </p>
                                 </div>
 
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                                        Stripe Webhook Signing Secret (whsec_...)
-                                    </label>
-                                    <input
-                                        type="password"
-                                        value={stripeWebhookSecret}
-                                        onChange={e => setStripeWebhookSecret(e.target.value)}
-                                        placeholder="whsec_..."
-                                        className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-white font-mono text-xs focus:border-purple-500 outline-none"
-                                    />
-                                    <p className="text-[10px] text-gray-500 mt-1">
-                                        Used by <code className="text-purple-300">/api/payments/stripe/webhook</code> to verify event signatures.
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                                        Stripe Account Mode
+                                        Paddle Environment Mode &amp; Account
                                     </label>
                                     <div className="w-full bg-[#0B0F19]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-300 text-xs flex items-center justify-between">
-                                        <span className="font-mono">{Boolean((stripeSecretKey || "").includes("_live")) ? "LIVE PRODUCTION" : "TEST SANDBOX"}</span>
-                                        <span className="text-[10px] text-emerald-400 font-bold">● PCI-DSS LEVEL 1 COMPLIANT</span>
+                                        <span className="font-mono text-emerald-400 font-bold">PRODUCTION (LIVE)</span>
+                                        <span className="text-[10px] text-cyan-400 font-bold">● MERCHANT OF RECORD</span>
                                     </div>
                                     <p className="text-[10px] text-gray-500 mt-1">
-                                        Automatically switches based on the key prefix.
+                                        All customer card orders are processed on Paddle live servers.
                                     </p>
+                                </div>
+                            </div>
+
+                            {/* Catalog Price ID Mapping */}
+                            <div className="pt-2 border-t border-gray-800/80">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                    Paddle Live Catalog Price IDs (Active Plans)
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div className="bg-[#0B0F19] p-3 rounded-xl border border-gray-800">
+                                        <div className="text-[10px] text-gray-400 uppercase font-bold">Standard Annual ($12.00/yr)</div>
+                                        <code className="text-[11px] text-cyan-300 font-mono block mt-0.5 truncate">pri_01m5q810bsvet6hvxrd5dj8pcc</code>
+                                    </div>
+                                    <div className="bg-[#0B0F19] p-3 rounded-xl border border-gray-800">
+                                        <div className="text-[10px] text-gray-400 uppercase font-bold">Standard Monthly ($5.00/mo)</div>
+                                        <code className="text-[11px] text-cyan-300 font-mono block mt-0.5 truncate">pri_01m5q7wn7dava1anyfn8sfze9j</code>
+                                    </div>
+                                    <div className="bg-[#0B0F19] p-3 rounded-xl border border-gray-800">
+                                        <div className="text-[10px] text-gray-400 uppercase font-bold">Custom Annual ($448.80/yr)</div>
+                                        <code className="text-[11px] text-cyan-300 font-mono block mt-0.5 truncate">pri_01m5q89px5fjy063g75wp24qtq</code>
+                                    </div>
+                                    <div className="bg-[#0B0F19] p-3 rounded-xl border border-gray-800">
+                                        <div className="text-[10px] text-gray-400 uppercase font-bold">Custom Monthly ($46.80/mo)</div>
+                                        <code className="text-[11px] text-cyan-300 font-mono block mt-0.5 truncate">pri_01m5q87843ar79ed43rq07k5hz</code>
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2 border-t border-gray-800/80">
                                 <div className="flex-1">
                                     <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
-                                        Stripe Webhook Destination URL (Paste this in Stripe Dashboard &gt; Webhooks)
+                                        Paddle Webhook Destination URL (Paste in Paddle Dashboard &gt; Developer tools &gt; Notifications)
                                     </label>
                                     <code className="text-xs text-emerald-400 font-mono bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
-                                        https://beraxis.online/api/payments/stripe/webhook
+                                        https://beraxis.online/api/payments/paddle/webhook
                                     </code>
                                 </div>
                                 <button
                                     type="button"
                                     disabled={stripeTesting}
                                     onClick={handleTestStripeConnection}
-                                    className="px-4 py-2.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-purple-500/40 flex items-center gap-2 cursor-pointer shrink-0 disabled:opacity-50"
+                                    className="px-4 py-2.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-cyan-500/40 flex items-center gap-2 cursor-pointer shrink-0 disabled:opacity-50"
                                 >
                                     {stripeTesting ? (
                                         <>
-                                            <div className="w-3.5 h-3.5 border-2 border-purple-300 border-t-transparent rounded-full animate-spin"></div>
-                                            Testing Stripe...
+                                            <div className="w-3.5 h-3.5 border-2 border-cyan-300 border-t-transparent rounded-full animate-spin"></div>
+                                            Testing Paddle API...
                                         </>
                                     ) : (
                                         <>
-                                            🧪 Test Stripe Connection
+                                            🧪 Test Paddle API Connection
                                         </>
                                     )}
                                 </button>
@@ -2122,7 +2088,7 @@ function SuperAdminPageContent() {
                             <div className="p-6 border-b border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <h2 className="text-lg font-black text-white">Stripe Live Transaction Feed</h2>
+                                        <h2 className="text-lg font-black text-white">Paddle Live Transaction Feed</h2>
                                         <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30">
                                             Success &amp; Failures
                                         </span>
@@ -2221,7 +2187,7 @@ function SuperAdminPageContent() {
                                             <tr>
                                                 <td colSpan={7} className="px-6 py-12 text-center text-gray-400 text-xs font-mono">
                                                     <div className="inline-block w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mr-2 align-middle"></div>
-                                                    Syncing transactions live from Stripe API...
+                                                    Syncing transactions live from Paddle API...
                                                 </td>
                                             </tr>
                                         ) : (Array.isArray(stripeTransactions) ? stripeTransactions : []).filter(t => {
@@ -2302,7 +2268,7 @@ function SuperAdminPageContent() {
                                                                         </span>
                                                                     )}
                                                                     <span className="text-[10px] text-gray-500 font-mono">
-                                                                        {tx.payment_method || "Stripe"}
+                                                                        {tx.payment_method || "Paddle"}
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -2353,12 +2319,12 @@ function SuperAdminPageContent() {
 
                                                         <td className="px-6 py-4 text-right">
                                                             <a
-                                                                href={tx?.stripe_url || "https://dashboard.stripe.com/workbench/overview"}
+                                                                href={tx?.stripe_url || "https://vendors.paddle.com/transactions"}
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-600/10 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-bold transition-all"
                                                             >
-                                                                <span>View in Stripe</span>
+                                                                <span>View in Paddle</span>
                                                                 <ExternalLink size={12} />
                                                             </a>
                                                         </td>
@@ -3397,7 +3363,7 @@ function SuperAdminPageContent() {
                     <div className="bg-[#141C2E] border border-purple-500/30 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 text-white">
                         <div className="flex items-center justify-between border-b border-gray-800 pb-3">
                             <h3 className="text-base font-bold flex items-center gap-2 text-purple-300">
-                                <Globe size={18} /> Stripe Global API Connection Test
+                                <Globe size={18} /> Paddle Live API Connection Test
                             </h3>
                             <button onClick={() => setIsTestStripeOpen(false)}><X size={18}/></button>
                         </div>
@@ -3405,18 +3371,18 @@ function SuperAdminPageContent() {
                         <div className="space-y-3">
                             <div className="bg-[#0F172A] p-3.5 rounded-xl border border-gray-800 text-xs font-mono space-y-1">
                                 <p className="text-gray-400">Target Key: <span className="text-purple-300">{stripeSecretKey ? stripeSecretKey.slice(0, 12) + "..." : "Not Configured"}</span></p>
-                                <p className="text-gray-400">Endpoint: <span className="text-emerald-400 font-bold">api.stripe.com/v1/balance</span></p>
-                                <p className="text-gray-400">Protocol: <span className="text-cyan-300">Stripe REST API (TLS 1.3)</span></p>
+                                <p className="text-gray-400">Endpoint: <span className="text-emerald-400 font-bold">api.paddle.com (Paddle Node SDK v2)</span></p>
+                                <p className="text-gray-400">Protocol: <span className="text-cyan-300">Paddle Live REST API (TLS 1.3)</span></p>
                             </div>
 
                             {stripeTesting ? (
                                 <div className="p-8 text-center text-gray-400 text-xs flex items-center justify-center gap-2">
-                                    <RefreshCw className="animate-spin text-purple-400" size={16} /> Connecting to Stripe API &amp; verifying credentials...
+                                    <RefreshCw className="animate-spin text-purple-400" size={16} /> Connecting to Paddle API &amp; verifying credentials...
                                 </div>
                             ) : stripeTestResult ? (
                                 <div className={`p-4 rounded-xl border text-xs font-mono ${stripeTestResult.ok ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" : "bg-red-500/10 border-red-500/30 text-red-300"}`}>
                                     <div className="flex items-center justify-between mb-2">
-                                        <p className="font-bold">{stripeTestResult.ok ? "✅ STRIPE CONNECTED" : "❌ CONNECTION FAILED"}</p>
+                                        <p className="font-bold">{stripeTestResult.ok ? "✅ PADDLE CONNECTED" : "❌ CONNECTION FAILED"}</p>
                                         <span className="text-[10px] px-2 py-0.5 rounded bg-black/40 font-mono">HTTP {stripeTestResult.status}</span>
                                     </div>
                                     <pre className="overflow-x-auto text-[11px] p-2 bg-black/40 rounded-lg whitespace-pre-wrap">

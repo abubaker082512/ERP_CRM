@@ -394,7 +394,7 @@ export default function PricingPage() {
                                 <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> 1,500 Contacts / Month</span>
                                 <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> WhatsApp &amp; Mobile Dials</span>
                                 <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> 1-Click CSV/Excel Export</span>
-                                <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> Stripe &amp; DirectPay Supported</span>
+                                <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> Paddle Global Checkout (Cards, Apple Pay, PayPal)</span>
                             </div>
                         </div>
 

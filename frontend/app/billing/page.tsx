@@ -465,7 +465,7 @@ function PlanCard({
                                     : "bg-white/10 hover:bg-white/15 text-white border border-white/15"
                             }`}
                         >
-                            <CreditCard size={14} /> Checkout with Card (Stripe / DirectPay) <ArrowRight size={14} />
+                            <CreditCard size={14} /> Pay with Paddle (Cards, Apple Pay, PayPal) <ArrowRight size={14} />
                         </a>
 
                         <button
