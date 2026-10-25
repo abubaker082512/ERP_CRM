@@ -58,8 +58,8 @@ export async function GET() {
       }
 
       const isAdmin = SUPER_ADMIN_EMAILS.includes(email) || email.endsWith("@beraxis.online") || email.endsWith("@erp-crm.com");
-      const plan = isAdmin ? "Admin Full Control" : (meta.plan || "Standard Plan ($1/mo)");
-      const memberCount = isAdmin ? 8 : (email === "abtandco18@gmail.com" ? 5 : 1);
+      const plan = isAdmin ? "Admin Full Control" : (meta.plan && meta.plan !== "Standard Plan ($1/mo)" && meta.plan !== "Standard Plan" ? meta.plan : "One App Free");
+      const memberCount = isAdmin ? 8 : (meta.seats || 1);
 
       return {
         id: `ws-${u.id.slice(0, 12)}`,
@@ -121,7 +121,7 @@ export async function GET() {
         owner_email: "abtandco18@gmail.com",
         member_count: 5,
         created_at: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-        plan: "Standard Plan ($1/mo)"
+        plan: "One App Free"
       },
       {
         id: "ws-tenant-003",
@@ -129,7 +129,7 @@ export async function GET() {
         owner_email: "shaheer031123@gmail.com",
         member_count: 1,
         created_at: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-        plan: "Standard Plan ($1/mo)"
+        plan: "One App Free"
       },
       {
         id: "ws-tenant-004",
@@ -137,7 +137,7 @@ export async function GET() {
         owner_email: "umertariq327@gmail.com",
         member_count: 1,
         created_at: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        plan: "Standard Plan ($1/mo)"
+        plan: "One App Free"
       },
       {
         id: "ws-tenant-005",
@@ -145,7 +145,7 @@ export async function GET() {
         owner_email: "sardarzaintahir@gmail.com",
         member_count: 1,
         created_at: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-        plan: "Standard Plan ($1/mo)"
+        plan: "One App Free"
       },
       {
         id: "ws-tenant-006",
@@ -153,7 +153,7 @@ export async function GET() {
         owner_email: "muhammadahad26@gmail.com",
         member_count: 1,
         created_at: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        plan: "Standard Plan ($1/mo)"
+        plan: "One App Free"
       }
     ];
 
@@ -176,15 +176,17 @@ export async function GET() {
     }));
   }
 
+  const payments: any[] = [];
+
   const stats = {
     total_workspaces: workspaces.length,
     total_users: users.length,
     active_subscriptions: tenants.filter(t => t.subscription_status === "active").length,
-    paid_subscribers: Math.max(workspaces.length - 2, 8),
-    total_revenue: 2840.00,
-    mrr: 240.00,
-    cc_revenue: 2840.00,
-    total_saas_revenue: 2840.00,
+    paid_subscribers: payments.filter(p => p.payment_status === "active").length,
+    total_revenue: 0.00,
+    mrr: 0.00,
+    cc_revenue: 0.00,
+    total_saas_revenue: 0.00,
     storage_used_gb: +(1.4 + workspaces.length * 0.08).toFixed(1),
     api_calls_today: 1420 + workspaces.length * 45
   };
@@ -237,63 +239,6 @@ export async function GET() {
       amount_total: 12.00,
       state: "done",
       created_at: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ];
-
-  const payments = [
-    {
-      id: "pay-101",
-      email: "abtandco18@gmail.com",
-      amount_usd: 12.00,
-      payment_status: "active",
-      plan: "Standard Plan ($1/mo)",
-      gateway: "DirectPay",
-      created_at: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "pay-102",
-      email: "shaheer031123@gmail.com",
-      amount_usd: 12.00,
-      payment_status: "active",
-      plan: "Standard Plan ($1/mo)",
-      gateway: "Stripe",
-      created_at: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "pay-103",
-      email: "umertariq327@gmail.com",
-      amount_usd: 12.00,
-      payment_status: "active",
-      plan: "Standard Plan ($1/mo)",
-      gateway: "Stripe",
-      created_at: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "pay-104",
-      email: "sardarzaintahir@gmail.com",
-      amount_usd: 12.00,
-      payment_status: "active",
-      plan: "Standard Plan ($1/mo)",
-      gateway: "Stripe",
-      created_at: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "pay-105",
-      email: "muhammadahad26@gmail.com",
-      amount_usd: 12.00,
-      payment_status: "active",
-      plan: "Standard Plan ($1/mo)",
-      gateway: "Stripe",
-      created_at: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "pay-106",
-      email: "beraxisai@gmail.com",
-      amount_usd: 12.00,
-      payment_status: "active",
-      plan: "Standard Plan ($1/mo)",
-      gateway: "Stripe",
-      created_at: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString()
     }
   ];
 

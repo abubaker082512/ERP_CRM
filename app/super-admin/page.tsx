@@ -378,7 +378,8 @@ function SuperAdminPageContent() {
         if (isSuperAdminEmail(ws.owner_email)) {
             return "Admin Full Control";
         }
-        if (!ws.plan || ws.plan === "Standard Plan" || ws.plan === "Standard") {
+        const p = (ws.plan || "").trim();
+        if (!p || p === "Standard Plan" || p === "Standard" || p === "Standard Plan ($1/mo)" || p === "Free" || p === "free" || p === "One App Free") {
             return "One App Free";
         }
         return ws.plan;
@@ -1377,20 +1378,23 @@ function SuperAdminPageContent() {
                                                         className={`${
                                                             isSuperAdminEmail(ws.owner_email)
                                                                 ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
-                                                                : getWorkspacePlanLabel(ws).includes("Standard") || getWorkspacePlanLabel(ws).includes("Custom")
-                                                                ? "bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border-purple-500/30"
-                                                                : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                                                : getWorkspacePlanLabel(ws) === "One App Free"
+                                                                ? "bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700/60"
+                                                                : getWorkspacePlanLabel(ws).includes("Custom")
+                                                                ? "bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 border-pink-500/30"
+                                                                : "bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border-purple-500/30"
+                                                                
                                                         } border px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all`}
                                                         title="Click to change plan"
                                                     >
-                                                        <Sparkles size={12} className={isSuperAdminEmail(ws.owner_email) ? "text-amber-400" : "text-purple-400"} />
+                                                        <Sparkles size={12} className={isSuperAdminEmail(ws.owner_email) ? "text-amber-400" : getWorkspacePlanLabel(ws) === "One App Free" ? "text-slate-400" : "text-purple-400"} />
                                                         {getWorkspacePlanLabel(ws)}
                                                         <Edit3 size={11} className="opacity-60" />
                                                     </button>
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <span className="bg-purple-950/40 text-purple-300 px-3 py-1 rounded-full text-xs font-bold border border-purple-500/20 font-mono">
-                                                        {ws.member_count || 1} seats
+                                                    <span className={`${isSuperAdminEmail(ws.owner_email) ? "bg-amber-950/40 text-amber-300 border-amber-500/20" : getWorkspacePlanLabel(ws) === "One App Free" ? "bg-slate-900 text-slate-400 border-slate-800" : "bg-purple-950/40 text-purple-300 border-purple-500/20"} px-3 py-1 rounded-full text-xs font-bold border font-mono`}>
+                                                        {ws.member_count || 1} {ws.member_count === 1 ? "seat" : "seats"}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-xs text-gray-400 font-mono">{fmtDate(ws.created_at)}</td>
