@@ -36,8 +36,12 @@ export default function Footer() {
                                 <a href="mailto:support@beraxis.online" className="hover:text-white transition-colors">support@beraxis.online</a>
                             </p>
                             <p className="flex items-start gap-2 text-gray-300 font-medium">
+                                <MapPin size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                                <span>US Office: Miami, Florida, United States</span>
+                            </p>
+                            <p className="flex items-start gap-2 text-gray-300 font-medium">
                                 <MapPin size={14} className="text-rose-400 shrink-0 mt-0.5" />
-                                <span>20, 21, Mobile Arena, SOAN Garden, Islamabad</span>
+                                <span>Operations Office: 20, 21, Mobile Arena, SOAN Garden, Islamabad</span>
                             </p>
                         </div>
 

@@ -123,7 +123,8 @@ export default function TermsPage() {
             </p>
             <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-xs space-y-1">
               <p><strong className="text-white">Beraxis Systems Inc. — Legal &amp; Billing Inquiries</strong></p>
-              <p>Physical Address: <span className="text-gray-300">20, 21, Mobile Arena, SOAN Garden, Islamabad</span></p>
+              <p>US Corporate Office: <span className="text-gray-300">Miami, Florida, United States</span></p>
+              <p>Operations Office: <span className="text-gray-300">20, 21, Mobile Arena, SOAN Garden, Islamabad</span></p>
               <p>Email: <a href="mailto:support@beraxis.online" className="text-purple-400 hover:underline">support@beraxis.online</a></p>
               <p>Phone: <a href="tel:+19707807993" className="text-purple-400 hover:underline">+1 (970) 780-7993</a></p>
               <p>Refunds &amp; Cancellations: <Link href="/refund-policy" className="text-emerald-400 hover:underline">14-Day Money-Back Guarantee Policy</Link></p>

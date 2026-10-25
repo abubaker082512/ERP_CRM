@@ -216,10 +216,13 @@ export default function RefundPolicyPage() {
               <div className="p-4 rounded-xl bg-[#070913] border border-white/5 space-y-1.5">
                 <div className="flex items-center gap-1.5 text-white font-bold">
                   <MapPin size={14} className="text-rose-400" />
-                  <span>Physical Address</span>
+                  <span>Corporate &amp; Physical Offices</span>
                 </div>
                 <p className="text-gray-300 font-medium">
-                  20, 21, Mobile Arena, SOAN Garden, Islamabad
+                  <strong className="text-emerald-400">US Office:</strong> Miami, Florida, United States
+                </p>
+                <p className="text-gray-300 font-medium">
+                  <strong className="text-rose-400">Operations Office:</strong> 20, 21, Mobile Arena, SOAN Garden, Islamabad
                 </p>
               </div>
 

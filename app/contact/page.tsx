@@ -77,11 +77,17 @@ export default function ContactPage() {
                                 <MapPin size={24} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold mb-2 text-white">Office Address</h3>
-                                <p className="text-gray-400 mb-2">Physical headquarters &amp; operational office:</p>
-                                <p className="text-gray-200 font-semibold leading-relaxed">
-                                    20, 21, Mobile Arena, SOAN Garden, Islamabad
-                                </p>
+                                <h3 className="text-xl font-bold mb-2 text-white">Office Addresses</h3>
+                                <div className="space-y-3 mt-1">
+                                    <div>
+                                        <p className="text-xs text-emerald-400 uppercase font-bold tracking-wider">US Office</p>
+                                        <p className="text-gray-200 font-semibold text-sm">Miami, Florida, United States</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-rose-400 uppercase font-bold tracking-wider">Operations Office</p>
+                                        <p className="text-gray-200 font-semibold text-sm">20, 21, Mobile Arena, SOAN Garden, Islamabad</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
