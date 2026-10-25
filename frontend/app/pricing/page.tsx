@@ -6,11 +6,65 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame, Building2, CreditCard } from "lucide-react";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
+import { initializePaddle, type Paddle } from "@paddle/paddle-js";
+import { PADDLE_PRICE_MAP } from "@/lib/paddleConfig";
 
 export default function PricingPage() {
     const [billingCycle, setBillingCycle] = useState<"annually" | "monthly">("annually");
     const [usersCount, setUsersCount] = useState<number>(5);
     const [pricing, setPricing] = useState<PricingConfig>(DEFAULT_PRICING_CONFIG);
+    const [paddle, setPaddle] = useState<Paddle | null>(null);
+    const [paddlePrices, setPaddlePrices] = useState<Record<string, string>>({});
+
+    // Initialize Paddle.js and fetch real-time localized PricePreview
+    useEffect(() => {
+        const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "live_6645496fe6160096b0d5e7c19fe";
+        const env = (process.env.NEXT_PUBLIC_PADDLE_ENV || "production") as "sandbox" | "production";
+        initializePaddle({
+            token: clientToken,
+            environment: env
+        }).then(instance => {
+            if (instance) {
+                setPaddle(instance);
+                instance.pricePreview({
+                    items: [
+                        { priceId: PADDLE_PRICE_MAP.standard_annual, quantity: 1 },
+                        { priceId: PADDLE_PRICE_MAP.standard_monthly, quantity: 1 },
+                        { priceId: PADDLE_PRICE_MAP.custom_annual, quantity: 1 },
+                        { priceId: PADDLE_PRICE_MAP.custom_monthly, quantity: 1 }
+                    ]
+                }).then(preview => {
+                    if (preview?.data?.details?.lineItems) {
+                        const map: Record<string, string> = {};
+                        for (const item of preview.data.details.lineItems) {
+                            map[item.price.id] = item.formattedTotals.total;
+                        }
+                        setPaddlePrices(map);
+                    }
+                }).catch(err => console.warn("Paddle pricePreview:", err));
+            }
+        }).catch(err => console.warn("Paddle init:", err));
+    }, []);
+
+    const handlePaddleCheckout = (planKey: "standard" | "custom" | "leadspool") => {
+        const priceId = isAnnual
+            ? (planKey === "custom" ? PADDLE_PRICE_MAP.custom_annual : PADDLE_PRICE_MAP.standard_annual)
+            : (planKey === "custom" ? PADDLE_PRICE_MAP.custom_monthly : PADDLE_PRICE_MAP.standard_monthly);
+
+        if (paddle) {
+            paddle.Checkout.open({
+                items: [{ priceId, quantity: planKey === "standard" || planKey === "custom" ? usersCount : 1 }],
+                settings: {
+                    displayMode: "overlay",
+                    theme: "dark",
+                    variant: "one-page",
+                    successUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/checkout?paddle_status=success&plan=${planKey}&billing=${billingCycle}`
+                }
+            });
+        } else {
+            window.location.href = `/checkout?plan=${planKey}&billing=${billingCycle}`;
+        }
+    };
 
     // Fetch dynamic pricing from Super Admin configuration
     useEffect(() => {
@@ -305,14 +359,13 @@ export default function PricingPage() {
                             </ul>
                         </div>
 
-                        <a 
-                            href={`/checkout?plan=standard&billing=${billingCycle}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95 text-center"
+                        <button 
+                            type="button"
+                            onClick={() => handlePaddleCheckout("standard")}
+                            className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95 text-center cursor-pointer"
                         >
-                            Pay with Card (${standardRate.toFixed(2)}/mo) <ArrowRight size={16} />
-                        </a>
+                            <CreditCard size={16} /> Pay with Paddle (${standardRate.toFixed(2)}/mo) <ArrowRight size={16} />
+                        </button>
                     </div>
 
                     {/* Tier 3: Custom Plan */}
@@ -362,14 +415,13 @@ export default function PricingPage() {
                             </ul>
                         </div>
 
-                        <a 
-                            href={`/checkout?plan=custom&billing=${billingCycle}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 flex items-center justify-center gap-2 hover:border-pink-500/30"
+                        <button 
+                            type="button"
+                            onClick={() => handlePaddleCheckout("custom")}
+                            className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 flex items-center justify-center gap-2 hover:border-pink-500/30 cursor-pointer"
                         >
-                            Pay with Card <ArrowRight size={16} />
-                        </a>
+                            <CreditCard size={16} /> Pay with Paddle <ArrowRight size={16} />
+                        </button>
                     </div>
                 </div>
 

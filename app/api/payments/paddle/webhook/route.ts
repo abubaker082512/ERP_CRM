@@ -23,7 +23,7 @@ function recordPaddleTransaction(tx: any) {
 export async function POST(request: NextRequest) {
   const signature = request.headers.get("paddle-signature") ?? "";
   const rawBody = await request.text();
-  const secret = process.env.PADDLE_NOTIFICATION_WEBHOOK_SECRET ?? "";
+  const secret = process.env.PADDLE_NOTIFICATION_WEBHOOK_SECRET || process.env.PADDLE_WEBHOOK_SECRET || "";
 
   if (!rawBody) {
     return NextResponse.json({ error: "Empty request body" }, { status: 400 });
