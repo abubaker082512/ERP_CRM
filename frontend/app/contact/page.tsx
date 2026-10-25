@@ -71,6 +71,19 @@ export default function ContactPage() {
                                 </div>
                             </div>
                         </div>
+
+                        <div className="galaxy-card p-8 flex items-start gap-4 animate-in fade-in slide-in-from-bottom-3 duration-900">
+                            <div className="bg-rose-500/20 p-4 rounded-xl text-rose-400 shrink-0 shadow-lg shadow-rose-500/10">
+                                <MapPin size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold mb-2 text-white">Office Address</h3>
+                                <p className="text-gray-400 mb-2">Physical headquarters &amp; operational office:</p>
+                                <p className="text-gray-200 font-semibold leading-relaxed">
+                                    20, 21, Mobile Arena, SOAN Garden, Islamabad
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Contact Form */}

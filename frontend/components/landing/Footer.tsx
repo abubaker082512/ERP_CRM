@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShieldCheck, Phone, Mail, MessageSquare, Globe, ArrowRight, Sparkles, Scale, Lock, FileText, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Phone, Mail, MessageSquare, Globe, ArrowRight, Sparkles, Scale, Lock, FileText, CheckCircle2, MapPin } from "lucide-react";
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
@@ -35,8 +35,9 @@ export default function Footer() {
                                 <Mail size={14} className="text-cyan-400 shrink-0" />
                                 <a href="mailto:support@beraxis.online" className="hover:text-white transition-colors">support@beraxis.online</a>
                             </p>
-                            <p className="text-[11px] text-gray-500">
-                                Global Headquarters: Wyoming, United States
+                            <p className="flex items-start gap-2 text-gray-300 font-medium">
+                                <MapPin size={14} className="text-rose-400 shrink-0 mt-0.5" />
+                                <span>20, 21, Mobile Arena, SOAN Garden, Islamabad</span>
                             </p>
                         </div>
 
@@ -139,8 +140,8 @@ export default function Footer() {
                             <li><Link href="/security" className="hover:text-white transition-colors font-medium text-gray-300">Enterprise Security &amp; RLS</Link></li>
                             <li><Link href="/cookies" className="hover:text-white transition-colors">Cookie &amp; Tracking Policy</Link></li>
                             <li><Link href="/privacy#gdpr" className="hover:text-white transition-colors">GDPR &amp; CCPA Rights</Link></li>
+                            <li><Link href="/refund-policy" className="hover:text-white transition-colors font-medium text-emerald-400">Refund Policy (14-Day Money-Back)</Link></li>
                             <li><Link href="/terms#acceptable-use" className="hover:text-white transition-colors">Acceptable Use Policy</Link></li>
-                            <li><Link href="/terms#subscriptions" className="hover:text-white transition-colors">Refund &amp; Billing Terms</Link></li>
                             <li><Link href="/sitemap.xml" className="hover:text-white transition-colors text-gray-500">XML Sitemap Index</Link></li>
                         </ul>
                     </div>
@@ -172,6 +173,8 @@ export default function Footer() {
                         <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy</Link>
                         <span>•</span>
                         <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms</Link>
+                        <span>•</span>
+                        <Link href="/refund-policy" className="hover:text-gray-300 transition-colors">Refund Policy</Link>
                         <span>•</span>
                         <Link href="/sla" className="hover:text-gray-300 transition-colors">SLA</Link>
                         <span>•</span>
