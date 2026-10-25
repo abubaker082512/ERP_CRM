@@ -29,6 +29,44 @@ const navItems = [
 function WorkspaceModuleGuard({ pathname, children }: { pathname: string; children: React.ReactNode }) {
     const { hasSelectedIndustry, isFreePlan, freeSelectedApp, isModuleEnabled } = useBranchContext();
 
+    // If pathname is a public or legal page, never block with an entity setup modal
+    const isPublic =
+        pathname === '' ||
+        pathname === '/' ||
+        pathname.startsWith('/refund') ||
+        pathname.startsWith('/terms') ||
+        pathname.startsWith('/privacy') ||
+        pathname.startsWith('/security') ||
+        pathname.startsWith('/sla') ||
+        pathname.startsWith('/cookies') ||
+        pathname.startsWith('/about') ||
+        pathname.startsWith('/contact') ||
+        pathname.startsWith('/pricing') ||
+        pathname.startsWith('/checkout') ||
+        pathname.startsWith('/affiliates') ||
+        pathname.startsWith('/referrals') ||
+        pathname.startsWith('/blog') ||
+        pathname.startsWith('/compare') ||
+        pathname.startsWith('/features') ||
+        pathname.startsWith('/industries') ||
+        pathname.startsWith('/shop') ||
+        pathname.startsWith('/meet') ||
+        pathname.startsWith('/team') ||
+        pathname.startsWith('/lead-pool') ||
+        pathname.startsWith('/leads-pool') ||
+        pathname.startsWith('/login') ||
+        pathname.startsWith('/signup') ||
+        pathname.startsWith('/forgot-password') ||
+        pathname.startsWith('/pitch-deck') ||
+        pathname.startsWith('/presentation') ||
+        pathname.startsWith('/launch-creatives') ||
+        pathname.startsWith('/appointments/book') ||
+        pathname.startsWith('/recruitment/apply');
+
+    if (isPublic) {
+        return <>{children}</>;
+    }
+
     // Always allow Settings, AI, Billing, Super Admin, and Leads Pool (which renders its own Paid Plan gate)
     const isAlwaysAllowed =
         pathname.startsWith('/settings') ||
@@ -185,31 +223,35 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
     const isPublicMarketingPage = 
         cleanPath === '' ||
         cleanPath === '/' || 
-        cleanPath === '/pricing' || 
-        cleanPath === '/about' || 
-        cleanPath === '/contact' || 
-        cleanPath === '/team' || 
-        cleanPath === '/leads-pool' || 
-        cleanPath === '/lead-pool' || 
-        cleanPath === '/pitch-deck' || 
-        cleanPath === '/presentation' || 
-        cleanPath === '/launch-creatives' || 
-        cleanPath === '/privacy' || 
-        cleanPath === '/terms' || 
-        cleanPath === '/sla' || 
-        cleanPath === '/security' || 
-        cleanPath === '/cookies' || 
-        cleanPath === '/login' || 
-        cleanPath === '/signup' || 
-        cleanPath === '/forgot-password' || 
-        cleanPath === '/checkout' || 
+        cleanPath.startsWith('/pricing') || 
+        cleanPath.startsWith('/about') || 
+        cleanPath.startsWith('/contact') || 
+        cleanPath.startsWith('/team') || 
+        cleanPath.startsWith('/leads-pool') || 
+        cleanPath.startsWith('/lead-pool') || 
+        cleanPath.startsWith('/pitch-deck') || 
+        cleanPath.startsWith('/presentation') || 
+        cleanPath.startsWith('/launch-creatives') || 
+        cleanPath.startsWith('/privacy') || 
+        cleanPath.startsWith('/terms') || 
+        cleanPath.startsWith('/refund') || 
+        cleanPath.startsWith('/sla') || 
+        cleanPath.startsWith('/security') || 
+        cleanPath.startsWith('/cookies') || 
+        cleanPath.startsWith('/login') || 
+        cleanPath.startsWith('/signup') || 
+        cleanPath.startsWith('/forgot-password') || 
+        cleanPath.startsWith('/checkout') || 
+        cleanPath.startsWith('/affiliates') || 
+        cleanPath.startsWith('/referrals') || 
         cleanPath.startsWith('/blog') || 
         cleanPath.startsWith('/compare') || 
         cleanPath.startsWith('/features') || 
         cleanPath.startsWith('/industries') || 
         cleanPath.startsWith('/shop') || 
         cleanPath.startsWith('/meet') || 
-        cleanPath.startsWith('/appointments/book');
+        cleanPath.startsWith('/appointments/book') ||
+        cleanPath.startsWith('/recruitment/apply');
 
     if (isPublicMarketingPage) {
         return (
