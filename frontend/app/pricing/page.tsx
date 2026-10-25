@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame, Building2, CreditCard } from "lucide-react";
+import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame, Building2, CreditCard, ShieldCheck } from "lucide-react";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { PADDLE_PRICE_MAP } from "@/lib/paddleConfig";
@@ -120,6 +120,8 @@ export default function PricingPage() {
         { name: "Purchase Management", free: false, standard: true, custom: true },
         { name: "Surveys & Documents", free: false, standard: true, custom: true },
         { name: "Single vs Multi-Company", free: "1 Company", standard: "1 Company", custom: "3 Included (+ $15/extra)" },
+        { name: "User Seats Bundled", free: "1 User", standard: "1 User Base", custom: "5 Seats Bundled Included (Expandable)" },
+        { name: "Seat Reclamation Guarantee", free: "N/A", standard: "100% Instant Pool Reuse", custom: "100% Instant Pool Reuse" },
         { name: "Lead Pool Credits / User / Mo", free: "50 Previews", standard: "1,500 (+ Top-up)", custom: "5,000+" },
         { name: "Beraxis Studio Customizer", free: false, standard: false, custom: true },
         { name: "External API Integrations", free: false, standard: false, custom: true },
@@ -391,6 +393,14 @@ export default function PricingPage() {
                                 <li className="flex items-center gap-3 bg-pink-500/15 border border-pink-500/30 rounded-xl p-2.5 -mx-1 text-pink-100 font-bold shadow-sm">
                                     <Building2 className="text-pink-400 shrink-0" size={16} />
                                     <span>Multi-Company: 3 Companies included (+ $15/mo per extra company)</span>
+                                </li>
+                                <li className="flex items-center gap-3 bg-pink-500/15 border border-pink-500/30 rounded-xl p-2.5 -mx-1 text-pink-100 font-bold shadow-sm">
+                                    <Users className="text-pink-400 shrink-0" size={16} />
+                                    <span>5 User Seats Bundled by Default (expandable up to 7+ or custom)</span>
+                                </li>
+                                <li className="flex items-center gap-3 bg-pink-500/10 border border-pink-500/30 rounded-xl p-2.5 -mx-1 text-pink-200 font-bold shadow-sm">
+                                    <ShieldCheck className="text-pink-400 shrink-0" size={16} />
+                                    <span>Instant Seat Reclamation: Free & reassign seats anytime upon offboarding</span>
                                 </li>
                                 <li className="flex items-center gap-3 bg-pink-500/10 border border-pink-500/30 rounded-xl p-2.5 -mx-1 text-pink-200 font-bold shadow-sm">
                                     <Zap className="text-pink-400 shrink-0" size={16} />

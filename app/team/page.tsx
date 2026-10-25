@@ -1,617 +1,743 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppHeader from "@/components/layout/AppHeader";
-import { 
-  UserPlus, 
-  Mail, 
-  Shield, 
-  User, 
-  Trash2, 
-  CheckCircle, 
-  Clock, 
-  Plus, 
-  Download, 
-  Copy, 
-  Check, 
-  Lock, 
-  KeyRound, 
-  ShieldCheck, 
-  AlertTriangle,
-  Send,
+import {
   Users,
-  Search,
   Building2,
-  Briefcase,
-  DollarSign,
-  Calendar,
+  Shield,
+  CreditCard,
+  Plus,
+  Trash2,
+  CheckCircle,
+  Clock,
   ExternalLink,
-  Laptop
+  ChevronRight,
+  GitBranch,
+  ShieldCheck,
+  UserCheck,
+  AlertCircle,
+  Sparkles,
+  ArrowRight,
+  RefreshCw,
+  Search,
+  Filter,
+  Check,
+  X,
+  Briefcase,
+  Layers,
+  Crown,
+  KeyRound,
+  Network
 } from "lucide-react";
 import Link from "next/link";
+import { 
+  TeamMember, 
+  CompanyEntity, 
+  MultiCompanyQuota, 
+  FreelancerContractor, 
+  TeamInvitation, 
+  Role 
+} from "@/lib/teamTypes";
+import { 
+  INITIAL_QUOTA, 
+  INITIAL_TEAM_MEMBERS, 
+  INITIAL_CONTRACTORS, 
+  INITIAL_INVITATIONS, 
+  ALL_SYSTEM_MODULES, 
+  DEFAULT_ROLE_PERMISSIONS 
+} from "@/lib/teamStorage";
 
-type Role = "Owner" | "Admin" | "Manager" | "Specialist" | "Viewer" | "Contractor";
-
-type TeamMember = {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-  department: string;
-  type: "full_time" | "freelance";
-  status: "active" | "away" | "offline";
-  lastActive: string;
-  twoFactorEnabled: boolean;
-  avatarBg: string;
-  rate?: string;
-  projectAssigned?: string;
-};
-
-type FreelancerContractor = {
-  id: string;
-  name: string;
-  email: string;
-  specialty: string;
-  rate: string; // e.g. "$75 / hr"
-  contractType: "Hourly Freelance" | "Monthly Retainer" | "Fixed Milestone";
-  projectAssigned: string;
-  status: "active" | "completed" | "onboarding";
-  ndaStatus: "Signed" | "Pending";
-  startDate: string;
-  endDate: string;
-};
-
-type Invitation = {
-  id: string;
-  email: string;
-  role: Role;
-  department: string;
-  invitedBy: string;
-  sentAt: string;
-  expiresIn: string;
-};
-
-const INITIAL_MEMBERS: TeamMember[] = [
-  {
-    id: "USR-001",
-    name: "Abubaker Admin",
-    email: "abubaker@galaxy.com",
-    role: "Owner",
-    department: "Executive & Systems",
-    type: "full_time",
-    status: "active",
-    lastActive: "Just now",
-    twoFactorEnabled: true,
-    avatarBg: "bg-purple-600"
-  },
-  {
-    id: "USR-002",
-    name: "Elena Rostova",
-    email: "elena.rostova@galaxy.com",
-    role: "Admin",
-    department: "Finance & Accounting",
-    type: "full_time",
-    status: "active",
-    lastActive: "5 mins ago",
-    twoFactorEnabled: true,
-    avatarBg: "bg-emerald-600"
-  },
-  {
-    id: "USR-003",
-    name: "Alex Vance",
-    email: "alex.vance@galaxy.com",
-    role: "Manager",
-    department: "Manufacturing & Plant",
-    type: "full_time",
-    status: "active",
-    lastActive: "18 mins ago",
-    twoFactorEnabled: true,
-    avatarBg: "bg-amber-600"
-  },
-  {
-    id: "USR-004",
-    name: "Sarah Jenkins",
-    email: "sarah.j@galaxy.com",
-    role: "Specialist",
-    department: "Engineering & Cloud",
-    type: "full_time",
-    status: "away",
-    lastActive: "1 hour ago",
-    twoFactorEnabled: true,
-    avatarBg: "bg-blue-600"
-  }
-];
-
-const INITIAL_CONTRACTORS: FreelancerContractor[] = [
-  {
-    id: "CON-101",
-    name: "Liam O'Connor",
-    email: "liam.dev@remote-contractor.io",
-    specialty: "iOS & React Native Specialist",
-    rate: "$85 / hr",
-    contractType: "Hourly Freelance",
-    projectAssigned: "POS Mobile Barcode Companion App",
-    status: "active",
-    ndaStatus: "Signed",
-    startDate: "2026-02-01",
-    endDate: "2026-06-30"
-  },
-  {
-    id: "CON-102",
-    name: "Amina Al-Mansoor",
-    email: "amina.design@uxstudio.co",
-    specialty: "Senior 3D UI & Motion Designer",
-    rate: "$4,800 / mo",
-    contractType: "Monthly Retainer",
-    projectAssigned: "Sign PDF Studio & Visual Identity",
-    status: "active",
-    ndaStatus: "Signed",
-    startDate: "2026-01-15",
-    endDate: "2026-12-31"
-  },
-  {
-    id: "CON-103",
-    name: "Viktor Petrov",
-    email: "viktor.sec@auditconsulting.eu",
-    specialty: "Cybersecurity & Penetration Testing",
-    rate: "$6,500 / project",
-    contractType: "Fixed Milestone",
-    projectAssigned: "SOC2 & SHA-256 Signature Audit",
-    status: "active",
-    ndaStatus: "Signed",
-    startDate: "2026-03-01",
-    endDate: "2026-04-15"
-  }
-];
-
-const INITIAL_INVITATIONS: Invitation[] = [
-  {
-    id: "INV-901",
-    email: "marcus.v@salesleaders.io",
-    role: "Manager",
-    department: "Enterprise Sales",
-    invitedBy: "Abubaker Admin",
-    sentAt: "2026-10-05 16:30",
-    expiresIn: "6 days remaining"
-  },
-  {
-    id: "INV-902",
-    email: "claire.qa@beraxis.online",
-    role: "Contractor",
-    department: "Quality Assurance",
-    invitedBy: "Alex Vance",
-    sentAt: "2026-10-06 11:00",
-    expiresIn: "7 days remaining"
-  }
-];
-
-const MODULE_PERMISSIONS: { name: string; key: string }[] = [
-  { name: "POS & Checkout Register", key: "pos" },
-  { name: "Sales & CRM Pipeline", key: "sales" },
-  { name: "Accounting & Financial Statements", key: "accounting" },
-  { name: "Inventory & Barcode Stocking", key: "inventory" },
-  { name: "Manufacturing & Work Orders", key: "manufacturing" },
-  { name: "Payroll & Salary Disbursement", key: "payroll" },
-  { name: "Recruitment & Employee Onboarding", key: "recruitment" },
-  { name: "Global Enterprise Settings", key: "settings" },
-];
-
-const ROLE_PERMISSIONS_MATRIX: Record<Role, Record<string, boolean>> = {
-  Owner: { pos: true, sales: true, accounting: true, inventory: true, manufacturing: true, payroll: true, recruitment: true, settings: true },
-  Admin: { pos: true, sales: true, accounting: true, inventory: true, manufacturing: true, payroll: true, recruitment: true, settings: true },
-  Manager: { pos: true, sales: true, accounting: false, inventory: true, manufacturing: true, payroll: false, recruitment: true, settings: false },
-  Specialist: { pos: true, sales: true, accounting: false, inventory: true, manufacturing: true, payroll: false, recruitment: false, settings: false },
-  Contractor: { pos: false, sales: false, accounting: false, inventory: true, manufacturing: true, payroll: false, recruitment: false, settings: false },
-  Viewer: { pos: false, sales: false, accounting: false, inventory: false, manufacturing: false, payroll: false, recruitment: false, settings: false },
-};
-
-export default function TeamPage() {
-  const [members, setMembers] = useState<TeamMember[]>(INITIAL_MEMBERS);
+export default function TeamManagementPage() {
+  const [quota, setQuota] = useState<MultiCompanyQuota>(INITIAL_QUOTA);
+  const [members, setMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
   const [contractors, setContractors] = useState<FreelancerContractor[]>(INITIAL_CONTRACTORS);
-  const [invitations, setInvitations] = useState<Invitation[]>(INITIAL_INVITATIONS);
-  const [activeTab, setActiveTab] = useState<"members" | "contractors" | "matrix" | "invites">("members");
+  const [invitations, setInvitations] = useState<TeamInvitation[]>(INITIAL_INVITATIONS);
+  
+  const [activeTab, setActiveTab] = useState<"members" | "orgchart" | "companies" | "matrix" | "contractors">("members");
   const [search, setSearch] = useState("");
+  const [companyFilter, setCompanyFilter] = useState<string>("all");
+  
+  // Modals
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isBuySeatsOpen, setIsBuySeatsOpen] = useState(false);
+  const [isNewCompanyOpen, setIsNewCompanyOpen] = useState(false);
+  const [selectedMemberForRevoke, setSelectedMemberForRevoke] = useState<TeamMember | null>(null);
 
-  // Modals & Link state
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [isAddContractorOpen, setIsAddContractorOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<Role>("Specialist");
-  const [inviteDept, setInviteDept] = useState("Engineering & Cloud");
-  const [inviteNote, setInviteNote] = useState("");
-  const [copiedLink, setCopiedLink] = useState(false);
+  // Invite Form State
+  const [invName, setInvName] = useState("");
+  const [invEmail, setInvEmail] = useState("");
+  const [invRole, setInvRole] = useState<Role>("Specialist");
+  const [invDept, setInvDept] = useState("Operations & Sales");
+  const [invReportsTo, setInvReportsTo] = useState<string>("USR-001");
+  const [invCompanies, setInvCompanies] = useState<string[]>(["CMP-001"]);
+  const [invModules, setInvModules] = useState<string[]>(DEFAULT_ROLE_PERMISSIONS["Specialist"]);
 
-  // New Contractor Form
-  const [conName, setConName] = useState("");
-  const [conEmail, setConEmail] = useState("");
-  const [conSpec, setConSpec] = useState("");
-  const [conRate, setConRate] = useState("$75 / hr");
-  const [conType, setConType] = useState<FreelancerContractor["contractType"]>("Hourly Freelance");
-  const [conProject, setConProject] = useState("");
+  // Seat Purchasing State
+  const [buySeatQty, setBuySeatQty] = useState<number>(5);
+  const [seatBillingCycle, setSeatBillingCycle] = useState<"annual" | "monthly">("annual");
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
-  const handleSendInvite = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteEmail.trim()) return;
+  // New Company Form State
+  const [newCompName, setNewCompName] = useState("");
+  const [newCompCode, setNewCompCode] = useState("");
+  const [newCompIndustry, setNewCompIndustry] = useState("Digital Services");
+  const [newCompCurrency, setNewCompCurrency] = useState("USD ($)");
 
-    const newInv: Invitation = {
-      id: `INV-${(900 + invitations.length + 1).toString()}`,
-      email: inviteEmail.trim(),
-      role: inviteRole,
-      department: inviteDept,
-      invitedBy: "Current Administrator",
-      sentAt: new Date().toISOString().replace("T", " ").slice(0, 16),
-      expiresIn: "7 days remaining"
-    };
+  // Notification Toast
+  const [toastMsg, setToastMsg] = useState<{ title: string; desc: string } | null>(null);
 
-    setInvitations([newInv, ...invitations]);
-    setIsInviteModalOpen(false);
-    setInviteEmail("");
-    setInviteNote("");
-    alert(`Invitation sent to ${newInv.email}!`);
+  const showToast = (title: string, desc: string) => {
+    setToastMsg({ title, desc });
+    setTimeout(() => setToastMsg(null), 4500);
   };
 
-  const handleCreateContractor = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!conName.trim() || !conEmail.trim()) return;
+  // Re-sync quota metrics based on active members
+  useEffect(() => {
+    const activeMembers = members.filter((m) => m.status !== "deactivated");
+    setQuota((prev) => ({
+      ...prev,
+      assignedSeats: activeMembers.length,
+      availableSeats: Math.max(0, prev.totalSeats - activeMembers.length),
+    }));
+  }, [members]);
 
-    const newCon: FreelancerContractor = {
-      id: `CON-${(100 + contractors.length + 1).toString()}`,
-      name: conName.trim(),
-      email: conEmail.trim(),
-      specialty: conSpec.trim() || "Consultant",
-      rate: conRate,
-      contractType: conType,
-      projectAssigned: conProject.trim() || "General Engineering Milestone",
+  // Handle Role Selection change inside Invite Modal
+  const handleRoleSelectionChange = (newRole: Role) => {
+    setInvRole(newRole);
+    setInvModules(DEFAULT_ROLE_PERMISSIONS[newRole] || ["pos"]);
+  };
+
+  // Toggle Module Selection inside Invite Modal
+  const toggleModuleSelection = (key: string) => {
+    if (invModules.includes("*")) {
+      setInvModules([key]);
+      return;
+    }
+    if (invModules.includes(key)) {
+      setInvModules(invModules.filter((k) => k !== key));
+    } else {
+      setInvModules([...invModules, key]);
+    }
+  };
+
+  // Toggle Company Assignment inside Invite Modal
+  const toggleCompanySelection = (compId: string) => {
+    if (invCompanies.includes(compId)) {
+      if (invCompanies.length > 1) {
+        setInvCompanies(invCompanies.filter((id) => id !== compId));
+      }
+    } else {
+      setInvCompanies([...invCompanies, compId]);
+    }
+  };
+
+  // Submit Invite Member
+  const handleInviteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!invEmail || !invEmail.includes("@")) {
+      alert("Please provide a valid company email address.");
+      return;
+    }
+
+    if (quota.availableSeats <= 0) {
+      alert("No available seats! Please buy additional seats or reclaim an existing seat.");
+      setIsInviteOpen(false);
+      setIsBuySeatsOpen(true);
+      return;
+    }
+
+    const newMember: TeamMember = {
+      id: `USR-${(members.length + 1).toString().padStart(3, "0")}`,
+      name: invName.trim() || invEmail.split("@")[0],
+      email: invEmail.trim(),
+      role: invRole,
+      department: invDept,
+      companyIds: invCompanies,
+      reportsToId: invReportsTo,
+      allowedModules: invModules,
+      type: "full_time",
       status: "active",
-      ndaStatus: "Signed",
-      startDate: new Date().toISOString().split("T")[0],
-      endDate: "2026-12-31"
+      twoFactorEnabled: false,
+      avatarBg: "bg-indigo-600",
+      lastActive: "Just now",
+      joinedAt: new Date().toISOString().split("T")[0],
+      title: `${invRole} (${invDept})`,
     };
 
-    setContractors([newCon, ...contractors]);
-    setIsAddContractorOpen(false);
-    setConName("");
-    setConEmail("");
-    setConSpec("");
-    setConProject("");
+    setMembers([newMember, ...members]);
+    setIsInviteOpen(false);
+    setInvName("");
+    setInvEmail("");
+
+    showToast(
+      "Seat Assigned & Member Invited!",
+      `${newMember.name} (${newMember.email}) has been provisioned. 1 seat allocated.`
+    );
   };
 
-  const handleRoleChange = (memberId: string, newRole: Role) => {
-    setMembers(members.map(m => m.id === memberId ? { ...m, role: newRole } : m));
+  // Seat Reclamation Action (Offboarding an employee)
+  const handleConfirmRevoke = () => {
+    if (!selectedMemberForRevoke) return;
+    if (selectedMemberForRevoke.role === "Owner") {
+      alert("The primary organization Owner cannot be revoked.");
+      setSelectedMemberForRevoke(null);
+      return;
+    }
+
+    const memberName = selectedMemberForRevoke.name;
+    // Remove member and immediately reclaim their seat back to the company pool
+    setMembers(members.filter((m) => m.id !== selectedMemberForRevoke.id));
+    setSelectedMemberForRevoke(null);
+
+    showToast(
+      "Seat Successfully Reclaimed!",
+      `${memberName}'s access was revoked and their credentials terminated. 1 paid seat is returned to your available pool for reassignment.`
+    );
   };
 
-  const handleRevokeMember = (memberId: string) => {
-    if (confirm("Are you sure you want to remove this member from the organization?")) {
-      setMembers(members.filter(m => m.id !== memberId));
+  // Create New Company Entity (Up to 3 included under Custom tier)
+  const handleCreateCompany = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCompName.trim()) return;
+
+    if (quota.companies.length >= quota.maxCompanies) {
+      alert(`Maximum company limit reached (${quota.maxCompanies} included in Custom Enterprise Plan).`);
+      return;
+    }
+
+    const newComp: CompanyEntity = {
+      id: `CMP-${(quota.companies.length + 1).toString().padStart(3, "0")}`,
+      name: newCompName.trim(),
+      code: newCompCode.trim().toUpperCase() || `SUB${quota.companies.length + 1}`,
+      industry: newCompIndustry,
+      currency: newCompCurrency,
+      timezone: "UTC-5 (EST / Miami)",
+      isPrimary: false,
+      createdAt: new Date().toISOString().split("T")[0],
+    };
+
+    setQuota({
+      ...quota,
+      companies: [...quota.companies, newComp],
+    });
+
+    setIsNewCompanyOpen(false);
+    setNewCompName("");
+    setNewCompCode("");
+
+    showToast(
+      "New Enterprise Entity Provisioned!",
+      `Company '${newComp.name}' added to your 3-company quota.`
+    );
+  };
+
+  // Purchase Additional Seats via Paddle
+  const handlePurchaseSeats = async () => {
+    setIsCheckoutLoading(true);
+    try {
+      const res = await fetch("/api/team/seats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quantity: buySeatQty,
+          plan: "standard",
+          billing: seatBillingCycle,
+          customerEmail: "abubaker@galaxy.com",
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Failed to configure checkout");
+
+      // In production Paddle checkout:
+      if (typeof window !== "undefined" && (window as any).Paddle) {
+        (window as any).Paddle.Checkout.open({
+          items: data.items,
+          customer: data.customer,
+          settings: {
+            displayMode: "overlay",
+            theme: "dark",
+            successUrl: "https://www.beraxis.online/team?payment=success",
+          },
+        });
+      } else {
+        // Fallback simulation adding seats directly to state
+        setQuota((prev) => ({
+          ...prev,
+          totalSeats: prev.totalSeats + buySeatQty,
+          availableSeats: prev.availableSeats + buySeatQty,
+        }));
+        showToast(
+          "Seat Expansion Complete!",
+          `Successfully expanded capacity by +${buySeatQty} seats!`
+        );
+      }
+      setIsBuySeatsOpen(false);
+    } catch (err: any) {
+      alert(`Error initiating seat checkout: ${err.message}`);
+    } finally {
+      setIsCheckoutLoading(false);
     }
   };
 
-  const handleRevokeContractor = (conId: string) => {
-    if (confirm("Terminate contractor engagement?")) {
-      setContractors(contractors.filter(c => c.id !== conId));
-    }
-  };
+  // Filtered members
+  const filteredMembers = members.filter((m) => {
+    const matchesSearch =
+      m.name.toLowerCase().includes(search.toLowerCase()) ||
+      m.email.toLowerCase().includes(search.toLowerCase()) ||
+      m.department.toLowerCase().includes(search.toLowerCase()) ||
+      m.role.toLowerCase().includes(search.toLowerCase());
 
-  const handleCopyMagicLink = () => {
-    const magicLink = `https://access.beraxis.online/team/join?token=sec_${Math.random().toString(36).substring(2, 12)}`;
-    navigator.clipboard.writeText(magicLink);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
+    const matchesCompany =
+      companyFilter === "all" || m.companyIds.includes(companyFilter);
 
-  const exportTeamCSV = () => {
-    const headers = ["ID", "Full Name", "Email", "Type", "Role / Specialty", "Department / Project", "Rate / Status"];
-    const rows = [
-      ...members.map(m => [m.id, `"${m.name}"`, m.email, "Full-Time Staff", m.role, `"${m.department}"`, m.status]),
-      ...contractors.map(c => [c.id, `"${c.name}"`, c.email, `Freelancer (${c.contractType})`, `"${c.specialty}"`, `"${c.projectAssigned}"`, c.rate])
-    ];
-
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `beraxis_workspace_team_${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const filteredMembers = members.filter(m => 
-    m.name.toLowerCase().includes(search.toLowerCase()) ||
-    m.email.toLowerCase().includes(search.toLowerCase()) ||
-    m.department.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const filteredContractors = contractors.filter(c => 
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.specialty.toLowerCase().includes(search.toLowerCase()) ||
-    c.projectAssigned.toLowerCase().includes(search.toLowerCase())
-  );
+    return matchesSearch && matchesCompany;
+  });
 
   return (
-    <div className="flex flex-col h-screen bg-[#0a0d14] text-white">
-      <AppHeader title="Team & Workforce Access" />
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+      <AppHeader />
 
-      <div className="flex-1 overflow-auto p-4 sm:p-6 space-y-6">
-        {/* KPI Dashboard */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="galaxy-card p-4 border border-purple-500/20 bg-purple-950/10 rounded-xl flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Full-Time Staff</p>
-              <h3 className="text-2xl font-bold text-purple-400 mt-1">{members.length} Core</h3>
-              <p className="text-xs text-gray-400 mt-1">Full internal access</p>
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 text-white px-5 py-4 rounded-xl shadow-2xl flex items-start space-x-3 max-w-md animate-in slide-in-from-bottom duration-300">
+          <CheckCircle className="w-5 h-5 text-emerald-400 mt-0.5 shrink-0" />
+          <div>
+            <h4 className="font-semibold text-sm text-emerald-300">{toastMsg.title}</h4>
+            <p className="text-xs text-slate-300 mt-1 leading-relaxed">{toastMsg.desc}</p>
+          </div>
+        </div>
+      )}
+
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        {/* Page Hero Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+          <div>
+            <div className="flex items-center space-x-3 mb-2">
+              <span className="px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center gap-1.5">
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+                Custom Enterprise Plan ($37.40 / mo)
+              </span>
+              <span className="text-xs text-slate-400">Master Organization Workspace</span>
             </div>
-            <div className="p-3 bg-purple-500/20 rounded-xl text-purple-400">
-              <Users size={22} />
-            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+              Team, Seats & Org Hierarchy
+            </h1>
+            <p className="text-sm text-slate-400 mt-1">
+              Multi-company seat provisioning, reporting hierarchies, and guaranteed license reclamation upon offboarding.
+            </p>
           </div>
 
-          <div className="galaxy-card p-4 border border-cyan-500/20 bg-cyan-950/10 rounded-xl flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Freelance Talent</p>
-              <h3 className="text-2xl font-bold text-cyan-400 mt-1">{contractors.length} External</h3>
-              <p className="text-xs text-gray-400 mt-1">Contractors & consultants</p>
-            </div>
-            <div className="p-3 bg-cyan-500/20 rounded-xl text-cyan-400">
-              <Laptop size={22} />
-            </div>
-          </div>
-
-          <div className="galaxy-card p-4 border border-amber-500/20 bg-amber-950/10 rounded-xl flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pending Invites</p>
-              <h3 className="text-2xl font-bold text-amber-400 mt-1">{invitations.length} Invites</h3>
-              <p className="text-xs text-gray-400 mt-1">Awaiting magic token</p>
-            </div>
-            <div className="p-3 bg-amber-500/20 rounded-xl text-amber-400">
-              <Clock size={22} />
-            </div>
-          </div>
-
-          <div className="galaxy-card p-4 border border-emerald-500/20 bg-emerald-950/10 rounded-xl flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">NDA & RBAC</p>
-              <h3 className="text-2xl font-bold text-emerald-400 mt-1">100% Sealed</h3>
-              <p className="text-xs text-gray-400 mt-1">Audit-compliant security</p>
-            </div>
-            <div className="p-3 bg-emerald-500/20 rounded-xl text-emerald-400">
-              <ShieldCheck size={22} />
-            </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setIsBuySeatsOpen(true)}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600/30 transition-all flex items-center gap-2"
+            >
+              <CreditCard className="w-4 h-4 text-indigo-400" />
+              Buy More Seats
+            </button>
+            <button
+              onClick={() => setIsInviteOpen(true)}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Invite Team Member
+            </button>
           </div>
         </div>
 
-        {/* Action Bar & Tabs */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111622] p-3.5 rounded-xl border border-gray-800">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex bg-gray-900/80 p-1 rounded-lg border border-gray-800">
-              <button
-                onClick={() => setActiveTab("members")}
-                className={`px-3.5 py-1.5 rounded-md text-xs font-bold uppercase transition-all ${
-                  activeTab === "members" ? "bg-purple-600 text-white shadow-md shadow-purple-900/40" : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Core Staff ({members.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("contractors")}
-                className={`px-3.5 py-1.5 rounded-md text-xs font-bold uppercase transition-all ${
-                  activeTab === "contractors" ? "bg-purple-600 text-white shadow-md shadow-purple-900/40" : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Freelance & Contractors ({contractors.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("matrix")}
-                className={`px-3.5 py-1.5 rounded-md text-xs font-bold uppercase transition-all ${
-                  activeTab === "matrix" ? "bg-purple-600 text-white shadow-md shadow-purple-900/40" : "text-gray-400 hover:text-white"
-                }`}
-              >
-                RBAC Permissions
-              </button>
-              <button
-                onClick={() => setActiveTab("invites")}
-                className={`px-3.5 py-1.5 rounded-md text-xs font-bold uppercase transition-all ${
-                  activeTab === "invites" ? "bg-purple-600 text-white shadow-md shadow-purple-900/40" : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Invitations ({invitations.length})
-              </button>
+        {/* Multi-Company & Seat Quota Cockpit */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          
+          {/* Card 1: 3 Companies Included Banner */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Building2 className="w-4 h-4 text-indigo-400" />
+                Multi-Company Cap
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                {quota.companies.length} of {quota.maxCompanies} Used
+              </span>
             </div>
+            <div className="text-2xl font-bold text-white mb-1">
+              {quota.companies.length} / {quota.maxCompanies} Companies
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              <strong>3 Companies Included</strong> in the $37.40 Custom Enterprise plan with shared team access.
+            </p>
+            <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-800">
+              <span className="text-slate-400">Available capacity:</span>
+              <span className="font-semibold text-emerald-400">
+                {quota.maxCompanies - quota.companies.length} Company Slots Open
+              </span>
+            </div>
+          </div>
 
-            <div className="relative max-w-xs ml-2">
-              <Search className="absolute left-3 top-2 text-gray-500" size={14} />
-              <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search people, roles, projects..."
-                className="bg-gray-900 border border-gray-700 rounded-lg pl-8 pr-3 py-1 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+          {/* Card 2: 5 Bundled User Seats */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-emerald-400" />
+                Team Seat Pool
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                {quota.assignedSeats} / {quota.totalSeats} Assigned
+              </span>
+            </div>
+            <div className="text-2xl font-bold text-white mb-1">
+              {quota.availableSeats} Seats Available
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              <strong>5 User Seats Bundled</strong> by default with instant seat reclamation on user removal.
+            </p>
+            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div 
+                className="bg-emerald-500 h-full transition-all duration-500" 
+                style={{ width: `${Math.min(100, (quota.assignedSeats / quota.totalSeats) * 100)}%` }} 
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href="/employees/departments"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-purple-300 rounded-lg text-xs font-semibold border border-purple-500/30 transition"
-            >
-              <Building2 size={13} /> Departments
-            </Link>
-
-            <button
-              onClick={exportTeamCSV}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800/80 hover:bg-gray-700 text-gray-200 rounded-lg text-xs font-semibold border border-gray-700 transition"
-            >
-              <Download size={13} /> Export Roster
-            </button>
-
-            <button
-              onClick={handleCopyMagicLink}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800/80 hover:bg-gray-700 text-cyan-300 rounded-lg text-xs font-semibold border border-cyan-500/30 transition"
-            >
-              {copiedLink ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-              {copiedLink ? "Link Copied!" : "Magic Join Link"}
-            </button>
-
-            {activeTab === "contractors" ? (
-              <button
-                onClick={() => setIsAddContractorOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-cyan-600/30 transition"
-              >
-                <Plus size={13} /> Add Freelancer
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsInviteModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-purple-600/30 transition"
-              >
-                <UserPlus size={13} /> Invite Member
-              </button>
-            )}
+          {/* Card 3: Seat Reclamation Guarantee */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-amber-400" />
+                Seat Reclamation Policy
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                100% Guaranteed
+              </span>
+            </div>
+            <div className="text-base font-semibold text-white mb-1">
+              Reusable Paid Licenses
+            </div>
+            <p className="text-xs text-slate-400 mb-3">
+              When an employee departs, offboarding them immediately frees their paid seat back to your pool for another team member.
+            </p>
+            <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-800 text-slate-400">
+              <span>Next billing renewal:</span>
+              <span className="text-slate-200 font-medium">Nov 24, 2026 (Paddle)</span>
+            </div>
           </div>
+
         </div>
 
-        {/* TAB 1: CORE STAFF DIRECTORY */}
+        {/* Navigation Tabs */}
+        <div className="flex border-b border-slate-800 space-x-6 overflow-x-auto text-sm font-medium">
+          <button
+            onClick={() => setActiveTab("members")}
+            className={`pb-3 flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${
+              activeTab === "members"
+                ? "border-indigo-500 text-indigo-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Team Members ({members.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab("orgchart")}
+            className={`pb-3 flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${
+              activeTab === "orgchart"
+                ? "border-indigo-500 text-indigo-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Network className="w-4 h-4" />
+            Interactive Org Hierarchy Chart
+          </button>
+
+          <button
+            onClick={() => setActiveTab("companies")}
+            className={`pb-3 flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${
+              activeTab === "companies"
+                ? "border-indigo-500 text-indigo-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            Multi-Company Workspaces ({quota.companies.length}/3)
+          </button>
+
+          <button
+            onClick={() => setActiveTab("matrix")}
+            className={`pb-3 flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${
+              activeTab === "matrix"
+                ? "border-indigo-500 text-indigo-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            Role & Module Permissions Matrix
+          </button>
+        </div>
+
+        {/* TAB 1: MEMBERS ROSTER */}
         {activeTab === "members" && (
-          <div className="galaxy-card bg-[#111622] rounded-xl border border-gray-800 overflow-hidden">
-            <table className="w-full text-left text-sm text-gray-300">
-              <thead className="bg-gray-900/90 text-gray-400 uppercase text-[11px] font-bold border-b border-gray-800 tracking-wider">
-                <tr>
-                  <th className="px-4 py-3">Member Name</th>
-                  <th className="px-4 py-3">Department</th>
-                  <th className="px-4 py-3">Security Role</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Last Active</th>
-                  <th className="px-4 py-3">2FA Security</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800/60">
-                {filteredMembers.map(member => (
-                  <tr key={member.id} className="hover:bg-gray-800/40 transition-colors">
-                    <td className="px-4 py-3.5 flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-full ${member.avatarBg} text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-md`}>
-                        {member.name.split(" ").map(n => n[0]).join("")}
-                      </div>
-                      <div>
-                        <div className="font-bold text-white flex items-center gap-1.5">
-                          {member.name}
-                          {member.role === "Owner" && (
-                            <span className="text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded border border-purple-500/40">
-                              Workspace Owner
+          <div className="space-y-4">
+            
+            {/* Filters Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+              <div className="relative w-full sm:w-80">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  placeholder="Filter by name, email, role, or dept..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="flex items-center space-x-3 w-full sm:w-auto">
+                <Filter className="w-4 h-4 text-slate-400" />
+                <select
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                  className="bg-slate-950 border border-slate-800 rounded-lg text-xs text-white px-3 py-2 focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="all">All 3 Included Companies</option>
+                  {quota.companies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Members Table */}
+            <div className="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                    <tr>
+                      <th className="py-3.5 px-4 font-semibold">Member & Credentials</th>
+                      <th className="py-3.5 px-4 font-semibold">Role</th>
+                      <th className="py-3.5 px-4 font-semibold">Reports To</th>
+                      <th className="py-3.5 px-4 font-semibold">Assigned Company</th>
+                      <th className="py-3.5 px-4 font-semibold">Module Access</th>
+                      <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {filteredMembers.map((m) => {
+                      const supervisor = members.find((sup) => sup.id === m.reportsToId);
+                      const isOwner = m.role === "Owner";
+
+                      return (
+                        <tr key={m.id} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-8 h-8 rounded-full ${m.avatarBg} flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-md`}>
+                                {m.name.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="font-semibold text-white flex items-center gap-1.5">
+                                  {m.name}
+                                  {isOwner && (
+                                    <Crown className="w-3.5 h-3.5 text-amber-400 inline" title="Workspace Owner" />
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-slate-400 font-mono">{m.email}</div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                              m.role === "Owner"
+                                ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                                : m.role === "Admin"
+                                ? "bg-purple-500/10 text-purple-300 border-purple-500/30"
+                                : m.role === "Manager"
+                                ? "bg-blue-500/10 text-blue-300 border-blue-500/30"
+                                : "bg-slate-800 text-slate-300 border-slate-700"
+                            }`}>
+                              {m.role}
                             </span>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-400">{member.email}</div>
-                      </div>
-                    </td>
+                            <div className="text-[10px] text-slate-500 mt-0.5">{m.department}</div>
+                          </td>
 
-                    <td className="px-4 py-3.5 text-xs text-gray-300 font-medium">
-                      {member.department}
-                    </td>
+                          <td className="py-3.5 px-4">
+                            {supervisor ? (
+                              <div className="flex items-center space-x-1.5 text-slate-300">
+                                <GitBranch className="w-3 h-3 text-slate-500 shrink-0" />
+                                <span className="font-medium text-[11px]">{supervisor.name}</span>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-slate-500 italic">Top Level (None)</span>
+                            )}
+                          </td>
 
-                    <td className="px-4 py-3.5">
-                      <select
-                        value={member.role}
-                        disabled={member.role === "Owner"}
-                        onChange={e => handleRoleChange(member.id, e.target.value as Role)}
-                        className="bg-gray-900 text-xs text-gray-200 border border-gray-700 rounded-lg px-2.5 py-1 focus:outline-none focus:border-purple-500 disabled:opacity-60"
-                      >
-                        <option value="Owner">Owner</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Manager">Manager</option>
-                        <option value="Specialist">Specialist</option>
-                        <option value="Viewer">Viewer</option>
-                      </select>
-                    </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex flex-wrap gap-1">
+                              {m.companyIds.map((cId) => {
+                                const comp = quota.companies.find((c) => c.id === cId);
+                                return (
+                                  <span key={cId} className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] border border-slate-700">
+                                    {comp ? comp.code : cId}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </td>
 
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full ${
-                          member.status === "active" ? "bg-emerald-400 shadow-sm shadow-emerald-400" :
-                          member.status === "away" ? "bg-amber-400" : "bg-gray-500"
-                        }`}></span>
-                        <span className="text-xs capitalize text-gray-300">{member.status}</span>
-                      </div>
-                    </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex flex-wrap gap-1 max-w-xs">
+                              {m.allowedModules.includes("*") ? (
+                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] border border-emerald-500/20 font-semibold">
+                                  All 28 Modules Unlocked
+                                </span>
+                              ) : (
+                                m.allowedModules.map((modKey) => (
+                                  <span key={modKey} className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 text-[10px] border border-indigo-500/20 uppercase font-mono">
+                                    {modKey}
+                                  </span>
+                                ))
+                              )}
+                            </div>
+                          </td>
 
-                    <td className="px-4 py-3.5 text-xs text-gray-400">{member.lastActive}</td>
-
-                    <td className="px-4 py-3.5">
-                      {member.twoFactorEnabled ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                          Active (FIDO2)
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
-                          Disabled
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="px-4 py-3.5 text-right">
-                      {member.role !== "Owner" && (
-                        <button
-                          onClick={() => handleRevokeMember(member.id)}
-                          className="p-1 text-gray-500 hover:text-red-400 transition"
-                          title="Revoke Member Access"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          <td className="py-3.5 px-4 text-right">
+                            {!isOwner ? (
+                              <button
+                                onClick={() => setSelectedMemberForRevoke(m)}
+                                className="text-red-400 hover:text-red-300 p-1 rounded hover:bg-red-500/10 transition-colors inline-flex items-center gap-1 text-[11px]"
+                                title="Revoke access and return seat to pool"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Reclaim Seat</span>
+                              </button>
+                            ) : (
+                              <span className="text-[10px] text-slate-500 italic">Protected</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* TAB 2: FREELANCERS & CONTRACTORS */}
-        {activeTab === "contractors" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredContractors.map(con => (
-                <div key={con.id} className="galaxy-card p-5 bg-[#111622] rounded-2xl border border-gray-800 hover:border-cyan-500/40 transition space-y-4 shadow-xl">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider">{con.id} • {con.contractType}</span>
-                      <h3 className="text-base font-bold text-white mt-1">{con.name}</h3>
-                      <p className="text-xs text-cyan-300 font-medium">{con.specialty}</p>
-                    </div>
-                    <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-[10px] font-bold uppercase">
-                      {con.status}
+        {/* TAB 2: INTERACTIVE ORG CHART HIERARCHY */}
+        {activeTab === "orgchart" && (
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                  <Network className="w-4 h-4 text-indigo-400" />
+                  Corporate Reporting Tree & Hierarchy
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Hierarchical structure dictating managerial approvals, team report routing, and record access boundaries.
+                </p>
+              </div>
+              <span className="text-xs text-slate-500">Root Node: CEO</span>
+            </div>
+
+            {/* Tree Visualization */}
+            <div className="space-y-4">
+              {/* Level 1: CEO / Owner */}
+              <div className="p-4 rounded-xl bg-purple-950/40 border border-purple-800/40 max-w-md mx-auto text-center shadow-lg">
+                <Crown className="w-5 h-5 text-amber-400 mx-auto mb-1" />
+                <div className="font-bold text-white text-sm">Abubaker Admin</div>
+                <div className="text-xs text-purple-300">Chief Executive Officer (CEO) • Owner</div>
+                <div className="text-[10px] text-slate-400 mt-1">Cross-Entity Authority (All 3 Companies)</div>
+              </div>
+
+              {/* Connecting line */}
+              <div className="w-0.5 h-6 bg-slate-700 mx-auto" />
+
+              {/* Level 2: Directors / Managers */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center shadow-md">
+                  <div className="font-semibold text-white text-xs">Elena Rostova</div>
+                  <div className="text-[11px] text-emerald-400">Chief Financial Officer (Admin)</div>
+                  <div className="text-[10px] text-slate-400 mt-1">Reports to: Abubaker Admin</div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center shadow-md">
+                  <div className="font-semibold text-white text-xs">Alex Vance</div>
+                  <div className="text-[11px] text-blue-400">Director of Operations (Manager)</div>
+                  <div className="text-[10px] text-slate-400 mt-1">Reports to: Abubaker Admin</div>
+                </div>
+              </div>
+
+              {/* Connecting line */}
+              <div className="w-0.5 h-6 bg-slate-700 mx-auto" />
+
+              {/* Level 3: Specialists */}
+              <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center max-w-sm mx-auto shadow-md">
+                <div className="font-semibold text-white text-xs">Sarah Jenkins</div>
+                <div className="text-[11px] text-indigo-400">Senior Cloud Engineer (Specialist)</div>
+                <div className="text-[10px] text-slate-400 mt-1">Reports to: Alex Vance</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: MULTI-COMPANY WORKSPACES */}
+        {activeTab === "companies" && (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+              <div>
+                <h3 className="text-sm font-semibold text-white">
+                  Multi-Company Entities ({quota.companies.length} of {quota.maxCompanies} Included)
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Your $37.40 Custom Enterprise plan includes 3 distinct companies under one unified login.
+                </p>
+              </div>
+
+              {quota.companies.length < quota.maxCompanies && (
+                <button
+                  onClick={() => setIsNewCompanyOpen(true)}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-all flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Subsidiary Entity
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {quota.companies.map((c) => (
+                <div key={c.id} className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                      {c.code}
                     </span>
+                    {c.isPrimary && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        Primary HQ
+                      </span>
+                    )}
                   </div>
 
-                  <div className="bg-gray-900/70 p-3 rounded-xl border border-gray-800 space-y-1.5 text-xs text-gray-300">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Hourly / Retainer Rate:</span>
-                      <span className="font-bold text-emerald-400 font-mono">{con.rate}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Assigned Project:</span>
-                      <span className="font-semibold text-white truncate max-w-[150px]">{con.projectAssigned}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">NDA Status:</span>
-                      <span className="font-bold text-cyan-400">{con.ndaStatus} (Verified)</span>
-                    </div>
-                    <div className="flex justify-between text-[11px] text-gray-400 pt-1 border-t border-gray-800/80">
-                      <span>Period: {con.startDate}</span>
-                      <span>To: {con.endDate}</span>
-                    </div>
-                  </div>
+                  <h4 className="text-base font-bold text-white">{c.name}</h4>
 
-                  <div className="flex items-center justify-between pt-1 text-xs">
-                    <span className="text-gray-400 truncate max-w-[170px]">{con.email}</span>
-                    <button
-                      onClick={() => handleRevokeContractor(con.id)}
-                      className="p-1 text-gray-500 hover:text-red-400 transition"
-                      title="Terminate Contractor"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <div className="space-y-1.5 text-xs text-slate-400 pt-2 border-t border-slate-800">
+                    <div className="flex justify-between">
+                      <span>Industry:</span>
+                      <span className="text-slate-200">{c.industry}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Base Currency:</span>
+                      <span className="text-slate-200">{c.currency}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Timezone:</span>
+                      <span className="text-slate-200">{c.timezone}</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -619,47 +745,46 @@ export default function TeamPage() {
           </div>
         )}
 
-        {/* TAB 3: ACCESS CONTROL MATRIX */}
+        {/* TAB 4: ROLE & MODULE PERMISSIONS MATRIX */}
         {activeTab === "matrix" && (
-          <div className="galaxy-card bg-[#111622] rounded-xl border border-gray-800 p-5 space-y-4">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Shield size={18} className="text-purple-400" /> Role-Based Access Control (RBAC) Matrix
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">
-                Configure module read, write, and disbursement authorizations across organizational roles.
+          <div className="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-4 border-b border-slate-800 bg-slate-950/60">
+              <h3 className="text-sm font-semibold text-white">Default Role Permissions Matrix</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Module authorization rules applied when assigning roles to new users.
               </p>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-gray-300">
-                <thead className="bg-gray-900/90 text-gray-400 uppercase text-[10px] font-bold border-b border-gray-800">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
                   <tr>
-                    <th className="px-4 py-3">Platform Module</th>
-                    <th className="px-4 py-3 text-center">Owner</th>
-                    <th className="px-4 py-3 text-center">Admin</th>
-                    <th className="px-4 py-3 text-center">Manager</th>
-                    <th className="px-4 py-3 text-center">Specialist</th>
-                    <th className="px-4 py-3 text-center">Contractor</th>
-                    <th className="px-4 py-3 text-center">Viewer</th>
+                    <th className="py-3 px-4 font-semibold">Business Module</th>
+                    <th className="py-3 px-4 font-semibold text-center">Owner</th>
+                    <th className="py-3 px-4 font-semibold text-center">Admin</th>
+                    <th className="py-3 px-4 font-semibold text-center">Manager</th>
+                    <th className="py-3 px-4 font-semibold text-center">Specialist</th>
+                    <th className="py-3 px-4 font-semibold text-center">Accountant</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-800/60">
-                  {MODULE_PERMISSIONS.map(mod => (
-                    <tr key={mod.key} className="hover:bg-gray-800/40">
-                      <td className="px-4 py-3 font-semibold text-white">{mod.name}</td>
-                      {(["Owner", "Admin", "Manager", "Specialist", "Contractor", "Viewer"] as Role[]).map(r => {
-                        const hasAccess = ROLE_PERMISSIONS_MATRIX[r]?.[mod.key];
+                <tbody className="divide-y divide-slate-800/60">
+                  {ALL_SYSTEM_MODULES.map((mod) => (
+                    <tr key={mod.key} className="hover:bg-slate-800/40">
+                      <td className="py-3 px-4 font-medium text-white">
+                        {mod.name}
+                        <span className="ml-2 text-[10px] text-slate-500 font-mono">[{mod.category}]</span>
+                      </td>
+
+                      {["Owner", "Admin", "Manager", "Specialist", "Accountant"].map((roleName) => {
+                        const perms = DEFAULT_ROLE_PERMISSIONS[roleName as Role] || [];
+                        const hasAccess = perms.includes("*") || perms.includes(mod.key);
+
                         return (
-                          <td key={r} className="px-4 py-3 text-center">
+                          <td key={roleName} className="py-3 px-4 text-center">
                             {hasAccess ? (
-                              <span className="inline-flex p-1 bg-emerald-500/10 text-emerald-400 rounded">
-                                <Check size={14} />
-                              </span>
+                              <CheckCircle className="w-4 h-4 text-emerald-400 mx-auto" />
                             ) : (
-                              <span className="inline-flex p-1 bg-gray-800 text-gray-600 rounded">
-                                ✕
-                              </span>
+                              <X className="w-4 h-4 text-slate-600 mx-auto" />
                             )}
                           </td>
                         );
@@ -672,229 +797,373 @@ export default function TeamPage() {
           </div>
         )}
 
-        {/* TAB 4: PENDING INVITATIONS */}
-        {activeTab === "invites" && (
-          <div className="galaxy-card bg-[#111622] rounded-xl border border-gray-800 overflow-hidden">
-            {invitations.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">No pending invitations.</div>
-            ) : (
-              <table className="w-full text-left text-sm text-gray-300">
-                <thead className="bg-gray-900/90 text-gray-400 uppercase text-[11px] font-bold border-b border-gray-800">
-                  <tr>
-                    <th className="px-4 py-3">Invited Email</th>
-                    <th className="px-4 py-3">Target Role</th>
-                    <th className="px-4 py-3">Department</th>
-                    <th className="px-4 py-3">Sent By</th>
-                    <th className="px-4 py-3">Expiration</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800/60">
-                  {invitations.map(inv => (
-                    <tr key={inv.id} className="hover:bg-gray-800/40">
-                      <td className="px-4 py-3.5 font-bold text-white flex items-center gap-2">
-                        <Mail size={14} className="text-purple-400" />
-                        <span>{inv.email}</span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                          {inv.role}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-xs text-gray-300">{inv.department}</td>
-                      <td className="px-4 py-3.5 text-xs text-gray-400">{inv.invitedBy} ({inv.sentAt.split(" ")[0]})</td>
-                      <td className="px-4 py-3.5 text-xs text-amber-400 font-semibold">{inv.expiresIn}</td>
-                      <td className="px-4 py-3.5 text-right">
-                        <button
-                          onClick={() => setInvitations(invitations.filter(i => i.id !== inv.id))}
-                          className="px-2.5 py-1 bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white rounded text-xs font-semibold transition-all"
-                        >
-                          Revoke Invite
-                        </button>
-                      </td>
-                    </tr>
+      </main>
+
+      {/* MODAL 1: INVITE TEAM MEMBER */}
+      {isInviteOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-indigo-400" />
+                Invite Team Member (Assign Paid Seat)
+              </h3>
+              <button onClick={() => setIsInviteOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleInviteSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Marcus Vance"
+                    value={invName}
+                    onChange={(e) => setInvName(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Corporate Email</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="marcus@company.com"
+                    value={invEmail}
+                    onChange={(e) => setInvEmail(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Role</label>
+                  <select
+                    value={invRole}
+                    onChange={(e) => handleRoleSelectionChange(e.target.value as Role)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="Admin">Admin</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Specialist">Specialist</option>
+                    <option value="Accountant">Accountant</option>
+                    <option value="Viewer">Viewer</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Reports To (Supervisor)</label>
+                  <select
+                    value={invReportsTo}
+                    onChange={(e) => setInvReportsTo(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500"
+                  >
+                    {members.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({m.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Company Entity Access (Multi-company 3 tier) */}
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Company Entity Access (Pick from your 3 included companies)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {quota.companies.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggleCompanySelection(c.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                        invCompanies.includes(c.id)
+                          ? "bg-indigo-600/30 border-indigo-500 text-indigo-300"
+                          : "bg-slate-950 border-slate-800 text-slate-400"
+                      }`}
+                    >
+                      {c.name} ({c.code})
+                    </button>
                   ))}
-                </tbody>
-              </table>
-            )}
+                </div>
+              </div>
+
+              {/* Module Access Checkboxes */}
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Allowed Module Access
+                </label>
+                <div className="grid grid-cols-2 gap-2 bg-slate-950 p-3 rounded-lg border border-slate-800 max-h-36 overflow-y-auto">
+                  {ALL_SYSTEM_MODULES.map((mod) => (
+                    <label key={mod.key} className="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={invModules.includes("*") || invModules.includes(mod.key)}
+                        onChange={() => toggleModuleSelection(mod.key)}
+                        className="rounded border-slate-700 text-indigo-600 focus:ring-0"
+                      />
+                      <span>{mod.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                <span className="text-xs text-slate-400">
+                  Allocates <strong>1 of {quota.availableSeats} available seats</strong>
+                </span>
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsInviteOpen(false)}
+                    className="px-4 py-2 text-xs font-medium rounded-lg text-slate-300 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30"
+                  >
+                    Send Invitation & Assign Seat
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* MODAL 1: INVITE CORE MEMBER */}
-      {isInviteModalOpen && (
+      {/* MODAL 2: BUY ADDITIONAL SEATS VIA PADDLE */}
+      {isBuySeatsOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <form onSubmit={handleSendInvite} className="bg-[#111622] border border-gray-700 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <UserPlus size={20} className="text-purple-400" /> Send Team Workspace Invitation
-            </h3>
-
-            <div>
-              <label className="text-xs font-bold text-gray-300 block mb-1">Colleague Email Address *</label>
-              <input
-                type="email"
-                required
-                value={inviteEmail}
-                onChange={e => setInviteEmail(e.target.value)}
-                placeholder="teammate@company.com"
-                className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-              />
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-indigo-400" />
+                Buy Additional Team Seats
+              </h3>
+              <button onClick={() => setIsBuySeatsOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-gray-300 block mb-1">Assigned Role</label>
-                <select
-                  value={inviteRole}
-                  onChange={e => setInviteRole(e.target.value as Role)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-                >
-                  <option value="Admin">Admin</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Specialist">Specialist</option>
-                  <option value="Contractor">Contractor</option>
-                  <option value="Viewer">Viewer</option>
-                </select>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Billing Cycle</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSeatBillingCycle("annual")}
+                    className={`py-2 text-xs font-semibold rounded-lg border transition-all ${
+                      seatBillingCycle === "annual"
+                        ? "bg-indigo-600/30 border-indigo-500 text-indigo-300"
+                        : "bg-slate-950 border-slate-800 text-slate-400"
+                    }`}
+                  >
+                    Annual ($1.00 / seat / mo)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSeatBillingCycle("monthly")}
+                    className={`py-2 text-xs font-semibold rounded-lg border transition-all ${
+                      seatBillingCycle === "monthly"
+                        ? "bg-indigo-600/30 border-indigo-500 text-indigo-300"
+                        : "bg-slate-950 border-slate-800 text-slate-400"
+                    }`}
+                  >
+                    Monthly ($5.00 / seat / mo)
+                  </button>
+                </div>
               </div>
+
               <div>
-                <label className="text-xs font-bold text-gray-300 block mb-1">Department Unit</label>
-                <input
-                  type="text"
-                  value={inviteDept}
-                  onChange={e => setInviteDept(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-                />
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Quantity of Additional Seats
+                </label>
+                <div className="flex items-center space-x-3">
+                  {[1, 5, 10, 25].map((qty) => (
+                    <button
+                      key={qty}
+                      type="button"
+                      onClick={() => setBuySeatQty(qty)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-all ${
+                        buySeatQty === qty
+                          ? "bg-indigo-600 text-white border-indigo-500 shadow-md"
+                          : "bg-slate-950 border-slate-800 text-slate-300"
+                      }`}
+                    >
+                      +{qty} Seats
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="text-xs font-bold text-gray-300 block mb-1">Custom Welcome Note (Optional)</label>
-              <textarea
-                rows={2}
-                value={inviteNote}
-                onChange={e => setInviteNote(e.target.value)}
-                placeholder="Welcome to Beraxis ERP team! Here are your credentials..."
-                className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-              />
-            </div>
+              {/* Price Calculation Box */}
+              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+                <div className="flex justify-between text-slate-400">
+                  <span>Additional Seats:</span>
+                  <span className="font-semibold text-white">+{buySeatQty} seats</span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>Unit Rate:</span>
+                  <span className="font-semibold text-white">
+                    {seatBillingCycle === "annual" ? "$1.00 / mo ($12/yr)" : "$5.00 / mo"}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-slate-800">
+                  <span>Total Expansion Amount:</span>
+                  <span className="text-emerald-400">
+                    ${seatBillingCycle === "annual" ? (buySeatQty * 12).toFixed(2) : (buySeatQty * 5).toFixed(2)}
+                  </span>
+                </div>
+              </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-gray-800">
               <button
-                type="button"
-                onClick={() => setIsInviteModalOpen(false)}
-                className="px-4 py-2 bg-gray-800 text-gray-300 hover:text-white rounded-xl text-xs font-bold"
+                onClick={handlePurchaseSeats}
+                disabled={isCheckoutLoading}
+                className="w-full py-3 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
+              >
+                <CreditCard className="w-4 h-4" />
+                {isCheckoutLoading ? "Opening Paddle Checkout..." : `Pay & Add +${buySeatQty} Seats`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: SEAT RECLAMATION CONFIRMATION */}
+      {selectedMemberForRevoke && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-red-500/30 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center space-x-3 text-red-400">
+              <AlertCircle className="w-6 h-6 shrink-0" />
+              <h3 className="text-base font-bold text-white">Revoke User & Reclaim Paid Seat?</h3>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Are you sure you want to offboard <strong>{selectedMemberForRevoke.name}</strong> ({selectedMemberForRevoke.email})?
+            </p>
+
+            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-1">
+              <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                <CheckCircle className="w-4 h-4" />
+                Guaranteed Seat Reclamation
+              </div>
+              <p>
+                Their active session will be terminated immediately. <strong>Their paid seat will be returned to your company pool</strong>, allowing you to invite another employee without any extra charges.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-3">
+              <button
+                onClick={() => setSelectedMemberForRevoke(null)}
+                className="px-4 py-2 text-xs font-medium rounded-lg text-slate-300 hover:text-white"
               >
                 Cancel
               </button>
               <button
-                type="submit"
-                className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 flex items-center gap-1.5"
+                onClick={handleConfirmRevoke}
+                className="px-4 py-2 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-500 text-white shadow-md shadow-red-600/30"
               >
-                <Send size={13} /> Send Invite
+                Confirm & Reclaim Seat
               </button>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
-      {/* MODAL 2: ADD FREELANCE CONTRACTOR */}
-      {isAddContractorOpen && (
+      {/* MODAL 4: NEW COMPANY SUBSIDIARY */}
+      {isNewCompanyOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <form onSubmit={handleCreateContractor} className="bg-[#111622] border border-gray-700 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Laptop size={20} className="text-cyan-400" /> Register Freelancer / Contractor
-            </h3>
-
-            <div>
-              <label className="text-xs font-bold text-gray-300 block mb-1">Contractor Full Name *</label>
-              <input
-                type="text"
-                required
-                value={conName}
-                onChange={e => setConName(e.target.value)}
-                placeholder="e.g. Liam O'Connor"
-                className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
-              />
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-indigo-400" />
+                Add Subsidiary Company ({quota.companies.length + 1} of {quota.maxCompanies})
+              </h3>
+              <button onClick={() => setIsNewCompanyOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleCreateCompany} className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-gray-300 block mb-1">Contractor Email *</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Company Entity Legal Name</label>
                 <input
-                  type="email"
+                  type="text"
                   required
-                  value={conEmail}
-                  onChange={e => setConEmail(e.target.value)}
-                  placeholder="contractor@domain.com"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
+                  placeholder="e.g. Apex Logistics Europe"
+                  value={newCompName}
+                  onChange={(e) => setNewCompName(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Company Code</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ALE"
+                    value={newCompCode}
+                    onChange={(e) => setNewCompCode(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 uppercase"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Base Currency</label>
+                  <select
+                    value={newCompCurrency}
+                    onChange={(e) => setNewCompCurrency(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="USD ($)">USD ($)</option>
+                    <option value="EUR (€)">EUR (€)</option>
+                    <option value="GBP (£)">GBP (£)</option>
+                    <option value="PKR (₨)">PKR (₨)</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
-                <label className="text-xs font-bold text-gray-300 block mb-1">Specialty / Role</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Primary Industry</label>
                 <input
                   type="text"
-                  value={conSpec}
-                  onChange={e => setConSpec(e.target.value)}
-                  placeholder="e.g. React Native Expert"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
+                  required
+                  placeholder="e.g. Freight & Logistics"
+                  value={newCompIndustry}
+                  onChange={(e) => setNewCompIndustry(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-gray-300 block mb-1">Contract Type</label>
-                <select
-                  value={conType}
-                  onChange={e => setConType(e.target.value as any)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsNewCompanyOpen(false)}
+                  className="px-4 py-2 text-xs font-medium rounded-lg text-slate-300 hover:text-white"
                 >
-                  <option value="Hourly Freelance">Hourly Freelance</option>
-                  <option value="Monthly Retainer">Monthly Retainer</option>
-                  <option value="Fixed Milestone">Fixed Milestone</option>
-                </select>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30"
+                >
+                  Create Company
+                </button>
               </div>
-              <div>
-                <label className="text-xs font-bold text-gray-300 block mb-1">Billing Rate</label>
-                <input
-                  type="text"
-                  value={conRate}
-                  onChange={e => setConRate(e.target.value)}
-                  placeholder="$75 / hr or $4,500 / mo"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-gray-300 block mb-1">Assigned Project / Deliverable</label>
-              <input
-                type="text"
-                value={conProject}
-                onChange={e => setConProject(e.target.value)}
-                placeholder="e.g. iOS Scanner App Implementation"
-                className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-gray-800">
-              <button
-                type="button"
-                onClick={() => setIsAddContractorOpen(false)}
-                className="px-4 py-2 bg-gray-800 text-gray-300 rounded-xl text-xs font-bold"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-cyan-600/30"
-              >
-                Register Contractor
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
+
     </div>
   );
 }

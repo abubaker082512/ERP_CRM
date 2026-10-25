@@ -2,7 +2,7 @@
 
 import {
     CheckCircle, Lock, Zap, Shield, ArrowRight, Loader2,
-    Copy, ExternalLink, Bitcoin, CreditCard, Star, X, Check, Calendar as CalendarIcon, Plus, Minus
+    Copy, ExternalLink, Bitcoin, CreditCard, Star, X, Check, Calendar as CalendarIcon, Plus, Minus, Building2, Users, ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -123,6 +123,8 @@ const PLANS: Plan[] = [
         badge: "Multi-Company & Custom APIs",
         features: [
             "Multi-Company: 3 Companies included (+ $15/mo per extra company)",
+            "5 User Seats Bundled by Default (expandable up to 7+ or custom)",
+            "Instant Seat Reclamation: Free & reassign seats anytime upon offboarding",
             "5,000+ Custom Lead Credits / user / mo (25.8M+ Pool)",
             "Beraxis Studio Customizer app",
             "External APIs & Webhooks",
@@ -762,6 +764,32 @@ function BillingPageContent() {
                             ))}
                         </div>
                     </div>
+                </div>
+
+                {/* Multi-Company & Team Seat Pool Cockpit Banner */}
+                <div className="max-w-7xl w-full mb-8 bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-900/60 border border-purple-500/30 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 backdrop-blur-xl shadow-xl">
+                    <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0">
+                            <Building2 size={24} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="font-extrabold text-white text-base">Multi-Company & Team Seat Pool</span>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                                    Custom Plan: 3 Companies + 5 Seats Bundled
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-400">
+                                Need multiple business entities or staff logins? Custom plan bundles 3 legal companies and 5 full user seats with 100% guaranteed instant seat reclamation upon employee offboarding.
+                            </p>
+                        </div>
+                    </div>
+                    <Link
+                        href="/team"
+                        className="px-4 py-2.5 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-2 transition-all shadow-md shrink-0"
+                    >
+                        <Users size={14} /> Manage Team & Seats <ArrowRight size={14} />
+                    </Link>
                 </div>
 
                 {/* Plan Cards */}
