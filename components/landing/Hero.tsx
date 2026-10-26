@@ -10,7 +10,8 @@ import {
     Sparkles,
     Flame,
     Calculator,
-    X
+    X,
+    Layers
 } from "lucide-react";
 import { initSocialAttribution } from "@/lib/abTesting";
 
@@ -60,19 +61,19 @@ export default function Hero() {
                     Replace 5+ expensive, disconnected tools like Odoo, Salesforce, and QuickBooks. Run Accounting, POS, Inventory, HR &amp; CRM across 28 unified modules — with <strong className="text-cyan-300 font-semibold">25M+ verified B2B leads</strong> built-in.
                 </p>
 
-                {/* 4. Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-xl mx-auto mb-8 sm:mb-10">
+                {/* 4. Action Buttons (Standardized Equal Padding & Heights with Zero Offsets) */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full max-w-2xl mx-auto mb-8 sm:mb-10">
                     <Link 
                         href="/signup" 
-                        className="galaxy-btn-primary !px-7 !py-4 text-sm sm:text-base w-full sm:w-auto flex items-center justify-center gap-2 group shadow-xl shadow-purple-500/25 hover:shadow-purple-500/40 font-extrabold rounded-xl transition-all"
+                        className="galaxy-btn-primary w-full sm:w-auto"
                     >
                         <span>Start Free Forever — No Card</span>
-                        <ArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
+                        <ArrowRight size={16} />
                     </Link>
 
                     <a 
                         href="#pricing" 
-                        className="px-6 py-4 rounded-xl bg-purple-950/30 hover:bg-purple-900/50 border border-purple-500/40 text-purple-200 hover:text-white text-sm sm:text-base font-bold transition-all flex items-center justify-center gap-2 w-full sm:w-auto backdrop-blur-sm shadow-md"
+                        className="galaxy-btn-outline w-full sm:w-auto"
                     >
                         <Flame size={16} className="text-amber-400" />
                         <span>Get All 28 Apps for $1/mo</span>
@@ -81,9 +82,9 @@ export default function Hero() {
                     <button
                         type="button"
                         onClick={() => setIsCalcOpen(true)}
-                        className="px-4 py-4 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-gray-300 hover:text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto cursor-pointer"
+                        className="galaxy-btn-secondary w-full sm:w-auto"
                     >
-                        <Calculator size={15} className="text-amber-400" />
+                        <Calculator size={16} className="text-amber-400" />
                         <span>Savings Calculator</span>
                     </button>
                 </div>
@@ -202,10 +203,10 @@ export default function Hero() {
                         <a
                             href="#pricing"
                             onClick={() => setIsCalcOpen(false)}
-                            className="galaxy-btn-primary !py-3.5 text-sm w-full flex items-center justify-center gap-2 group font-black rounded-xl"
+                            className="galaxy-btn-primary w-full"
                         >
                             <span>Lock In $1/mo Early Bird Access</span>
-                            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                            <ArrowRight size={16} />
                         </a>
                     </div>
                 </div>

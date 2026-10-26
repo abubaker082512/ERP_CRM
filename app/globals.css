@@ -1,119 +1,108 @@
-@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Caveat:wght@600&family=Dancing+Script:wght@700&family=Great+Vibes&family=Pacifico&family=Sacramento&family=Satisfy&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html {
-  background-color: #020205 !important;
-  scroll-behavior: smooth;
-  color-scheme: dark;
+:root {
+  --background: #020205;
+  --foreground: #f8fafc;
+  --primary: #8b5cf6;
+  --secondary: #ec4899;
+  --accent: #06b6d4;
+  --surface: #0f172a;
 }
 
 body {
-  @apply text-white overflow-x-hidden;
-  font-family: 'Inter', sans-serif;
-  background-color: #020205 !important;
-  text-rendering: optimizeSpeed;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color-scheme: dark;
+  color: var(--foreground);
+  background: var(--background);
+  font-feature-settings: "rlig" 1, "calt" 1;
+  overflow-x: hidden;
 }
 
-select {
-  color-scheme: dark;
+@layer base {
+  * {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
 }
 
-select option {
-  background-color: #1E293B !important;
-  color: #F8FAFC !important;
+/* Cosmic Aesthetics & Brand Typography */
+.text-cosmic-glow {
+  text-shadow: 0 0 25px rgba(168, 85, 247, 0.45);
 }
 
-.min-h-screen {
-  background-color: transparent !important;
+.text-cyan-glow {
+  text-shadow: 0 0 25px rgba(6, 182, 212, 0.45);
 }
 
-/* Galaxy Background Utilities */
-.galaxy-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
-  background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
-  overflow: hidden;
-  transform: translateZ(0);
-}
-
-/* Glassmorphism Components - Hardware Accelerated for 60fps Scrolling */
 .glass-panel {
   background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  transform: translateZ(0);
-  will-change: transform;
 }
 
-.glass-card {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+.glass-panel-interactive {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1rem;
-  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
-  transform: translateZ(0);
-  will-change: transform;
+  transition: all 0.25s ease-out;
 }
 
-.glass-card:hover {
+.glass-panel-interactive:hover {
   background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  transform: translateY(-2px) translateZ(0);
+  border-color: rgba(168, 85, 247, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -10px rgba(168, 85, 247, 0.25);
 }
 
-/* Cosmic Accents */
-.text-cosmic-glow {
-  text-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
-}
-
-/* Premium Galaxy Scrollbar */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
+
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.8);
+  background: #020205;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #8B5CF6, #EC4899);
-  border-radius: 10px;
+  background: #1e293b;
+  border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #A78BFA, #F472B6);
+  background: #334155;
 }
 
-/* Custom scrollbar for specific elements */
-.custom-scrollbar {
-  scrollbar-gutter: stable;
-}
-
-/* Galaxy Component Tokens */
+/* Unified Galaxy Component Tokens */
 .galaxy-card {
-  @apply bg-[#1E293B]/60 backdrop-blur-md border border-white/10 rounded-2xl shadow-xl transition-transform duration-200;
+  @apply bg-[#0F172A]/70 backdrop-blur-md border border-white/10 rounded-2xl shadow-xl transition-all duration-200;
   transform: translateZ(0);
   will-change: transform;
 }
 .galaxy-card:hover {
-  @apply border-white/20 bg-[#1E293B]/80 -translate-y-1;
+  @apply border-purple-500/30 bg-[#0F172A]/90 -translate-y-1 shadow-2xl;
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   UNIFIED BUTTON SYSTEM: Equal Padding, Equal Height, Zero Offsets
+   ══════════════════════════════════════════════════════════════════════ */
 .galaxy-btn-primary {
-  @apply bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-2 px-6 rounded-lg 
-         hover:from-purple-500 hover:to-pink-500 shadow-md
-         transition-all active:scale-95;
+  @apply bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3.5 px-6 rounded-xl 
+         hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40
+         transition-all active:scale-[0.98] inline-flex items-center justify-center gap-2 min-h-[48px] text-sm cursor-pointer whitespace-nowrap text-center;
+  transform: translateZ(0);
+}
+
+.galaxy-btn-secondary {
+  @apply bg-white/[0.04] hover:bg-white/[0.08] text-gray-200 hover:text-white font-bold py-3.5 px-6 rounded-xl border border-white/10
+         hover:border-purple-500/30 transition-all active:scale-[0.98] inline-flex items-center justify-center gap-2 min-h-[48px] text-sm cursor-pointer whitespace-nowrap text-center;
+  transform: translateZ(0);
+}
+
+.galaxy-btn-outline {
+  @apply bg-purple-950/30 hover:bg-purple-900/50 text-purple-200 hover:text-white font-bold py-3.5 px-6 rounded-xl border border-purple-500/40
+         shadow-md hover:border-purple-400 transition-all active:scale-[0.98] inline-flex items-center justify-center gap-2 min-h-[48px] text-sm cursor-pointer whitespace-nowrap text-center;
   transform: translateZ(0);
 }
 
@@ -125,7 +114,7 @@ select option {
   @apply text-white bg-gradient-to-r from-purple-500/20 to-pink-500/10 border-l-2 border-purple-500;
 }
 
-/* Light, CPU-friendly background ambient gradient */
+/* Ambient Gradient Layer */
 .aurora-bg {
   position: fixed;
   top: 0;

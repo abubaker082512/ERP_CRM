@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { Rocket, Target, Globe2 } from "lucide-react";
+import { Rocket, Target, Globe2, ArrowRight } from "lucide-react";
  
 export default function AboutPage() {
     return (
@@ -79,9 +80,10 @@ export default function AboutPage() {
                     <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
                         Experience the future of enterprise resource planning today. Set up your workspace in seconds.
                     </p>
-                    <a href="/signup" className="galaxy-btn-primary !px-8 !py-4 text-lg inline-block">
-                        Start your free trial
-                    </a>
+                    <Link href="/signup" className="galaxy-btn-primary">
+                        <span>Start Free Forever — No Card</span>
+                        <ArrowRight size={16} />
+                    </Link>
                 </div>
             </div>
 

@@ -31,6 +31,7 @@ import Features from "@/components/landing/Features";
 import Stats from "@/components/landing/Stats";
 import Testimonials from "@/components/landing/Testimonials";
 import IndustryShowcase from "@/components/landing/IndustryShowcase";
+import BeraxisCosmicCanvas from "@/components/3d/BeraxisCosmicCanvas";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { getPaddlePrice } from "@/lib/paddleConfig";
@@ -111,7 +112,10 @@ export default function Home() {
     ];
 
     return (
-        <main className="min-h-screen bg-[#020205] text-white overflow-hidden">
+        <main className="relative min-h-screen bg-[#020205] text-white overflow-hidden">
+            {/* 3D Beraxis Cosmic Core: Follows seamlessly from Hero throughout the entire page down to footer */}
+            <BeraxisCosmicCanvas />
+
             <Navbar />
             <Hero />
             
@@ -212,7 +216,7 @@ export default function Home() {
                         <button 
                             type="button"
                             onClick={() => router.push('/signup')}
-                            className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 text-xs flex items-center justify-center gap-2 cursor-pointer hover:border-emerald-500/40"
+                            className="w-full galaxy-btn-secondary mt-8"
                         >
                             <span>Start Free Forever (No Card)</span>
                             <ArrowRight size={14} />
@@ -283,7 +287,7 @@ export default function Home() {
                             <button
                                 type="button"
                                 onClick={() => handlePaddleCheckout("standard")}
-                                className="w-full galaxy-btn-primary !py-4 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-purple-500/30 cursor-pointer"
+                                className="w-full galaxy-btn-primary"
                             >
                                 <CreditCard size={15} />
                                 <span>{isAnnual ? "Claim Early Bird Standard ($1/mo · $12/yr)" : "Claim Early Bird Standard ($5/mo)"}</span>
@@ -345,7 +349,7 @@ export default function Home() {
                         <button 
                             type="button"
                             onClick={() => handlePaddleCheckout("custom")}
-                            className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 text-xs flex items-center justify-center gap-2 cursor-pointer hover:border-cyan-500/40"
+                            className="w-full galaxy-btn-secondary mt-8"
                         >
                             <span>Get Multi-Company Enterprise</span>
                             <ArrowRight size={14} />
@@ -442,17 +446,17 @@ export default function Home() {
                         <p className="text-gray-300 text-xs sm:text-base mb-8">
                             Join fast-growing companies replacing expensive legacy subscriptions. Start free forever or lock in the Early Bird deal today.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        <div className="flex flex-col sm:flex-row gap-3.5 sm:gap-4 justify-center items-center">
                             <Link 
                                 href="/signup" 
-                                className="galaxy-btn-primary !px-8 !py-4 text-sm font-extrabold w-full sm:w-auto shadow-xl shadow-purple-500/30 rounded-xl"
+                                className="galaxy-btn-primary w-full sm:w-auto"
                             >
                                 Start 1 App Free Forever
                             </Link>
                             <button
                                 type="button"
                                 onClick={() => handlePaddleCheckout("standard")}
-                                className="px-7 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-sm transition-all shadow-lg shadow-purple-500/25 w-full sm:w-auto cursor-pointer"
+                                className="galaxy-btn-outline w-full sm:w-auto"
                             >
                                 Claim Early Bird Standard ($1/mo)
                             </button>
