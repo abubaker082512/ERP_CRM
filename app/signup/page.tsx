@@ -87,10 +87,10 @@ function SignupForm() {
                     <span className="text-3xl">{invite_id ? '🤝' : '🚀'}</span>
                 </div>
                 <h1 className="text-3xl font-bold text-white text-cosmic-glow">
-                    {invite_id ? 'Join Your Team' : 'Start for free'}
+                    {invite_id ? 'Join Your Team' : 'Start Free Forever'}
                 </h1>
                 <p className="text-gray-400 mt-2">
-                    {invite_id ? 'Create your account to access the workspace' : 'Create your workspace · 7-day free trial'}
+                    {invite_id ? 'Create your account to access the workspace' : '1 App Free Forever · No Credit Card Required · Setup in 30s'}
                 </p>
             </div>
 

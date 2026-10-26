@@ -24,6 +24,8 @@ import {
     Zap,
     Building2,
     Sparkles,
+    CreditCard,
+    ShieldCheck,
 } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -33,6 +35,8 @@ import Stats from "@/components/landing/Stats";
 import Testimonials from "@/components/landing/Testimonials";
 import IndustryShowcase from "@/components/landing/IndustryShowcase";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
+import { initializePaddle, type Paddle } from "@paddle/paddle-js";
+import { getPaddlePrice } from "@/lib/paddleConfig";
 
 const SHOWCASE_SCREENS = {
     apps: {
@@ -75,6 +79,19 @@ export default function Home() {
     const [billingCycle, setBillingCycle] = useState<"annually" | "monthly">("annually");
     const [activeShowcaseTab, setActiveShowcaseTab] = useState<"apps" | "industry" | "dashboard">("apps");
     const [pricing, setPricing] = useState<PricingConfig>(DEFAULT_PRICING_CONFIG);
+    const [paddle, setPaddle] = useState<Paddle | null>(null);
+
+    // Initialize Paddle.js client
+    useEffect(() => {
+        const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "live_6645496fe6160096b0d5e7c19fe";
+        const env = (process.env.NEXT_PUBLIC_PADDLE_ENV || "production") as "sandbox" | "production";
+        initializePaddle({
+            token: clientToken,
+            environment: env
+        }).then(instance => {
+            if (instance) setPaddle(instance);
+        }).catch(err => console.warn("Paddle init warning:", err));
+    }, []);
 
     useEffect(() => {
         fetch("/api/admin/pricing")
@@ -97,17 +114,34 @@ export default function Home() {
         : pricing.custom.monthly_rate;
     const activeScreen = SHOWCASE_SCREENS[activeShowcaseTab];
 
+    const handlePaddleCheckout = (planKey: "standard" | "custom") => {
+        const priceConfig = getPaddlePrice(planKey, isAnnual ? "annual" : "monthly");
+        if (paddle) {
+            paddle.Checkout.open({
+                items: [{ priceId: priceConfig.priceId, quantity: 1 }],
+                settings: {
+                    displayMode: "overlay",
+                    theme: "dark",
+                    variant: "one-page",
+                    successUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/checkout?paddle_status=success&plan=${planKey}&billing=${isAnnual ? "annual" : "monthly"}`
+                }
+            });
+        } else {
+            router.push(`/checkout?plan=${planKey}&billing=${isAnnual ? "annual" : "monthly"}`);
+        }
+    };
+
     return (
         <main className="min-h-screen bg-[#020205] text-white overflow-hidden">
             <Navbar />
             <Hero />
             
-            {/* Real Product Showcase Section (Replaces mock dashboard with real product pictures) */}
-            <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-28 animate-in fade-in duration-1000">
+            {/* Real Product Showcase Section */}
+            <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24 animate-in fade-in duration-1000">
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wider mb-4 shadow-lg shadow-purple-500/10">
                         <Sparkles size={14} className="text-purple-400" />
-                        <span>Real System Interface & Production Cockpit</span>
+                        <span>Real System Interface &amp; Production Cockpit</span>
                     </div>
                     <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-4">
                         Experience the Real <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400">Beraxis Cockpit</span>
@@ -155,12 +189,12 @@ export default function Home() {
                         }`}
                     >
                         <LayoutDashboard size={15} className={activeShowcaseTab === "dashboard" ? "text-white" : "text-cyan-400"} />
-                        <span>Executive Dashboard & AI</span>
+                        <span>Executive Dashboard &amp; AI</span>
                     </button>
                 </div>
 
                 {/* Glassmorphic Application Browser Window with Real System Picture */}
-                <div className="relative border border-white/15 bg-[#0F172A]/90 backdrop-blur-2xl shadow-[0_0_80px_rgba(139,92,246,0.2)] rounded-3xl overflow-hidden group hover:border-purple-500/40 transition-all duration-500">                    {/* Window Title Bar */}
+                <div className="relative border border-white/15 bg-[#0F172A]/90 backdrop-blur-2xl shadow-[0_0_80px_rgba(139,92,246,0.2)] rounded-3xl overflow-hidden group hover:border-purple-500/40 transition-all duration-500">
                     <div className="bg-[#141A28]/95 border-b border-white/10 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3 text-xs">
                         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                             <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#EF4444]/90 inline-block shadow-sm"></span>
@@ -168,7 +202,6 @@ export default function Home() {
                             <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#10B981]/90 inline-block shadow-sm"></span>
                         </div>
 
-                        {/* URL / Location Bar */}
                         <div className="flex-1 max-w-xl mx-auto flex items-center justify-center gap-1.5 sm:gap-2 bg-[#070B16] border border-white/10 rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 text-gray-300 text-[10px] sm:text-[11px] font-mono shadow-inner min-w-0">
                             <Lock size={11} className="text-emerald-400 shrink-0" />
                             <span className="truncate">{activeScreen.url}</span>
@@ -190,7 +223,6 @@ export default function Home() {
                         </div>
                     </div>
 
-                    {/* Image Container with Ambient Glow and Hover Zoom */}
                     <div className="relative overflow-hidden bg-[#070B16] aspect-[4/3] sm:aspect-[16/9]">
                         <picture>
                             <source srcSet={activeScreen.imageWebp} type="image/webp" />
@@ -203,10 +235,8 @@ export default function Home() {
                             />
                         </picture>
 
-                        {/* Subtle bottom gradient overlay for smooth visual blending */}
                         <div className="absolute inset-x-0 bottom-0 h-20 sm:h-28 bg-gradient-to-t from-[#020205] via-[#020205]/60 to-transparent pointer-events-none"></div>
 
-                        {/* Caption floating card */}
                         <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-6 sm:right-auto sm:max-w-md bg-[#0F172A]/95 backdrop-blur-md border border-white/15 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-2xl flex items-center justify-between gap-3">
                             <div className="min-w-0">
                                 <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-purple-400 font-extrabold block mb-0.5">
@@ -228,7 +258,8 @@ export default function Home() {
                             </Link>
                         </div>
                     </div>
-                </div></section>
+                </div>
+            </section>
 
             <Stats />
             <Features />
@@ -236,17 +267,17 @@ export default function Home() {
             <Testimonials />
             
             {/* Pricing Section */}
-            <section id="pricing" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 md:pt-40 mb-28 scroll-mt-24">
+            <section id="pricing" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 mb-28 scroll-mt-24">
                 <div className="text-center mb-12">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-pink-500/10 border border-amber-500/30 text-amber-300 text-xs font-extrabold uppercase tracking-widest mb-4 shadow-lg">
                         <Flame size={14} className="text-amber-400 animate-pulse" />
                         <span>Early Bird Launch Special — 96% OFF</span>
                     </div>
                     <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-4">
-                        Transparent, Value-Packed <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Pricing</span>
+                        Simple, High-Converting <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Pricing</span>
                     </h2>
                     <p className="text-gray-300 text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed">
-                        Start with a single module forever free, or unlock all 28 integrated modules for as low as <strong className="text-white font-bold">$1/month</strong> ($12 billed annually) with our Early Bird Special.
+                        Start with a single module forever free (no credit card required), or unlock all 28 integrated modules for as low as <strong className="text-white font-bold">$1/month</strong> ($12 billed annually).
                     </p>
                 </div>
 
@@ -282,51 +313,56 @@ export default function Home() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
-                    {/* Free Plan */}
-                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between bg-[#0F172A]/30 border-white/10 hover:border-white/20 transition-all">
+                    
+                    {/* Tier 1: One App Free */}
+                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between bg-[#0F172A]/30 border-white/10 hover:border-white/20 transition-all rounded-3xl">
                         <div>
                             <div className="mb-4">
-                                <span className="text-xs bg-white/5 text-gray-400 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-white/10">Forever Free</span>
+                                <span className="text-xs bg-emerald-500/10 text-emerald-400 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-emerald-500/20">
+                                    Forever Free · 1 App
+                                </span>
                             </div>
                             <h3 className="text-xl font-bold text-gray-200 mb-2">One App Free</h3>
-                            <p className="text-gray-400 text-xs mb-6">Choose any single module with unlimited users forever.</p>
-                            <div className="flex items-baseline gap-1 mb-8 pb-6 border-b border-white/5">
+                            <p className="text-gray-400 text-xs mb-6">Pick any 1 full ERP module and use it forever with your team.</p>
+                            <div className="flex items-baseline gap-1 mb-6 pb-6 border-b border-white/5">
                                 <span className="text-4xl font-black text-white">$0</span>
                                 <span className="text-gray-500 text-xs">/ seat / month</span>
                             </div>
                             <div className="space-y-3.5 text-xs text-gray-300">
                                 <div className="flex items-center gap-2">
-                                    <CheckCircle className="text-purple-400 shrink-0" size={14} />
-                                    <span>Choose <strong>any 1</strong> full ERP module</span>
+                                    <CheckCircle className="text-emerald-400 shrink-0" size={14} />
+                                    <span>Choose <strong>any 1</strong> full ERP module (CRM, POS, Accounting, etc.)</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <CheckCircle className="text-purple-400 shrink-0" size={14} />
-                                    <span>Unlimited user seats</span>
+                                    <CheckCircle className="text-emerald-400 shrink-0" size={14} />
+                                    <span>Unlimited team members</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Building2 className="text-gray-400 shrink-0" size={14} />
-                                    <span className="text-gray-300">Single Company Workspace (1 Company)</span>
+                                    <span className="text-gray-300">Single Company Workspace</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <CheckCircle className="text-purple-400 shrink-0" size={14} />
+                                    <CheckCircle className="text-emerald-400 shrink-0" size={14} />
                                     <span>50 Starter Lead Pool Previews</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <CheckCircle className="text-purple-400 shrink-0" size={14} />
-                                    <span>Managed Cloud Hosting</span>
+                                    <CheckCircle className="text-emerald-400 shrink-0" size={14} />
+                                    <span>Fast Cloud Hosting &amp; SSL included</span>
                                 </div>
                             </div>
                         </div>
                         <button 
+                            type="button"
                             onClick={() => router.push('/signup')}
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 text-xs flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            Deploy Free App
+                            <span>Deploy Free App (No Card Needed)</span>
+                            <ArrowRight size={14} />
                         </button>
                     </div>
 
-                    {/* Standard Plan */}
-                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between border-purple-500/40 bg-[#0F172A]/60 relative shadow-2xl shadow-purple-500/10 ring-1 ring-purple-500/30">
+                    {/* Tier 2: Standard Plan (Most Popular) */}
+                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between border-purple-500/50 bg-[#0F172A]/70 relative shadow-2xl shadow-purple-500/15 ring-2 ring-purple-500/40 rounded-3xl">
                         <div className="absolute top-0 right-6 -translate-y-1/2 bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 text-white font-extrabold text-[10px] uppercase tracking-wider px-3.5 py-1 rounded-full shadow-lg flex items-center gap-1.5">
                             <Flame size={13} className="text-yellow-300 animate-pulse" />
                             <span>Early Bird Special ({isAnnual ? "96% OFF" : "84% OFF"})</span>
@@ -338,10 +374,9 @@ export default function Home() {
                                 </span>
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">Standard Plan</h3>
-                            <p className="text-gray-400 text-xs mb-6">Complete business cockpit with 28 enterprise modules and built-in Lead Pool.</p>
+                            <p className="text-gray-400 text-xs mb-6">Complete business command center with 28 enterprise modules and built-in Lead Pool.</p>
                             
-                            {/* Dynamic Rate Presentation */}
-                            <div className="mb-8 pb-6 border-b border-purple-500/20">
+                            <div className="mb-6 pb-6 border-b border-purple-500/20">
                                 {standardOriginalRate > standardRate && (
                                     <div className="flex items-center gap-2 mb-1.5">
                                         <span className="text-sm text-gray-500 line-through font-bold">
@@ -358,7 +393,7 @@ export default function Home() {
                                 </div>
                                 <div className="mt-2 text-[11px] font-bold text-purple-300">
                                     {isAnnual 
-                                        ? "Billed annually at $12 / user / year (Early Bird rate)" 
+                                        ? "Billed annually at $12 / user / year (Lock in $1/mo rate)" 
                                         : "Billed monthly at $5 / user / month (Month-to-month)"}
                                 </div>
                             </div>
@@ -370,7 +405,7 @@ export default function Home() {
                                 </div>
                                 <div className="flex items-center gap-2 text-cyan-300 font-bold bg-cyan-500/10 border border-cyan-500/20 px-3 py-2 rounded-xl">
                                     <Zap className="text-cyan-400 shrink-0" size={15} />
-                                    <span>1,500 Verified Lead Credits / user / mo</span>
+                                    <span>1,500 Verified B2B Lead Credits / user / mo</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-gray-300">
                                     <CheckCircle className="text-emerald-400 shrink-0" size={14} />
@@ -382,37 +417,47 @@ export default function Home() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-purple-400 shrink-0" size={14} />
-                                    <span>Standard Cloud SaaS & Live Backups</span>
+                                    <span>Galaxy AI Copilot &amp; Voice Commands</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <ShieldCheck className="text-emerald-400 shrink-0" size={14} />
+                                    <span>Instant Seat Reclamation Guarantee</span>
                                 </div>
                             </div>
                         </div>
-                        <a 
-                            href="/checkout?plan=standard&billing=annually"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <button 
+                            type="button"
+                            onClick={() => handlePaddleCheckout("standard")}
                             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-black py-3.5 px-4 rounded-xl mt-8 transition-all shadow-xl shadow-purple-500/25 text-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                         >
+                            <CreditCard size={15} />
                             <span>Claim Early Bird Standard (${standardRate.toFixed(2)}/mo)</span>
                             <ArrowRight size={14} />
-                        </a>
+                        </button>
                     </div>
 
-                    {/* Custom Plan */}
-                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between bg-[#0F172A]/30 border-pink-500/20 hover:border-pink-500/40 transition-all">
+                    {/* Tier 3: Custom Plan */}
+                    <div className="galaxy-card p-6 md:p-8 flex flex-col justify-between bg-[#0F172A]/30 border-pink-500/20 hover:border-pink-500/40 transition-all rounded-3xl">
                         <div>
                             <div className="mb-4">
-                                <span className="text-xs bg-pink-500/10 text-pink-400 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-pink-500/20">Custom Enterprise</span>
+                                <span className="text-xs bg-pink-500/10 text-pink-400 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-pink-500/20">
+                                    Multi-Company &amp; Custom APIs
+                                </span>
                             </div>
                             <h3 className="text-xl font-bold text-pink-300 mb-2">Custom Plan</h3>
                             <p className="text-gray-400 text-xs mb-6">Multi-company consolidation, developer studio, and external API connectors.</p>
-                            <div className="flex items-baseline gap-1 mb-8 pb-6 border-b border-white/5">
+                            <div className="flex items-baseline gap-1 mb-6 pb-6 border-b border-white/5">
                                 <span className="text-4xl font-extrabold text-white">${customRate.toFixed(2)}</span>
                                 <span className="text-gray-500 text-xs">/ seat / month</span>
                             </div>
                             <div className="space-y-3.5 text-xs text-gray-300">
                                 <div className="flex items-center gap-2 text-pink-200 font-bold bg-pink-500/10 border border-pink-500/30 px-3 py-2 rounded-xl">
                                     <Building2 className="text-pink-400 shrink-0" size={15} />
-                                    <span>Multi-Company: 3 Companies included (+ $15/mo per extra company)</span>
+                                    <span>Multi-Company: 3 Companies included (+ $15/extra)</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-pink-200 font-bold bg-pink-500/10 border border-pink-500/30 px-3 py-2 rounded-xl">
+                                    <Users className="text-pink-400 shrink-0" size={15} />
+                                    <span>5 User Seats Bundled by Default</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-pink-300 font-bold bg-pink-500/10 border border-pink-500/20 px-3 py-2 rounded-xl">
                                     <Zap className="text-pink-400 shrink-0" size={15} />
@@ -424,28 +469,49 @@ export default function Home() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-pink-400 shrink-0" size={14} />
-                                    <span>External APIs & Webhooks</span>
+                                    <span>External APIs &amp; Webhooks</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <CheckCircle className="text-pink-400 shrink-0" size={14} />
-                                    <span className="font-semibold text-white">24/7 WhatsApp & Phone Support</span>
+                                    <ShieldCheck className="text-emerald-400 shrink-0" size={14} />
+                                    <span>Instant Seat Reclamation Guarantee</span>
                                 </div>
                             </div>
                         </div>
-                        <a 
-                            href="/checkout?plan=custom&billing=annually"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <button 
+                            type="button"
+                            onClick={() => handlePaddleCheckout("custom")}
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 text-xs flex items-center justify-center gap-2 cursor-pointer hover:border-pink-500/40"
                         >
-                            Configure Custom
-                        </a>
+                            <CreditCard size={15} />
+                            <span>Get Custom Enterprise (${customRate.toFixed(2)}/mo)</span>
+                            <ArrowRight size={14} />
+                        </button>
                     </div>
                 </div>
 
-                <div className="text-center mt-12">
+                {/* Trust Guarantee Reassurance Bar */}
+                <div className="mt-14 pt-8 border-t border-white/10 flex flex-wrap items-center justify-center gap-8 text-xs text-gray-400">
+                    <span className="flex items-center gap-2">
+                        <ShieldCheck size={16} className="text-emerald-400" />
+                        <span>256-Bit SSL Bank Encryption</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                        <CreditCard size={16} className="text-purple-400" />
+                        <span>Powered by Paddle (Cards, Apple Pay, PayPal)</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                        <CheckCircle size={16} className="text-amber-400" />
+                        <span>14-Day Money-Back Guarantee</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                        <Zap size={16} className="text-cyan-400" />
+                        <span>Instant Workspace Activation</span>
+                    </span>
+                </div>
+
+                <div className="text-center mt-10">
                     <Link href="/pricing" className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 font-bold text-sm tracking-wider uppercase transition-colors">
-                        View Detailed Interactive Pricing Configurator <ArrowRight size={14} />
+                        View Detailed Interactive Pricing Configurator &amp; Matrix <ArrowRight size={14} />
                     </Link>
                 </div>
             </section>

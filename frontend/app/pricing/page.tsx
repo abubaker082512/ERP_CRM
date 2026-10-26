@@ -7,7 +7,7 @@ import Footer from "@/components/landing/Footer";
 import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame, Building2, CreditCard, ShieldCheck } from "lucide-react";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
-import { PADDLE_PRICE_MAP } from "@/lib/paddleConfig";
+import { getPaddlePrice, PADDLE_PRICE_MAP } from "@/lib/paddleConfig";
 
 export default function PricingPage() {
     const [billingCycle, setBillingCycle] = useState<"annually" | "monthly">("annually");
@@ -28,10 +28,10 @@ export default function PricingPage() {
                 setPaddle(instance);
                 instance.pricePreview({
                     items: [
-                        { priceId: PADDLE_PRICE_MAP.standard_annual, quantity: 1 },
-                        { priceId: PADDLE_PRICE_MAP.standard_monthly, quantity: 1 },
-                        { priceId: PADDLE_PRICE_MAP.custom_annual, quantity: 1 },
-                        { priceId: PADDLE_PRICE_MAP.custom_monthly, quantity: 1 }
+                        { priceId: PADDLE_PRICE_MAP["standard-annual"].priceId, quantity: 1 },
+                        { priceId: PADDLE_PRICE_MAP["standard-monthly"].priceId, quantity: 1 },
+                        { priceId: PADDLE_PRICE_MAP["custom-annual"].priceId, quantity: 1 },
+                        { priceId: PADDLE_PRICE_MAP["custom-monthly"].priceId, quantity: 1 }
                     ]
                 }).then(preview => {
                     if (preview?.data?.details?.lineItems) {
@@ -47,9 +47,9 @@ export default function PricingPage() {
     }, []);
 
     const handlePaddleCheckout = (planKey: "standard" | "custom" | "leadspool") => {
-        const priceId = isAnnual
-            ? (planKey === "custom" ? PADDLE_PRICE_MAP.custom_annual : PADDLE_PRICE_MAP.standard_annual)
-            : (planKey === "custom" ? PADDLE_PRICE_MAP.custom_monthly : PADDLE_PRICE_MAP.standard_monthly);
+        const priceConfig = getPaddlePrice(planKey, isAnnual ? "annual" : "monthly");
+        const priceId = priceConfig.priceId;
+
 
         if (paddle) {
             paddle.Checkout.open({
