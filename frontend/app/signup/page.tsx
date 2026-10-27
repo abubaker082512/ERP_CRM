@@ -63,6 +63,18 @@ function SignupForm() {
 
             const data = await resp.json();
             if (resp.ok) {
+                try {
+                    fetch('/api/webhooks/pumpgtm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            email,
+                            company: accountType === 'company' ? companyName : undefined,
+                            dryRun: false
+                        })
+                    }).catch(e => console.warn('[PumpGTM Dispatch Warning]', e));
+                } catch {}
                 if (phone.trim()) {
                     try { localStorage.setItem("beraxis_user_phone", phone.trim()); } catch {}
                 }

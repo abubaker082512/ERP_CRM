@@ -75,6 +75,36 @@ def signup(user: UserSignup):
             except Exception as ws_err:
                 print(f"[Signup] Workspace creation warning: {ws_err}")
 
+        # Dispatch to PumpGTM Webhook asynchronously
+        try:
+            import os, requests, threading, time
+            pump_key = os.getenv("PUMPGTM_API_KEY")
+            pump_url = os.getenv("PUMPGTM_WEBHOOK_URL", "https://app.pumpgtm.com/api/v1/plays/53018427-bbc0-43a7-bfad-d3fdd9806e90/webhook")
+            if pump_key:
+                def send_pumpgtm():
+                    try:
+                        requests.post(
+                            pump_url,
+                            headers={
+                                "Content-Type": "application/json",
+                                "Authorization": f"Bearer {pump_key.strip()}"
+                            },
+                            json={
+                                "eventId": f"signup_{new_user_id}_{int(time.time())}",
+                                "expectedRevision": 1,
+                                "name": user.name or "",
+                                "email": user.email,
+                                "company": user.company_name or "",
+                                "dryRun": False
+                            },
+                            timeout=5
+                        )
+                    except Exception as pe:
+                        print(f"[PumpGTM Warning]: {pe}")
+                threading.Thread(target=send_pumpgtm, daemon=True).start()
+        except Exception as pe:
+            print(f"[PumpGTM Setup Warning]: {pe}")
+
         return {"message": "User created successfully", "user": res.user}
     except HTTPException:
         raise
