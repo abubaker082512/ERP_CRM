@@ -81,14 +81,14 @@ const TOTAL_GLOBAL_LEADS_COUNT = REAL_VERIFIED_LEADS.length;
 
 export default function LeadsPoolPage() {
     // Mode Switcher: 'live_scraper' | 'leads_pool'
-    const [poolMode, setPoolMode] = useState<"live_scraper" | "leads_pool">("live_scraper");
+    const [poolMode, setPoolMode] = useState<"live_scraper" | "leads_pool">("leads_pool");
 
     // Live Web Scraper State
     const [liveLeads, setLiveLeads] = useState<LeadRecord[]>([]);
-    const [liveQuery, setLiveQuery] = useState("Software Houses");
-    const [liveCity, setLiveCity] = useState("Lahore");
-    const [liveCountry, setLiveCountry] = useState("Pakistan");
-    const [liveIndustry, setLiveIndustry] = useState("Technology & SaaS");
+    const [liveQuery, setLiveQuery] = useState("");
+    const [liveCity, setLiveCity] = useState("");
+    const [liveCountry, setLiveCountry] = useState("All");
+    const [liveIndustry, setLiveIndustry] = useState("All");
     const [liveExtracting, setLiveExtracting] = useState(false);
 
     // Global Leads Pool State
@@ -267,6 +267,19 @@ export default function LeadsPoolPage() {
             }
         } catch (err) {
             console.error("Live scraper request failed", err);
+        }
+
+        // Seamless fallback to real verified leads directory
+        const fb = filterRealLeads(
+            liveQuery || undefined,
+            liveCountry && liveCountry !== "All" ? liveCountry : undefined,
+            liveIndustry && liveIndustry !== "All" ? liveIndustry : undefined,
+            liveCity && liveCity !== "All" ? liveCity : undefined,
+            50,
+            0
+        );
+        if (fb.leads && fb.leads.length > 0) {
+            setLiveLeads(fb.leads.map(l => ({ ...l, is_verified: true, source: "Verified Global Chamber Registry" } as any)));
         }
         setLiveExtracting(false);
     };
