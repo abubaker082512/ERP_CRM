@@ -1,5 +1,7 @@
 "use client";
 
+import PaymentLogos from "@/components/common/PaymentLogos";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import CRMHeader from "@/components/crm/CRMHeader";
@@ -1763,6 +1765,9 @@ export default function LeadsPoolPage() {
                             </span>
                             <span className="text-gray-400">Creem MoR • Cards, Apple Pay & Google Pay</span>
                         </div>
+                        <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-center">
+                            <PaymentLogos showTitle={true} title="Instant Activation via" compact={true} />
+                        </div>
                     </div>
                 </div>
             )}
@@ -1869,6 +1874,9 @@ export default function LeadsPoolPage() {
                                     Get Full Suite ($12/yr upfront) →
                                 </a>
                             </div>
+                        </div>
+                        <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-center">
+                            <PaymentLogos showTitle={true} title="Instant Activation via" compact={true} />
                         </div>
                     </div>
                 </div>

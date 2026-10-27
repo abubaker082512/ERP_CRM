@@ -1,5 +1,7 @@
 "use client";
 
+import PaymentLogos from "@/components/common/PaymentLogos";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
@@ -367,7 +369,7 @@ export default function PricingPage() {
                             data-creem-theme="dark"
                             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95 text-center cursor-pointer"
                         >
-                            <Lock size={16} /> Pay with Creem (${isAnnual ? "12/yr" : "5/mo"}) <ArrowRight size={16} />
+                            <Lock size={16} /> Pay Now (${isAnnual ? "$12/yr" : "$5/mo"}) <ArrowRight size={16} />
                         </a>
                     </div>
 
@@ -432,12 +434,21 @@ export default function PricingPage() {
                             data-creem-theme="dark"
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 flex items-center justify-center gap-2 hover:border-pink-500/30 cursor-pointer"
                         >
-                            <Lock size={16} /> Pay with Creem (${isAnnual ? "448.80/yr" : "46.80/mo"}) <ArrowRight size={16} />
+                            <Lock size={16} /> Pay Now (${isAnnual ? "$448.80/yr" : "$46.80/mo"}) <ArrowRight size={16} />
                         </a>
                     </div>
                 </div>
 
                 
+                {/* Global Supported Payment Methods Strip */}
+                <div className="max-w-5xl mx-auto mb-14 p-5 rounded-3xl bg-[#0F172A]/80 border border-white/10 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+                    <div className="flex items-center gap-2.5 text-xs text-gray-300">
+                        <ShieldCheck size={18} className="text-emerald-400 shrink-0" />
+                        <span>All orders secured with 256-Bit SSL &bull; <strong>14-Day Money-Back Guarantee</strong></span>
+                    </div>
+                    <PaymentLogos showTitle={true} title="Supported Cards & Wallets" compact={false} />
+                </div>
+
                 {/* Dedicated Leads Pool Solo Spotlight Banner */}
                 <div className="max-w-5xl mx-auto mb-16 relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 p-8 backdrop-blur-xl shadow-2xl shadow-amber-500/5">
                     <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-rose-500 text-white font-extrabold text-[10px] uppercase tracking-widest px-4 py-1 rounded-bl-xl shadow-md">

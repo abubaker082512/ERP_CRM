@@ -1,5 +1,7 @@
 "use client";
 
+import PaymentLogos from "@/components/common/PaymentLogos";
+
 import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
@@ -209,17 +211,15 @@ export default function DonatePage() {
                                 </div>
                             </div>
 
-                            {/* Minimum Amount Notice Callout */}
-                            <div className="p-4 rounded-2xl bg-[#0B1224] border border-cyan-500/30 flex items-center justify-between flex-wrap gap-2 text-xs">
+                            {/* Minimum Amount & Payment Methods */}
+                            <div className="p-4 rounded-2xl bg-[#0B1224] border border-cyan-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
                                 <div className="flex items-center gap-2">
                                     <DollarSign size={16} className="text-cyan-400 shrink-0" />
                                     <span className="text-gray-300">
-                                        <strong className="text-white">Minimum Single Contribution:</strong> $5.00 USD
+                                        <strong className="text-white">Minimum Contribution:</strong> $5.00 USD (Any amount accepted)
                                     </span>
                                 </div>
-                                <span className="text-[11px] text-cyan-300 font-semibold">
-                                    Visa, Mastercard, Amex, Apple Pay, Google Pay
-                                </span>
+                                <PaymentLogos showTitle={false} compact={true} />
                             </div>
 
                             {/* Primary Donation Action Button with Creem MoR */}

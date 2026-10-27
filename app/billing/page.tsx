@@ -1,5 +1,7 @@
 "use client";
 
+import PaymentLogos from "@/components/common/PaymentLogos";
+
 import {
     CheckCircle, Lock, Zap, Shield, ArrowRight, Loader2,
     Copy, ExternalLink, Bitcoin, CreditCard, Star, X, Check, Calendar as CalendarIcon, Plus, Minus, Building2, Users, ShieldCheck
@@ -838,17 +840,20 @@ function BillingPageContent() {
                     </form>
                 )}
 
-                {/* Trust badges */}
-                <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400">
-                    {["Visa / Mastercard", "American Express", "Apple Pay", "Google Pay", "Instant Activation", "PCI-DSS Compliant"].map(item => (
-                        <div key={item} className="flex items-center gap-1.5">
-                            <CheckCircle size={11} className="text-purple-400" />
-                            <span>{item}</span>
+                {/* Trust badges & Payment Logos */}
+                <div className="flex flex-col items-center justify-center gap-4 py-6 border-t border-white/10">
+                    <PaymentLogos showTitle={true} title="Accepted Payment Methods" compact={false} />
+                    <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400 pt-2">
+                        {["Instant Activation", "14-Day Money-Back Guarantee", "PCI-DSS Level 1 Compliant"].map(item => (
+                            <div key={item} className="flex items-center gap-1.5">
+                                <CheckCircle size={11} className="text-purple-400" />
+                                <span>{item}</span>
+                            </div>
+                        ))}
+                        <div className="flex items-center gap-1.5">
+                            <ShieldCheck size={13} className="text-emerald-400" />
+                            <span>Secured by Creem Merchant of Record (MoR)</span>
                         </div>
-                    ))}
-                    <div className="flex items-center gap-1.5">
-                        <ShieldCheck size={13} className="text-emerald-400" />
-                        <span>Secured by Creem Merchant of Record (MoR)</span>
                     </div>
                 </div>
             </div>

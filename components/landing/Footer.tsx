@@ -1,5 +1,7 @@
 "use client";
 
+import PaymentLogos from "@/components/common/PaymentLogos";
+
 import Link from "next/link";
 import { ShieldCheck, Phone, Mail, MessageSquare, Globe, ArrowRight, Sparkles, Scale, Lock, FileText, CheckCircle2, MapPin } from "lucide-react";
 
@@ -172,6 +174,15 @@ export default function Footer() {
                             <span>All Systems Operational (99.9% SLA)</span>
                         </span>
                     </div>
+                </div>
+
+                {/* Payment Methods & MoR Security Strip */}
+                <div className="py-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
+                        <span>Secure 256-Bit Encrypted Payments Powered by <strong>Creem Merchant of Record (MoR)</strong></span>
+                    </div>
+                    <PaymentLogos showTitle={true} title="Supported Payment Methods" compact={false} />
                 </div>
 
                 {/* Bottom Copyright Bar */}

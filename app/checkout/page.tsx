@@ -1,5 +1,7 @@
 "use client";
 
+import PaymentLogos from "@/components/common/PaymentLogos";
+
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
@@ -307,6 +309,15 @@ function CheckoutPageContent() {
                   )}
                 </button>
               </form>
+            </div>
+
+            {/* Payment Methods Banner for Checkout */}
+            <div className="lg:col-span-12 mb-2 p-4 rounded-2xl bg-[#0B1224] border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-gray-300">
+                    <ShieldCheck size={16} className="text-emerald-400" />
+                    <span>256-Bit Bank Grade SSL Encrypted Checkout</span>
+                </div>
+                <PaymentLogos showTitle={true} title="Accepted Payment Methods" compact={true} />
             </div>
 
             {/* Right Column: Order Summary Card */}
