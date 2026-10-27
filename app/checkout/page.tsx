@@ -251,7 +251,7 @@ function CheckoutPageContent() {
                       required
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="e.g. Marcus Vance"
+                      placeholder="e.g. Alex Morgan"
                       className="w-full bg-[#090D1A] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-purple-500 outline-none"
                     />
                   </div>
