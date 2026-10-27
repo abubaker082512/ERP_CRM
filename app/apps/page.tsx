@@ -325,11 +325,7 @@ export default function AppsDashboardPage() {
     if (!mounted) return null;
 
     return (
-        <div className="min-h-screen bg-[#030712] text-white flex flex-col selection:bg-purple-500 selection:text-white relative overflow-hidden">
-            {/* Seamless Ambient Background - Zero Banding or Harsh Circular Halos */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(120,119,198,0.14),rgba(255,255,255,0))] pointer-events-none" />
-            <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25 pointer-events-none" />
-
+        <div className="min-h-screen bg-transparent text-white flex flex-col selection:bg-purple-500 selection:text-white relative overflow-hidden">
             {/* Top Navigation Bar */}
             <header className="border-b border-white/10 bg-[#090d16]/90 backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-3">

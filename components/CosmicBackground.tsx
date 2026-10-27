@@ -12,6 +12,7 @@ export default function CosmicBackground() {
   const isPublicPage = 
     cleanPath === "" ||
     cleanPath === "/" || 
+    cleanPath.startsWith("/apps") || 
     cleanPath.startsWith("/pricing") || 
     cleanPath.startsWith("/about") || 
     cleanPath.startsWith("/contact") || 
