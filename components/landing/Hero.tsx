@@ -29,40 +29,41 @@ export default function Hero() {
     const annualSavings = Math.max(0, currentAnnualSpend - beraxisAnnualCost);
 
     return (
-        <section className="relative overflow-hidden pt-28 pb-16 sm:pt-36 sm:pb-20 lg:pt-40 lg:pb-24">
-            {/* Ambient Background Glows */}
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[850px] h-[350px] sm:h-[450px] bg-gradient-to-tr from-purple-600/15 via-pink-600/10 to-cyan-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <section className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center pt-28 pb-12 sm:pt-32 sm:pb-16 lg:pt-36 lg:pb-20">
+            {/* Ambient Background Glows Centered with Viewport */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[900px] h-[350px] sm:h-[500px] bg-gradient-to-tr from-purple-600/15 via-pink-600/10 to-cyan-500/10 rounded-full blur-[140px] pointer-events-none" />
             <div className="absolute top-1/3 left-4 sm:left-12 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute top-1/2 right-4 sm:right-12 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-2/3 right-4 sm:right-12 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+            {/* Centralized Hero Container (Middle of Viewport: Top, Bottom, Left, Right) */}
+            <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center justify-center my-auto">
                 
                 {/* 1. Early Bird Pill Badge */}
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-purple-500/40 text-purple-200 text-xs font-semibold mb-6 sm:mb-8 shadow-lg backdrop-blur-md transition-colors">
-                    <span className="flex items-center gap-1 text-amber-300 font-extrabold uppercase text-[10px] tracking-wider bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/25">
+                <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-purple-500/40 text-purple-200 text-xs font-semibold mb-4 sm:mb-6 shadow-lg backdrop-blur-md transition-colors max-w-full">
+                    <span className="flex items-center gap-1 text-amber-300 font-extrabold uppercase text-[10px] tracking-wider bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/25 shrink-0">
                         <Flame size={12} className="text-amber-400 animate-pulse" /> Early Bird Special
                     </span>
-                    <span>All 28 Apps for $1/mo or 1 App Free Forever</span>
+                    <span className="truncate sm:overflow-visible">All 28 Apps for $1/mo or 1 App Free Forever</span>
                 </div>
 
                 {/* 2. Primary Headline (Strictly the ONLY <h1> on the page) */}
-                <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-[4rem] font-black tracking-tight text-white mb-6 sm:mb-8 leading-[1.1] max-w-4xl mx-auto">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.75rem] font-black tracking-tight text-white mb-4 sm:mb-6 leading-[1.15] max-w-4xl mx-auto">
                     The All-in-One{" "}
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">
                         AI ERP &amp; CRM
                     </span>
-                    <span className="block mt-2 sm:mt-3 text-xl sm:text-3xl md:text-4xl lg:text-[2.6rem] text-gray-200 font-bold tracking-tight">
+                    <span className="block mt-2 sm:mt-2.5 text-xl sm:text-2xl md:text-3xl lg:text-[2.35rem] text-gray-200 font-bold tracking-tight">
                         Built to Run &amp; Scale Your Business
                     </span>
                 </h1>
 
                 {/* 3. Subheadline */}
-                <p className="text-sm sm:text-base md:text-lg text-gray-300 max-w-2xl mx-auto mb-8 sm:mb-10 font-normal leading-relaxed">
+                <p className="text-sm sm:text-base md:text-lg text-gray-300 max-w-2xl mx-auto mb-6 sm:mb-8 font-normal leading-relaxed">
                     Replace 5+ expensive, disconnected tools like Odoo, Salesforce, and QuickBooks. Run Accounting, POS, Inventory, HR &amp; CRM across 28 unified modules — with <strong className="text-cyan-300 font-semibold">integrated B2B lead discovery</strong> built-in.
                 </p>
 
-                {/* 4. Action Buttons (Standardized Equal Padding & Heights with Zero Offsets) */}
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full max-w-2xl mx-auto mb-8 sm:mb-10">
+                {/* 4. Action Buttons (Responsive, Centered, Equal Touch Targets) */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-2xl mx-auto mb-6 sm:mb-8">
                     <Link 
                         href="/signup" 
                         className="galaxy-btn-primary w-full sm:w-auto"
@@ -90,7 +91,7 @@ export default function Hero() {
                 </div>
 
                 {/* 5. Trust Proof Checklist */}
-                <div className="flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-8 gap-y-2.5 text-xs sm:text-sm text-gray-400 font-medium mb-12 sm:mb-16">
+                <div className="flex flex-wrap items-center justify-center gap-x-5 sm:gap-x-7 gap-y-2 text-xs sm:text-sm text-gray-400 font-medium mb-8 sm:mb-10">
                     <span className="flex items-center gap-1.5">
                         <span className="text-emerald-400 font-bold">✓</span> 1 App 100% Free Forever
                     </span>
@@ -106,7 +107,7 @@ export default function Hero() {
                 </div>
 
                 {/* 6. Enterprise Trust Badges Strip (Grounding the Independent Hero) */}
-                <div className="w-full max-w-4xl py-4 sm:py-5 px-4 sm:px-6 rounded-2xl bg-[#0A0E1A]/80 border border-white/10 shadow-xl grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-left">
+                <div className="w-full max-w-4xl py-3.5 sm:py-4 px-4 sm:px-6 rounded-2xl bg-[#0A0E1A]/80 border border-white/10 shadow-xl grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-left">
                     <div className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-300 font-medium">
                         <ShieldCheck size={18} className="text-purple-400 shrink-0" />
                         <span className="truncate">Enterprise Security</span>
