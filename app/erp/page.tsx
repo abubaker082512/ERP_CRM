@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Best Cloud ERP Software 2026 | Free ERP System | Beraxis",
-    description: "Replace complex, expensive ERPs like SAP and NetSuite. Full-suite Cloud ERP with 28 unified modules, AI copilot, and 25M+ B2B leads for $1/month.",
+    description: "Replace complex, expensive ERPs like SAP and NetSuite. Full-suite Cloud ERP with 28 unified modules, AI copilot, and verified B2B leads for $1/month.",
     url: "https://www.beraxis.online/erp",
     siteName: "Beraxis",
     images: [
@@ -142,7 +142,7 @@ export default function ErpLandingPage() {
             "name": "What modules are included in Beraxis Cloud ERP?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Beraxis ERP includes 28 unified modules: Double-Entry General Ledger, Invoicing, Multi-Warehouse Inventory, Barcode Tracking, Touch POS, Sales Quotations, Purchasing & RFQs, Manufacturing MRP, HRMS Attendance & Payroll, AI Voice Pilot, and an integrated 25M+ B2B Leads Directory."
+              "text": "Beraxis ERP includes 28 unified modules: Double-Entry General Ledger, Invoicing, Multi-Warehouse Inventory, Barcode Tracking, Touch POS, Sales Quotations, Purchasing & RFQs, Manufacturing MRP, HRMS Attendance & Payroll, AI Voice Pilot, and an integrated verified B2B leads Directory."
             }
           }
         ]
@@ -323,7 +323,7 @@ export default function ErpLandingPage() {
                 <tr>
                   <td className="py-4 font-medium text-white">Integrated B2B Leads Pool</td>
                   <td className="py-4 text-red-400">None (Requires Apollo / ZoomInfo $99/mo)</td>
-                  <td className="py-4 text-emerald-300 font-bold">25M+ Verified Leads Built-In</td>
+                  <td className="py-4 text-emerald-300 font-bold">Verified Leads Built-In</td>
                 </tr>
                 <tr>
                   <td className="py-4 font-medium text-white">Autonomous AI Voice Copilot</td>

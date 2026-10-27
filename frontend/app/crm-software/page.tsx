@@ -21,7 +21,7 @@ import {
 
 export const metadata: Metadata = {
   title: "AI CRM Software | Best Free & Affordable CRM System 2026 | Beraxis",
-  description: "Beraxis is the premier AI CRM software for growing sales teams. Visual Kanban deal pipelines, automated WhatsApp sync, and built-in global 25M+ verified B2B leads directory for just $1/month. Start 100% free.",
+  description: "Beraxis is the premier AI CRM software for growing sales teams. Visual Kanban deal pipelines, automated WhatsApp sync, and built-in global verified B2B leads directory for just $1/month. Start 100% free.",
   keywords: [
     "CRM",
     "CRM software",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Best AI CRM Software 2026 | Free Sales CRM System | Beraxis",
-    description: "Close deals 30% faster. Unified visual Kanban stages, automated WhatsApp sync, and 25M+ verified B2B contacts built-in for $1/month.",
+    description: "Close deals 30% faster. Unified visual Kanban stages, automated WhatsApp sync, and verified B2B contacts built-in for $1/month.",
     url: "https://www.beraxis.online/crm-software",
     siteName: "Beraxis",
     images: [
@@ -125,7 +125,7 @@ export default function CrmSoftwareLandingPage() {
             "name": "How does Beraxis CRM compare to HubSpot and Salesforce?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "HubSpot and Salesforce charge escalating penalties as your contact list grows, often reaching hundreds of dollars per user per month. Beraxis CRM provides unlimited contacts, unlimited deals, and a native 25M+ verified B2B leads directory for just $1.00 per month."
+              "text": "HubSpot and Salesforce charge escalating penalties as your contact list grows, often reaching hundreds of dollars per user per month. Beraxis CRM provides unlimited contacts, unlimited deals, and a native verified B2B leads directory for just $1.00 per month."
             }
           },
           {
@@ -157,7 +157,7 @@ export default function CrmSoftwareLandingPage() {
       badge: "Deals"
     },
     {
-      title: "25M+ Verified B2B Leads Pool",
+      title: "Global B2B Leads Directory",
       desc: "Instant 1-click import of verified corporate decision-makers, direct phone dials, and validated business emails into your pipeline.",
       icon: Globe,
       badge: "Lead Gen"
@@ -214,7 +214,7 @@ export default function CrmSoftwareLandingPage() {
               AI CRM Software
             </span>
             <span className="block mt-2 text-2xl sm:text-4xl text-gray-200 font-bold">
-              With 25M+ Verified B2B Leads Built-In
+              With Verified B2B Leads Built-In
             </span>
           </h1>
 
@@ -317,7 +317,7 @@ export default function CrmSoftwareLandingPage() {
                 <tr>
                   <td className="py-4 font-medium text-white">Verified B2B Leads Pool</td>
                   <td className="py-4 text-gray-400">Not included ($99/mo third-party)</td>
-                  <td className="py-4 text-emerald-300 font-bold">25M+ Leads Included</td>
+                  <td className="py-4 text-emerald-300 font-bold">Global Leads Included</td>
                 </tr>
                 <tr>
                   <td className="py-4 font-medium text-white">Direct ERP &amp; Invoicing Sync</td>
@@ -353,7 +353,7 @@ export default function CrmSoftwareLandingPage() {
           <div className="p-6 rounded-2xl bg-[#090D1A] border border-white/10">
             <h3 className="text-base font-bold text-white mb-2">Can I import leads directly into my sales stages?</h3>
             <p className="text-xs sm:text-sm text-gray-300 leading-relaxed font-light">
-              Yes! You can search the built-in 25M+ Leads Pool by country, industry, or job title, and import verified prospects directly into your New Opportunity stage with one click.
+              Yes! You can search the built-in B2B Leads Directory by country, industry, or job title, and import verified prospects directly into your New Opportunity stage with one click.
             </p>
           </div>
 
@@ -373,7 +373,7 @@ export default function CrmSoftwareLandingPage() {
             Accelerate Your Sales Pipeline With Beraxis CRM
           </h2>
           <p className="text-sm sm:text-base text-gray-300 max-w-2xl mx-auto mb-8 font-light">
-            Deploy your visual Kanban stages, search 25M+ corporate leads, and close more deals starting today.
+            Deploy your visual Kanban stages, search verified corporate leads, and close more deals starting today.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
