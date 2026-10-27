@@ -74,7 +74,7 @@ export type LeadRecord = {
 
 const TOTAL_GLOBAL_LEADS_COUNT = 25_850_000;
 
-// Deterministic Procedural Synthesizer for instant 25M+ lead exploration
+// Deterministic Procedural Synthesizer for instant global lead exploration
 const COUNTRIES_METADATA: Record<string, { cities: string[]; dial: string; fnames: string[]; lnames: string[]; domains: string[] }> = {
     "United States": {
         cities: ["San Francisco, CA", "New York, NY", "Austin, TX", "Seattle, WA", "Boston, MA", "Chicago, IL", "Denver, CO", "Los Angeles, CA", "Miami, FL", "Atlanta, GA", "Dallas, TX"],
@@ -596,7 +596,7 @@ export default function LeadsPoolPage() {
             }
         } catch (err) {}
 
-        // High-Speed Fallback Procedural Generator (25M+ Indexing)
+        // High-Speed Fallback Procedural Generator (Global Indexing)
         generateProceduralBatch();
         setLoading(false);
     };

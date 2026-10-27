@@ -70,7 +70,7 @@ export type Applicant = {
 const INITIAL_APPLICANTS: Applicant[] = [
   {
     id: "APP-101",
-    name: "Sarah Jenkins",
+    name: "Rachel Adams",
     job_id: "JOB-001",
     job_title: "Senior Full Stack Engineer",
     email: "sarah.j@example.com",
@@ -82,8 +82,8 @@ const INITIAL_APPLICANTS: Applicant[] = [
     experience_years: 7,
     location: "San Francisco, USA (Remote)",
     linkedin: "https://linkedin.com/in/sarah-jenkins-dev",
-    portfolio: "https://github.com/sarahjenkins-code",
-    resume_file: "Sarah_Jenkins_Staff_Engineer_CV.pdf",
+    portfolio: "https://github.com/racheladams-code",
+    resume_file: "Rachel_Adams_Staff_Engineer_CV.pdf",
     notice_period: "2 Weeks",
     custom_answers: {
       q1: "6 years of high-scale React/Next.js and GraphQL production systems.",

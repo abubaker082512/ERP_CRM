@@ -76,7 +76,7 @@ export const INDUSTRIES_MAP: Record<string, IndustryData> = {
       { title: "Automated Player Split-Bills", desc: "Let all 4 players pay their exact 25% share via mobile link before entering the court." },
       { title: "Pro Shop Barcode Terminal", desc: "Sell drinks, apparel, and padel gear with live inventory depletion." },
       { title: "Tournament & Ladder Brackets", desc: "Americano, Mexicano, and knockout tournament brackets generated automatically." },
-      { title: "25M+ B2B Leads Engine", desc: "Find corporate sponsors, local businesses, and company tournament clients." },
+      { title: "Global B2B Leads Engine", desc: "Find corporate sponsors, local businesses, and company tournament clients." },
       { title: "Double-Entry Financial Ledgers", desc: "Audit-ready revenue recognition for prepayments, packages, and court credits." }
     ],
     operationModes: [
@@ -388,7 +388,7 @@ export const INDUSTRIES_MAP: Record<string, IndustryData> = {
       { title: "Lease Contract Generator", desc: "Automate lease agreements, security deposit escrows, and renewal escalations." },
       { title: "Tenant Portal & Rent Collection", desc: "Tenants view payment histories, download tax invoices, and submit maintenance tickets." },
       { title: "Vendor Work Order Budgeting", desc: "Issue approved maintenance work orders with contractor invoice reconciliation." },
-      { title: "25M+ Property Investor Leads", desc: "Discover high-net-worth commercial buyers and corporate tenants from the leads pool." },
+      { title: "Verified Property Investor Leads", desc: "Discover high-net-worth commercial buyers and corporate tenants from the leads pool." },
       { title: "Full Trust & Escrow Accounting", desc: "Segregate owner distributions, security deposits, and operating accounts." }
     ],
     operationModes: [
@@ -544,7 +544,7 @@ export const INDUSTRIES_MAP: Record<string, IndustryData> = {
       { title: "Field Daily Logs with Photos", desc: "Site supervisors log daily weather, crew counts, safety incidents, and inspection photos." },
       { title: "Subcontractor Retainage Management", desc: "Hold standard 5% or 10% retainage until punch list signoff and warranty periods." },
       { title: "Change Order Approval Workflow", desc: "Draft change orders with client digital signature approval before executing additional site work." },
-      { title: "25M+ Subcontractor & B2B Leads", desc: "Source specialized trade partners, architects, and engineering consultancies." }
+      { title: "Verified Subcontractor & B2B Leads", desc: "Source specialized trade partners, architects, and engineering consultancies." }
     ],
     operationModes: [
       { badge: "🏗️ General Contractor", name: "Turnkey Project Mode", desc: "Architectural milestones, subcontractor retainage, and progressive client billing." },
@@ -699,7 +699,7 @@ export const INDUSTRIES_MAP: Record<string, IndustryData> = {
       { title: "Grant Budget vs. Actual Monitoring", desc: "Prevent budget overruns with real-time alerts before project funds are exhausted." },
       { title: "Multi-Currency Humanitarian Disbursements", desc: "Issue local currency procurement orders for international field mission supplies." },
       { title: "Audit-Ready Financial Statements", desc: "Generate Statement of Financial Position and Statement of Activities for regulators." },
-      { title: "25M+ Corporate Sponsor Directory", desc: "Reach out directly to corporate CSR heads and philanthropic foundation leaders." },
+      { title: "Corporate Sponsor Directory", desc: "Reach out directly to corporate CSR heads and philanthropic foundation leaders." },
       { title: "Field Mission Expense Receipts", desc: "Staff capture and submit field expenditure receipts via mobile photos for instant reimbursement." }
     ],
     operationModes: [
@@ -853,7 +853,7 @@ export const INDUSTRIES_MAP: Record<string, IndustryData> = {
       { title: "Dynamic Bin & Pallet Locations", desc: "Track exact shelf and bin coordinates across multiple distribution hubs." },
       { title: "Wholesale B2B Customer Portal", desc: "Wholesale clients log in to view negotiated price lists and place bulk replenishment orders." },
       { title: "Automated Credit Limit Enforcement", desc: "Prevent dispatching goods to B2B clients with past-due unpaid balances." },
-      { title: "25M+ Verified B2B Buyer Leads", desc: "Directly prospect wholesale buyers, retail chains, and purchasing agents." },
+      { title: "Verified B2B Buyer Leads", desc: "Directly prospect wholesale buyers, retail chains, and purchasing agents." },
       { title: "Landed Cost Calculations", desc: "Distribute customs duties, freight tariffs, and insurance into unit inventory valuation." },
       { title: "Carrier Manifests & BOLs", desc: "Generate freight packing slips, container manifests, and delivery receipts." }
     ],
@@ -931,7 +931,7 @@ export const INDUSTRIES_MAP: Record<string, IndustryData> = {
       { title: "Monthly Retainer Burn Tracker", desc: "Track prepaid retainer hours with automated rollovers or use-it-or-lose-it expirations." },
       { title: "Milestone & Fixed-Fee Contracts", desc: "Trigger client billing automatically upon deliverable review and signoff." },
       { title: "Client Portal & File Approvals", desc: "Clients review project deliverables, download invoices, and pay via credit card or ACH." },
-      { title: "25M+ Corporate Prospect Leads", desc: "Directly identify VP of Marketing, CTO, and C-level decision-makers needing agency services." },
+      { title: "Verified Corporate Prospect Leads", desc: "Directly identify VP of Marketing, CTO, and C-level decision-makers needing agency services." },
       { title: "Multi-Currency & VAT Compliance", desc: "Bill international clients in USD, EUR, GBP, or AED with compliant tax formatting." }
     ],
     operationModes: [

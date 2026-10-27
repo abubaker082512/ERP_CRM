@@ -45,7 +45,7 @@ function saveCampaignLog(entry: CampaignLogEntry) {
   }
 }
 
-// Generate realistic deterministic lead samples from our 25M+ bank metadata
+// Generate realistic deterministic lead samples from our global bank metadata
 function generateSampleTargetLeads(country: string, industry: string, count: number = 5) {
   const firstNames = ["Marcus", "Sarah", "Alexander", "Elena", "Victoria", "Tariq", "Hans", "David", "Liam", "Sophie"];
   const lastNames = ["Vance", "Jenkins", "Hayes", "Al-Mansoor", "Schneider", "Tremblay", "Blackwood", "Sterling", "Cooper"];

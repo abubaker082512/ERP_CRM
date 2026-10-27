@@ -30,7 +30,7 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
   hero_headline_v1: {
     id: "hero_headline_v1",
     name: "Homepage Hero Headline & Positioning",
-    description: "Testing feature scope vs. $400/mo Anti-SaaS Tax vs. 25M+ Leads Customer Engine.",
+    description: "Testing feature scope vs. $400/mo Anti-SaaS Tax vs. Global Leads Customer Engine.",
     variants: [
       {
         id: "control",
@@ -46,7 +46,7 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
       },
       {
         id: "leads_engine",
-        name: "Growth & Pipeline (25M+ Leads Customer Engine)",
+        name: "Growth & Pipeline (Global Leads Customer Engine)",
         weight: 33,
         description: "Highlights automated customer acquisition and B2B lead generation."
       }
@@ -68,7 +68,7 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
         id: "frictionless",
         name: "Frictionless (No Credit Card Free)",
         weight: 33,
-        description: "Primary: Start Free — No Credit Card Required | Secondary: Explore 25M+ Leads"
+        description: "Primary: Start Free — No Credit Card Required | Secondary: Explore Global Leads"
       },
       {
         id: "savings_calc",
@@ -98,7 +98,7 @@ export const EXPERIMENTS: Record<string, ExperimentConfig> = {
       },
       {
         id: "interactive_leads",
-        name: "Live Interactive 25M+ Leads Search Widget",
+        name: "Live Interactive Leads Search Widget",
         weight: 33,
         description: "Instant in-hero search simulator for visitors to test query B2B leads before signing up."
       }

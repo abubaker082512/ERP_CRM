@@ -81,7 +81,7 @@ const DEMO_LEADS = [
     },
     {
         id: "dl-4",
-        name: "Sarah Jenkins",
+        name: "Rachel Adams",
         title: "Head of Revenue Operations",
         seniority: "Director",
         company: "OmniScale Commerce",
@@ -91,7 +91,7 @@ const DEMO_LEADS = [
         headcount: "100-250",
         intentScore: 89,
         intentLabel: "Tool Replacement Signal",
-        verifiedEmail: "s.jenkins@omniscale.com",
+        verifiedEmail: "r.adams@omniscale.com",
         phone: "+1 (512) 402-****"
     },
     {

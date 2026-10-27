@@ -133,7 +133,7 @@ export function calculateAffiliateEarnings(referredCount: number, avgMonthlyReve
  */
 export function getSocialShareLinks(referralLink: string) {
   const shareText = encodeURIComponent(
-    "Stop paying the $400/mo SaaS tax for fragmented tools. We switched to Beraxis AI Autonomous ERP & CRM — full accounting, 25M+ leads, and POS for just $1/month! Check it out:"
+    "Stop paying the $400/mo SaaS tax for fragmented tools. We switched to Beraxis AI Autonomous ERP & CRM — full accounting, global leads directory, and POS for just $1/month! Check it out:"
   );
   const encodedUrl = encodeURIComponent(referralLink);
 

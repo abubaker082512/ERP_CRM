@@ -53,7 +53,7 @@ Beraxis operates on a transparent, predictable model. Whether you have 5 team me
 
 ---
 
-### 2. Built-In 25M+ Leads Pool vs. Zudo's Third-Party Scraper Tax
+### 2. Built-In B2B Leads Directory vs. Zudo's Third-Party Scraper Tax
 
 In the Zudo ecosystem, your CRM is merely an empty database shell. To actually find prospective customers, you are forced to purchase external subscriptions like ZoomInfo, Apollo, or LinkedIn Sales Navigator, costing anywhere from **\$1,000 to \$2,500 every single month**.
 
@@ -128,7 +128,7 @@ Let’s examine the line items that actually appear on a mid-market company's in
 | Expense Item | Zudo Legacy Stack | Beraxis Autonomous Suite |
 | :--- | :--- | :--- |
 | **Base Software Licenses** | \$10,500 / year | Included / Early Bird Flat |
-| **B2B Lead Enrichment (ZoomInfo/Apollo)** | \$14,400 / year | **\$0 (25M+ Leads Included)** |
+| **B2B Lead Enrichment (ZoomInfo/Apollo)** | \$14,400 / year | **\$0 (Global Leads Included)** |
 | **AI Voice Assistant Integration** | Not Available / \$6,000 Custom | **Included Native Voice Pilot** |
 | **Omnichannel WhatsApp & SMS Bridge** | \$1,800 / year (Addon) | Included Native Sync |
 | **Consultant Maintenance Retainer** | \$12,000 / year | **\$0 (Intuitive No-Code Config)** |
@@ -285,7 +285,7 @@ The directive is compiled and active immediately without writing a single line o
 
 ---
 
-### 2. Built-In 25M+ Verified B2B Leads vs. An Empty Zoho Database
+### 2. Built-In Verified B2B Leads vs. An Empty Zoho Database
 
 One of the greatest illusions of legacy CRMs like Zoho is that buying the software will help you grow sales. In reality, **Zoho gives you an empty container**.
 
@@ -295,7 +295,7 @@ To actually find potential buyers, founders must buy expensive third-party tools
 * LinkedIn Sales Navigator: **$960 / user / year**
 
 **How Beraxis Differs:**
-Beraxis integrates the **Global 25M+ B2B Leads Directory** natively into your cockpit. With over 25,000,000 pre-verified enterprise decision-makers across 12 major industries, your sales representatives can filter prospects by revenue, headcount, country, and AI buying intent scores.
+Beraxis integrates the **Global B2B Leads Directory** natively into your cockpit. With over pre-verified enterprise decision-makers across 12 major industries, your sales representatives can filter prospects by revenue, headcount, country, and AI buying intent scores.
 
 With one click, qualified prospects are converted into active deals on your visual Kanban board. Explore our [Live Leads Pool Showcase](/leads-pool) to see real-time verified contacts in action.
 
@@ -308,7 +308,7 @@ With one click, qualified prospects are converted into active deals on your visu
 | **Database Architecture** | 45+ Disjointed App Silos | **Single PostgreSQL Schema (Supabase RLS)** |
 | **Sync Latency** | 2 to 15 Minutes Sync Delays | **0ms Real-Time Global Consistency** |
 | **Custom Automations** | Proprietary Deluge Script ($) | **Visual No-Code + AI Voice Pilot** |
-| **B2B Prospecting Leads** | None (Third-Party Addon Required) | **25M+ Pre-Verified Decision Makers Included** |
+| **B2B Prospecting Leads** | None (Third-Party Addon Required) | **Pre-Verified Global Decision Makers Included** |
 | **Accounting Integration** | Requires Zoho Books Sync Setup | **Native GAAP/IFRS Double-Entry Ledger** |
 | **Annual Software Cost (5 Users)** | **$2,220 - $5,400 / year** | **$12 / year (Early Bird Flat Plan)** |
 

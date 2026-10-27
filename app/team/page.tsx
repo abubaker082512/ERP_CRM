@@ -677,7 +677,7 @@ export default function TeamManagementPage() {
 
               {/* Level 3: Specialists */}
               <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center max-w-sm mx-auto shadow-md">
-                <div className="font-semibold text-white text-xs">Sarah Jenkins</div>
+                <div className="font-semibold text-white text-xs">Rachel Adams</div>
                 <div className="text-[11px] text-indigo-400">Senior Cloud Engineer (Specialist)</div>
                 <div className="text-[10px] text-slate-400 mt-1">Reports to: Alex Vance</div>
               </div>

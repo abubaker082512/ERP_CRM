@@ -35,7 +35,7 @@ export const TARGET_PERSONAS: TargetAudiencePersona[] = [
     targetCountries: ["United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait"],
     targetTitles: ["Managing Director", "General Manager", "VP of Operations", "Chief Executive Officer"],
     suggestedSequenceId: "leads-pool-accelerator",
-    hook: "Pre-verified 25M+ B2B decision makers to scale regional outreach without third-party scrapers."
+    hook: "Pre-verified B2B decision makers to scale regional outreach without third-party scrapers."
   },
   {
     id: "retail-dining-operators",
@@ -83,10 +83,10 @@ To unsubscribe: {{unsubscribe_url}}`
   {
     id: "leads-pool-accelerator",
     step: 2,
-    name: "The Built-in 25M+ Leads Engine (Touch 2)",
+    name: "The Built-in Leads Engine (Touch 2)",
     category: "leads",
     delayDays: 3,
-    subject: "25M+ pre-verified B2B leads for {{company_name}}",
+    subject: "Verified B2B leads for {{company_name}}",
     body: `Hi {{contact_name}},
 
 Following up on my previous note. One specific feature that our customers in {{industry}} love is that they never have to buy external B2B lead lists again.

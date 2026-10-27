@@ -3260,7 +3260,7 @@ function SuperAdminPageContent() {
                         <form onSubmit={handleCreateUser} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Full Name</label>
-                                <input type="text" value={userForm.name} onChange={e => setUserForm({...userForm, name: e.target.value})} placeholder="e.g. Sarah Jenkins" className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-4 py-2.5 text-white text-xs focus:border-purple-500 outline-none" />
+                                <input type="text" value={userForm.name} onChange={e => setUserForm({...userForm, name: e.target.value})} placeholder="e.g. Rachel Adams" className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-4 py-2.5 text-white text-xs focus:border-purple-500 outline-none" />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Email Address *</label>

@@ -34,7 +34,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
     competitorName: "QuickBooks Online",
     competitorTagline: "Accounting Only with Price Hikes and App Silos",
     badge: "The Accounting & ERP Upgrade",
-    heroHeadline: "The Modern QuickBooks Alternative with CRM, POS, and 25M+ Leads",
+    heroHeadline: "The Modern QuickBooks Alternative with CRM, POS, and Global Leads",
     heroSubheadline: "Stop paying $85/month for basic bookkeeping only to buy third-party plugins for CRM, inventory, and point of sale. Beraxis gives you full double-entry accounting plus your complete operational suite for $1/month.",
     competitorCostAnnual: "$1,020 - $2,400/yr",
     beraxisCostAnnual: "$12/yr (Early Bird)",
@@ -49,7 +49,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
     ],
     beraxisWins: [
       "Complete double-entry general ledger, balance sheets, and real-time P&L",
-      "Proprietary 25M+ B2B lead pool with hot intent scoring and CRM routing",
+      "Proprietary B2B lead directory with hot intent scoring and CRM routing",
       "Built-in touch POS with barcoding and instant register reconciliation",
       "Multi-warehouse inventory tracking included in Standard tier",
       "1 App 100% Free Forever with no credit card required"
@@ -58,7 +58,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
       { feature: "Full Double-Entry Accounting", beraxis: true, competitor: true, note: "Both offer general ledger, journal entries, and balance sheets" },
       { feature: "3-Second AI Invoice & Receipt OCR", beraxis: true, competitor: "Limited / Extra Add-on", note: "Beraxis AI scans line items directly to ledger in 3.1s" },
       { feature: "Sales CRM & Visual Kanban Pipeline", beraxis: true, competitor: false, note: "QuickBooks requires HubSpot, Pipedrive, or Salesforce" },
-      { feature: "Built-in 25M+ B2B Leads Engine", beraxis: true, competitor: false, note: "Beraxis includes verified business leads with intent scores" },
+      { feature: "Built-in Global B2B Leads Engine", beraxis: true, competitor: false, note: "Beraxis includes verified business leads with intent scores" },
       { feature: "Integrated Touch Point of Sale (POS)", beraxis: true, competitor: "Separate Subscription ($)", note: "Beraxis POS syncs live with inventory and cash registers" },
       { feature: "Multi-Warehouse Stock Tracking", beraxis: true, competitor: "QuickBooks Advanced Only ($200/mo)", note: "Included out of the box in Beraxis" },
       { feature: "Voice Assist Pilot (AI Commands)", beraxis: true, competitor: false, note: "Speak or prompt invoice generation and reporting" },
@@ -99,14 +99,14 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
     beraxisWins: [
       "Modern Next.js & TypeScript cloud architecture with zero installation headache",
       "12 Global Industry Archetypes that auto-configure workflows in 1 click",
-      "Built-in 25M+ AI Lead Pool to fill your sales pipeline immediately",
+      "Built-in AI Lead Pool to fill your sales pipeline immediately",
       "Dual-Brain AI Copilot for voice-driven operations and automated analytics",
       "Simple transparent pricing: $1/mo Annual ($12/yr) vs. confusing per-user/per-app tiers"
     ],
     matrix: [
       { feature: "Implementation Time", beraxis: "< 30 Seconds", competitor: "3 to 12 Weeks", note: "Beraxis auto-configures out of the box" },
       { feature: "Modern Cloud UI/UX", beraxis: "Next.js / Tailwind (Sub-second)", competitor: "Legacy Web Client", note: "Beraxis provides instantaneous page loads" },
-      { feature: "Built-in 25M+ B2B Leads Engine", beraxis: true, competitor: false, note: "Odoo has no built-in verified lead pool" },
+      { feature: "Built-in Global B2B Leads Engine", beraxis: true, competitor: false, note: "Odoo has no built-in verified lead pool" },
       { feature: "Voice Assist Pilot (AI Commands)", beraxis: true, competitor: false, note: "Execute voice transactions and queries" },
       { feature: "Full Double-Entry Accounting", beraxis: true, competitor: "Enterprise Only ($)", note: "Odoo Community strips full dynamic accounting" },
       { feature: "High-Speed Retail / F&B POS", beraxis: true, competitor: true, note: "Both feature offline-ready touch POS" },
@@ -121,7 +121,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
       { step: "03", title: "Connect Staff & Registers", desc: "Invite team members with role-based permissions and begin executing sales immediately." }
     ],
     faqs: [
-      { q: "How is Beraxis different from Odoo Community?", a: "Odoo Community lacks full double-entry accounting reports, multi-company features, and requires self-hosting maintenance. Beraxis is a managed, ultra-fast cloud command center with full accounting, 25M+ leads, and AI voice assistance." },
+      { q: "How is Beraxis different from Odoo Community?", a: "Odoo Community lacks full double-entry accounting reports, multi-company features, and requires self-hosting maintenance. Beraxis is a managed, ultra-fast cloud command center with full accounting, global leads directory, and AI voice assistance." },
       { q: "Do I need a technical developer to configure Beraxis?", a: "No. Unlike Odoo, which requires Python/XML adjustments, Beraxis auto-configures your departments, roles, and POS layouts based on your selected industry archetype." },
       { q: "Can my retail cashiers use the Beraxis POS without training?", a: "Yes. Our Point of Sale is designed like modern tablet apps (Square/Toast), with visual categories, barcode scanning, and instant split bills." }
     ]
@@ -154,7 +154,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
     ],
     matrix: [
       { feature: "Visual Sales Kanban Pipeline", beraxis: true, competitor: true, note: "Drag-and-drop deals across custom sales stages" },
-      { feature: "Built-in 25M+ Verified B2B Leads", beraxis: true, competitor: false, note: "HubSpot requires separate prospecting tools ($100+/mo)" },
+      { feature: "Built-in Verified B2B Leads", beraxis: true, competitor: false, note: "HubSpot requires separate prospecting tools ($100+/mo)" },
       { feature: "AI Intent Scoring (Hot/Warm)", beraxis: true, competitor: "Enterprise Only ($500+/mo)", note: "Identify high-probability buyers automatically" },
       { feature: "Full Double-Entry Accounting Sync", beraxis: true, competitor: false, note: "Deals instantly convert to general ledger invoices" },
       { feature: "Multi-Warehouse Inventory Fulfillment", beraxis: true, competitor: false, note: "HubSpot cannot track physical stock or supply chain" },
@@ -167,7 +167,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
     migrationSteps: [
       { step: "01", title: "Export HubSpot Deals & Contacts", desc: "Download your contacts, companies, and active pipeline deals as CSV files." },
       { step: "02", title: "Map Pipeline Stages in Beraxis", desc: "Replicate your sales stages (Lead, Meeting, Proposal, Closed Won) in Beraxis CRM." },
-      { step: "03", title: "Tap the 25M+ Leads Pool", desc: "Filter new accounts by industry and revenue to inject fresh pipeline opportunities immediately." }
+      { step: "03", title: "Tap the Global Leads Directory", desc: "Filter new accounts by industry and revenue to inject fresh pipeline opportunities immediately." }
     ],
     faqs: [
       { q: "Does Beraxis charge more when our contact list grows?", a: "No. Unlike HubSpot, which penalizes you with contact tier price bumps, Beraxis allows you to manage customer relationships without arbitrary list penalties." },
@@ -207,7 +207,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
       { feature: "Double-Entry General Ledger", beraxis: true, competitor: true, note: "Both comply with global GAAP/IFRS standards" },
       { feature: "Multi-Warehouse & Lot Tracking", beraxis: true, competitor: true, note: "Manage multiple stock locations and bin transfers" },
       { feature: "Integrated Touch Point of Sale", beraxis: true, competitor: "Requires Separate Hardware/License", note: "Beraxis runs POS on any browser or iPad" },
-      { feature: "Built-in 25M+ B2B Leads Engine", beraxis: true, competitor: false, note: "Legacy ERPs only manage existing clients" },
+      { feature: "Built-in Global B2B Leads Engine", beraxis: true, competitor: false, note: "Legacy ERPs only manage existing clients" },
       { feature: "Voice Pilot & AI Automation", beraxis: true, competitor: false, note: "Next-gen natural language commands and OCR" },
       { feature: "Annual Contract Commitment", beraxis: "Cancel Anytime", competitor: "1 to 3 Year Strict Contracts", note: "No enterprise trap" },
       { feature: "Free Tier Available", beraxis: "1 App Free Forever", competitor: "None", note: "Test with zero financial risk" },
@@ -279,7 +279,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
     competitorTagline: "Fragmented 45-App Ecosystem with Deluge Script Overhead and Slow Sync",
     badge: "The Unified CRM & Operating System",
     heroHeadline: "The Modern Zoho CRM Alternative Without 45 Disjointed Apps or Deluge Script",
-    heroSubheadline: "Tired of syncing disjointed apps between Zoho CRM, Zoho Books, and Zoho Inventory? Frustrated with slow page loads and paying developers for proprietary Deluge code? Beraxis gives you a unified, real-time command center with double-entry accounting, point of sale, and 25M+ built-in B2B leads for $1/month.",
+    heroSubheadline: "Tired of syncing disjointed apps between Zoho CRM, Zoho Books, and Zoho Inventory? Frustrated with slow page loads and paying developers for proprietary Deluge code? Beraxis gives you a unified, real-time command center with double-entry accounting, point of sale, and built-in global B2B leads for $1/month.",
     competitorCostAnnual: "$1,680 - $7,200/yr",
     beraxisCostAnnual: "$12/yr (Early Bird)",
     annualSavings: "$1,668+/yr",
@@ -300,7 +300,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
     ],
     matrix: [
       { feature: "Unified Single-Database Architecture", beraxis: true, competitor: "Fragmented Across 45+ Apps", note: "Beraxis guarantees zero desynchronization between CRM, Books, and Inventory" },
-      { feature: "Built-in 25M+ Verified B2B Leads Engine", beraxis: true, competitor: false, note: "Zoho requires third-party prospecting extensions" },
+      { feature: "Built-in Verified B2B Leads Engine", beraxis: true, competitor: false, note: "Zoho requires third-party prospecting extensions" },
       { feature: "AI Voice Pilot & Natural Language Commands", beraxis: true, competitor: false, note: "Execute pipeline moves, quotes, and reports with natural speech" },
       { feature: "No Proprietary Scripting Language", beraxis: "Zero Code Needed", competitor: "Requires Deluge Script ($)", note: "Beraxis auto-configures workflows without proprietary scripting" },
       { feature: "Full Double-Entry Accounting Sync", beraxis: true, competitor: "Requires Zoho Books Integration", note: "Native general ledger, trial balance, and tax reconciliation" },
@@ -313,7 +313,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
     migrationSteps: [
       { step: "01", title: "Export Zoho Leads, Contacts & Deals", desc: "Download your contacts, accounts, and deal stages as standard CSV files from Zoho CRM." },
       { step: "02", title: "1-Click Beraxis CRM Import", desc: "Use our intelligent CSV mapper to instantly recreate your sales pipeline and assign deal values." },
-      { step: "03", title: "Activate 25M+ Prospecting Engine", desc: "Filter pre-verified industry decision-makers to fill your new pipeline from day one." }
+      { step: "03", title: "Activate Prospecting Engine", desc: "Filter pre-verified industry decision-makers to fill your new pipeline from day one." }
     ],
     faqs: [
       { q: "Why is Beraxis better than using Zoho One?", a: "Zoho One is a collection of 45+ separate apps acquired over decades that often fail to talk to each other seamlessly. Beraxis was engineered from the ground up as a single, ultra-fast cloud command center. Your CRM, invoices, inventory, and POS run on one database without sync delays or Deluge scripts." },
