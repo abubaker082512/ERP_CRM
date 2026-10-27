@@ -17,8 +17,8 @@ export default function CosmicBackground() {
     cleanPath.startsWith("/about") || 
     cleanPath.startsWith("/contact") || 
     cleanPath.startsWith("/team") || 
-    cleanPath.startsWith("/leads-pool") || 
-    cleanPath.startsWith("/lead-pool") || 
+    cleanPath.includes("leads-pool") || 
+    cleanPath.includes("lead-pool") || 
     cleanPath.startsWith("/pitch-deck") || 
     cleanPath.startsWith("/presentation") || 
     cleanPath.startsWith("/launch-creatives") || 

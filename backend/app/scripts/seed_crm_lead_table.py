@@ -23,7 +23,9 @@ def seed_supabase_leads():
     skipped = 0
 
     for lead in VERIFIED_REAL_BUSINESSES:
-        formatted_name = f"{lead['company_name']} - {lead.get('contact_name', 'Executive')} ({lead.get('city', 'Lahore')}, {lead.get('country', 'Pakistan')})"
+        city = lead.get('city', 'Corporate HQ')
+        country = lead.get('country', 'Global')
+        formatted_name = f"{lead['company_name']} - {lead.get('contact_name', 'Executive')} ({city}, {country})"
         
         if formatted_name in existing_names:
             skipped += 1

@@ -78,8 +78,17 @@ export async function GET(req: NextRequest) {
                             return maskLeadContact(baseLead, isUnlocked);
                         });
 
+                        const contentRange = res.headers.get("content-range");
+                        let totalCount = enriched.length;
+                        if (contentRange && contentRange.includes("/")) {
+                            const parsed = parseInt(contentRange.split("/")[1], 10);
+                            if (!isNaN(parsed)) {
+                                totalCount = parsed;
+                            }
+                        }
+
                         return NextResponse.json({
-                            total: enriched.length,
+                            total: totalCount,
                             leads: enriched,
                             source: "supabase_crm_lead",
                             plan: userPlan,

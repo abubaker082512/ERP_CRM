@@ -280,26 +280,45 @@ export default function LeadsPoolPage() {
             if (hasPhoneOnly) params.append("has_phone", "true");
             params.append("limit", pageSize.toString());
             params.append("skip", ((currentPage - 1) * pageSize).toString());
+            params.append("plan", userPlan);
+            if (unlockedLeadIds.length > 0) {
+                params.append("unlocked_ids", unlockedLeadIds.join(","));
+            }
 
+            // 1. Try direct Next.js lead-bank route (direct Supabase PostgREST query)
+            try {
+                const localRes = await fetch(`/api/lead-bank?${params.toString()}`);
+                if (localRes.ok) {
+                    const localData = await localRes.json();
+                    if (localData.leads && localData.leads.length > 0) {
+                        setLeads(localData.leads);
+                        setTotal(localData.total || localData.leads.length);
+                        setLoading(false);
+                        return;
+                    }
+                }
+            } catch {}
+
+            // 2. Try backend API proxy
             const res = await fetchAPI(`/lead-bank?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.leads && data.leads.length > 0) {
                     setLeads(data.leads);
-                    setTotal(data.total || TOTAL_GLOBAL_LEADS_COUNT);
+                    setTotal(data.total || data.leads.length);
                     setLoading(false);
                     return;
                 }
             }
         } catch (err) {}
 
-        // Verified Real Directory Fallback (Zero Mock/Procedural Data)
+        // 3. Verified Real Directory Fallback (Zero Mock/Procedural Data)
         const filtered = filterRealLeads(searchQuery, selectedCountry, selectedIndustry);
         const mapped = filtered.map(lead => {
             const isUnlocked = userPlan === "premium" || unlockedLeadIds.includes(lead.id);
             return maskLeadContact(lead, isUnlocked);
         });
-        setLeads(mapped as any);
+        setLeads(mapped.slice((currentPage - 1) * pageSize, currentPage * pageSize) as any);
         setTotal(filtered.length);
         setLoading(false);
     };
@@ -1098,24 +1117,22 @@ export default function LeadsPoolPage() {
                                         className="bg-[#1E293B] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
                                     >
                                         <option value="All">🌍 All Countries</option>
-                                        <option value="United States">🇺🇸 United States (5.2M Leads)</option>
-                                        <option value="United Kingdom">🇬🇧 United Kingdom (2.8M Leads)</option>
-                                        <option value="Saudi Arabia">🇸🇦 Saudi Arabia (2.4M Leads)</option>
-                                        <option value="United Arab Emirates">🇦🇪 United Arab Emirates (1.95M Leads)</option>
-                                        <option value="India">🇮🇳 India (1.9M Leads)</option>
-                                        <option value="Germany">🇩🇪 Germany (1.85M Leads)</option>
-                                        <option value="Canada">🇨🇦 Canada (1.5M Leads)</option>
-                                        <option value="Australia">🇦🇺 Australia (1.35M Leads)</option>
-                                        <option value="Pakistan">🇵🇰 Pakistan (1.1M Leads)</option>
-                                        <option value="Singapore">🇸🇬 Singapore (850K Leads)</option>
-                                        <option value="France">🇫🇷 France (820K Leads)</option>
-                                        <option value="Kuwait">🇰🇼 Kuwait (720K Leads)</option>
-                                        <option value="Qatar">🇶🇦 Qatar (650K Leads)</option>
-                                        <option value="Sweden">🇸🇪 Sweden (650K Leads)</option>
-                                        <option value="Netherlands">🇳🇱 Netherlands (560K Leads)</option>
-                                        <option value="Switzerland">🇨🇭 Switzerland (480K Leads)</option>
-                                        <option value="Japan">🇯🇵 Japan (450K Leads)</option>
-                                        <option value="Ireland">🇮🇪 Ireland (420K Leads)</option>
+                                        <option value="United States">🇺🇸 United States</option>
+                                        <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                                        <option value="Germany">🇩🇪 Germany</option>
+                                        <option value="France">🇫🇷 France</option>
+                                        <option value="Canada">🇨🇦 Canada</option>
+                                        <option value="Australia">🇦🇺 Australia</option>
+                                        <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
+                                        <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
+                                        <option value="Singapore">🇸🇬 Singapore</option>
+                                        <option value="Netherlands">🇳🇱 Netherlands</option>
+                                        <option value="Switzerland">🇨🇭 Switzerland</option>
+                                        <option value="Japan">🇯🇵 Japan</option>
+                                        <option value="India">🇮🇳 India</option>
+                                        <option value="Pakistan">🇵🇰 Pakistan</option>
+                                        <option value="Sweden">🇸🇪 Sweden</option>
+                                        <option value="Brazil">🇧🇷 Brazil</option>
                                     </select>
 
                                     {/* Industry Filter */}
