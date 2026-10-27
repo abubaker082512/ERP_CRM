@@ -5,6 +5,7 @@ import Link from "next/link";
 import CRMHeader from "@/components/crm/CRMHeader";
 import { fetchAPI } from "@/lib/api";
 import { useBranchContext } from "@/lib/branchContext";
+import { CREEM_PRODUCTS } from "@/lib/creemConfig";
 import {
     Search,
     Filter,

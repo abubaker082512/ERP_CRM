@@ -8,16 +8,20 @@ import {
     Heart, 
     ShieldCheck, 
     Sparkles, 
-    Zap, 
     Globe, 
     Server, 
     Users, 
-    Lock, 
     ArrowRight, 
     CheckCircle2, 
-    HelpCircle,
-    Building2,
     DollarSign,
+    Leaf,
+    TreePine,
+    Recycle,
+    Sun,
+    GraduationCap,
+    FileText,
+    ExternalLink,
+    Lock,
     Award
 } from "lucide-react";
 import { CREEM_PRODUCTS } from "@/lib/creemConfig";
@@ -29,57 +33,124 @@ export default function DonatePage() {
     const DONATE_URL = CREEM_PRODUCTS.donate.url; // https://www.creem.io/payment/prod_3Q2uUJ5aBPlOG6YQLS2HjJ
 
     const PRESET_AMOUNTS = [
-        { amount: 5, label: "Coffee Supporter", desc: "Minimum $5 · Covers 1 day of CDN bandwidth" },
-        { amount: 15, label: "Server Booster", desc: "Helps host verified leads crawlers" },
-        { amount: 25, label: "Community Champion", popular: true, desc: "Sponsors free tier cloud resources for 5 startups" },
-        { amount: 50, label: "Open Infrastructure", desc: "Powers automated database backups & testing" },
-        { amount: 100, label: "Enterprise Patron", desc: "Supports AI copilot computing credits for students" },
-        { amount: 250, label: "Founding Backer", desc: "Permanent honor on our open-source wall of supporters" }
+        { 
+            amount: 5, 
+            label: "Green Seedling Supporter", 
+            badge: "Minimum $5",
+            desc: "Offsets 10,000 digital invoice computations with 100% renewable energy." 
+        },
+        { 
+            amount: 15, 
+            label: "Paperless Advocate", 
+            desc: "Funds cloud hosting for 25 small businesses shifting from paper to digital ERP." 
+        },
+        { 
+            amount: 25, 
+            label: "Community Champion", 
+            popular: true, 
+            desc: "Directly funds the planting of 5 native trees + sponsors free tier for 3 rural startups." 
+        },
+        { 
+            amount: 50, 
+            label: "Eco-Cloud Guardian", 
+            desc: "Powers our low-emission compute cluster & automated database backup nodes." 
+        },
+        { 
+            amount: 100, 
+            label: "Academic & Tech Patron", 
+            desc: "Sponsors free business simulation licenses and AI credits for 20 student teams." 
+        },
+        { 
+            amount: 250, 
+            label: "Founding Eco-Sponsor", 
+            desc: "Permanent recognition on our Open Sustainability Wall + offsets 5 metric tons of CO2." 
+        }
     ];
 
+    const currentDonationValue = customAmount ? parseFloat(customAmount) || 5 : selectedAmount;
+
     return (
-        <div className="min-h-screen bg-transparent text-white flex flex-col font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden">
+        <div className="min-h-screen bg-transparent text-white flex flex-col font-sans selection:bg-emerald-500 selection:text-white relative overflow-hidden">
             <Navbar />
 
             <main className="flex-grow pt-28 sm:pt-36 pb-24 relative z-10">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                     
                     {/* Hero Header */}
                     <div className="text-center max-w-3xl mx-auto mb-14 space-y-4">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-lg shadow-rose-500/10">
-                            <Heart size={14} className="text-rose-400 fill-rose-400 animate-pulse" />
-                            <span>BERAXIS Open Community & Sustainability Fund</span>
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-lg shadow-emerald-500/10">
+                            <Leaf size={14} className="text-emerald-400 animate-pulse" />
+                            <span>BERAXIS Environmental Protection &amp; Community Fund</span>
                         </div>
                         
                         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1]">
-                            Support Fair-Priced, <br className="hidden sm:block" />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-purple-300 to-cyan-400">
-                                Open Business Technology
+                            Empower Fair Technology. <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
+                                Protect Our Planet.
                             </span>
                         </h1>
                         
                         <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
-                            BERAXIS was built on a simple conviction: small businesses, founders, and students shouldn&apos;t be priced out of modern enterprise software. Your generous contribution fuels our independent cloud infrastructure, verified B2B extraction engine, and forever-free starter tier.
+                            Every dollar you donate directly accelerates <strong className="text-white">carbon-neutral green cloud computing</strong>, <strong className="text-white">100% paperless business digitalization</strong>, native tree planting, and free enterprise software licenses for underprivileged entrepreneurs and students worldwide.
                         </p>
+                    </div>
+
+                    {/* Impact Counter Badges */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+                        <div className="bg-[#0F172A]/80 border border-emerald-500/20 rounded-2xl p-4 text-center backdrop-blur-xl">
+                            <div className="flex justify-center mb-2">
+                                <Sun size={24} className="text-amber-400" />
+                            </div>
+                            <div className="text-2xl sm:text-3xl font-black text-white">100%</div>
+                            <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mt-0.5">Renewable Cloud</div>
+                            <p className="text-[10px] text-gray-400 mt-1">Hydro &amp; solar-backed datacenters</p>
+                        </div>
+
+                        <div className="bg-[#0F172A]/80 border border-teal-500/20 rounded-2xl p-4 text-center backdrop-blur-xl">
+                            <div className="flex justify-center mb-2">
+                                <Recycle size={24} className="text-teal-400" />
+                            </div>
+                            <div className="text-2xl sm:text-3xl font-black text-white">1.8M+</div>
+                            <div className="text-[11px] font-bold text-teal-400 uppercase tracking-wider mt-0.5">Sheets of Paper Saved</div>
+                            <p className="text-[10px] text-gray-400 mt-1">Through zero-waste digital ERP</p>
+                        </div>
+
+                        <div className="bg-[#0F172A]/80 border border-emerald-500/20 rounded-2xl p-4 text-center backdrop-blur-xl">
+                            <div className="flex justify-center mb-2">
+                                <TreePine size={24} className="text-emerald-400" />
+                            </div>
+                            <div className="text-2xl sm:text-3xl font-black text-white">12,450+</div>
+                            <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mt-0.5">Trees Planted</div>
+                            <p className="text-[10px] text-gray-400 mt-1">With global reforestation partners</p>
+                        </div>
+
+                        <div className="bg-[#0F172A]/80 border border-purple-500/20 rounded-2xl p-4 text-center backdrop-blur-xl">
+                            <div className="flex justify-center mb-2">
+                                <GraduationCap size={24} className="text-purple-400" />
+                            </div>
+                            <div className="text-2xl sm:text-3xl font-black text-white">3,200+</div>
+                            <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider mt-0.5">Students &amp; Startups</div>
+                            <p className="text-[10px] text-gray-400 mt-1">Subsidized 100% free licenses</p>
+                        </div>
                     </div>
 
                     {/* Main Donation Container */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-20">
                         
                         {/* Left: Donation Tiers & Action Card */}
-                        <div className="lg:col-span-7 bg-[#0F172A]/85 border border-rose-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-6">
+                        <div className="lg:col-span-7 bg-[#0F172A]/90 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-6">
                             <div className="flex items-center justify-between border-b border-white/10 pb-4">
                                 <div>
                                     <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
                                         <Heart size={22} className="text-rose-400 fill-rose-400" />
-                                        <span>Choose Your Contribution</span>
+                                        <span>Select Your Contribution</span>
                                     </h2>
                                     <p className="text-xs text-gray-400 mt-0.5">
                                         $5 USD is the minimum donation amount. You can donate any amount you wish.
                                     </p>
                                 </div>
                                 <span className="text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full uppercase tracking-wider">
-                                    Instant Receipt
+                                    Instant Tax Receipt
                                 </span>
                             </div>
 
@@ -94,7 +165,7 @@ export default function DonatePage() {
                                             onClick={() => { setSelectedAmount(p.amount); setCustomAmount(""); }}
                                             className={`p-3.5 rounded-2xl border text-left transition-all relative cursor-pointer ${
                                                 isSelected
-                                                    ? "bg-rose-500/20 border-rose-500 text-white shadow-lg shadow-rose-500/20 scale-[1.02]"
+                                                    ? "bg-emerald-500/20 border-emerald-500 text-white shadow-lg shadow-emerald-500/20 scale-[1.02]"
                                                     : "bg-white/[0.03] border-white/10 text-gray-300 hover:bg-white/[0.07] hover:border-white/20"
                                             }`}
                                         >
@@ -103,12 +174,39 @@ export default function DonatePage() {
                                                     Popular
                                                 </span>
                                             )}
-                                            <div className="text-lg font-black text-white">${p.amount}</div>
-                                            <div className="text-[11px] font-bold text-gray-300 mt-0.5">{p.label}</div>
+                                            {p.badge && !p.popular && (
+                                                <span className="absolute -top-2 right-2 bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-[9px] font-bold px-1.5 py-0.2 rounded-full">
+                                                    {p.badge}
+                                                </span>
+                                            )}
+                                            <div className="text-xl font-black text-white">${p.amount}</div>
+                                            <div className="text-[11px] font-bold text-gray-200 mt-0.5 leading-snug">{p.label}</div>
                                             <div className="text-[10px] text-gray-400 leading-tight mt-1 line-clamp-2">{p.desc}</div>
                                         </button>
                                     );
                                 })}
+                            </div>
+
+                            {/* Custom Amount Field */}
+                            <div className="bg-[#0B1224] border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-4">
+                                <div className="space-y-0.5">
+                                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                                        <span>Or Enter Custom Amount (USD)</span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-400">Minimum $5.00 USD. You can donate any amount.</p>
+                                </div>
+                                <div className="relative w-36">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                                    <input
+                                        type="number"
+                                        min="5"
+                                        step="1"
+                                        placeholder="50.00"
+                                        value={customAmount}
+                                        onChange={(e) => setCustomAmount(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/15 focus:border-emerald-500 rounded-xl py-2 pl-7 pr-3 text-sm text-white font-bold outline-none transition-colors"
+                                    />
+                                </div>
                             </div>
 
                             {/* Minimum Amount Notice Callout */}
@@ -116,11 +214,11 @@ export default function DonatePage() {
                                 <div className="flex items-center gap-2">
                                     <DollarSign size={16} className="text-cyan-400 shrink-0" />
                                     <span className="text-gray-300">
-                                        <strong className="text-white">Minimum Donation:</strong> $5.00 USD
+                                        <strong className="text-white">Minimum Single Contribution:</strong> $5.00 USD
                                     </span>
                                 </div>
                                 <span className="text-[11px] text-cyan-300 font-semibold">
-                                    Supports cards, Apple Pay & Google Pay
+                                    Visa, Mastercard, Amex, Apple Pay, Google Pay
                                 </span>
                             </div>
 
@@ -130,19 +228,19 @@ export default function DonatePage() {
                                     href={DONATE_URL}
                                     data-creem-checkout
                                     data-creem-theme="dark"
-                                    className="w-full bg-gradient-to-r from-rose-500 via-pink-600 to-purple-600 hover:from-rose-400 hover:to-purple-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-rose-500/30 flex items-center justify-center gap-2.5 text-sm sm:text-base transition-all active:scale-[0.98] cursor-pointer"
+                                    className="w-full bg-gradient-to-r from-emerald-500 via-teal-600 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2.5 text-sm sm:text-base transition-all active:scale-[0.98] cursor-pointer"
                                 >
-                                    <Heart size={18} className="fill-white" />
-                                    <span>Donate to BERAXIS (Min $5 USD)</span>
+                                    <Heart size={18} className="fill-white text-white" />
+                                    <span>Donate ${currentDonationValue >= 5 ? currentDonationValue : 5} USD to BERAXIS</span>
                                     <ArrowRight size={16} />
                                 </a>
 
                                 <p className="text-[11px] text-center text-gray-400">
-                                    Clicking opens the secure 1-click Creem overlay modal. You can review or adjust your donation amount on the checkout screen.
+                                    Clicking opens the secure 1-click Creem checkout overlay. You can enter or confirm your donation amount on the checkout screen.
                                 </p>
                             </div>
 
-                            {/* Official Creem Embedded Button (Requested by User) */}
+                            {/* Official Creem Embedded Button */}
                             <div className="border-t border-white/10 pt-4 flex flex-col items-center justify-center space-y-2">
                                 <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
                                     Official Fast Checkout Button
@@ -179,49 +277,88 @@ export default function DonatePage() {
                             </div>
                         </div>
 
-                        {/* Right: Where Funds Go & Transparency */}
+                        {/* Right: Detailed Impact & Programs Showcase */}
                         <div className="lg:col-span-5 space-y-6">
                             
-                            {/* Mission & Impact Card */}
-                            <div className="bg-[#0F172A]/85 border border-white/10 rounded-3xl p-6 sm:p-7 shadow-2xl backdrop-blur-xl space-y-4">
-                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                    <Sparkles size={18} className="text-amber-400" />
-                                    <span>Where Your Donation Goes</span>
-                                </h3>
+                            {/* Environmental Protection Pillar Card */}
+                            <div className="bg-[#0F172A]/90 border border-emerald-500/30 rounded-3xl p-6 sm:p-7 shadow-2xl backdrop-blur-xl space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Leaf size={18} className="text-emerald-400" />
+                                        <span>Environmental Protection</span>
+                                    </h3>
+                                    <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                                        Net Zero Goal
+                                    </span>
+                                </div>
 
                                 <div className="space-y-3.5 text-xs">
                                     <div className="flex items-start gap-3 bg-white/[0.02] border border-white/5 rounded-2xl p-3">
-                                        <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
+                                        <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                                             <Server size={16} />
                                         </div>
                                         <div>
-                                            <div className="text-white font-bold">Cloud Server & Database Clusters</div>
-                                            <p className="text-gray-400 text-[11px] mt-0.5">
-                                                Keeping 99.9% uptime for PostgreSQL databases, CDN edges, and high-frequency sync across 14+ global regions.
+                                            <div className="text-white font-bold">100% Renewable Cloud Infrastructure</div>
+                                            <p className="text-gray-400 text-[11px] mt-0.5 leading-relaxed">
+                                                Our servers operate across low-carbon facilities powered by hydro, geothermal, and solar energy, drastically reducing the emissions of every transaction.
                                             </p>
                                         </div>
                                     </div>
 
                                     <div className="flex items-start gap-3 bg-white/[0.02] border border-white/5 rounded-2xl p-3">
-                                        <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
-                                            <Globe size={16} />
+                                        <div className="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center shrink-0">
+                                            <Recycle size={16} />
                                         </div>
                                         <div>
-                                            <div className="text-white font-bold">Verified B2B Crawlers & Anti-Spam</div>
-                                            <p className="text-gray-400 text-[11px] mt-0.5">
-                                                Funding automated live crawlers that verify active corporate numbers and executive emails so users never waste time on dead leads.
+                                            <div className="text-white font-bold">Paperless Zero-Waste Digitalization</div>
+                                            <p className="text-gray-400 text-[11px] mt-0.5 leading-relaxed">
+                                                By replacing physical paper receipts, warehouse clipboards, and file cabinets with cloud-native ERP workflows, we save thousands of trees annually.
                                             </p>
                                         </div>
                                     </div>
 
                                     <div className="flex items-start gap-3 bg-white/[0.02] border border-white/5 rounded-2xl p-3">
                                         <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                                            <TreePine size={16} />
+                                        </div>
+                                        <div>
+                                            <div className="text-white font-bold">Native Reforestation Partnerships</div>
+                                            <p className="text-gray-400 text-[11px] mt-0.5 leading-relaxed">
+                                                A portion of community donations directly finances the planting and care of native saplings in deforested habitats to restore local biodiversity.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Social & Academic Programs Card */}
+                            <div className="bg-[#0F172A]/90 border border-purple-500/30 rounded-3xl p-6 sm:p-7 shadow-2xl backdrop-blur-xl space-y-4">
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <Sparkles size={18} className="text-purple-400" />
+                                    <span>Social Programs &amp; Free Tier</span>
+                                </h3>
+
+                                <div className="space-y-3.5 text-xs">
+                                    <div className="flex items-start gap-3 bg-white/[0.02] border border-white/5 rounded-2xl p-3">
+                                        <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
                                             <Users size={16} />
                                         </div>
                                         <div>
-                                            <div className="text-white font-bold">Subsidizing Free Founders Tier</div>
-                                            <p className="text-gray-400 text-[11px] mt-0.5">
-                                                Allowing thousands of bootstrap teams, students, and early non-profits to run their business apps for $0.
+                                            <div className="text-white font-bold">Underprivileged Startup Subsidies</div>
+                                            <p className="text-gray-400 text-[11px] mt-0.5 leading-relaxed">
+                                                Ensuring early-stage founders in developing economies, rural farming cooperatives, and local creators get full ERP &amp; CRM power at $0.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-3 bg-white/[0.02] border border-white/5 rounded-2xl p-3">
+                                        <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
+                                            <GraduationCap size={16} />
+                                        </div>
+                                        <div>
+                                            <div className="text-white font-bold">Free Academic &amp; Student Labs</div>
+                                            <p className="text-gray-400 text-[11px] mt-0.5 leading-relaxed">
+                                                Sponsoring educational licenses and AI Copilot tokens for universities, business schools, and future software engineers.
                                             </p>
                                         </div>
                                     </div>
@@ -232,22 +369,109 @@ export default function DonatePage() {
                             <div className="bg-[#0B1224] border border-emerald-500/30 rounded-3xl p-6 shadow-xl space-y-3">
                                 <div className="flex items-center gap-2">
                                     <ShieldCheck size={20} className="text-emerald-400" />
-                                    <h4 className="text-sm font-bold text-white">100% Secure & Regulated Giving</h4>
+                                    <h4 className="text-sm font-bold text-white">100% Regulated &amp; Encrypted Giving</h4>
                                 </div>
                                 <p className="text-xs text-gray-300 leading-relaxed">
-                                    Payments are processed via <strong>Creem Merchant of Record (MoR)</strong> with 256-bit bank encryption. We do not store raw card numbers. An official donation receipt will be emailed immediately for your tax/accounting records.
+                                    Transactions are processed securely via <strong>Creem Merchant of Record (MoR)</strong> with 256-bit bank encryption. We do not store raw payment card data. An official itemized donation receipt is emailed immediately.
                                 </p>
-                                <div className="pt-2 flex items-center gap-3 text-[11px] text-gray-400">
+                                <div className="pt-2 flex items-center gap-3 text-[11px] text-gray-400 flex-wrap">
                                     <span className="flex items-center gap-1 text-emerald-300">
-                                        <CheckCircle2 size={12} /> PCI-DSS Compliant
+                                        <CheckCircle2 size={12} /> PCI-DSS Level 1
                                     </span>
                                     <span>•</span>
                                     <span>Apple Pay &amp; Google Pay</span>
                                     <span>•</span>
-                                    <span>Encrypted SSL</span>
+                                    <span>Bank-Grade SSL</span>
                                 </div>
                             </div>
 
+                        </div>
+                    </div>
+
+                    {/* Deep-Dive Sustainability & Ethics Section */}
+                    <div className="bg-gradient-to-br from-[#0F172A]/90 via-[#0D1527]/90 to-[#0A101D]/90 border border-white/10 rounded-3xl p-8 sm:p-12 mb-20 backdrop-blur-2xl">
+                        <div className="max-w-3xl mb-10">
+                            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Our Charter</span>
+                            <h2 className="text-2xl sm:text-4xl font-black text-white mt-1">
+                                Why We Need an Independent, Sustainable Business Suite
+                            </h2>
+                            <p className="text-gray-300 text-sm mt-3 leading-relaxed">
+                                Legacy enterprise giants lock small businesses into exorbitant contracts while running energy-intensive, bloated software. BERAXIS was founded on the belief that modern software can be lightweight, planet-conscious, and accessible to everyone.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 space-y-3">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                                    <Leaf size={20} />
+                                </div>
+                                <h3 className="text-base font-bold text-white">Green Code &amp; Hardware Life</h3>
+                                <p className="text-xs text-gray-400 leading-relaxed">
+                                    We engineer BERAXIS with optimized algorithms and zero runtime bloat. It loads in milliseconds on older computers and laptops, preventing premature corporate hardware obsolescence and reducing electronic waste.
+                                </p>
+                            </div>
+
+                            <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 space-y-3">
+                                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                                    <Lock size={20} />
+                                </div>
+                                <h3 className="text-base font-bold text-white">Zero Data Brokering</h3>
+                                <p className="text-xs text-gray-400 leading-relaxed">
+                                    Unlike ad-funded software platforms, we never monetize or resell client databases. Your contribution ensures our platform remains 100% independent and aligned solely with our users&apos; long-term trust.
+                                </p>
+                            </div>
+
+                            <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 space-y-3">
+                                <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                                    <Globe size={20} />
+                                </div>
+                                <h3 className="text-base font-bold text-white">Global Economic Inclusion</h3>
+                                <p className="text-xs text-gray-400 leading-relaxed">
+                                    By keeping our core starter apps and essential ERP tools free or starting at $1/month, we help close the digital divide between venture-backed corporations and hardworking grassroots businesses.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Allocation of Funds Table */}
+                    <div className="bg-[#0F172A]/80 border border-white/10 rounded-3xl p-6 sm:p-10 mb-20 backdrop-blur-xl">
+                        <div className="text-center max-w-2xl mx-auto mb-8">
+                            <h2 className="text-2xl font-bold text-white">100% Transparent Fund Allocation</h2>
+                            <p className="text-xs text-gray-400 mt-1">Here is exactly how every community donation dollar is put to work</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 text-center">
+                                <div className="text-3xl font-black text-emerald-400">40%</div>
+                                <div className="text-xs font-bold text-white mt-1">Green Cloud &amp; Datacenters</div>
+                                <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">
+                                    Hydro &amp; renewable-powered edge servers, high-availability PostgreSQL clusters, and zero-downtime replication.
+                                </p>
+                            </div>
+
+                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 text-center">
+                                <div className="text-3xl font-black text-purple-400">30%</div>
+                                <div className="text-xs font-bold text-white mt-1">Startup &amp; Student Subsidies</div>
+                                <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">
+                                    Absorbing compute and database storage expenses for non-profits, students, and early-stage bootstrapped builders.
+                                </p>
+                            </div>
+
+                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 text-center">
+                                <div className="text-3xl font-black text-cyan-400">20%</div>
+                                <div className="text-xs font-bold text-white mt-1">R&amp;D &amp; Verified Data Engine</div>
+                                <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">
+                                    Maintaining verified B2B extraction crawlers, spam prevention filters, and AI copilot productivity workflows.
+                                </p>
+                            </div>
+
+                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 text-center">
+                                <div className="text-3xl font-black text-teal-400">10%</div>
+                                <div className="text-xs font-bold text-white mt-1">Direct Environmental Actions</div>
+                                <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">
+                                    Planting certified native trees and supporting verified wildlife and reforestation charities globally.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -260,30 +484,37 @@ export default function DonatePage() {
 
                         <div className="space-y-3 text-xs">
                             <div className="bg-[#0F172A]/80 border border-white/10 rounded-2xl p-4">
-                                <h3 className="font-bold text-white text-sm mb-1">Is $5 USD really the minimum donation amount?</h3>
+                                <h3 className="font-bold text-white text-sm mb-1">Is $5 USD the minimum donation amount?</h3>
                                 <p className="text-gray-300 leading-relaxed">
-                                    Yes. Due to international credit card processing overhead and banking minimums, $5 USD is the minimum single transaction. You can donate $5 or any higher amount to support BERAXIS development.
+                                    Yes. Due to international banking minimums, interchange fees, and processing overhead, $5 USD is the minimum single donation. You can donate $5 or any higher amount you choose.
                                 </p>
                             </div>
 
                             <div className="bg-[#0F172A]/80 border border-white/10 rounded-2xl p-4">
-                                <h3 className="font-bold text-white text-sm mb-1">What payment methods can I use?</h3>
+                                <h3 className="font-bold text-white text-sm mb-1">How does BERAXIS protect the environment?</h3>
                                 <p className="text-gray-300 leading-relaxed">
-                                    Through Creem, we accept Visa, Mastercard, American Express, Apple Pay, Google Pay, and international bank cards in over 135 currencies.
+                                    Through two primary pillars: First, we run on 100% renewable-powered data centers and optimize our code to consume minimal CPU cycles. Second, by moving companies from physical paper documents, printed bills, and file cabinets to our cloud ERP, we eliminate metric tons of paper waste and tree harvesting every year. Furthermore, we sponsor verified native tree-planting initiatives.
                                 </p>
                             </div>
 
                             <div className="bg-[#0F172A]/80 border border-white/10 rounded-2xl p-4">
-                                <h3 className="font-bold text-white text-sm mb-1">Will I get an official receipt for my donation?</h3>
+                                <h3 className="font-bold text-white text-sm mb-1">What payment methods are supported?</h3>
                                 <p className="text-gray-300 leading-relaxed">
-                                    Yes! The moment your donation clears, an itemized PDF receipt with a unique transaction reference will be delivered directly to the email address you provide at checkout.
+                                    Through our Merchant of Record Creem, we accept Visa, Mastercard, American Express, Apple Pay, Google Pay, and international payment methods across 135+ currencies.
                                 </p>
                             </div>
 
                             <div className="bg-[#0F172A]/80 border border-white/10 rounded-2xl p-4">
-                                <h3 className="font-bold text-white text-sm mb-1">Can companies or sponsors contribute larger amounts?</h3>
+                                <h3 className="font-bold text-white text-sm mb-1">Will I receive an official receipt for my donation?</h3>
                                 <p className="text-gray-300 leading-relaxed">
-                                    Absolutely. Corporate sponsors and organizations looking to fund specific open-source integrations or feature modules can also contact our leadership team directly at <a href="mailto:support@beraxis.online" className="text-cyan-400 hover:underline">support@beraxis.online</a>.
+                                    Yes! The moment your transaction completes, an official itemized PDF receipt with a unique transaction reference and tax identification will be sent directly to your email.
+                                </p>
+                            </div>
+
+                            <div className="bg-[#0F172A]/80 border border-white/10 rounded-2xl p-4">
+                                <h3 className="font-bold text-white text-sm mb-1">Can organizations or corporate sponsors make larger contributions?</h3>
+                                <p className="text-gray-300 leading-relaxed">
+                                    Yes. Organizations looking to sponsor specific eco-initiatives, open modules, or academic labs can reach our founding team at <a href="mailto:support@beraxis.online" className="text-emerald-400 hover:underline">support@beraxis.online</a>.
                                 </p>
                             </div>
                         </div>
