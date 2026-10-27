@@ -910,7 +910,7 @@ export default function LeadsPoolPage() {
     }
 
     return (
-        <div className="min-h-screen bg-transparent text-white flex flex-col">
+        <div className="min-h-screen bg-[#020205] text-white flex flex-col relative overflow-hidden">
             <CRMHeader />
 
             <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">

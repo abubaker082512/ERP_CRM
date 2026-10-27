@@ -263,7 +263,7 @@ export default function DashboardPage() {
         : `Free (${selectedModule})`;
 
     return (
-        <div className="min-h-screen bg-transparent text-white flex flex-col">
+        <div className="min-h-screen bg-[#020205] text-white flex flex-col relative overflow-hidden">
             {/* Standardized Top Header with Navigation, Back, Apps Launcher & Website */}
             <DashboardHeader
                 onSync={fetchDashboardData}

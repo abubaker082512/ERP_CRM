@@ -325,9 +325,14 @@ export default function AppsDashboardPage() {
     if (!mounted) return null;
 
     return (
-        <div className="min-h-screen bg-transparent text-white flex flex-col selection:bg-purple-500 selection:text-white">
+        <div className="min-h-screen bg-[#020205] text-white flex flex-col selection:bg-purple-500 selection:text-white relative overflow-hidden">
+            {/* Ambient Cosmic Background Glows */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-gradient-to-tr from-purple-600/10 via-pink-600/5 to-cyan-500/5 rounded-full blur-[140px] pointer-events-none" />
+            <div className="absolute top-1/3 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
+
             {/* Top Navigation Bar */}
-            <header className="border-b border-white/5 bg-[#090d16]/80 backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+            <header className="border-b border-white/10 bg-[#090d16]/90 backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Link href="/apps" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
                         <img src="/logo2.png" alt="Beraxis Logo" className="h-7 w-auto" />
@@ -413,7 +418,7 @@ export default function AppsDashboardPage() {
             </header>
 
             {/* Main Canvas Area */}
-            <main className="flex-1 max-w-7xl w-full mx-auto p-6 sm:p-10 flex flex-col justify-center">
+            <main className="flex-1 max-w-7xl w-full mx-auto p-6 sm:p-10 flex flex-col justify-center relative z-10">
                 {/* ─── ONBOARDING / INDUSTRY & COMPANY SELECTION GATEWAY ─── */}
                 {showOnboarding ? (
                     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200 py-4">
@@ -707,7 +712,7 @@ export default function AppsDashboardPage() {
                                         </div>
                                         <p className="text-[11px] text-gray-400 mt-0.5">
                                             Upgrade to Standard ($1/mo Annual Early Bird) to unlock all 28 ERP/CRM apps and the{" "}
-                                            <strong className="text-cyan-300">25.8M+ Verified B2B Leads Pool</strong>.
+                                            <strong className="text-cyan-300">Global Verified B2B Leads Directory</strong>.
                                         </p>
                                     </div>
                                 </div>
