@@ -141,7 +141,7 @@ export default function RealProductShowcase() {
             </div>
 
             {/* Glassmorphic Application Browser Window with Real System Picture */}
-            <div className="relative border border-white/15 bg-[#0F172A]/90 backdrop-blur-2xl shadow-[0_0_100px_rgba(139,92,246,0.22)] rounded-3xl overflow-hidden group hover:border-purple-500/40 transition-all duration-500 text-left">
+            <div className="relative border border-white/15 bg-[#0F172A]/95 shadow-[0_0_70px_rgba(139,92,246,0.18)] rounded-3xl overflow-hidden group hover:border-purple-500/40 transition-all duration-500 text-left">
                 {/* Browser Top Navigation Bar */}
                 <div className="bg-[#141A28]/95 border-b border-white/10 px-3 sm:px-5 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4 text-xs">
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -187,7 +187,7 @@ export default function RealProductShowcase() {
                     <div className="absolute inset-x-0 bottom-0 h-20 sm:h-28 bg-gradient-to-t from-[#020205] via-[#020205]/60 to-transparent pointer-events-none"></div>
 
                     {/* Floating Info Overlay Bar */}
-                    <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-6 sm:right-auto sm:max-w-md bg-[#0F172A]/95 backdrop-blur-md border border-white/15 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xl flex items-center justify-between gap-3">
+                    <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-6 sm:right-auto sm:max-w-md bg-[#0F172A]/98 border border-white/15 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xl flex items-center justify-between gap-3">
                         <div className="min-w-0">
                             <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-purple-400 font-extrabold block mb-0.5">
                                 {activeScreen.tag}

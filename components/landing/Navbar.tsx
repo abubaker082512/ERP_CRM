@@ -51,7 +51,7 @@ export default function Navbar() {
                         <Link href="/features" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Features</Link>
                         <Link href="/industries" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Industries</Link>
                         <Link href="/pricing" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Pricing</Link>
-                        <Link href="/affiliates" className="text-purple-300 hover:text-purple-200 transition-colors text-sm font-semibold">Affiliates (30%)</Link>
+                        <Link href="/affiliates" className="text-purple-300 hover:text-purple-200 transition-colors text-sm font-semibold">Affiliates</Link>
                         <Link href="/compare" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Compare</Link>
                         <Link href="/about" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">About</Link>
                         <Link href="/contact" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Contact</Link>
@@ -109,7 +109,7 @@ export default function Navbar() {
                         <Link href="/features" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Features</Link>
                         <Link href="/industries" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Industries</Link>
                         <Link href="/pricing" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Pricing</Link>
-                        <Link href="/affiliates" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-semibold text-purple-300 hover:text-purple-200 hover:bg-white/5 rounded-md">🎁 Affiliates (30% Commission)</Link>
+                        <Link href="/affiliates" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-semibold text-purple-300 hover:text-purple-200 hover:bg-white/5 rounded-md">🎁 Affiliates</Link>
                         <Link href="/compare" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Compare</Link>
                         <Link href="/about" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">About</Link>
                         <Link href="/contact" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Contact</Link>

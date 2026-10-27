@@ -125,7 +125,7 @@ export default function Features() {
                     {features.map((feature, idx) => (
                         <div 
                             key={idx} 
-                            className="relative bg-[#090D1A]/80 backdrop-blur-xl border border-white/10 hover:border-purple-500/40 rounded-2xl p-7 flex flex-col justify-between transition-all duration-500 hover:-translate-y-1.5 shadow-xl hover:shadow-[0_20px_50px_rgba(168,85,247,0.15)] group overflow-hidden"
+                            className="relative bg-[#090D1A]/95 border border-white/10 hover:border-purple-500/40 rounded-2xl p-7 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 shadow-xl hover:shadow-[0_20px_50px_rgba(168,85,247,0.15)] group overflow-hidden"
                         >
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 via-transparent to-sky-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
                             

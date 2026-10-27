@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 export default function CosmicBackground() {
+  const pathname = usePathname();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isHomepage = pathname === "/";
 
   useEffect(() => {
+    if (isHomepage) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -90,7 +94,9 @@ export default function CosmicBackground() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [isHomepage]);
+
+  if (isHomepage) return null;
 
   return (
     <div 

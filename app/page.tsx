@@ -142,7 +142,7 @@ export default function Home() {
 
                 {/* Billing Cycle Toggle */}
                 <div className="flex justify-center mb-10">
-                    <div className="inline-flex items-center p-1.5 bg-[#0B0F19] border border-white/10 rounded-2xl shadow-xl backdrop-blur-md">
+                    <div className="inline-flex items-center p-1.5 bg-[#0B0F19] border border-white/10 rounded-2xl shadow-xl">
                         <button
                             type="button"
                             onClick={() => setBillingCycle("annually")}

@@ -76,12 +76,11 @@ body {
 
 /* Unified Galaxy Component Tokens */
 .galaxy-card {
-  @apply bg-[#0F172A]/70 backdrop-blur-md border border-white/10 rounded-2xl shadow-xl transition-all duration-200;
+  @apply bg-[#0F172A]/90 border border-white/10 rounded-2xl shadow-xl transition-all duration-200;
   transform: translateZ(0);
-  will-change: transform;
 }
 .galaxy-card:hover {
-  @apply border-purple-500/30 bg-[#0F172A]/90 -translate-y-1 shadow-2xl;
+  @apply border-purple-500/30 bg-[#0F172A]/95 -translate-y-1 shadow-2xl;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

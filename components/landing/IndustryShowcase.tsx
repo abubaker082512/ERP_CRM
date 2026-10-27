@@ -127,7 +127,7 @@ export default function IndustryShowcase() {
       </div>
 
       {/* Interactive Industry Deep-Dive Card */}
-      <div className="bg-[#0b0e17]/90 border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+      <div className="bg-[#0b0e17]/95 border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">

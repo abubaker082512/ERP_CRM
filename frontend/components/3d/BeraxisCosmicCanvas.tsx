@@ -30,10 +30,12 @@ export default function BeraxisCosmicCanvas({
 
         const renderer = new THREE.WebGLRenderer({
             alpha: true,
-            antialias: true,
-            powerPreference: "high-performance"
+            antialias: false,
+            powerPreference: "high-performance",
+            precision: "mediump"
         });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        // Render particles at optimized DPI (eliminates heavy 4K/Retina GPU compositor stalls)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
         renderer.setSize(window.innerWidth, window.innerHeight);
 
         const canvas = renderer.domElement;
@@ -44,6 +46,9 @@ export default function BeraxisCosmicCanvas({
         canvas.style.height = "100%";
         canvas.style.pointerEvents = "none";
         canvas.style.zIndex = "1";
+        canvas.style.transform = "translateZ(0)";
+        canvas.style.willChange = "transform";
+        canvas.style.contain = "strict";
         container.appendChild(canvas);
 
         // ── COSMIC ROTATING PARTICLE GALAXY ──
@@ -191,9 +196,21 @@ export default function BeraxisCosmicCanvas({
         // ── CONTINUOUS ROTATION ANIMATION LOOP ──
         let animationFrameId: number;
         const clock = new THREE.Clock();
+        let isVisible = !document.hidden;
+
+        const handleVisibilityChange = () => {
+            isVisible = !document.hidden;
+            if (isVisible) {
+                clock.start();
+            } else {
+                clock.stop();
+            }
+        };
+        document.addEventListener("visibilitychange", handleVisibilityChange, { passive: true });
 
         const animate = () => {
             animationFrameId = requestAnimationFrame(animate);
+            if (!isVisible) return;
 
             const elapsedTime = clock.getElapsedTime();
 
@@ -223,6 +240,7 @@ export default function BeraxisCosmicCanvas({
         return () => {
             cancelAnimationFrame(animationFrameId);
             window.removeEventListener("resize", handleResize);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
             if (interactive) {
                 window.removeEventListener("pointermove", handlePointerMove);
                 window.removeEventListener("touchmove", handlePointerMove);

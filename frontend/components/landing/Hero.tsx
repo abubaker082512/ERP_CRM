@@ -106,7 +106,7 @@ export default function Hero() {
                 </div>
 
                 {/* 6. Enterprise Trust Badges Strip (Grounding the Independent Hero) */}
-                <div className="w-full max-w-4xl py-4 sm:py-5 px-4 sm:px-6 rounded-2xl bg-white/[0.02] border border-white/10 backdrop-blur-md shadow-xl grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-left">
+                <div className="w-full max-w-4xl py-4 sm:py-5 px-4 sm:px-6 rounded-2xl bg-[#0A0E1A]/80 border border-white/10 shadow-xl grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-left">
                     <div className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-300 font-medium">
                         <ShieldCheck size={18} className="text-purple-400 shrink-0" />
                         <span className="truncate">Enterprise Security</span>
