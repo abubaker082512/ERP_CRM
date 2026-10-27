@@ -14,9 +14,13 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Industry-Specific AI ERP & Business Operating Systems | Beraxis",
+  title: "Our Industries | 12 Vertical AI ERP & CRM Operating Systems | Beraxis",
   description: "Explore tailored ERP, CRM, and POS blueprints for 12 global industries: padel clubs, dental clinics, artisan bakeries, auto workshops, real estate, and schools for $1/month.",
   keywords: [
+    "Our Industries",
+    "Industry ERP",
+    "Industry CRM",
+    "ERP and CRM",
     "industry ERP software",
     "vertical SaaS ERP",
     "padel club ERP",
@@ -31,7 +35,7 @@ export const metadata: Metadata = {
     canonical: "https://www.beraxis.online/industries",
   },
   openGraph: {
-    title: "Industry-Specific AI ERP & Business Operating Systems | Beraxis",
+    title: "Our Industries | 12 Vertical AI ERP & CRM Operating Systems | Beraxis",
     description: "Pre-configured operational blueprints, workflows, roles, and POS for 12 global industries. $1/month.",
     url: "https://www.beraxis.online/industries",
     siteName: "Beraxis",

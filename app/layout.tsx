@@ -12,11 +12,23 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 export const metadata: Metadata = {
     metadataBase: new URL("https://www.beraxis.online"),
     title: {
-        default: "Beraxis | Free ERP, Free CRM & Free POS · Global B2B Leads Directory ($1/mo)",
+        default: "Beraxis | AI ERP & CRM Software · Free Cloud ERP, CRM & POS System",
         template: "%s | Beraxis"
     },
-    description: "Forever Free Tier available for Free CRM, Free POS & Free ERP. Unify 28 AI modules — CRM, verified B2B leads directory, POS, multi-industry operations, double-entry accounting, inventory, and HRMS for just $1/month.",
+    description: "The #1 AI ERP & CRM Software for growing businesses. Deploy Free ERP, Free CRM, Point of Sale (POS), Accounting, and Global B2B Leads Directory for $1/month across 12 custom industries.",
     keywords: [
+        "ERP",
+        "CRM",
+        "ERP Software",
+        "CRM Software",
+        "Cloud ERP",
+        "AI CRM",
+        "Best ERP",
+        "Best CRM",
+        "Our Industries",
+        "Industry ERP",
+        "Small business ERP",
+        "B2B CRM",
         "Free ERP",
         "Free CRM",
         "Free POS",
@@ -119,8 +131,8 @@ export const metadata: Metadata = {
     },
     manifest: "/site.webmanifest",
     openGraph: {
-        title: "Beraxis | Free ERP, Free CRM & Free POS · Global B2B Leads Directory",
-        description: "Forever Free Tier available for Free CRM, Free POS & Free ERP. Unify 28 AI modules — CRM, verified B2B leads directory, POS, accounting & HRMS for $1/month.",
+        title: "Beraxis | AI ERP & CRM Software · Free Cloud ERP, CRM & POS System",
+        description: "The #1 AI ERP & CRM Software for growing businesses. Deploy Free ERP, Free CRM, Point of Sale (POS), Accounting, and Global B2B Leads Directory for $1/month across 12 custom industries.",
         url: "https://www.beraxis.online",
         siteName: "Beraxis",
         images: [
@@ -142,8 +154,8 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: "summary_large_image",
-        title: "Beraxis | Free ERP, Free CRM & Free POS · Global B2B Leads Directory",
-        description: "Forever Free Tier available. The AI-driven business command center: Free CRM, Free POS, verified B2B leads directory, inventory, accounting & HRMS for $1/month.",
+        title: "Beraxis | AI ERP & CRM Software · Free Cloud ERP, CRM & POS System",
+        description: "The #1 AI ERP & CRM Software for growing businesses. Deploy Free ERP, Free CRM, Point of Sale (POS), Accounting, and Global B2B Leads Directory for $1/month across 12 custom industries.",
         images: ["https://www.beraxis.online/og-image.png?v=3"],
         creator: "@beraxis",
     },

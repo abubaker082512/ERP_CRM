@@ -42,8 +42,10 @@ export default function Navbar() {
                     </Link>
  
                     {/* Desktop Menu */}
-                    <div className="hidden md:flex space-x-7 items-center">
+                    <div className="hidden md:flex space-x-4 lg:space-x-5 items-center">
                         <Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Home</Link>
+                        <Link href="/erp" className="text-gray-300 hover:text-white transition-colors text-sm font-semibold">ERP</Link>
+                        <Link href="/crm-software" className="text-gray-300 hover:text-white transition-colors text-sm font-semibold">CRM</Link>
                         <Link href="/leads-pool" className="text-cyan-300 hover:text-cyan-200 transition-colors text-sm font-semibold flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-400/40">
                             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
                             Lead Pool
@@ -103,6 +105,8 @@ export default function Navbar() {
                 <div className="md:hidden bg-[#0F172A]/98 backdrop-blur-2xl border-b border-white/10 absolute top-full left-0 right-0 w-full shadow-2xl max-h-[calc(100vh-80px)] overflow-y-auto">
                     <div className="px-4 pt-3 pb-8 space-y-2 flex flex-col">
                         <Link href="/" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Home</Link>
+                        <Link href="/erp" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">ERP Software</Link>
+                        <Link href="/crm-software" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">AI CRM Software</Link>
                         <Link href="/leads-pool" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-semibold text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 rounded-md">
                             🎯 B2B Leads Directory
                         </Link>

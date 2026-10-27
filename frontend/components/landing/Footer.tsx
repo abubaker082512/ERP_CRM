@@ -72,6 +72,8 @@ export default function Footer() {
                             <span>ERP Modules</span>
                         </h4>
                         <ul className="space-y-2.5 text-xs font-light">
+                            <li><Link href="/erp" className="hover:text-white transition-colors font-medium text-purple-300">Cloud ERP Software</Link></li>
+                            <li><Link href="/crm-software" className="hover:text-white transition-colors font-medium text-blue-300">AI CRM Software</Link></li>
                             <li><Link href="/features/crm-pipeline" className="hover:text-white transition-colors">CRM Lead Pipeline</Link></li>
                             <li><Link href="/features/inventory" className="hover:text-white transition-colors">Smart Inventory</Link></li>
                             <li><Link href="/features/voice-pilot" className="hover:text-white transition-colors">AI Voice Pilot</Link></li>
@@ -145,7 +147,7 @@ export default function Footer() {
                             <li><Link href="/cookies" className="hover:text-white transition-colors">Cookie &amp; Tracking Policy</Link></li>
                             <li><Link href="/privacy#gdpr" className="hover:text-white transition-colors">GDPR &amp; CCPA Rights</Link></li>
                             <li><Link href="/refund-policy" className="hover:text-white transition-colors font-medium text-emerald-400">Refund Policy (14-Day Money-Back)</Link></li>
-                            <li><Link href="/terms#acceptable-use" className="hover:text-white transition-colors">Acceptable Use Policy</Link></li>
+                            <li><Link href="/acceptable-use" className="hover:text-white transition-colors font-medium text-purple-300">Acceptable Use Policy (AUP)</Link></li>
                             <li><Link href="/sitemap.xml" className="hover:text-white transition-colors text-gray-500">XML Sitemap Index</Link></li>
                         </ul>
                     </div>

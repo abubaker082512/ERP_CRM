@@ -110,14 +110,29 @@ export default function TermsPage() {
           </section>
 
           <section className="bg-[#0b0e17]/80 border border-white/5 rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 className="text-xl font-bold text-white">4. Intellectual Property &amp; Data Ownership</h2>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <span className="text-red-400">🛡️</span> 4. AI Copilot &amp; Content Restrictions (Strict NSFW Prohibition)
+            </h2>
+            <p>
+              Beraxis incorporates generative artificial intelligence models and an autonomous Voice Pilot strictly for business productivity, including drafting invoices, generating sales quotations, summarizing general ledgers, and authoring professional commercial communications.
+            </p>
+            <p>
+              <strong className="text-white">Strict Prohibition on NSFW &amp; Sexually Explicit Content:</strong> You may not use the AI copilot, Voice Pilot, or any Beraxis service to generate, draft, store, request, or disseminate any Not-Safe-For-Work (NSFW) material, pornography, sexually explicit text or imagery, adult entertainment solicitations, non-consensual sexual depictions, or sexually harassing communications. Any attempt to bypass content guardrails or generate sexually explicit material constitutes a material breach resulting in immediate, non-refundable termination of your account.
+            </p>
+            <p className="text-xs text-gray-400">
+              All AI copilot usage and content generation is additionally governed by our standalone <Link href="/acceptable-use" className="text-red-400 hover:underline font-semibold">Acceptable Use Policy (AUP)</Link>.
+            </p>
+          </section>
+
+          <section className="bg-[#0b0e17]/80 border border-white/5 rounded-2xl p-6 sm:p-8 space-y-4">
+            <h2 className="text-xl font-bold text-white">5. Intellectual Property &amp; Data Ownership</h2>
             <p>
               You retain 100% intellectual property ownership of all customer records, transactions, catalogs, recipes, and financial ledgers entered into your Beraxis instance. Beraxis retains ownership of platform code, trademarks, algorithms, and glassmorphic UI assets.
             </p>
           </section>
 
           <section className="bg-[#0b0e17]/80 border border-white/5 rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 className="text-xl font-bold text-white">5. Governing Law &amp; Arbitration</h2>
+            <h2 className="text-xl font-bold text-white">6. Governing Law &amp; Arbitration</h2>
             <p>
               These Terms shall be governed by and construed in accordance with the laws of the State of Wyoming, USA, without regard to conflict of law principles. Any dispute arising under these Terms shall be resolved via binding individual arbitration.
             </p>

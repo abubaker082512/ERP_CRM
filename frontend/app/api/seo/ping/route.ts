@@ -10,6 +10,8 @@ const KEY_LOCATION = `${BASE_URL}/${INDEXNOW_KEY}.txt`;
 function getAllSitemapUrls(): string[] {
   const staticPaths = [
     '',
+    '/erp',
+    '/crm-software',
     '/pricing',
     '/leads-pool',
     '/compare',
