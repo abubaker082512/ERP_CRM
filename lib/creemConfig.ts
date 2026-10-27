@@ -77,7 +77,7 @@ export function getCreemCheckoutUrl(
         return CREEM_PRODUCTS.leads_pool.url;
     }
 
-    if (plan === "custom") {
+    if (plan === "custom" || plan === "premium") {
         return isYearly ? CREEM_PRODUCTS.custom_yearly.url : CREEM_PRODUCTS.custom_monthly.url;
     }
 

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, Suspense, useEffect } from 'react';
 import { fetchAPI } from '@/lib/api';
+import { getCreemCheckoutUrl } from '@/lib/creemConfig';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -351,7 +352,7 @@ function PlanCard({
     durationCount: number;
     userEmail: string;
     onSelectFree: () => void;
-    onSelectCrypto: (plan: Plan, totalPrice: number, durationLabel: string) => void;
+    onSelectCrypto?: (plan: Plan, totalPrice: number, durationLabel: string) => void;
 }) {
     const monthlyRate = plan.isFree ? 0 : (billing === "annual" ? plan.annualPrice : plan.monthlyPrice);
     const monthsTotal = billing === "annual" ? durationCount * 12 : durationCount;
@@ -456,27 +457,19 @@ function PlanCard({
                         <span>Choose Module & Start Free</span> <ArrowRight size={14} />
                     </button>
                 ) : (
-                    <>
-                        <a
-                            href={`/checkout?plan=${plan.id}&billing=${billing}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all ${
-                                plan.highlight
-                                    ? "bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/25"
-                                    : "bg-white/10 hover:bg-white/15 text-white border border-white/15"
-                            }`}
-                        >
-                            <CreditCard size={14} /> Pay with Paddle (Cards, Apple Pay, PayPal) <ArrowRight size={14} />
-                        </a>
-
-                        <button
-                            onClick={() => onSelectCrypto(plan, totalPrice, durationLabel)}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-xs bg-purple-600/15 hover:bg-purple-600/25 text-purple-300 border border-purple-500/20 transition-all cursor-pointer"
-                        >
-                            <Bitcoin size={14} /> Pay with Crypto <ArrowRight size={14} />
-                        </button>
-                    </>
+                    <a
+                        href={getCreemCheckoutUrl(plan.id, billing)}
+                        data-creem-checkout
+                        data-creem-theme="dark"
+                        className={`w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+                            plan.highlight
+                                ? "bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/25 active:scale-[0.98]"
+                                : "bg-white/10 hover:bg-white/15 text-white border border-white/15 hover:border-white/30 active:scale-[0.98]"
+                        }`}
+                    >
+                        <span>Pay Now</span>
+                        <ArrowRight size={15} />
+                    </a>
                 )}
             </div>
         </div>
@@ -846,16 +839,16 @@ function BillingPageContent() {
                 )}
 
                 {/* Trust badges */}
-                <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-600">
-                    {["Bitcoin", "Ethereum", "USDT", "30+ Cryptos", "Visa / Mastercard", "PayPal"].map(item => (
+                <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400">
+                    {["Visa / Mastercard", "American Express", "Apple Pay", "Google Pay", "Instant Activation", "PCI-DSS Compliant"].map(item => (
                         <div key={item} className="flex items-center gap-1.5">
-                            <CheckCircle size={11} className="text-purple-500" />
+                            <CheckCircle size={11} className="text-purple-400" />
                             <span>{item}</span>
                         </div>
                     ))}
                     <div className="flex items-center gap-1.5">
-                        <Shield size={11} className="text-green-500" />
-                        <span>Secured by Freemius &amp; Plisio</span>
+                        <ShieldCheck size={13} className="text-emerald-400" />
+                        <span>Secured by Creem Merchant of Record (MoR)</span>
                     </div>
                 </div>
             </div>
