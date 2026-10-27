@@ -270,9 +270,9 @@ function SignupForm() {
 export default function SignupPage() {
     return (
         <div className="min-h-screen bg-[#020205] relative flex items-center justify-center p-4 overflow-hidden">
-            {/* Ambient Background Glows */}
-            <div className="absolute top-1/4 -left-32 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-1/4 -right-32 w-80 h-80 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
+            {/* Seamless Ambient Background */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(120,119,198,0.14),rgba(255,255,255,0))] pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25 pointer-events-none" />
 
             <Suspense fallback={<div className="min-h-screen bg-[#020205] flex items-center justify-center text-gray-400">Loading...</div>}>
                 <SignupForm />

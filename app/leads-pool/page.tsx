@@ -214,14 +214,10 @@ export default function LeadsPoolPublicPage() {
 
     return (
         <main className="min-h-screen bg-[#020205] text-white overflow-x-hidden selection:bg-cyan-500/30 selection:text-cyan-200 relative">
-            {/* Global Full-Bleed Ambient Galaxy Lighting & Cosmic Grid - Eliminates side and vertical black voids */}
+            {/* Global Full-Bleed Seamless Ambient Lighting & Grid - Zero Banding or Spherical Halos */}
             <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1400px] h-[700px] bg-gradient-to-b from-cyan-600/15 via-purple-600/10 to-transparent blur-[160px]" />
-                <div className="absolute top-1/4 -left-32 w-[650px] h-[650px] bg-cyan-600/15 rounded-full blur-[150px]" />
-                <div className="absolute top-1/2 -right-32 w-[700px] h-[700px] bg-purple-600/15 rounded-full blur-[160px]" />
-                <div className="absolute top-3/4 left-1/4 w-[600px] h-[600px] bg-pink-600/10 rounded-full blur-[160px]" />
-                <div className="absolute bottom-10 right-1/4 w-[800px] h-[600px] bg-cyan-500/10 rounded-full blur-[160px]" />
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_20%,#000_70%,transparent_100%)] opacity-70" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(6,182,212,0.12),rgba(255,255,255,0))] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25 pointer-events-none" />
             </div>
 
             <Navbar />

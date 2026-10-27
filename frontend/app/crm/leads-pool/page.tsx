@@ -147,6 +147,50 @@ export default function LeadsPoolPage() {
         } catch {}
     };
 
+    const [unlockedLeadIds, setUnlockedLeadIds] = useState<string[]>([]);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [unlockSuccessMsg, setUnlockSuccessMsg] = useState<string | null>(null);
+    const [filterUnlockedOnly, setFilterUnlockedOnly] = useState(false);
+
+    const handleUnlockLead = (leadId: string) => {
+        if (creditsInfo.remaining <= 0 && userPlan !== "premium") {
+            setShowUpgradeModal(true);
+            return;
+        }
+
+        const nextUnlocked = [...unlockedLeadIds, leadId];
+        setUnlockedLeadIds(nextUnlocked);
+        try {
+            localStorage.setItem("beraxis_unlocked_lead_ids", JSON.stringify(nextUnlocked));
+        } catch {}
+
+        if (userPlan !== "premium") {
+            setCreditsInfo(prev => ({
+                ...prev,
+                remaining: Math.max(0, prev.remaining - 1)
+            }));
+        }
+
+        setLeads(prev => prev.map(l => {
+            if (l.id === leadId) {
+                const original = REAL_VERIFIED_LEADS.find(r => r.id === leadId) || (l as any);
+                return maskLeadContact(original, true) as any;
+            }
+            return l;
+        }));
+
+        setLiveLeads(prev => prev.map(l => {
+            if (l.id === leadId) {
+                const original = REAL_VERIFIED_LEADS.find(r => r.id === leadId) || (l as any);
+                return maskLeadContact(original, true) as any;
+            }
+            return l;
+        }));
+
+        setUnlockSuccessMsg("🎉 Contact Unlocked! Direct corporate phone & WhatsApp now active.");
+        setTimeout(() => setUnlockSuccessMsg(null), 3000);
+    };
+
     const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
     const [buyingCredits, setBuyingCredits] = useState(false);
     const [buyCreditsSuccess, setBuyCreditsSuccess] = useState<string | null>(null);
@@ -184,6 +228,8 @@ export default function LeadsPoolPage() {
         try {
             const saved = localStorage.getItem("crm_added_lead_ids");
             if (saved) setAddedLeadIds(JSON.parse(saved));
+            const savedUnlocked = localStorage.getItem("beraxis_unlocked_lead_ids");
+            if (savedUnlocked) setUnlockedLeadIds(JSON.parse(savedUnlocked));
         } catch {}
         fetchCredits();
     }, []);
@@ -249,7 +295,11 @@ export default function LeadsPoolPage() {
 
         // Verified Real Directory Fallback (Zero Mock/Procedural Data)
         const filtered = filterRealLeads(searchQuery, selectedCountry, selectedIndustry);
-        setLeads(filtered as any);
+        const mapped = filtered.map(lead => {
+            const isUnlocked = userPlan === "premium" || unlockedLeadIds.includes(lead.id);
+            return maskLeadContact(lead, isUnlocked);
+        });
+        setLeads(mapped as any);
         setTotal(filtered.length);
         setLoading(false);
     };
@@ -430,123 +480,105 @@ export default function LeadsPoolPage() {
     };
 
     const { isFreePlan, userPlan, hasLeadsPoolAccess } = useBranchContext();
-    const isLocked = isFreePlan && userPlan !== "leadspool" && !hasLeadsPoolAccess;
+        const isSoloOrPaid = userPlan === "leadspool" || userPlan === "standard" || userPlan === "premium" || hasLeadsPoolAccess;
 
-    if (isLocked) {
-        return (
-            <div className="min-h-screen bg-[#020205] text-white flex flex-col">
-                <CRMHeader />
-                <main className="flex-1 flex items-center justify-center p-6">
-                    <div className="max-w-2xl w-full bg-[#0F172A] border border-cyan-500/30 rounded-3xl p-8 text-center shadow-2xl space-y-6">
-                        <div className="w-16 h-16 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mx-auto shadow-lg shadow-cyan-500/10">
-                            <ShieldCheck size={32} />
-                        </div>
-                        
-                        <div>
-                            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-bold uppercase tracking-wider mb-3">
-                                🎯 Global Verified B2B Business Directory
-                            </div>
-                            <h1 className="text-2xl sm:text-3xl font-black text-white">
-                                Unlock Global B2B Leads Pool & Live Scraper
-                            </h1>
-                            <p className="text-gray-300 text-xs sm:text-sm mt-2 max-w-lg mx-auto leading-relaxed">
-                                Access verified worldwide executive contacts, direct business phone lines, WhatsApp dials, and live chamber scraper.
-                            </p>
-                        </div>
-
-                        {/* Two Upgrade Options Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                            {/* Option 1: Leads Pool Solo */}
-                            <div className="p-5 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 hover:border-cyan-400/60 transition-all flex flex-col justify-between">
-                                <div>
-                                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 tracking-wider">
-                                        Solo Dedicated Access
-                                    </span>
-                                    <h3 className="text-base font-bold text-white mt-2">Leads Pool Only</h3>
-                                    <div className="flex items-baseline gap-1 my-2">
-                                        <span className="text-2xl font-black text-cyan-400">$10</span>
-                                        <span className="text-xs text-gray-400">/ month</span>
-                                    </div>
-                                    <ul className="text-xs text-gray-300 space-y-1.5 my-3">
-                                        <li className="flex items-center gap-2">
-                                            <CheckCircle2 size={13} className="text-cyan-400 shrink-0" />
-                                            <span><strong>1,500 contacts / month</strong></span>
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <CheckCircle2 size={13} className="text-cyan-400 shrink-0" />
-                                            <span>Direct phone & WhatsApp dials</span>
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <CheckCircle2 size={13} className="text-cyan-400 shrink-0" />
-                                            <span>1-Click CSV & CRM Export</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <Link
-                                    href="/checkout?plan=leadspool&billing=monthly"
-                                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-cyan-600/20 block"
-                                >
-                                    Get Leads Pool ($10/mo) →
-                                </Link>
-                            </div>
-
-                            {/* Option 2: All 28 Apps Standard */}
-                            <div className="p-5 rounded-2xl bg-purple-950/30 border border-purple-500/40 hover:border-purple-400/60 transition-all flex flex-col justify-between relative overflow-hidden">
-                                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-500 to-rose-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full">
-                                    96% OFF EARLY BIRD
-                                </div>
-                                <div>
-                                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 tracking-wider">
-                                        Full Suite Cockpit
-                                    </span>
-                                    <h3 className="text-base font-bold text-white mt-2">Standard Plan</h3>
-                                    <div className="flex items-baseline gap-1 my-2">
-                                        <span className="text-2xl font-black text-purple-400">$1</span>
-                                        <span className="text-xs text-gray-400">/ mo ($12/yr upfront)</span>
-                                    </div>
-                                    <ul className="text-xs text-gray-300 space-y-1.5 my-3">
-                                        <li className="flex items-center gap-2">
-                                            <CheckCircle2 size={13} className="text-purple-400 shrink-0" />
-                                            <span><strong>All 28 ERP/CRM modules</strong></span>
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <CheckCircle2 size={13} className="text-purple-400 shrink-0" />
-                                            <span><strong>1,500 Lead Credits / mo</strong></span>
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <CheckCircle2 size={13} className="text-purple-400 shrink-0" />
-                                            <span>Accounting, POS, Inventory & HR</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <Link
-                                    href="/checkout?plan=standard&billing=annual"
-                                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-purple-600/20 block"
-                                >
-                                    Get Full Suite ($1/mo) →
-                                </Link>
-                            </div>
-                        </div>
-
-                        <div className="pt-2">
-                            <Link
-                                href="/apps"
-                                className="text-xs text-gray-400 hover:text-white transition-colors"
-                            >
-                                ← Back to My Workspace Apps
-                            </Link>
-                        </div>
-                    </div>
-                </main>
-            </div>
-        );
-    }
+    // Synchronize initial plan limits
+    useEffect(() => {
+        if (isFreePlan && userPlan !== "leadspool") {
+            try {
+                const savedUnlocked = localStorage.getItem("beraxis_unlocked_lead_ids");
+                const count = savedUnlocked ? JSON.parse(savedUnlocked).length : 0;
+                setCreditsInfo({
+                    remaining: Math.max(0, 3 - count),
+                    total: 3,
+                    plan: "Free Trial (3 Unlocks)",
+                    userSeats: 1,
+                    isExhausted: count >= 3
+                });
+            } catch {}
+        }
+    }, [isFreePlan, userPlan]);
 
     return (
-        <div className="min-h-screen bg-[#020205] text-white flex flex-col relative overflow-hidden">
+        <div className="min-h-screen bg-[#030712] text-white flex flex-col relative overflow-hidden">
+            {/* Seamless Ambient Background - Zero Banding */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(120,119,198,0.14),rgba(255,255,255,0))] pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25 pointer-events-none" />
             <CRMHeader />
 
             <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
+                {/* ── Plan-Based Leads Quota & Unlock Status Banner ── */}
+                {isFreePlan && userPlan !== "leadspool" ? (
+                    <div className="bg-gradient-to-r from-amber-950/60 via-[#0F172A]/90 to-purple-950/60 border border-amber-500/40 rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3 shadow-lg">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300">
+                                <Zap size={16} />
+                            </div>
+                            <div>
+                                <div className="text-white text-xs sm:text-sm font-bold flex items-center gap-2">
+                                    <span>Free Trial Mode</span>
+                                    <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-[10px] font-extrabold">
+                                        {creditsInfo.remaining} / 3 Free Unlocks Remaining
+                                    </span>
+                                </div>
+                                <p className="text-gray-400 text-xs mt-0.5">
+                                    Browse all real open-source verified enterprise leads. Upgrade to unlock 1,500 contacts per month.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowUpgradeModal(true)}
+                            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-white font-bold rounded-xl text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+                        >
+                            Upgrade to Unlock 1,500 Leads →
+                        </button>
+                    </div>
+                ) : userPlan === "premium" ? (
+                    <div className="bg-gradient-to-r from-purple-950/60 via-[#0F172A]/90 to-emerald-950/60 border border-emerald-500/40 rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3 shadow-lg">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300">
+                                <ShieldCheck size={16} />
+                            </div>
+                            <div>
+                                <div className="text-white text-xs sm:text-sm font-bold flex items-center gap-2">
+                                    <span>Enterprise VIP Plan</span>
+                                    <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-extrabold">
+                                        Unlimited Unlocks Active
+                                    </span>
+                                </div>
+                                <p className="text-gray-400 text-xs mt-0.5">
+                                    All real enterprise contact dossiers, phone lines, and direct WhatsApp links are fully unlocked.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="bg-gradient-to-r from-cyan-950/60 via-[#0F172A]/90 to-blue-950/60 border border-cyan-500/40 rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3 shadow-lg">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-300">
+                                <Zap size={16} />
+                            </div>
+                            <div>
+                                <div className="text-white text-xs sm:text-sm font-bold flex items-center gap-2">
+                                    <span>{userPlan.toUpperCase()} Plan Active</span>
+                                    <span className="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-[10px] font-extrabold">
+                                        {creditsInfo.remaining} / {creditsInfo.total} Monthly Unlocks Remaining
+                                    </span>
+                                </div>
+                                <p className="text-gray-400 text-xs mt-0.5">
+                                    1-Click direct export to CRM pipeline and CSV enabled.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowBuyCreditsModal(true)}
+                            className="px-3 py-1.5 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-300 font-bold rounded-xl text-xs transition-all cursor-pointer"
+                        >
+                            + Add Extra Credits
+                        </button>
+                    </div>
+                )}
+
                 {/* ── Top Hero & Stats Banner ── */}
                 <div className="bg-gradient-to-r from-emerald-950/80 via-[#0F172A]/95 to-purple-950/80 border border-emerald-500/30 rounded-3xl p-6 shadow-2xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
                     <div className="flex items-center gap-4">
@@ -871,35 +903,47 @@ export default function LeadsPoolPage() {
                                                             </div>
                                                         </td>
 
-                                                        {/* Real Phone Number & Actions */}
+                                                        {/* Real Phone Number & Actions with Plan Gating */}
                                                         <td className="py-4">
-                                                            <div className="space-y-1.5">
-                                                                <div className="font-mono text-white font-bold text-xs flex items-center gap-1.5">
-                                                                    <Phone size={12} className="text-emerald-400" />
-                                                                    <span>{lead.phone}</span>
+                                                            {lead.is_unlocked || userPlan === "premium" || unlockedLeadIds.includes(lead.id) ? (
+                                                                <div className="space-y-1.5">
+                                                                    <div className="font-mono text-white font-bold text-xs flex items-center gap-1.5">
+                                                                        <Phone size={12} className="text-emerald-400" />
+                                                                        <span>{lead.phone}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <a
+                                                                            href={`https://wa.me/${cleanPhone}`}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all"
+                                                                            title="Message on WhatsApp"
+                                                                        >
+                                                                            <MessageCircle size={11} /> WhatsApp
+                                                                        </a>
+                                                                        <a
+                                                                            href={`tel:${lead.phone}`}
+                                                                            className="bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all"
+                                                                            title="Dial Phone"
+                                                                        >
+                                                                            <Phone size={11} /> Call
+                                                                        </a>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="flex items-center gap-2">
-                                                                    {/* Direct WhatsApp Call/Chat */}
-                                                                    <a
-                                                                        href={`https://wa.me/${cleanPhone}`}
-                                                                        target="_blank"
-                                                                        rel="noreferrer"
-                                                                        className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all"
-                                                                        title="Message on WhatsApp"
+                                                            ) : (
+                                                                <div className="space-y-1.5">
+                                                                    <div className="text-gray-400 text-xs font-mono tracking-wider">
+                                                                        {lead.phone ? `${lead.phone.slice(0, 7)} ••••••••` : "+92 42 ••••••••"}
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={() => handleUnlockLead(lead.id)}
+                                                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-cyan-500/20 hover:from-amber-500/35 hover:to-cyan-500/35 border border-amber-500/40 text-amber-300 hover:text-white font-bold text-[11px] shadow-sm transition-all active:scale-95 cursor-pointer"
                                                                     >
-                                                                        <MessageCircle size={11} /> WhatsApp
-                                                                    </a>
-
-                                                                    {/* Direct Phone Dial */}
-                                                                    <a
-                                                                        href={`tel:${lead.phone}`}
-                                                                        className="bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all"
-                                                                        title="Dial Phone"
-                                                                    >
-                                                                        <Phone size={11} /> Call
-                                                                    </a>
+                                                                        <Zap size={11} className="text-amber-400" />
+                                                                        <span>Unlock Contact (1 Credit)</span>
+                                                                    </button>
                                                                 </div>
-                                                            </div>
+                                                            )}
                                                         </td>
 
                                                         {/* Physical Address & City */}
@@ -1300,43 +1344,62 @@ export default function LeadsPoolPage() {
                                                             </div>
                                                         </td>
 
-                                                        {/* Verified Contact Details */}
+                                                        {/* Verified Contact Details with Plan Unlock Gating */}
                                                         <td className="py-4">
-                                                            <div className="space-y-1">
-                                                                {lead.email ? (
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <span className="font-mono text-gray-200 text-xs truncate max-w-[170px]">
-                                                                            {lead.email}
-                                                                        </span>
-                                                                        <button
-                                                                            onClick={() => copyToClipboard(lead.email)}
-                                                                            title="Copy email address"
-                                                                            className="text-gray-500 hover:text-white p-1 transition-colors cursor-pointer"
-                                                                        >
-                                                                            {copiedEmail === lead.email ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-                                                                        </button>
-                                                                        <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold px-1.5 py-0.2 rounded">
-                                                                            Verified
-                                                                        </span>
+                                                            {lead.is_unlocked || userPlan === "premium" || unlockedLeadIds.includes(lead.id) ? (
+                                                                <div className="space-y-1.5">
+                                                                    {lead.email && (
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <span className="font-mono text-gray-200 text-xs truncate max-w-[170px]">
+                                                                                {lead.email}
+                                                                            </span>
+                                                                            <button
+                                                                                onClick={() => copyToClipboard(lead.email)}
+                                                                                title="Copy email"
+                                                                                className="text-gray-500 hover:text-white p-1 transition-colors cursor-pointer"
+                                                                            >
+                                                                                {copiedEmail === lead.email ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                                                                            </button>
+                                                                            <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-extrabold px-1.5 py-0.2 rounded">
+                                                                                ✓ UNLOCKED
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                    {lead.phone && (
+                                                                        <div className="flex items-center gap-2 text-xs">
+                                                                            <a
+                                                                                href={`tel:${lead.phone}`}
+                                                                                className="text-purple-300 hover:text-white font-mono flex items-center gap-1"
+                                                                            >
+                                                                                <Phone size={11} /> {lead.phone}
+                                                                            </a>
+                                                                            {(lead as any).whatsapp_url && (
+                                                                                <a
+                                                                                    href={(lead as any).whatsapp_url}
+                                                                                    target="_blank"
+                                                                                    rel="noreferrer"
+                                                                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 hover:text-emerald-200 text-[9px] font-bold border border-emerald-500/30"
+                                                                                >
+                                                                                    <MessageCircle size={10} /> WhatsApp
+                                                                                </a>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="space-y-1.5">
+                                                                    <div className="text-gray-400 text-xs font-mono tracking-wider">
+                                                                        {lead.phone || "+92 42 ••••••••"}
                                                                     </div>
-                                                                ) : (
-                                                                    <span className="text-gray-500 text-xs">No email</span>
-                                                                )}
-
-                                                                {lead.phone ? (
-                                                                    <div className="flex items-center gap-1.5 text-gray-400 font-mono text-xs">
-                                                                        <Phone size={11} className="text-purple-400" />
-                                                                        <a
-                                                                            href={`tel:${lead.phone}`}
-                                                                            className="hover:text-white transition-colors"
-                                                                        >
-                                                                            {lead.phone}
-                                                                        </a>
-                                                                    </div>
-                                                                ) : (
-                                                                    <span className="text-gray-500 text-xs">No phone</span>
-                                                                )}
-                                                            </div>
+                                                                    <button
+                                                                        onClick={() => handleUnlockLead(lead.id)}
+                                                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-cyan-500/20 hover:from-amber-500/35 hover:to-cyan-500/35 border border-amber-500/40 text-amber-300 hover:text-white font-bold text-[11px] shadow-sm transition-all active:scale-95 cursor-pointer"
+                                                                    >
+                                                                        <Zap size={11} className="text-amber-400" />
+                                                                        <span>Unlock Contact (1 Credit)</span>
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                         </td>
 
                                                         {/* Tech Stack & Location */}
@@ -1683,6 +1746,117 @@ export default function LeadsPoolPage() {
                             <span className="text-gray-400">Card & Invoice billing</span>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* ── Plan Upgrade Modal when credits exhausted ── */}
+            {showUpgradeModal && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="max-w-2xl w-full bg-[#0F172A] border border-cyan-500/40 rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-6 relative animate-in fade-in zoom-in-95 duration-150">
+                        <button
+                            onClick={() => setShowUpgradeModal(false)}
+                            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white rounded-full bg-white/5 hover:bg-white/10 cursor-pointer"
+                        >
+                            <X size={18} />
+                        </button>
+
+                        <div className="w-14 h-14 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mx-auto shadow-lg shadow-cyan-500/10">
+                            <ShieldCheck size={28} />
+                        </div>
+
+                        <div>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-bold uppercase tracking-wider mb-2">
+                                🎯 Verified B2B Enterprise Unlocks
+                            </span>
+                            <h2 className="text-xl sm:text-2xl font-black text-white">
+                                Unlock 1,500 Real Leads Every Month
+                            </h2>
+                            <p className="text-gray-300 text-xs sm:text-sm mt-1 max-w-md mx-auto">
+                                You have used your free trial unlock credits. Choose a plan to instantly unlock unlimited real B2B decision-maker phones, emails, and direct WhatsApp links.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                            {/* Option 1: Leads Pool Dedicated */}
+                            <div className="p-5 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 hover:border-cyan-400/60 transition-all flex flex-col justify-between">
+                                <div>
+                                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 tracking-wider">
+                                        Solo Dedicated
+                                    </span>
+                                    <h3 className="text-base font-bold text-white mt-2">Leads Pool Only</h3>
+                                    <div className="flex items-baseline gap-1 my-2">
+                                        <span className="text-2xl font-black text-cyan-400">$10</span>
+                                        <span className="text-xs text-gray-400">/ month</span>
+                                    </div>
+                                    <ul className="text-xs text-gray-300 space-y-1.5 my-3">
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-cyan-400 shrink-0" />
+                                            <span><strong>1,500 contacts / month</strong></span>
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-cyan-400 shrink-0" />
+                                            <span>Direct phone & WhatsApp dials</span>
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-cyan-400 shrink-0" />
+                                            <span>1-Click CSV & CRM Export</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <Link
+                                    href="/checkout?plan=leadspool&billing=monthly"
+                                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-cyan-600/20 block"
+                                >
+                                    Get Leads Pool ($10/mo) →
+                                </Link>
+                            </div>
+
+                            {/* Option 2: Full Suite Standard */}
+                            <div className="p-5 rounded-2xl bg-purple-950/30 border border-purple-500/40 hover:border-purple-400/60 transition-all flex flex-col justify-between relative overflow-hidden">
+                                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-500 to-rose-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full">
+                                    96% OFF EARLY BIRD
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 tracking-wider">
+                                        Full Suite Cockpit
+                                    </span>
+                                    <h3 className="text-base font-bold text-white mt-2">Standard Plan</h3>
+                                    <div className="flex items-baseline gap-1 my-2">
+                                        <span className="text-2xl font-black text-purple-400">$1</span>
+                                        <span className="text-xs text-gray-400">/ mo ($12/yr upfront)</span>
+                                    </div>
+                                    <ul className="text-xs text-gray-300 space-y-1.5 my-3">
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-purple-400 shrink-0" />
+                                            <span><strong>All 28 ERP/CRM modules</strong></span>
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-purple-400 shrink-0" />
+                                            <span><strong>1,500 Lead Credits / mo</strong></span>
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <CheckCircle2 size={13} className="text-purple-400 shrink-0" />
+                                            <span>Accounting, POS, Inventory & HR</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <Link
+                                    href="/checkout?plan=standard&billing=annual"
+                                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-purple-600/20 block"
+                                >
+                                    Get Full Suite ($1/mo) →
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Unlock Toast Notification ── */}
+            {unlockSuccessMsg && (
+                <div className="fixed bottom-6 right-6 z-50 bg-[#0F172A] border border-emerald-500/50 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-bottom-5">
+                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                    <span>{unlockSuccessMsg}</span>
                 </div>
             )}
         </div>

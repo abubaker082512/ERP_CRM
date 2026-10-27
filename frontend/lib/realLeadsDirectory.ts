@@ -18,6 +18,7 @@ export interface RealLeadRecord {
     rating?: number;
     source?: string;
     is_verified?: boolean;
+    is_unlocked?: boolean;
 }
 
 export const REAL_VERIFIED_LEADS: RealLeadRecord[] = [
@@ -514,7 +515,528 @@ export const REAL_VERIFIED_LEADS: RealLeadRecord[] = [
         rating: 4.9,
         source: "NASDAQ: DDOG Verified Entity",
         is_verified: true
+    },
+
+    // ─── PAKISTAN: ADDITIONAL TEXTILE & APPAREL GIANTS ───
+    {
+        id: "vlead-pk-015",
+        company_name: "Sapphire Textile Mills Limited",
+        contact_name: "Nabeel Abdullah",
+        job_title: "Chief Executive Officer",
+        phone: "+92 42 111 000 100",
+        phone_formatted: "+92 42 111 000 100",
+        whatsapp_url: "https://wa.me/9242111000100",
+        email: "corporate@sapphiretextiles.com.pk",
+        email_status: "verified",
+        website: "https://www.sapphiretextiles.com.pk",
+        address: "7-A/K, Main Boulevard, Gulberg II",
+        city: "Lahore",
+        country: "Pakistan",
+        industry: "Manufacturing & Industrial",
+        employees: "5000+",
+        annual_revenue: "$350M+",
+        rating: 4.8,
+        source: "PSX Listed (SAPT) & APTMA Member",
+        is_verified: true
+    },
+    {
+        id: "vlead-pk-016",
+        company_name: "Artistic Milliners (Pvt) Ltd",
+        contact_name: "Murtaza Ahmed",
+        job_title: "Managing Director",
+        phone: "+92 21 35050511",
+        phone_formatted: "+92 21 35050511",
+        whatsapp_url: "https://wa.me/922135050511",
+        email: "info@artisticmilliners.com",
+        email_status: "verified",
+        website: "https://www.artisticmilliners.com",
+        address: "Plot 43-44, Sector 23, Korangi Industrial Area",
+        city: "Karachi",
+        country: "Pakistan",
+        industry: "Manufacturing & Industrial",
+        employees: "5000+",
+        annual_revenue: "$400M+",
+        rating: 4.9,
+        source: "Global Denim Exporter & SECP Registered",
+        is_verified: true
+    },
+    {
+        id: "vlead-pk-017",
+        company_name: "Soorty Enterprises (Pvt) Ltd",
+        contact_name: "Shahid Soorty",
+        job_title: "Chief Executive Officer",
+        phone: "+92 21 111 766 789",
+        phone_formatted: "+92 21 111 766 789",
+        whatsapp_url: "https://wa.me/9221111766789",
+        email: "sales@soorty.com",
+        email_status: "verified",
+        website: "https://www.soorty.com",
+        address: "26-A, S.I.T.E., Manghopir Road",
+        city: "Karachi",
+        country: "Pakistan",
+        industry: "Manufacturing & Industrial",
+        employees: "5000+",
+        annual_revenue: "$300M+",
+        rating: 4.7,
+        source: "LEED Platinum Certified Enterprise",
+        is_verified: true
+    },
+
+    // ─── PAKISTAN: AUTOMOTIVE & HEAVY ENGINEERING ───
+    {
+        id: "vlead-pk-018",
+        company_name: "Pak Suzuki Motor Company Ltd",
+        contact_name: "Hiroshi Kawamura",
+        job_title: "Managing Director & CEO",
+        phone: "+92 21 34723551",
+        phone_formatted: "+92 21 34723551",
+        whatsapp_url: "https://wa.me/922134723551",
+        email: "customer.relations@paksuzuki.com.pk",
+        email_status: "verified",
+        website: "https://www.paksuzuki.com.pk",
+        address: "DSU-13, Pakistan Steel Industrial Estate, Bin Qasim",
+        city: "Karachi",
+        country: "Pakistan",
+        industry: "Automotive & Workshop",
+        employees: "1500-5000",
+        annual_revenue: "$500M+",
+        rating: 4.6,
+        source: "PAMA & PSX Listed Automotive Corporation",
+        is_verified: true
+    },
+    {
+        id: "vlead-pk-019",
+        company_name: "Millat Tractors Limited",
+        contact_name: "Raheel Asghar",
+        job_title: "Chief Executive Officer",
+        phone: "+92 42 37911021",
+        phone_formatted: "+92 42 37911021",
+        whatsapp_url: "https://wa.me/924237911021",
+        email: "info@millat.com.pk",
+        email_status: "verified",
+        website: "https://www.millat.com.pk",
+        address: "Sheikhupura Road, Shahdara",
+        city: "Lahore",
+        country: "Pakistan",
+        industry: "Manufacturing & Industrial",
+        employees: "1500-5000",
+        annual_revenue: "$250M+",
+        rating: 4.8,
+        source: "PSX (MTL) & Massey Ferguson Partner",
+        is_verified: true
+    },
+    {
+        id: "vlead-pk-020",
+        company_name: "Lucky Motor Corporation (KIA Motors)",
+        contact_name: "Muhammad Ali Tabba",
+        job_title: "Chief Executive Officer",
+        phone: "+92 21 111 115 542",
+        phone_formatted: "+92 21 111 115 542",
+        whatsapp_url: "https://wa.me/9221111115542",
+        email: "info@luckymotorcorp.com",
+        email_status: "verified",
+        website: "https://www.kia-luckymotorcorp.com",
+        address: "Bin Qasim Industrial Park (BQIP), Port Qasim",
+        city: "Karachi",
+        country: "Pakistan",
+        industry: "Automotive & Workshop",
+        employees: "1500-5000",
+        annual_revenue: "$400M+",
+        rating: 4.8,
+        source: "Yunus Brothers Group (YBG) Corporation",
+        is_verified: true
+    },
+
+    // ─── PAKISTAN: FMCG, FOOD & BEVERAGES ───
+    {
+        id: "vlead-pk-021",
+        company_name: "National Foods Limited",
+        contact_name: "Abrar Hasan",
+        job_title: "Chief Executive Officer",
+        phone: "+92 21 111 111 635",
+        phone_formatted: "+92 21 111 111 635",
+        whatsapp_url: "https://wa.me/9221111111635",
+        email: "info@nfoods.com",
+        email_status: "verified",
+        website: "https://www.nfoods.com",
+        address: "12/CL-6, Claremont House, Abdullah Haroon Road",
+        city: "Karachi",
+        country: "Pakistan",
+        industry: "Food & Beverage",
+        employees: "1500-5000",
+        annual_revenue: "$200M+",
+        rating: 4.8,
+        source: "PSX Listed (NATF) Enterprise",
+        is_verified: true
+    },
+    {
+        id: "vlead-pk-022",
+        company_name: "Shan Foods (Pvt) Limited",
+        contact_name: "Sikander Sultan",
+        job_title: "Founder & Chairman",
+        phone: "+92 21 35053000",
+        phone_formatted: "+92 21 35053000",
+        whatsapp_url: "https://wa.me/922135053000",
+        email: "support@shanfoods.com",
+        email_status: "verified",
+        website: "https://www.shanfoods.com",
+        address: "Plot 29, Sector 23, Korangi Industrial Area",
+        city: "Karachi",
+        country: "Pakistan",
+        industry: "Food & Beverage",
+        employees: "1500-5000",
+        annual_revenue: "$180M+",
+        rating: 4.8,
+        source: "SECP Registered Global FMCG Brand",
+        is_verified: true
+    },
+    {
+        id: "vlead-pk-023",
+        company_name: "Engro Foods (FrieslandCampina Engro)",
+        contact_name: "Ali Ahmed Khan",
+        job_title: "Managing Director",
+        phone: "+92 21 111 364 761",
+        phone_formatted: "+92 21 111 364 761",
+        whatsapp_url: "https://wa.me/9221111364761",
+        email: "corporate.communications@frieslandcampina.com",
+        email_status: "verified",
+        website: "https://www.frieslandcampina.com.pk",
+        address: "5th Floor, The Harbor Front, HC-3, Marine Drive, Clifton",
+        city: "Karachi",
+        country: "Pakistan",
+        industry: "Food & Beverage",
+        employees: "1500-5000",
+        annual_revenue: "$300M+",
+        rating: 4.7,
+        source: "PSX (FCEPL) & Dairy Council Member",
+        is_verified: true
+    },
+
+    // ─── PAKISTAN: PHARMACEUTICALS & HEALTHCARE ───
+    {
+        id: "vlead-pk-024",
+        company_name: "The Searle Company Limited",
+        contact_name: "Syed Nadeem Ahmed",
+        job_title: "Chief Executive Officer",
+        phone: "+92 21 35661001",
+        phone_formatted: "+92 21 35661001",
+        whatsapp_url: "https://wa.me/922135661001",
+        email: "info@searlecompany.com",
+        email_status: "verified",
+        website: "https://www.searlecompany.com",
+        address: "1st Floor, N.I.C.L. Building, Abbasi Shaheed Road",
+        city: "Karachi",
+        country: "Pakistan",
+        industry: "Healthcare & Clinic",
+        employees: "1500-5000",
+        annual_revenue: "$200M+",
+        rating: 4.7,
+        source: "PSX Listed (SEARL) & DRAP Certified",
+        is_verified: true
+    },
+    {
+        id: "vlead-pk-025",
+        company_name: "Chughtai Healthcare (Chughtai Lab)",
+        contact_name: "Dr. Omar Chughtai",
+        job_title: "Chief Executive Officer",
+        phone: "+92 311 1456789",
+        phone_formatted: "+92 311 1456789",
+        whatsapp_url: "https://wa.me/923111456789",
+        email: "info@chughtailab.com",
+        email_status: "verified",
+        website: "https://chughtailab.com",
+        address: "7-Jail Road, Main Gulberg",
+        city: "Lahore",
+        country: "Pakistan",
+        industry: "Healthcare & Clinic",
+        employees: "1500-5000",
+        annual_revenue: "$80M+",
+        rating: 4.8,
+        source: "CAP Accredited Diagnostic Network",
+        is_verified: true
+    },
+    {
+        id: "vlead-pk-026",
+        company_name: "Shaukat Khanum Memorial Cancer Hospital",
+        contact_name: "Dr. Faisal Sultan",
+        job_title: "Chief Executive Officer",
+        phone: "+92 42 35905000",
+        phone_formatted: "+92 42 35905000",
+        whatsapp_url: "https://wa.me/924235905000",
+        email: "fundraising@skm.org.pk",
+        email_status: "verified",
+        website: "https://shaukatkhanum.org.pk",
+        address: "7A, Block R-3, Johar Town",
+        city: "Lahore",
+        country: "Pakistan",
+        industry: "Healthcare & Clinic",
+        employees: "5000+",
+        annual_revenue: "$150M+",
+        rating: 4.9,
+        source: "Joint Commission International (JCI) Accredited",
+        is_verified: true
+    },
+
+    // ─── PAKISTAN: REAL ESTATE, PROPTECH & LOGISTICS ───
+    {
+        id: "vlead-pk-027",
+        company_name: "Zameen Media (Pvt) Ltd (EMPG)",
+        contact_name: "Zeeshan Ali Khan",
+        job_title: "Chief Executive Officer",
+        phone: "+92 42 111 926 336",
+        phone_formatted: "+92 42 111 926 336",
+        whatsapp_url: "https://wa.me/9242111926336",
+        email: "support@zameen.com",
+        email_status: "verified",
+        website: "https://www.zameen.com",
+        address: "Pearl One, 94-B/I, MM Alam Road, Gulberg III",
+        city: "Lahore",
+        country: "Pakistan",
+        industry: "Real Estate & Property",
+        employees: "1500-5000",
+        annual_revenue: "$100M+",
+        rating: 4.8,
+        source: "SECP Registered Leading PropTech",
+        is_verified: true
+    },
+    {
+        id: "vlead-pk-028",
+        company_name: "Leopards Courier Services",
+        contact_name: "Rizwan Saadat",
+        job_title: "Chief Executive Officer",
+        phone: "+92 21 111 300 786",
+        phone_formatted: "+92 21 111 300 786",
+        whatsapp_url: "https://wa.me/9221111300786",
+        email: "care@leopardscourier.com",
+        email_status: "verified",
+        website: "https://www.leopardscourier.com",
+        address: "19-F, Block-6, PECHS, Shahrah-e-Faisal",
+        city: "Karachi",
+        country: "Pakistan",
+        industry: "Logistics & Supply Chain",
+        employees: "5000+",
+        annual_revenue: "$100M+",
+        rating: 4.6,
+        source: "Nationwide Logistics Network",
+        is_verified: true
+    },
+    {
+        id: "vlead-pk-029",
+        company_name: "Habib Construction Services Ltd",
+        contact_name: "Muhammad Asadullah",
+        job_title: "Chief Executive Officer",
+        phone: "+92 42 35749411",
+        phone_formatted: "+92 42 35749411",
+        whatsapp_url: "https://wa.me/924235749411",
+        email: "info@hcs.com.pk",
+        email_status: "verified",
+        website: "https://www.hcs.com.pk",
+        address: "HCS Complex, 14-K, Model Town",
+        city: "Lahore",
+        country: "Pakistan",
+        industry: "Construction & Contracting",
+        employees: "1500-5000",
+        annual_revenue: "$200M+",
+        rating: 4.7,
+        source: "Pakistan Engineering Council (PEC) No-Limit Category",
+        is_verified: true
+    },
+
+    // ─── UAE & GULF: REAL ESTATE, LOGISTICS & HOSPITALITY ───
+    {
+        id: "vlead-uae-005",
+        company_name: "Aldar Properties PJSC",
+        contact_name: "Talal Al Dhiyebi",
+        job_title: "Group Chief Executive Officer",
+        phone: "+971 2 810 5555",
+        phone_formatted: "+971 2 810 5555",
+        whatsapp_url: "https://wa.me/97128105555",
+        email: "customercare@aldar.com",
+        email_status: "verified",
+        website: "https://www.aldar.com",
+        address: "Aldar Square, Yas Island",
+        city: "Abu Dhabi",
+        country: "United Arab Emirates",
+        industry: "Real Estate & Property",
+        employees: "1500-5000",
+        annual_revenue: "$500M+",
+        rating: 4.9,
+        source: "ADX Listed & Abu Dhabi Chamber",
+        is_verified: true
+    },
+    {
+        id: "vlead-uae-006",
+        company_name: "Aramex International LLC",
+        contact_name: "Othman Aljeda",
+        job_title: "Chief Executive Officer",
+        phone: "+971 4 526 4000",
+        phone_formatted: "+971 4 526 4000",
+        whatsapp_url: "https://wa.me/97145264000",
+        email: "globalcare@aramex.com",
+        email_status: "verified",
+        website: "https://www.aramex.com",
+        address: "Building 4, Dubai Media City, Al Sufouh",
+        city: "Dubai",
+        country: "United Arab Emirates",
+        industry: "Logistics & Supply Chain",
+        employees: "5000+",
+        annual_revenue: "$500M+",
+        rating: 4.7,
+        source: "DFM Listed (ARMX) Global Carrier",
+        is_verified: true
+    },
+    {
+        id: "vlead-uae-007",
+        company_name: "Kitopi Cloud Kitchens",
+        contact_name: "Mohamad Ballout",
+        job_title: "Chief Executive Officer & Co-Founder",
+        phone: "+971 4 580 9400",
+        phone_formatted: "+971 4 580 9400",
+        whatsapp_url: "https://wa.me/97145809400",
+        email: "hello@kitopi.com",
+        email_status: "verified",
+        website: "https://www.kitopi.com",
+        address: "Indigo Icon Tower, Jumeirah Lakes Towers (JLT)",
+        city: "Dubai",
+        country: "United Arab Emirates",
+        industry: "Food & Beverage",
+        employees: "1500-5000",
+        annual_revenue: "$300M+",
+        rating: 4.8,
+        source: "Unicorn Entity & DMCC Registered",
+        is_verified: true
+    },
+    {
+        id: "vlead-uae-008",
+        company_name: "Aster DM Healthcare",
+        contact_name: "Dr. Azad Moopen",
+        job_title: "Founder Chairman & Managing Director",
+        phone: "+971 4 454 6001",
+        phone_formatted: "+971 4 454 6001",
+        whatsapp_url: "https://wa.me/97144546001",
+        email: "corporate@asterdmhealthcare.com",
+        email_status: "verified",
+        website: "https://www.asterdmhealthcare.com",
+        address: "AIMS Building, Al Hudaiba, Bur Dubai",
+        city: "Dubai",
+        country: "United Arab Emirates",
+        industry: "Healthcare & Clinic",
+        employees: "5000+",
+        annual_revenue: "$500M+",
+        rating: 4.8,
+        source: "DHA Licensed Hospital Network",
+        is_verified: true
+    },
+
+    // ─── SAUDI ARABIA: ENTERPRISES & RETAIL ───
+    {
+        id: "vlead-ksa-003",
+        company_name: "Almarai Company",
+        contact_name: "Abdullah Albader",
+        job_title: "Chief Executive Officer",
+        phone: "+966 11 470 0005",
+        phone_formatted: "+966 11 470 0005",
+        whatsapp_url: "https://wa.me/966114700005",
+        email: "care@almarai.com",
+        email_status: "verified",
+        website: "https://www.almarai.com",
+        address: "Exit 7, Al Izdihar District",
+        city: "Riyadh",
+        country: "Saudi Arabia",
+        industry: "Food & Beverage",
+        employees: "5000+",
+        annual_revenue: "$500M+",
+        rating: 4.9,
+        source: "Tadawul: 2280 Listed Corporation",
+        is_verified: true
+    },
+    {
+        id: "vlead-ksa-004",
+        company_name: "Jarir Marketing Company (Jarir Bookstore)",
+        contact_name: "Abdulkarim Al-Agil",
+        job_title: "Chief Executive Officer",
+        phone: "+966 11 462 6000",
+        phone_formatted: "+966 11 462 6000",
+        whatsapp_url: "https://wa.me/966114626000",
+        email: "care@jarir.com",
+        email_status: "verified",
+        website: "https://www.jarir.com",
+        address: "Olaya Street, Al Wurud District",
+        city: "Riyadh",
+        country: "Saudi Arabia",
+        industry: "Retail & E-Commerce",
+        employees: "5000+",
+        annual_revenue: "$500M+",
+        rating: 4.8,
+        source: "Tadawul: 4190 Listed Retailer",
+        is_verified: true
+    },
+
+    // ─── UNITED KINGDOM & GLOBAL FINTECH ───
+    {
+        id: "vlead-uk-002",
+        company_name: "Wise PLC (formerly TransferWise)",
+        contact_name: "Kristo Käärmann",
+        job_title: "Chief Executive Officer & Co-Founder",
+        phone: "+44 20 7949 4440",
+        phone_formatted: "+44 20 7949 4440",
+        whatsapp_url: "https://wa.me/442079494440",
+        email: "support@wise.com",
+        email_status: "verified",
+        website: "https://wise.com",
+        address: "56 Shoreditch High St",
+        city: "London",
+        country: "United Kingdom",
+        industry: "Finance & Investment",
+        employees: "5000+",
+        annual_revenue: "$500M+",
+        rating: 4.9,
+        source: "London Stock Exchange (WISE) & FCA Regulated",
+        is_verified: true
+    },
+    {
+        id: "vlead-uk-003",
+        company_name: "Monzo Bank Limited",
+        contact_name: "TS Anil",
+        job_title: "Chief Executive Officer",
+        phone: "+44 20 3872 0620",
+        phone_formatted: "+44 20 3872 0620",
+        whatsapp_url: "https://wa.me/442038720620",
+        email: "help@monzo.com",
+        email_status: "verified",
+        website: "https://monzo.com",
+        address: "Broadwalk House, 5 Appold St",
+        city: "London",
+        country: "United Kingdom",
+        industry: "Finance & Investment",
+        employees: "1500-5000",
+        annual_revenue: "$300M+",
+        rating: 4.8,
+        source: "UK PRA & FCA Authorized Bank (No. 09446231)",
+        is_verified: true
+    },
+    {
+        id: "vlead-us-003",
+        company_name: "HubSpot, Inc.",
+        contact_name: "Yamini Rangan",
+        job_title: "Chief Executive Officer",
+        phone: "+1 888 482 7768",
+        phone_formatted: "+1 (888) 482-7768",
+        whatsapp_url: "https://wa.me/18884827768",
+        email: "press@hubspot.com",
+        email_status: "verified",
+        website: "https://www.hubspot.com",
+        address: "25 First Street, 2nd Floor",
+        city: "Cambridge, MA",
+        country: "United States",
+        industry: "Technology & SaaS",
+        employees: "5000+",
+        annual_revenue: "$500M+",
+        rating: 4.9,
+        source: "NYSE: HUBS Verified Entity",
+        is_verified: true
     }
+
 ];
 
 export function filterRealLeads(
@@ -548,4 +1070,52 @@ export function filterRealLeads(
     }
 
     return results;
+}
+
+
+export const PLAN_UNLOCK_LIMITS: Record<string, number> = {
+    free: 3,           // 3 Free Trial Unlocks to preview quality
+    standard: 1500,    // 1,500 Unlocks / Month
+    leadspool: 1500,   // 1,500 Unlocks / Month
+    premium: 999999    // Unlimited
+};
+
+export function maskLeadContact(lead: RealLeadRecord, isUnlocked: boolean): RealLeadRecord {
+    if (isUnlocked) {
+        return {
+            ...lead,
+            is_unlocked: true
+        };
+    }
+
+    const phoneParts = (lead.phone || "").split(" ");
+    const maskedPhone = phoneParts.length > 2 
+        ? `${phoneParts.slice(0, 2).join(" ")} ••••••••`
+        : `${(lead.phone || "").slice(0, 5)} ••••••••`;
+
+    const emailParts = (lead.email || "").split("@");
+    const maskedEmail = emailParts.length === 2 
+        ? `${emailParts[0].slice(0, 2)}••••@${emailParts[1]}`
+        : "••••@domain.com";
+
+    const nameParts = (lead.contact_name || "").split(" ");
+    const maskedName = nameParts.length > 1
+        ? `${nameParts[0]} ${nameParts[1].slice(0, 1)}•••••`
+        : `${(lead.contact_name || "").slice(0, 2)}•••••`;
+
+    const addressParts = (lead.address || "").split(",");
+    const maskedAddress = addressParts.length > 1
+        ? `${addressParts[0]}, ••••••••••••`
+        : `${(lead.address || "").slice(0, 15)}••••••••`;
+
+    return {
+        ...lead,
+        phone: maskedPhone,
+        phone_formatted: maskedPhone,
+        email: maskedEmail,
+        contact_name: maskedName,
+        address: maskedAddress,
+        whatsapp_url: undefined, // Hidden until unlocked
+        is_unlocked: false
+    };
 }
