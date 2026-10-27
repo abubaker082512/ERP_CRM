@@ -57,6 +57,7 @@ export default function Navbar() {
                         <Link href="/compare" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Compare</Link>
                         <Link href="/about" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">About</Link>
                         <Link href="/contact" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">Contact</Link>
+                        <Link href="/donate" className="text-rose-400 hover:text-rose-300 transition-colors text-sm font-bold flex items-center gap-1">💙 Donate</Link>
                         
                         <div className="flex items-center gap-4 ml-4">
                             {isLoggedIn ? (
@@ -117,6 +118,7 @@ export default function Navbar() {
                         <Link href="/compare" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Compare</Link>
                         <Link href="/about" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">About</Link>
                         <Link href="/contact" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Contact</Link>
+                        <Link href="/donate" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-bold text-rose-400 hover:text-rose-300 hover:bg-white/5 rounded-md">💙 Donate to Beraxis</Link>
                         <div className="h-px bg-white/10 my-4"></div>
                         
                         {isLoggedIn ? (

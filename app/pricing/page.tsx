@@ -6,6 +6,8 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame, Building2, CreditCard, ShieldCheck } from "lucide-react";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
+import { CREEM_PRODUCTS, getCreemCheckoutUrl } from "@/lib/creemConfig";
+import { Heart, Lock } from "lucide-react";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { getPaddlePrice, PADDLE_PRICE_MAP } from "@/lib/paddleConfig";
 
@@ -46,25 +48,23 @@ export default function PricingPage() {
         }).catch(err => console.warn("Paddle init:", err));
     }, []);
 
-    const handlePaddleCheckout = (planKey: "standard" | "custom" | "leadspool") => {
-        const priceConfig = getPaddlePrice(planKey, isAnnual ? "annual" : "monthly");
-        const priceId = priceConfig.priceId;
-
-
-        if (paddle) {
-            paddle.Checkout.open({
-                items: [{ priceId, quantity: planKey === "standard" || planKey === "custom" ? usersCount : 1 }],
-                settings: {
-                    displayMode: "overlay",
-                    theme: "dark",
-                    variant: "one-page",
-                    successUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/checkout?paddle_status=success&plan=${planKey}&billing=${billingCycle}`
-                }
-            });
-        } else {
-            window.location.href = `/checkout?plan=${planKey}&billing=${billingCycle}`;
+    const handleCreemCheckout = (planKey: "standard" | "custom" | "leadspool") => {
+        const url = getCreemCheckoutUrl(planKey, billingCycle);
+        if (typeof window !== "undefined") {
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.setAttribute("data-creem-checkout", "");
+            anchor.setAttribute("data-creem-theme", "dark");
+            anchor.style.display = "none";
+            document.body.appendChild(anchor);
+            anchor.click();
+            setTimeout(() => {
+                if (document.body.contains(anchor)) document.body.removeChild(anchor);
+            }, 1000);
         }
     };
+
+    const handlePaddleCheckout = handleCreemCheckout;
 
     // Fetch dynamic pricing from Super Admin configuration
     useEffect(() => {
@@ -361,13 +361,14 @@ export default function PricingPage() {
                             </ul>
                         </div>
 
-                        <button 
-                            type="button"
-                            onClick={() => handlePaddleCheckout("standard")}
+                        <a 
+                            href={isAnnual ? CREEM_PRODUCTS.pro_yearly.url : CREEM_PRODUCTS.pro_monthly.url}
+                            data-creem-checkout
+                            data-creem-theme="dark"
                             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95 text-center cursor-pointer"
                         >
-                            <CreditCard size={16} /> Pay with Paddle (${standardRate.toFixed(2)}/mo) <ArrowRight size={16} />
-                        </button>
+                            <Lock size={16} /> Pay with Creem (${isAnnual ? "12/yr" : "5/mo"}) <ArrowRight size={16} />
+                        </a>
                     </div>
 
                     {/* Tier 3: Custom Plan */}
@@ -425,13 +426,14 @@ export default function PricingPage() {
                             </ul>
                         </div>
 
-                        <button 
-                            type="button"
-                            onClick={() => handlePaddleCheckout("custom")}
+                        <a 
+                            href={isAnnual ? CREEM_PRODUCTS.custom_yearly.url : CREEM_PRODUCTS.custom_monthly.url}
+                            data-creem-checkout
+                            data-creem-theme="dark"
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 flex items-center justify-center gap-2 hover:border-pink-500/30 cursor-pointer"
                         >
-                            <CreditCard size={16} /> Pay with Paddle <ArrowRight size={16} />
-                        </button>
+                            <Lock size={16} /> Pay with Creem (${isAnnual ? "448.80/yr" : "46.80/mo"}) <ArrowRight size={16} />
+                        </a>
                     </div>
                 </div>
 
@@ -450,13 +452,13 @@ export default function PricingPage() {
                                 Leads Pool Solo — <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-400">$10/month</span>
                             </h3>
                             <p className="text-sm text-gray-300 max-w-2xl leading-relaxed">
-                                Get dedicated monthly access to our <strong className="text-white">25.8M+ verified global B2B contacts database</strong> without subscribing to full ERP suites. Includes <span className="text-amber-300 font-bold">1,500 direct contacts every month</span> with direct phone, WhatsApp dials, and deliverable corporate emails.
+                                Get dedicated monthly access to our <strong className="text-white">verified international enterprise B2B directory</strong> without subscribing to full ERP suites. Includes <span className="text-amber-300 font-bold">1,500 direct contacts every month</span> with direct phone, WhatsApp dials, and deliverable corporate emails.
                             </p>
                             <div className="flex flex-wrap gap-4 pt-1 justify-center lg:justify-start text-xs text-gray-300">
                                 <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> 1,500 Contacts / Month</span>
                                 <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> WhatsApp &amp; Mobile Dials</span>
                                 <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> 1-Click CSV/Excel Export</span>
-                                <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> Paddle Global Checkout (Cards, Apple Pay, PayPal)</span>
+                                <span className="flex items-center gap-1.5"><Check size={14} className="text-amber-400" /> Creem Global Checkout (Cards, Apple Pay, Google Pay)</span>
                             </div>
                         </div>
 
@@ -466,13 +468,45 @@ export default function PricingPage() {
                                 <span className="text-gray-400 text-xs"> / month</span>
                             </div>
                             <a
-                                href="/checkout?plan=leadspool&billing=monthly"
+                                href={CREEM_PRODUCTS.leads_pool.url}
+                                data-creem-checkout
+                                data-creem-theme="dark"
                                 className="bg-gradient-to-r from-amber-500 via-rose-500 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white font-extrabold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-amber-500/20 text-center text-sm flex items-center justify-center gap-2"
                             >
-                                Get Leads Pool Solo <ArrowRight size={16} />
+                                Get Leads Pool Solo ($10/mo) <ArrowRight size={16} />
                             </a>
                             <span className="text-[11px] text-gray-400">Cancel anytime • Instant access</span>
                         </div>
+                    </div>
+                </div>
+
+                {/* Community Support & Donation Banner */}
+                <div className="max-w-5xl mx-auto mb-16 rounded-3xl border border-rose-500/30 bg-gradient-to-r from-rose-500/10 via-purple-500/10 to-indigo-500/10 p-6 sm:p-8 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+                    <div className="space-y-1.5 text-center md:text-left">
+                        <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                            💙 Open Community Fund
+                        </span>
+                        <h4 className="text-xl font-black text-white">Support BERAXIS Open-Source &amp; Free Tier</h4>
+                        <p className="text-xs text-gray-300 max-w-xl">
+                            Help us maintain high-speed servers, database clusters, and 100% verified B2B crawlers. You can donate any amount starting at $5 USD.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                        <Link
+                            href="/donate"
+                            className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs transition-all shadow-md flex items-center gap-2"
+                        >
+                            <span>Learn More</span>
+                        </Link>
+                        <a
+                            href={CREEM_PRODUCTS.donate.url}
+                            data-creem-checkout
+                            data-creem-theme="dark"
+                            className="px-6 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-400 hover:to-purple-500 text-white font-extrabold text-xs transition-all shadow-lg shadow-rose-500/25 flex items-center gap-2"
+                        >
+                            <Heart size={14} className="fill-white" />
+                            <span>Donate with Creem (Min $5)</span>
+                        </a>
                     </div>
                 </div>
 

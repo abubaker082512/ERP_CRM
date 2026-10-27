@@ -31,6 +31,7 @@ import RealProductShowcase from "@/components/landing/RealProductShowcase";
 import Features from "@/components/landing/Features";
 import IndustryShowcase from "@/components/landing/IndustryShowcase";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
+import { CREEM_PRODUCTS, getCreemCheckoutUrl } from "@/lib/creemConfig";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { getPaddlePrice } from "@/lib/paddleConfig";
 
@@ -73,22 +74,23 @@ export default function Home() {
         ? pricing.custom.annual_monthly_rate 
         : pricing.custom.monthly_rate;
 
-    const handlePaddleCheckout = (planKey: "standard" | "custom") => {
-        const priceConfig = getPaddlePrice(planKey, isAnnual ? "annual" : "monthly");
-        if (paddle) {
-            paddle.Checkout.open({
-                items: [{ priceId: priceConfig.priceId, quantity: 1 }],
-                settings: {
-                    displayMode: "overlay",
-                    theme: "dark",
-                    variant: "one-page",
-                    successUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/checkout?paddle_status=success&plan=${planKey}&billing=${isAnnual ? "annual" : "monthly"}`
-                }
-            });
-        } else {
-            router.push(`/checkout?plan=${planKey}&billing=${isAnnual ? "annual" : "monthly"}`);
+    const handleCreemCheckout = (planKey: "standard" | "custom") => {
+        const url = getCreemCheckoutUrl(planKey, isAnnual ? "annual" : "monthly");
+        if (typeof window !== "undefined") {
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.setAttribute("data-creem-checkout", "");
+            anchor.setAttribute("data-creem-theme", "dark");
+            anchor.style.display = "none";
+            document.body.appendChild(anchor);
+            anchor.click();
+            setTimeout(() => {
+                if (document.body.contains(anchor)) document.body.removeChild(anchor);
+            }, 1000);
         }
     };
+
+    const handlePaddleCheckout = handleCreemCheckout;
 
     const faqs = [
         {
@@ -105,7 +107,7 @@ export default function Home() {
         },
         {
             q: "What payment methods are supported, and is it secure?",
-            a: "All payments are securely handled through Paddle with 256-bit bank-grade encryption. We support Visa, Mastercard, American Express, Apple Pay, Google Pay, and PayPal. Every paid plan is backed by an unconditional 14-day money-back guarantee."
+            a: "All payments are securely handled through Creem Global Merchant of Record with 256-bit bank-grade encryption. We support Visa, Mastercard, American Express, Apple Pay, Google Pay, and PayPal. Every paid plan is backed by an unconditional 14-day money-back guarantee."
         }
     ];
 
@@ -282,15 +284,16 @@ export default function Home() {
                         </div>
 
                         <div className="mt-8 space-y-2">
-                            <button
-                                type="button"
-                                onClick={() => handlePaddleCheckout("standard")}
-                                className="w-full galaxy-btn-primary"
+                            <a
+                                href={isAnnual ? CREEM_PRODUCTS.pro_yearly.url : CREEM_PRODUCTS.pro_monthly.url}
+                                data-creem-checkout
+                                data-creem-theme="dark"
+                                className="w-full galaxy-btn-primary flex items-center justify-center gap-2 text-center"
                             >
                                 <CreditCard size={15} />
-                                <span>{isAnnual ? "Claim Early Bird Standard ($1/mo · $12/yr)" : "Claim Early Bird Standard ($5/mo)"}</span>
+                                <span>{isAnnual ? "Claim Early Bird Pro ($12/yr upfront)" : "Claim Early Bird Pro ($5/mo)"}</span>
                                 <ArrowRight size={15} />
-                            </button>
+                            </a>
                             <p className="text-[10px] text-gray-400 text-center">14-Day Money-Back Guarantee · Cancel Anytime</p>
                         </div>
                     </div>
@@ -344,14 +347,15 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <button 
-                            type="button"
-                            onClick={() => handlePaddleCheckout("custom")}
-                            className="w-full galaxy-btn-secondary mt-8"
+                        <a 
+                            href={isAnnual ? CREEM_PRODUCTS.custom_yearly.url : CREEM_PRODUCTS.custom_monthly.url}
+                            data-creem-checkout
+                            data-creem-theme="dark"
+                            className="w-full galaxy-btn-secondary mt-8 flex items-center justify-center gap-2 text-center"
                         >
-                            <span>Get Multi-Company Enterprise</span>
+                            <span>Get Custom Plan (${isAnnual ? "448.80/yr" : "46.80/mo"})</span>
                             <ArrowRight size={14} />
-                        </button>
+                        </a>
                     </div>
 
                 </div>
@@ -445,13 +449,14 @@ export default function Home() {
                             >
                                 Start 1 App Free Forever
                             </Link>
-                            <button
-                                type="button"
-                                onClick={() => handlePaddleCheckout("standard")}
-                                className="galaxy-btn-outline w-full sm:w-auto"
+                            <a
+                                href={isAnnual ? CREEM_PRODUCTS.pro_yearly.url : CREEM_PRODUCTS.pro_monthly.url}
+                                data-creem-checkout
+                                data-creem-theme="dark"
+                                className="galaxy-btn-outline w-full sm:w-auto flex items-center justify-center text-center"
                             >
                                 Claim Early Bird Standard ($1/mo)
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getPaddlePrice, PaddlePriceMapping } from "@/lib/paddleConfig";
+import { getCreemCheckoutUrl } from "@/lib/creemConfig";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 
@@ -128,45 +129,25 @@ function CheckoutPageContent() {
     try {
       if (form.phone) localStorage.setItem("beraxis_user_phone", form.phone);
       if (form.company) localStorage.setItem("beraxis_company_name", form.company);
+      if (form.email) localStorage.setItem("beraxis_billing_email", form.email);
     } catch {}
 
-    if (!paddle) {
-      // If Paddle client has not finished mounting, fallback to direct checkout open
-      setErrorMessage("Payment gateway is initializing. Please wait a moment and click again.");
-      setProcessing(false);
+    const creemUrl = getCreemCheckoutUrl(planParam, billingParam);
+    if (typeof window !== "undefined") {
+      const a = document.createElement("a");
+      a.href = creemUrl;
+      a.setAttribute("data-creem-checkout", "");
+      a.setAttribute("data-creem-theme", "dark");
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (document.body.contains(a)) document.body.removeChild(a);
+        setProcessing(false);
+      }, 1000);
       return;
     }
-
-    try {
-      paddle.Checkout.open({
-        items: [
-          {
-            priceId: selectedPlan.priceId,
-            quantity: 1
-          }
-        ],
-        customer: {
-          email: form.email || undefined
-        },
-        customData: {
-          plan: selectedPlan.planId,
-          company: form.company,
-          phone: form.phone,
-          customer_name: form.name
-        },
-        settings: {
-          displayMode: "overlay",
-          theme: "dark",
-          variant: "one-page",
-          successUrl: `${window.location.origin}/checkout?paddle_status=success&plan=${selectedPlan.planId}`
-        }
-      });
-    } catch (err: any) {
-      console.error("Error opening Paddle checkout:", err);
-      setErrorMessage(err?.message || "Failed to open secure payment gateway. Please try again.");
-    } finally {
-      setProcessing(false);
-    }
+    setProcessing(false);
   };
 
   if (success) {
@@ -296,14 +277,14 @@ function CheckoutPageContent() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                       <ShieldCheck size={16} className="text-emerald-400" />
-                      Paddle Global Merchant of Record
+                      Creem Global Merchant of Record
                     </span>
                     <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold tracking-wider">
                       Live Production
                     </span>
                   </div>
                   <p className="text-[11px] text-gray-400 leading-relaxed">
-                    Transactions are processed securely through Paddle. Supports Apple Pay, Google Pay, Visa, Mastercard, American Express, PayPal, and regional bank transfers.
+                    Transactions are processed securely through Creem MoR. Supports Apple Pay, Google Pay, Visa, Mastercard, American Express, PayPal, and regional bank transfers.
                   </p>
                 </div>
 
@@ -320,7 +301,7 @@ function CheckoutPageContent() {
                   ) : (
                     <>
                       <Lock size={15} />
-                      <span>Proceed to Paddle Secure Checkout (${selectedPlan.unitAmountUsd.toFixed(2)})</span>
+                      <span>Proceed to Creem Secure Checkout (${selectedPlan.unitAmountUsd.toFixed(2)})</span>
                       <ArrowRight size={14} />
                     </>
                   )}

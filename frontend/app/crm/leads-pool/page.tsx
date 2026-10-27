@@ -1760,7 +1760,7 @@ export default function LeadsPoolPage() {
                                 <ShieldCheck size={14} className="text-emerald-400" />
                                 Instant delivery to active workspace
                             </span>
-                            <span className="text-gray-400">Card & Invoice billing</span>
+                            <span className="text-gray-400">Creem MoR • Cards, Apple Pay & Google Pay</span>
                         </div>
                     </div>
                 </div>
@@ -1820,12 +1820,14 @@ export default function LeadsPoolPage() {
                                         </li>
                                     </ul>
                                 </div>
-                                <Link
-                                    href="/checkout?plan=leadspool&billing=monthly"
-                                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-cyan-600/20 block"
+                                <a
+                                    href={CREEM_PRODUCTS.leads_pool.url}
+                                    data-creem-checkout
+                                    data-creem-theme="dark"
+                                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-cyan-600/20 block cursor-pointer"
                                 >
                                     Get Leads Pool ($10/mo) →
-                                </Link>
+                                </a>
                             </div>
 
                             {/* Option 2: Full Suite Standard */}
@@ -1857,12 +1859,14 @@ export default function LeadsPoolPage() {
                                         </li>
                                     </ul>
                                 </div>
-                                <Link
-                                    href="/checkout?plan=standard&billing=annual"
-                                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-purple-600/20 block"
+                                <a
+                                    href={CREEM_PRODUCTS.pro_yearly.url}
+                                    data-creem-checkout
+                                    data-creem-theme="dark"
+                                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs text-center transition-all shadow-md shadow-purple-600/20 block cursor-pointer"
                                 >
-                                    Get Full Suite ($1/mo) →
-                                </Link>
+                                    Get Full Suite ($12/yr upfront) →
+                                </a>
                             </div>
                         </div>
                     </div>

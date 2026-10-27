@@ -5,6 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 import CosmicBackground from "@/components/CosmicBackground";
+import CreemScript from "@/components/CreemScript";
 import GalaxyAppShell from "@/components/layout/GalaxyAppShell";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -432,6 +433,7 @@ export default function RootLayout({
             <body className={`${inter.className} relative min-h-screen text-white bg-[#020205]`}>
                 <div className="aurora-bg" />
                 <CosmicBackground />
+                <CreemScript />
                 <GalaxyAppShell>{children}</GalaxyAppShell>
                 <Analytics />
                 <SpeedInsights />

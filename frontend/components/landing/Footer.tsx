@@ -130,6 +130,7 @@ export default function Footer() {
                             <li><Link href="/affiliates" className="hover:text-purple-300 font-semibold text-purple-400">Affiliate Program</Link></li>
                             <li><Link href="/referrals" className="hover:text-white transition-colors">Customer Referrals</Link></li>
                             <li><Link href="/digital-launch-hub.html" className="hover:text-white transition-colors">Digital Launch Hub</Link></li>
+                            <li><Link href="/donate" className="hover:text-rose-300 font-semibold text-rose-400">💙 Donate to Beraxis</Link></li>
                         </ul>
                     </div>
 
@@ -158,6 +159,7 @@ export default function Footer() {
                     <div className="flex flex-wrap items-center gap-6">
                         <Link href="/about" className="text-gray-300 hover:text-white transition-colors">About Us</Link>
                         <Link href="/pricing" className="text-gray-300 hover:text-white transition-colors">Pricing ($1/mo Plan)</Link>
+                        <Link href="/donate" className="text-rose-400 hover:text-rose-300 font-semibold transition-colors">Donate</Link>
                         <Link href="/blog" className="text-gray-300 hover:text-white transition-colors">Insights &amp; Engineering Blog</Link>
                         <Link href="/contact" className="text-gray-300 hover:text-white transition-colors">Contact Support</Link>
                         <Link href="/login" className="text-gray-300 hover:text-white transition-colors">Customer Login</Link>
