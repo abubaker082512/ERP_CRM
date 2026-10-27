@@ -33,6 +33,9 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
     const isPublic =
         pathname === '' ||
         pathname === '/' ||
+        pathname.startsWith('/acceptable-use') ||
+        pathname.startsWith('/erp') ||
+        pathname.startsWith('/crm-software') ||
         pathname.startsWith('/refund') ||
         pathname.startsWith('/terms') ||
         pathname.startsWith('/privacy') ||
@@ -232,6 +235,9 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         cleanPath.startsWith('/pitch-deck') || 
         cleanPath.startsWith('/presentation') || 
         cleanPath.startsWith('/launch-creatives') || 
+        cleanPath.startsWith('/acceptable-use') || 
+        cleanPath.startsWith('/erp') || 
+        cleanPath.startsWith('/crm-software') || 
         cleanPath.startsWith('/privacy') || 
         cleanPath.startsWith('/terms') || 
         cleanPath.startsWith('/refund') || 
