@@ -32,7 +32,6 @@ import Features from "@/components/landing/Features";
 import Stats from "@/components/landing/Stats";
 import Testimonials from "@/components/landing/Testimonials";
 import IndustryShowcase from "@/components/landing/IndustryShowcase";
-import BeraxisCosmicCanvas from "@/components/3d/BeraxisCosmicCanvas";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { getPaddlePrice } from "@/lib/paddleConfig";
@@ -114,9 +113,6 @@ export default function Home() {
 
     return (
         <main className="relative min-h-screen bg-[#020205] text-white overflow-hidden">
-            {/* 3D Beraxis Cosmic Core: Follows seamlessly from Hero throughout the entire page down to footer */}
-            <BeraxisCosmicCanvas />
-
             <Navbar />
             <Hero />
             

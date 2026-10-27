@@ -74,7 +74,7 @@ function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[#020205]/70 relative z-10 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center mb-4">

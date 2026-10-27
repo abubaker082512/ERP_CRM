@@ -257,7 +257,7 @@ function SignupForm() {
 
 export default function SignupPage() {
     return (
-        <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[#020205]/70 relative z-10 flex items-center justify-center p-4">
             <Suspense fallback={<div className="text-white">Loading...</div>}>
                 <SignupForm />
             </Suspense>
