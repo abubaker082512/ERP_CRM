@@ -284,6 +284,21 @@ export default function LeadsPoolPage() {
         setLiveExtracting(false);
     };
 
+        const [triggeringHarvest, setTriggeringHarvest] = useState(false);
+    const handleTriggerLiveHarvest = async () => {
+        setTriggeringHarvest(true);
+        try {
+            const res = await fetchAPI("/lead-bank/crawler/trigger?batch_size=50", { method: "POST" });
+            if (res.ok) {
+                await loadLeadsPool();
+            }
+        } catch (e) {
+            console.error("Trigger harvest failed:", e);
+        } finally {
+            setTriggeringHarvest(false);
+        }
+    };
+
     const loadLeadsPool = async () => {
         setLoading(true);
         try {
@@ -1053,6 +1068,33 @@ export default function LeadsPoolPage() {
                 {/* ========================================================================= */}
                 {poolMode === "leads_pool" && (
                     <div className="space-y-6">
+                        {/* Autonomous Harvester Live Engine Banner */}
+                        <div className="bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-purple-950/40 border border-cyan-500/20 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 backdrop-blur-xl shadow-lg shadow-cyan-950/20">
+                            <div className="flex items-center gap-3">
+                                <div className="relative flex items-center justify-center w-3.5 h-3.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-white tracking-wide uppercase">Autonomous Lead Harvester Daemon</span>
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Running in Background</span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">
+                                        Continuously crawling SEC EDGAR filings, corporate registries, and open sources into database &bull; <span className="text-cyan-300 font-semibold">{total.toLocaleString()} leads stored &amp; accessible</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleTriggerLiveHarvest}
+                                disabled={triggeringHarvest}
+                                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-md shadow-cyan-600/20 flex items-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+                            >
+                                <Zap size={13} className={triggeringHarvest ? "animate-spin" : ""} />
+                                <span>{triggeringHarvest ? "Harvesting..." : "Extract Live Batch Now"}</span>
+                            </button>
+                        </div>
+
                         {/* ── Stats Summary Bar ── */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div className="bg-[#0F172A]/70 border border-white/5 rounded-2xl p-4 flex items-center gap-3.5 backdrop-blur-md">

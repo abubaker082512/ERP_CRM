@@ -250,3 +250,25 @@ def live_scrape_leads(
         limit=limit
     )
 
+
+
+from app.services.lead_crawler_worker import lead_crawler_worker
+
+@router.get("/crawler/status")
+def get_crawler_status():
+    """
+    Get background lead crawler daemon status, total harvested, and database count.
+    """
+    return lead_crawler_worker.get_status()
+
+@router.post("/crawler/trigger")
+def trigger_crawler_harvest(batch_size: int = 50):
+    """
+    Trigger an on-demand batch harvest of real verified enterprise leads.
+    """
+    count = lead_crawler_worker.harvest_batch(batch_size=batch_size)
+    return {
+        "success": True,
+        "harvested": count,
+        "status": lead_crawler_worker.get_status()
+    }
