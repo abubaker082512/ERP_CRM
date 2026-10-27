@@ -6,7 +6,7 @@ import { Users, Package, Mic, Globe, ShoppingCart, BarChart3, ShieldCheck, Check
 
 export const metadata: Metadata = {
   title: "Platform Features & Enterprise Modules | Free ERP & CRM · Beraxis AI",
-  description: "Explore all Beraxis AI enterprise capabilities: Free CRM pipeline, real-time multi-warehouse inventory, Free POS, AI voice pilot, and native 25M+ leads pool for $1/month.",
+  description: "Explore all Beraxis AI enterprise capabilities: Free CRM pipeline, real-time multi-warehouse inventory, Free POS, AI voice pilot, and native B2B leads directory for $1/month.",
   keywords: [
     "Free ERP",
     "Free CRM",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     "AI CRM software",
     "smart inventory system",
     "AI voice ERP",
-    "25M leads database",
+    "Verified leads database",
     "business automation tools"
   ],
   alternates: {
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Platform Features & Enterprise Modules | Beraxis AI",
-    description: "Replace 5 fragmented tools with one cohesive glassmorphic command deck. 28 modules + 25M+ leads pool for $1/month.",
+    description: "Replace 5 fragmented tools with one cohesive glassmorphic command deck. 28 modules + global leads directory for $1/month.",
     url: "https://www.beraxis.online/features",
     siteName: "Beraxis",
   },
@@ -41,7 +41,7 @@ const FEATURE_MODULES = [
     color: "text-blue-400",
     bg: "bg-blue-500/10",
     border: "border-blue-500/30",
-    description: "Drag-and-drop Kanban deal tracking with automated WhatsApp sync, AI opportunity scoring, and direct 1-click import from the 25M+ Leads Pool.",
+    description: "Drag-and-drop Kanban deal tracking with automated WhatsApp sync, AI opportunity scoring, and direct 1-click import from the B2B Leads Directory.",
     highlights: ["Interactive Kanban", "AI Win Scoring", "WhatsApp Sync", "1-Click Lead Import"],
     href: "/features/crm-pipeline"
   },
@@ -71,14 +71,14 @@ const FEATURE_MODULES = [
   },
   {
     slug: "leads-pool",
-    title: "25M+ B2B Leads Pool",
+    title: "Global B2B Leads Directory",
     badge: "Growth Engine",
     icon: Globe,
     color: "text-cyan-400",
     bg: "bg-cyan-500/10",
     border: "border-cyan-500/30",
     description: "Stop paying thousands to Apollo or ZoomInfo. Search verified decision-maker contacts across 50+ countries with direct phone dials and emails.",
-    highlights: ["25M+ Verified Contacts", "50+ Countries", "Zero Add-on Fees", "Direct CRM Pipeline Import"],
+    highlights: ["Verified Business Contacts", "50+ Countries", "Zero Add-on Fees", "Direct CRM Pipeline Import"],
     href: "/leads-pool"
   },
   {

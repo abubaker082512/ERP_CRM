@@ -3,8 +3,8 @@ import Link from 'next/link';
 
 const features = [
     {
-        title: "Global Leads Pool (25M+)",
-        description: "Access 25M+ worldwide verified B2B leads across USA, UK, UAE, Saudi, Europe & Asia with direct dials, verified emails, and 1-click CRM import.",
+        title: "Global B2B Leads Directory",
+        description: "Access worldwide verified B2B contacts across USA, UK, UAE, Saudi, Europe & Asia with direct dials, verified emails, and 1-click CRM import.",
         icon: Globe,
         color: "text-cyan-400",
         bg: "bg-cyan-500/10"
@@ -62,7 +62,7 @@ const features = [
 
 const platformComparison = [
     {
-        feature: "Global Leads Pool (25M+ Contacts)",
+        feature: "Global B2B Leads Directory",
         beraxis: "100% Free & Built-In",
         others: "Expensive Third-Party Credits / Lock-in",
         winner: "beraxis"
@@ -157,7 +157,7 @@ export default function Features() {
                             <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-5 leading-tight">
                                 Never Pay For Apollo or ZoomInfo Again: <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-purple-400">
-                                    25M+ Global Leads Pool Built-in
+                                    Global B2B Leads Directory Built-in
                                 </span>
                             </h2>
                             <p className="text-gray-300 text-base font-light leading-relaxed mb-6">
@@ -166,8 +166,8 @@ export default function Features() {
 
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
                                 <div className="bg-white/5 border border-white/10 rounded-xl p-3.5">
-                                    <div className="text-xl sm:text-2xl font-black text-cyan-300">25M+</div>
-                                    <div className="text-xs text-gray-400">B2B Contacts</div>
+                                    <div className="text-xl sm:text-2xl font-black text-cyan-300">Global</div>
+                                    <div className="text-xs text-gray-400">B2B Directory</div>
                                 </div>
                                 <div className="bg-white/5 border border-white/10 rounded-xl p-3.5">
                                     <div className="text-xl sm:text-2xl font-black text-purple-300">50+</div>
@@ -211,9 +211,9 @@ export default function Features() {
                                             SC
                                         </div>
                                         <div>
-                                            <div className="text-xs font-bold text-white">Sarah Jenkins • Chief Technology Officer</div>
+                                            <div className="text-xs font-bold text-white">Chief Technology Officer</div>
                                             <div className="text-[11px] text-gray-400 flex items-center gap-2">
-                                                <span>Apex Cloud AI</span> • <span className="text-cyan-400">San Francisco, USA</span>
+                                                <span>Cloud Infrastructure Industry</span> • <span className="text-cyan-400">San Francisco, USA</span>
                                             </div>
                                         </div>
                                     </div>
@@ -225,12 +225,12 @@ export default function Features() {
                                 <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-blue-600/30 text-blue-300 flex items-center justify-center font-bold text-xs">
-                                            TA
+                                            VP
                                         </div>
                                         <div>
-                                            <div className="text-xs font-bold text-white">Tariq Al-Mansoor • VP of Procurement</div>
+                                            <div className="text-xs font-bold text-white">VP of Global Procurement</div>
                                             <div className="text-[11px] text-gray-400 flex items-center gap-2">
-                                                <span>Gulf Horizon Logistics</span> • <span className="text-cyan-400">Dubai, UAE</span>
+                                                <span>Logistics &amp; Supply Chain</span> • <span className="text-cyan-400">Dubai, UAE</span>
                                             </div>
                                         </div>
                                     </div>
@@ -242,12 +242,12 @@ export default function Features() {
                                 <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-pink-600/30 text-pink-300 flex items-center justify-center font-bold text-xs">
-                                            EM
+                                            SC
                                         </div>
                                         <div>
-                                            <div className="text-xs font-bold text-white">Elena Müller • Head of Supply Chain</div>
+                                            <div className="text-xs font-bold text-white">Head of Supply Chain</div>
                                             <div className="text-[11px] text-gray-400 flex items-center gap-2">
-                                                <span>Nordic Green Energy</span> • <span className="text-cyan-400">Berlin, Germany</span>
+                                                <span>Clean Energy Technologies</span> • <span className="text-cyan-400">Berlin, Germany</span>
                                             </div>
                                         </div>
                                     </div>

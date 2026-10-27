@@ -1402,7 +1402,7 @@ export default function LeadsPoolPage() {
                                     type="submit"
                                     className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-cyan-600/20 active:scale-95 cursor-pointer shrink-0"
                                 >
-                                    <Search size={14} /> Search 25M+ Leads
+                                    <Search size={14} /> Search Global Leads
                                 </button>
                             </form>
 
@@ -1596,7 +1596,7 @@ export default function LeadsPoolPage() {
                                             <tr>
                                                 <td colSpan={6} className="py-12 text-center text-gray-400">
                                                     <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                                                    <span>Querying 25M+ Global Leads Engine...</span>
+                                                    <span>Querying Global Leads Engine...</span>
                                                 </td>
                                             </tr>
                                         ) : leads.length === 0 ? (

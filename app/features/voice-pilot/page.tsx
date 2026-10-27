@@ -226,7 +226,7 @@ export default function VoicePilotFeaturePage() {
             Experience Voice ERP for Just $1/Month
           </h2>
           <p className="text-gray-300 text-sm max-w-xl mx-auto mb-6">
-            Get unlimited voice commands, 25M+ leads pool, and all 28 integrated modules with our Early Bird Launch Special.
+            Get unlimited voice commands, global B2B leads directory, and all 28 integrated modules with our Early Bird Launch Special.
           </p>
           <Link href="/pricing" className="galaxy-btn-primary !px-8 !py-3.5 text-sm font-bold inline-flex items-center gap-2">
             Claim Early Bird ($1/mo) <ArrowRight size={15} />

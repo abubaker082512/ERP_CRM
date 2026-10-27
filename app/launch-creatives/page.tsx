@@ -339,10 +339,10 @@ export default function LaunchCreativesPage() {
                     FEATURED • 12-INDUSTRY GLOBAL COMMERCIAL (2:12)
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    Beraxis AI: 12 Industries, POS, ERP, CRM & 25M+ Leads
+                    Beraxis AI: 12 Industries, POS, ERP, CRM & B2B Leads Directory
                   </h2>
                   <p className="text-sm text-slate-300 mt-1 max-w-3xl">
-                    Recorded in the live Beraxis workspace. Showcasing all 12 global industry archetypes, high-speed Point of Sale checkout, Cloud ERP financials, visual Smart CRM, and the proprietary 25M+ B2B Inbound Lead Pool with studio acoustic guitar/piano soundtrack and zero-overlapping narration.
+                    Recorded in the live Beraxis workspace. Showcasing all 12 global industry archetypes, high-speed Point of Sale checkout, Cloud ERP financials, visual Smart CRM, and the proprietary Global B2B Inbound Leads Directory with studio acoustic guitar/piano soundtrack and zero-overlapping narration.
                   </p>
                 </div>
 
@@ -556,7 +556,7 @@ export default function LaunchCreativesPage() {
                         <span className="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 font-mono font-bold text-xs mt-0.5">0:09</span>
                         <div>
                           <div className="text-xs font-bold text-white">Gesture Demonstration & Floating UI Card</div>
-                          <div className="text-[11px] text-slate-400 mt-0.5">Presenter gestures to a floating 3D glass card demonstrating 25M+ B2B leads, Cloud ERP financials, and touch POS.</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">Presenter gestures to a floating 3D glass card demonstrating verified B2B leads, Cloud ERP financials, and touch POS.</div>
                         </div>
                       </div>
 
@@ -711,8 +711,8 @@ export default function LaunchCreativesPage() {
                         <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-black">Ad 2 • 43.5s</span>
                         <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/75 text-cyan-400">Dual Format</span>
                       </div>
-                      <h4 className="font-bold text-white text-base mt-3">The Customer Generator (25M+ Leads)</h4>
-                      <p className="text-xs text-slate-400 mt-1">Differentiates Beraxis from dead ERP databases by showcasing the built-in 25M+ lead engine that fills sales pipelines automatically.</p>
+                      <h4 className="font-bold text-white text-base mt-3">The Customer Generator (B2B Leads Directory)</h4>
+                      <p className="text-xs text-slate-400 mt-1">Differentiates Beraxis from dead ERP databases by showcasing the built-in global lead engine that fills sales pipelines automatically.</p>
                     </div>
                     <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">
                       <div className="flex items-center justify-between">
@@ -880,7 +880,7 @@ export default function LaunchCreativesPage() {
                         <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-black">Engagement 3 • 69.0s</span>
                         <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/75 text-cyan-400">Dual Format</span>
                       </div>
-                      <h4 className="font-bold text-white text-base mt-3">From 25M Cold Leads to Clients</h4>
+                      <h4 className="font-bold text-white text-base mt-3">From Cold Leads to Clients</h4>
                       <p className="text-xs text-slate-400 mt-1">The complete growth engine: filter verified decision makers, push qualified prospects directly to CRM, trigger email sequences, and cash out at POS.</p>
                     </div>
                     <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">

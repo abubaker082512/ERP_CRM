@@ -238,7 +238,7 @@ export default function LeadsPoolPublicPage() {
                         </span>
                         <span className="text-xs sm:text-sm font-semibold text-cyan-200 tracking-wide flex items-center gap-2">
                             <span className="bg-cyan-500/25 text-cyan-300 text-[11px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">
-                                25M+ Verified B2B Contacts
+                                Global B2B Leads Directory
                             </span>
                             Live Intelligence Built Directly Into Your ERP
                         </span>
@@ -256,7 +256,7 @@ export default function LeadsPoolPublicPage() {
                     {/* Subheadline */}
                     <p className="mt-4 text-base sm:text-lg md:text-xl text-gray-300 max-w-4xl mx-auto mb-10 font-light leading-relaxed">
                         Say goodbye to overpriced third-party databases, broken scraper plugins, and CSV import errors. 
-                        Beraxis gives you instant access to over <strong className="text-white font-semibold">25,000,000+ verified decision-makers</strong> worldwide with real-time email verification and 1-click CRM ingestion.
+                        Beraxis gives you instant access to verified decision-makers across global markets with real-time email verification and 1-click CRM ingestion.
                     </p>
 
                     {/* Action Buttons */}
@@ -280,16 +280,16 @@ export default function LeadsPoolPublicPage() {
                     {/* Highlights Ribbon */}
                     <div className="mt-12 pt-8 border-t border-white/10 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 text-center">
                         <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1120]/60 border border-white/10 hover:border-cyan-500/30 backdrop-blur-md transition-all shadow-lg">
-                            <p className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">25.4M+</p>
-                            <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider font-semibold">Verified B2B Executives</p>
+                            <p className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Global</p>
+                            <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider font-semibold">Multi-Industry Directory</p>
                         </div>
                         <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1120]/60 border border-white/10 hover:border-purple-500/30 backdrop-blur-md transition-all shadow-lg">
                             <p className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">180+</p>
                             <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider font-semibold">Global Countries Covered</p>
                         </div>
                         <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1120]/60 border border-white/10 hover:border-emerald-500/30 backdrop-blur-md transition-all shadow-lg">
-                            <p className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">98.6%</p>
-                            <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider font-semibold">Email Deliverability Rate</p>
+                            <p className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Live</p>
+                            <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider font-semibold">SMTP Handshake Validation</p>
                         </div>
                         <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1120]/60 border border-white/10 hover:border-amber-500/30 backdrop-blur-md transition-all shadow-lg">
                             <p className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">&lt; 1 Sec</p>
@@ -540,7 +540,7 @@ export default function LeadsPoolPublicPage() {
                         {/* Value proposition message */}
                         <div className="bg-gradient-to-r from-purple-500/10 via-cyan-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl p-4 mb-6 text-center">
                             <p className="text-xs font-semibold text-white mb-1">
-                                Ready to import this lead and 25M+ others straight to your CRM?
+                                Ready to import this lead and verified contacts straight to your CRM?
                             </p>
                             <p className="text-[11px] text-gray-400">
                                 In your Beraxis workspace, clicking "Add to CRM" creates instant opportunity records with automated win probability and smart cadences.
@@ -660,7 +660,7 @@ export default function LeadsPoolPublicPage() {
                                     </li>
                                     <li className="flex items-center gap-2 font-medium">
                                         <Check size={14} className="text-emerald-400 shrink-0" />
-                                        <span>Unlimited search across 25M+ pre-verified B2B records</span>
+                                        <span>Unlimited search across pre-verified global B2B records</span>
                                     </li>
                                     <li className="flex items-center gap-2 font-medium">
                                         <Check size={14} className="text-emerald-400 shrink-0" />
@@ -783,7 +783,7 @@ export default function LeadsPoolPublicPage() {
                     <div className="bg-[#0B1120]/80 border border-white/10 hover:border-purple-500/30 rounded-2xl p-6 backdrop-blur-md transition-all shadow-lg">
                         <h3 className="text-base font-bold text-white mb-2">How fresh and accurate is the contact data?</h3>
                         <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            Our database is continuously updated through automated crawlers, corporate registry filings, and real-time SMTP handshake verification. Emails have an average deliverability rate of 98.6%.
+                            Our database is continuously updated through automated discovery crawlers, corporate registry filings, and live SMTP syntax validation to ensure high accuracy before CRM pipeline import.
                         </p>
                     </div>
 

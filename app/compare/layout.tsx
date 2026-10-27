@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Compare Beraxis AI vs. QuickBooks, Odoo, HubSpot, Zoho CRM & Legacy ERP",
-  description: "Detailed 2026 software comparisons. See why businesses are ditching the $400/mo SaaS tax and upgrading to Beraxis AI for double-entry accounting, 25M+ leads, POS, and multi-warehouse ERP for $1/month.",
+  description: "Detailed 2026 software comparisons. See why businesses are ditching the $400/mo SaaS tax and upgrading to Beraxis AI for double-entry accounting, verified B2B leads, POS, and multi-warehouse ERP for $1/month.",
   keywords: [
     "Free Odoo alternative",
     "Free HubSpot alternative",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Compare Beraxis AI vs. QuickBooks, Odoo, HubSpot, Zoho CRM & Legacy ERP",
-    description: "Stop paying the $400/mo SaaS tax. Full double-entry accounting, 25M+ leads, POS, and ERP for $1/month.",
+    description: "Stop paying the $400/mo SaaS tax. Full double-entry accounting, verified B2B leads, POS, and ERP for $1/month.",
     images: ["https://www.beraxis.online/social_media_assets/ad4_carousel_comparison_square.png"],
   },
 };

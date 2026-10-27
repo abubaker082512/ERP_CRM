@@ -359,8 +359,8 @@ export default function AppsDashboardPage() {
                                     if (isFreePlan) {
                                         setUpgradePromptModal({
                                             open: true,
-                                            title: "Unlock All 28 Apps & 25M+ Leads Pool",
-                                            reason: "Your Free Plan allows 1 Major App + Settings. Upgrade to a Paid Plan ($1/mo Early Bird) to install unlimited ERP/CRM apps and unlock the 25.8M+ B2B Leads Pool."
+                                            title: "Unlock All 28 Apps & Global Leads Directory",
+                                            reason: "Your Free Plan allows 1 Major App + Settings. Upgrade to a Paid Plan ($1/mo Early Bird) to install unlimited ERP/CRM apps and unlock the Global B2B Leads Directory."
                                         });
                                     } else {
                                         setIsManageAppsModalOpen(true);

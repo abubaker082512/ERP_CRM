@@ -58,7 +58,7 @@ export default function Hero() {
 
                 {/* 3. Subheadline */}
                 <p className="text-sm sm:text-base md:text-lg text-gray-300 max-w-2xl mx-auto mb-8 sm:mb-10 font-normal leading-relaxed">
-                    Replace 5+ expensive, disconnected tools like Odoo, Salesforce, and QuickBooks. Run Accounting, POS, Inventory, HR &amp; CRM across 28 unified modules — with <strong className="text-cyan-300 font-semibold">25M+ verified B2B leads</strong> built-in.
+                    Replace 5+ expensive, disconnected tools like Odoo, Salesforce, and QuickBooks. Run Accounting, POS, Inventory, HR &amp; CRM across 28 unified modules — with <strong className="text-cyan-300 font-semibold">integrated B2B lead discovery</strong> built-in.
                 </p>
 
                 {/* 4. Action Buttons (Standardized Equal Padding & Heights with Zero Offsets) */}
@@ -113,11 +113,11 @@ export default function Hero() {
                     </div>
                     <div className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-300 font-medium">
                         <Globe size={18} className="text-cyan-400 shrink-0" />
-                        <span className="truncate">25M+ Leads Pool</span>
+                        <span className="truncate">Global Leads Directory</span>
                     </div>
                     <div className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-300 font-medium">
                         <Zap size={18} className="text-amber-400 shrink-0" />
-                        <span className="truncate">45ms Edge Sync</span>
+                        <span className="truncate">Instant Cloud Sync</span>
                     </div>
                     <div className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-300 font-medium">
                         <Sparkles size={18} className="text-pink-400 shrink-0" />

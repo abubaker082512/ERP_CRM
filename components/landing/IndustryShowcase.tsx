@@ -204,7 +204,7 @@ export default function IndustryShowcase() {
               </Link>
               <div className="flex items-center gap-2 text-xs text-emerald-400 font-semibold w-full sm:w-auto mt-1 sm:mt-0">
                 <CheckCircle2 size={16} />
-                <span>Includes 25M+ B2B Leads Pool & Full ERP/CRM Suite</span>
+                <span>Includes Global B2B Leads Directory & Full ERP/CRM Suite</span>
               </div>
             </div>
           </div>

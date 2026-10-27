@@ -84,7 +84,7 @@ export default function IndustrySlugClient({ industry, otherIndustries }: Indust
             </span>
             <span>•</span>
             <span className="flex items-center gap-1.5 text-cyan-400 font-medium">
-              <Globe size={14} /> 25M+ Verified Leads Pool Included
+              <Globe size={14} /> Global B2B Leads Directory Included
             </span>
             <span>•</span>
             <span className="flex items-center gap-1.5 text-purple-400 font-medium">
@@ -289,7 +289,7 @@ export default function IndustrySlugClient({ industry, otherIndustries }: Indust
           </h2>
 
           <p className="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto mb-8 font-light">
-            Deploy your dedicated industry workspace in under 60 seconds. Get all 28 modules, unlimited team seats, and the 25M+ leads pool for just <strong className="text-white font-bold">$1/month</strong>.
+            Deploy your dedicated industry workspace in under 60 seconds. Get all 28 modules, unlimited team seats, and the global leads directory for just <strong className="text-white font-bold">$1/month</strong>.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

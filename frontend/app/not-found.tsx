@@ -49,7 +49,7 @@ export default function NotFound() {
             <input
               type="text"
               name="query"
-              placeholder="Search 25M+ Leads or modules..."
+              placeholder="Search Leads or modules..."
               className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-24 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-400 transition-colors"
             />
             <button
@@ -89,7 +89,7 @@ export default function NotFound() {
               className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-400/50 hover:bg-white/10 transition-all group"
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors">25M+ Leads Pool</span>
+                <span className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors">B2B Leads Directory</span>
                 <Globe size={14} className="text-cyan-400" />
               </div>
               <p className="text-xs text-gray-400">Verified B2B contacts directory.</p>

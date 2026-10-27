@@ -90,7 +90,7 @@ export async function generateMetadata({ params }: CompareSlugProps): Promise<Me
   }
 
   const title = `Best Free ${comp.competitorName} Alternative (2026) | Beraxis AI`;
-  const description = `${comp.heroHeadline}. ${comp.heroSubheadline.slice(0, 150)}... Save ${comp.annualSavings} annually with double-entry accounting, CRM, POS, and 25M+ leads for $1/mo.`;
+  const description = `${comp.heroHeadline}. ${comp.heroSubheadline.slice(0, 150)}... Save ${comp.annualSavings} annually with double-entry accounting, CRM, POS, and verified B2B leads for $1/mo.`;
 
   return {
     title,
@@ -103,7 +103,7 @@ export async function generateMetadata({ params }: CompareSlugProps): Promise<Me
       "Free ERP software",
       "Free CRM software",
       "Cloud ERP comparison",
-      "25M B2B leads directory"
+      "Global B2B leads directory"
     ],
     alternates: {
       canonical: `https://www.beraxis.online/compare/${comp.slug}`
@@ -486,7 +486,7 @@ export default async function CompareSlugPage({ params }: CompareSlugProps) {
                 Replace {comp.competitorName} Today for Just $1/Month
               </h2>
               <p className="text-gray-300 text-sm sm:text-base font-light">
-                Lock in your annual savings, tap our 25M+ B2B leads directory, and enjoy frictionless operations.
+                Lock in your annual savings, tap our global B2B leads directory, and enjoy frictionless operations.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
                 <Link

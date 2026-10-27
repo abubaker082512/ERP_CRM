@@ -104,7 +104,7 @@ export default function Navbar() {
                     <div className="px-4 pt-3 pb-8 space-y-2 flex flex-col">
                         <Link href="/" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Home</Link>
                         <Link href="/leads-pool" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-semibold text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 rounded-md">
-                            🎯 Lead Pool (25M+ Directory)
+                            🎯 B2B Leads Directory
                         </Link>
                         <Link href="/features" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Features</Link>
                         <Link href="/industries" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-md">Industries</Link>

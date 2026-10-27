@@ -106,7 +106,7 @@ const DEFAULT_STORE: ExperimentDataStore = {
     hero_headline_v1: {
       id: "hero_headline_v1",
       name: "Homepage Hero Headline & Positioning",
-      description: "Testing feature scope vs. $400/mo Anti-SaaS Tax vs. 25M+ Leads Customer Engine.",
+      description: "Testing feature scope vs. $400/mo Anti-SaaS Tax vs. Global Leads Customer Engine.",
       totalImpressions: 1931,
       totalConversions: 290,
       overallCvr: 15.02,
@@ -138,7 +138,7 @@ const DEFAULT_STORE: ExperimentDataStore = {
         },
         leads_engine: {
           id: "leads_engine",
-          name: "Growth & Pipeline (25M+ Leads Customer Engine)",
+          name: "Growth & Pipeline (Global Leads Customer Engine)",
           impressions: 631,
           conversions: 98,
           cvr: 15.53,
@@ -232,7 +232,7 @@ const DEFAULT_STORE: ExperimentDataStore = {
         },
         interactive_leads: {
           id: "interactive_leads",
-          name: "Live Interactive 25M+ Leads Search Widget",
+          name: "Live Interactive Global Leads Search Widget",
           impressions: 531,
           conversions: 95,
           cvr: 17.89,
@@ -264,7 +264,7 @@ const DEFAULT_STORE: ExperimentDataStore = {
     },
     creative_customer_generator: {
       id: "creative_customer_generator",
-      name: "25M+ B2B Leads Engine Walkthrough",
+      name: "Global B2B Leads Engine Walkthrough",
       visits: 324,
       conversions: 52,
       cvr: 16.05,

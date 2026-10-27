@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     },
     openGraph: {
         title: "Beraxis Blog & Operational Briefings",
-        description: "Articles on autonomous ERP, 25M+ lead mining, and migrating from legacy monolithic software.",
+        description: "Articles on autonomous ERP, global B2B lead discovery, and migrating from legacy monolithic software.",
         url: "https://www.beraxis.online/blog",
         images: ["https://www.beraxis.online/og-image.png"]
     }

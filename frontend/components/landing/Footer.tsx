@@ -23,7 +23,7 @@ export default function Footer() {
                             />
                         </Link>
                         <p className="text-xs text-gray-400 font-light leading-relaxed max-w-sm">
-                            The #1 autonomous AI ERP &amp; CRM command center. Unify 28 business modules with built-in 25M+ B2B leads directory, point of sale, smart inventory, and voice assist pilot for $1/month.
+                            The #1 autonomous AI ERP &amp; CRM command center. Unify 28 business modules with built-in global B2B leads directory, point of sale, smart inventory, and voice assist pilot for $1/month.
                         </p>
                         
                         <div className="space-y-2 pt-2 text-xs">
@@ -60,7 +60,7 @@ export default function Footer() {
                                 className="inline-flex items-center gap-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/20 px-3 py-2 rounded-xl text-xs transition-all"
                             >
                                 <Globe size={13} />
-                                <span>25M+ Leads Directory</span>
+                                <span>B2B Leads Directory</span>
                             </Link>
                         </div>
                     </div>
@@ -124,7 +124,7 @@ export default function Footer() {
                             <li><Link href="/compare" className="hover:text-amber-300 font-semibold text-amber-400 flex items-center gap-1">All Comparisons Hub &rarr;</Link></li>
                             
                             <li className="pt-3 border-t border-white/5"><span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block mb-1">Tools &amp; Hubs</span></li>
-                            <li><Link href="/leads-pool" className="hover:text-white transition-colors">25M+ Leads Pool</Link></li>
+                            <li><Link href="/leads-pool" className="hover:text-white transition-colors">B2B Leads Directory</Link></li>
                             <li><Link href="/affiliates" className="hover:text-purple-300 font-semibold text-purple-400">Affiliate Program</Link></li>
                             <li><Link href="/referrals" className="hover:text-white transition-colors">Customer Referrals</Link></li>
                             <li><Link href="/digital-launch-hub.html" className="hover:text-white transition-colors">Digital Launch Hub</Link></li>

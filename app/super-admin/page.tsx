@@ -1324,7 +1324,7 @@ function SuperAdminPageContent() {
                     <TabBtn active={activeTab === "audit"}       onClick={() => setActiveTab("audit")}       label="🛡️ Audit Logs" count={safeAuditLogs.length} />
                     <TabBtn active={activeTab === "diagnostics"} onClick={() => setActiveTab("diagnostics")} label="🩺 System Health" />
                                         <TabBtn active={activeTab === "experiments"} onClick={() => { setActiveTab("experiments"); fetchExperimentsData(); }} label="🧪 A/B Testing & Optimization" />
-                    <TabBtn active={activeTab === "outbound"}    onClick={() => setActiveTab("outbound")}    label="🚀 Outbound Campaigns (25M+ Leads)" />
+                    <TabBtn active={activeTab === "outbound"}    onClick={() => setActiveTab("outbound")}    label="🚀 Outbound Campaigns (B2B Leads)" />
                 </div>
 
                 {/* ── TAB 1: WORKSPACES & TENANT DATABASES ── */}

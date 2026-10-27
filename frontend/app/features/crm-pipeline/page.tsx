@@ -6,7 +6,7 @@ import { Users, Globe, Zap, CheckCircle2, ArrowRight, Sparkles, MessageSquare, B
 
 export const metadata: Metadata = {
   title: "Free AI CRM Pipeline & Lead Management Software | Beraxis",
-  description: "Accelerate deal velocity with Beraxis Free AI CRM. Includes visual Kanban stages, automated WhatsApp sync, and 25M+ built-in global verified B2B leads for $1/month.",
+  description: "Accelerate deal velocity with Beraxis Free AI CRM. Includes visual Kanban stages, automated WhatsApp sync, and built-in global verified B2B leads for $1/month.",
   keywords: [
     "Free CRM",
     "Free CRM software",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "AI CRM Pipeline & Lead Management Software | Beraxis",
-    description: "Close deals 30% faster with interactive Kanban, voice notes, WhatsApp sync, and 25M+ verified B2B contacts built-in.",
+    description: "Close deals 30% faster with interactive Kanban, voice notes, WhatsApp sync, and verified B2B contacts built-in.",
     url: "https://www.beraxis.online/features/crm-pipeline",
     siteName: "Beraxis",
     images: [
@@ -49,12 +49,12 @@ export default function CrmPipelineFeaturePage() {
         "name": "How does the Beraxis CRM differ from traditional CRMs like HubSpot or Salesforce?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Unlike HubSpot which charges escalating monthly fees per contact and locks sales pipelines behind enterprise tiers, Beraxis includes unlimited user seats, full visual Kanban automation, and a native 25M+ B2B Leads Pool for just $1/month."
+          "text": "Unlike HubSpot which charges escalating monthly fees per contact and locks sales pipelines behind enterprise tiers, Beraxis includes unlimited user seats, full visual Kanban automation, and a native B2B Leads Directory for just $1/month."
         }
       },
       {
         "@type": "Question",
-        "name": "Can I import leads directly from the 25M+ Leads Pool into my pipeline?",
+        "name": "Can I import leads directly from the Leads Pool into my pipeline?",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "Yes. Search by industry, country, or job title in the Leads Pool, and click 'Import to CRM'. All verified corporate emails, direct dials, and company details populate immediately into your New Opportunity stage."
@@ -125,7 +125,7 @@ export default function CrmPipelineFeaturePage() {
             <Users size={14} className="text-blue-400" /> Autonomous Sales Cockpit
           </div>
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-tight">
-            AI-Powered CRM Pipeline With Built-In <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400">25M+ Leads</span>
+            AI-Powered CRM Pipeline With Built-In <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400">Global Leads</span>
           </h1>
           <p className="text-lg sm:text-xl text-gray-300 font-light leading-relaxed mb-8 max-w-3xl mx-auto">
             Stop switching between HubSpot, Apollo, and messy spreadsheets. Track high-value deals with drag-and-drop Kanban, AI opportunity scoring, WhatsApp sync, and 1-click global lead imports.
@@ -136,7 +136,7 @@ export default function CrmPipelineFeaturePage() {
               Claim Early Bird ($1/mo) <ArrowRight size={16} />
             </Link>
             <Link href="/leads-pool" className="px-7 py-4 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold text-base transition-all flex items-center gap-2">
-              <Globe size={16} /> Explore 25M+ Leads
+              <Globe size={16} /> Explore B2B Leads
             </Link>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function CrmPipelineFeaturePage() {
             <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-6">
               <Globe size={24} />
             </div>
-            <h2 className="text-xl font-bold text-white mb-3">Native 25M+ Leads Directory</h2>
+            <h2 className="text-xl font-bold text-white mb-3">Native B2B Leads Directory</h2>
             <p className="text-gray-400 text-sm leading-relaxed">
               Zero add-on subscription fees. Search decision-makers by country, revenue, and industry, then import verified phone numbers and emails straight into your funnel.
             </p>
@@ -184,7 +184,7 @@ export default function CrmPipelineFeaturePage() {
               "Multi-Currency Deal Valuations",
               "AI Win Probability Scoring",
               "Automatic Quotation Generator",
-              "1-Click 25M+ Leads Import",
+              "1-Click Leads Import",
               "Customer Activity Audit Logs",
               "Team Commission Split Tracking",
               "Omnichannel Email & WhatsApp Threads",
@@ -220,7 +220,7 @@ export default function CrmPipelineFeaturePage() {
             Ready to Accelerate Your Sales Funnel?
           </h2>
           <p className="text-gray-300 text-sm max-w-xl mx-auto mb-6">
-            Get instant access to the CRM pipeline, 25M+ B2B Leads Pool, and all 28 ERP modules for just $1/month.
+            Get instant access to the CRM pipeline, Global B2B Leads Directory, and all 28 ERP modules for just $1/month.
           </p>
           <Link href="/pricing" className="galaxy-btn-primary !px-8 !py-3.5 text-sm font-bold inline-flex items-center gap-2">
             Get Started Now ($1/mo) <ArrowRight size={15} />

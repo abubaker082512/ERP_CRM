@@ -12,10 +12,10 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 export const metadata: Metadata = {
     metadataBase: new URL("https://www.beraxis.online"),
     title: {
-        default: "Beraxis | Free ERP, Free CRM & Free POS · 25M+ B2B Leads Pool ($1/mo)",
+        default: "Beraxis | Free ERP, Free CRM & Free POS · Global B2B Leads Directory ($1/mo)",
         template: "%s | Beraxis"
     },
-    description: "Forever Free Tier available for Free CRM, Free POS & Free ERP. Unify 28 AI modules — CRM, 25M+ verified B2B leads directory, POS, multi-industry operations, double-entry accounting, inventory, and HRMS for just $1/month.",
+    description: "Forever Free Tier available for Free CRM, Free POS & Free ERP. Unify 28 AI modules — CRM, verified B2B leads directory, POS, multi-industry operations, double-entry accounting, inventory, and HRMS for just $1/month.",
     keywords: [
         "Free ERP",
         "Free CRM",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
         "Autonomous ERP",
         "Next Gen ERP",
         "B2B Leads Pool",
-        "25M verified B2B leads database",
+        "Verified B2B leads database",
         "AI ERP System",
         "Cloud ERP software",
         "Gym management software",
@@ -85,7 +85,7 @@ export const metadata: Metadata = {
         "real estate lease management CRM",
         "subcontractor project costing ERP",
         "non-profit grant tracking CRM",
-        "ERP with 25 million B2B leads",
+        "ERP with B2B leads directory",
         "Voice AI autonomous ERP copilot",
         "Affordable ERP software"
     ],
@@ -119,8 +119,8 @@ export const metadata: Metadata = {
     },
     manifest: "/site.webmanifest",
     openGraph: {
-        title: "Beraxis | Free ERP, Free CRM & Free POS · 25M+ B2B Leads Pool",
-        description: "Forever Free Tier available for Free CRM, Free POS & Free ERP. Unify 28 AI modules — CRM, 25M+ verified B2B leads directory, POS, accounting & HRMS for $1/month.",
+        title: "Beraxis | Free ERP, Free CRM & Free POS · Global B2B Leads Directory",
+        description: "Forever Free Tier available for Free CRM, Free POS & Free ERP. Unify 28 AI modules — CRM, verified B2B leads directory, POS, accounting & HRMS for $1/month.",
         url: "https://www.beraxis.online",
         siteName: "Beraxis",
         images: [
@@ -142,8 +142,8 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: "summary_large_image",
-        title: "Beraxis | Free ERP, Free CRM & Free POS · 25M+ B2B Leads Pool",
-        description: "Forever Free Tier available. The AI-driven business command center: Free CRM, Free POS, 25M+ verified B2B leads directory, inventory, accounting & HRMS for $1/month.",
+        title: "Beraxis | Free ERP, Free CRM & Free POS · Global B2B Leads Directory",
+        description: "Forever Free Tier available. The AI-driven business command center: Free CRM, Free POS, verified B2B leads directory, inventory, accounting & HRMS for $1/month.",
         images: ["https://www.beraxis.online/og-image.png?v=3"],
         creator: "@beraxis",
     },
@@ -185,7 +185,7 @@ export default function RootLayout({
                     "height": "512"
                 },
                 "image": "https://www.beraxis.online/og-image.png?v=3",
-                "description": "Beraxis Systems Inc. is an autonomous AI-driven enterprise ERP and CRM command center unifying business operations, CRM, 25M+ verified B2B Leads Pool, POS, multi-industry blueprints, inventory, and financial bookkeeping.",
+                "description": "Beraxis Systems Inc. is an autonomous AI-driven enterprise ERP and CRM command center unifying business operations, CRM, verified B2B Leads Directory, POS, multi-industry blueprints, inventory, and financial bookkeeping.",
                 "sameAs": [
                     "https://www.beraxis.online",
                     "https://wa.me/19707807993",
@@ -220,13 +220,6 @@ export default function RootLayout({
                 "name": "Beraxis",
                 "operatingSystem": "Cloud, Web, iOS, Android",
                 "applicationCategory": "BusinessApplication",
-                "aggregateRating": {
-                    "@type": "AggregateRating",
-                    "ratingValue": "4.9",
-                    "reviewCount": "1280",
-                    "bestRating": "5",
-                    "worstRating": "1"
-                },
                 "offers": [
                     {
                         "@type": "Offer",
@@ -246,7 +239,7 @@ export default function RootLayout({
                 ],
                 "featureList": [
                     "Autonomous AI Voice Pilot Cockpit",
-                    "25M+ Verified B2B Leads Pool Directory",
+                    "Global B2B Leads Directory",
                     "Double-Entry General Ledger & Accounting",
                     "Visual Kanban CRM & Sales Pipeline",
                     "Omnichannel Touch Point of Sale (POS)",
@@ -254,7 +247,7 @@ export default function RootLayout({
                     "HRMS, Attendance & Payroll Management",
                     "12 Industry Operational Blueprints"
                 ],
-                "description": "Beraxis is an autonomous AI ERP & CRM platform featuring Free CRM, Free POS, and Free ERP modules, 25M+ B2B Leads Pool, accounting, inventory, and Voice Pilot for $1/month.",
+                "description": "Beraxis is an autonomous AI ERP & CRM platform featuring Free CRM, Free POS, and Free ERP modules, Global B2B Leads Directory, accounting, inventory, and Voice Pilot for $1/month.",
                 "url": "https://www.beraxis.online"
             },
             {
@@ -266,7 +259,7 @@ export default function RootLayout({
                         "name": "What is the best free ERP and CRM in 2026?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Beraxis is rated one of the best free ERP and CRM platforms in 2026, offering a Forever Free tier that unifies CRM pipelines, double-entry accounting, point of sale (POS), and inventory management with an AI Voice Pilot and 25M+ verified B2B leads."
+                            "text": "Beraxis is rated one of the best free ERP and CRM platforms in 2026, offering a Forever Free tier that unifies CRM pipelines, double-entry accounting, point of sale (POS), and inventory management with an AI Voice Pilot and verified B2B leads directory."
                         }
                     },
                     {
@@ -306,7 +299,7 @@ export default function RootLayout({
                         "name": "What is Beraxis?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Beraxis is an autonomous AI-powered ERP and CRM platform that unifies 28 business modules—including double-entry accounting, point of sale (POS), inventory management, HRMS payroll, an AI Voice Pilot, and a built-in 25M+ verified B2B leads directory—into a single glassmorphic command deck."
+                            "text": "Beraxis is an autonomous AI-powered ERP and CRM platform that unifies 28 business modules—including double-entry accounting, point of sale (POS), inventory management, HRMS payroll, an AI Voice Pilot, and a built-in global B2B leads directory—into a single glassmorphic command deck."
                         }
                     },
                     {
@@ -319,10 +312,10 @@ export default function RootLayout({
                     },
                     {
                         "@type": "Question",
-                        "name": "What is the Beraxis 25M+ B2B Leads Pool?",
+                        "name": "What is the Beraxis B2B Leads Directory?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "The Leads Pool is an integrated global B2B contact directory containing over 25 million verified corporate decision-makers, direct dials, and verified emails across 50+ countries. Users can search and 1-click import leads directly into their Beraxis CRM pipeline with zero extra third-party software subscriptions."
+                            "text": "The Leads Directory is an integrated global B2B contact search tool containing verified corporate decision-makers, direct dials, and verified emails across global markets. Users can search and 1-click import leads directly into their Beraxis CRM pipeline with zero extra third-party software subscriptions."
                         }
                     },
                     {
@@ -387,7 +380,7 @@ export default function RootLayout({
                     {
                         "@type": "ListItem",
                         "position": 3,
-                        "name": "25M+ Leads Directory",
+                        "name": "B2B Leads Directory",
                         "item": "https://www.beraxis.online/leads-pool"
                     },
                     {

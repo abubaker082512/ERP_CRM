@@ -98,9 +98,9 @@ export default function TermsPage() {
           </section>
 
           <section className="bg-[#0b0e17]/80 border border-white/5 rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 className="text-xl font-bold text-white">3. Acceptable Use of 25M+ Leads Pool</h2>
+            <h2 className="text-xl font-bold text-white">3. Acceptable Use of B2B Leads Directory</h2>
             <p>
-              Subscribers receive access to the integrated 25M+ Global B2B Leads Pool. By using this service, you agree to:
+              Subscribers receive access to the integrated Global B2B Leads Directory. By using this service, you agree to:
             </p>
             <ul className="list-disc pl-5 space-y-2 text-gray-400">
               <li>Adhere to applicable international communications regulations (including CAN-SPAM Act, GDPR, and CASL).</li>

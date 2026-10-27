@@ -92,7 +92,7 @@ export default function IndustriesHubPage() {
               <CheckCircle2 size={14} /> Zero Configuration Headaches
             </span>
             <span className="text-xs px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-cyan-400 flex items-center gap-1.5">
-              <Globe size={14} /> 25M+ Verified B2B Leads Built-In
+              <Globe size={14} /> Global B2B Leads Built-In
             </span>
             <span className="text-xs px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-amber-300 flex items-center gap-1.5">
               <Flame size={14} /> $1/Month Early Bird Special

@@ -182,7 +182,7 @@ With Beraxis, this entire fragmented chain is replaced by a single, real-time co
 When you open the **Beraxis Lead Pool**, you are tapping into a continuously updated global directory of **25,000,000+ verified executive contacts**:
 
 * **Multi-Parameter Filtering:** Pinpoint prospects by exact industry (SaaS, FinTech, Logistics, Robotics), headcount, country, and seniority.
-* **Live AI Web Scraper & Verification:** Every email is verified through real-time SMTP handshakes to guarantee a 98.6% deliverability rate.
+* **Live AI Web Scraper & Verification:** Every email is validated through real-time SMTP handshakes to maximize inbox reach and campaign deliverability.
 * **1-Click Native CRM Sync:** Click "Add to CRM" and the lead is immediately placed into the "New" stage of your Kanban pipeline with automated revenue projections and probability scoring.
 
 Take a look at how this works in our [Interactive Public Leads Pool Showcase](/leads-pool).

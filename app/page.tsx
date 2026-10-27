@@ -29,8 +29,6 @@ import Footer from "@/components/landing/Footer";
 import Hero from "@/components/landing/Hero";
 import RealProductShowcase from "@/components/landing/RealProductShowcase";
 import Features from "@/components/landing/Features";
-import Stats from "@/components/landing/Stats";
-import Testimonials from "@/components/landing/Testimonials";
 import IndustryShowcase from "@/components/landing/IndustryShowcase";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
@@ -385,17 +383,11 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Core Stats Bar */}
-            <Stats />
-
             {/* Features Breakdown */}
             <Features />
 
             {/* Industry Specific Configurations */}
             <IndustryShowcase />
-
-            {/* Real User Testimonials */}
-            <Testimonials />
 
             {/* Simple FAQ Section for High Conversion */}
             <section className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

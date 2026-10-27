@@ -231,7 +231,7 @@ export default async function BlogPostPage({ params }: Props) {
                             href="/leads-pool"
                             className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-400 text-cyan-300 font-semibold flex items-center justify-between"
                         >
-                            <span>Explore 25M+ Leads Pool</span>
+                            <span>Explore B2B Leads Directory</span>
                             <ArrowRight size={14} />
                         </Link>
                         <Link
