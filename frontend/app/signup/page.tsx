@@ -92,7 +92,7 @@ function SignupForm() {
     };
 
     return (
-        <div className="w-full max-w-md relative z-10">
+        <div className="w-full max-w-md relative z-10 my-8">
             {/* Header */}
             <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-14 h-14 bg-green-600/20 rounded-2xl mb-4 border border-green-500/30">
@@ -112,7 +112,7 @@ function SignupForm() {
                     <span>Referred by partner code <strong className="text-white font-mono">{referralCode}</strong>. 1 Month Free benefit attached to your account!</span>
                 </div>
             )}
-            <div className="glass-card p-8 shadow-2xl">
+            <div className="bg-[#0F172A]/90 backdrop-blur-xl rounded-3xl border border-purple-500/30 p-8 shadow-2xl shadow-purple-950/40">
                 {error && (
                     <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg mb-5">
                         <AlertCircle size={18} className="text-red-400 shrink-0" />
@@ -128,13 +128,13 @@ function SignupForm() {
 
                 <form onSubmit={handleSignup} className="space-y-4">
                     {!invite_id && (
-                        <div className="flex p-1 bg-[#0F172A]/80 border border-gray-600/50 rounded-lg mb-4">
+                        <div className="flex p-1 bg-[#0B0F19] border border-white/10 rounded-xl mb-4">
                             <button
                                 type="button"
                                 onClick={() => setAccountType("individual")}
                                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
                                     accountType === "individual" 
-                                    ? "bg-purple-600/80 text-white shadow-lg" 
+                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-600/25" 
                                     : "text-gray-400 hover:text-white"
                                 }`}
                             >
@@ -145,7 +145,7 @@ function SignupForm() {
                                 onClick={() => setAccountType("company")}
                                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
                                     accountType === "company" 
-                                    ? "bg-purple-600/80 text-white shadow-lg" 
+                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-600/25" 
                                     : "text-gray-400 hover:text-white"
                                 }`}
                             >
@@ -162,7 +162,7 @@ function SignupForm() {
                                 value={companyName}
                                 onChange={(e) => setCompanyName(e.target.value)}
                                 placeholder="Acme Corp"
-                                className="w-full px-4 py-3 bg-[#0F172A]/80 border border-gray-600/50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
+                                className="w-full px-4 py-3 bg-[#0B0F19] border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
                                 required
                             />
                         </div>
@@ -176,7 +176,7 @@ function SignupForm() {
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Your full name"
-                            className="w-full px-4 py-3 bg-[#0F172A]/80 border border-gray-600/50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
+                            className="w-full px-4 py-3 bg-[#0B0F19] border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
                             required
                         />
                     </div>
@@ -189,7 +189,7 @@ function SignupForm() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="you@email.com"
-                            className="w-full px-4 py-3 bg-[#0F172A]/80 border border-gray-600/50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
+                            className="w-full px-4 py-3 bg-[#0B0F19] border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
                             required
                         />
                     </div>
@@ -201,7 +201,7 @@ function SignupForm() {
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             placeholder="e.g. +1 555-0199 or 03001234567"
-                            className="w-full px-4 py-3 bg-[#0F172A]/80 border border-gray-600/50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all font-mono text-sm"
+                            className="w-full px-4 py-3 bg-[#0B0F19] border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all font-mono text-sm"
                         />
                     </div>
 
@@ -214,7 +214,7 @@ function SignupForm() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Min. 6 characters"
-                                className="w-full px-4 py-3 bg-[#0F172A]/80 border border-gray-600/50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
+                                className="w-full px-4 py-3 bg-[#0B0F19] border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
                                 required
                             />
                             <button
@@ -235,7 +235,7 @@ function SignupForm() {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Repeat password"
-                            className="w-full px-4 py-3 bg-[#0F172A]/80 border border-gray-600/50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
+                            className="w-full px-4 py-3 bg-[#0B0F19] border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
                             required
                         />
                     </div>
@@ -244,7 +244,7 @@ function SignupForm() {
                         id="signup-submit"
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 mt-2"
+                        className="galaxy-btn-primary !w-full !py-3.5 !rounded-xl text-sm font-bold shadow-lg shadow-purple-600/25 flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
                     >
                         {loading ? (
                             <><Loader2 size={18} className="animate-spin" /> Creating account...</>
@@ -269,8 +269,12 @@ function SignupForm() {
 
 export default function SignupPage() {
     return (
-        <div className="min-h-screen bg-[#020205]/70 relative z-10 flex items-center justify-center p-4">
-            <Suspense fallback={<div className="text-white">Loading...</div>}>
+        <div className="min-h-screen bg-[#020205] relative flex items-center justify-center p-4 overflow-hidden">
+            {/* Ambient Background Glows */}
+            <div className="absolute top-1/4 -left-32 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-1/4 -right-32 w-80 h-80 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
+
+            <Suspense fallback={<div className="min-h-screen bg-[#020205] flex items-center justify-center text-gray-400">Loading...</div>}>
                 <SignupForm />
             </Suspense>
         </div>

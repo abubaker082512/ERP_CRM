@@ -21,6 +21,9 @@ export default function CosmicBackground() {
     cleanPath.startsWith("/pitch-deck") || 
     cleanPath.startsWith("/presentation") || 
     cleanPath.startsWith("/launch-creatives") || 
+    cleanPath.startsWith("/acceptable-use") || 
+    cleanPath.startsWith("/erp") || 
+    cleanPath.startsWith("/crm-software") || 
     cleanPath.startsWith("/privacy") || 
     cleanPath.startsWith("/terms") || 
     cleanPath.startsWith("/refund") || 

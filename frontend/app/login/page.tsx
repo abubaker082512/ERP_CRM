@@ -74,17 +74,21 @@ function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen bg-[#020205]/70 relative z-10 flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
+        <div className="min-h-screen bg-[#020205] relative flex items-center justify-center p-4 overflow-hidden">
+            {/* Ambient Background Glows */}
+            <div className="absolute top-1/4 -left-32 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-1/4 -right-32 w-80 h-80 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="w-full max-w-md relative z-10">
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center mb-4">
                         <img src="/logo-full.png" alt="Beraxis Logo" className="h-12 w-auto object-contain" />
                     </div>
-                    <h1 className="text-3xl font-bold text-white">Welcome back</h1>
-                    <p className="text-gray-400 mt-2">Sign in to your ERP workspace</p>
+                    <h1 className="text-3xl font-extrabold text-white tracking-tight">Welcome back</h1>
+                    <p className="text-gray-400 mt-2 text-sm">Sign in to your autonomous ERP workspace</p>
                 </div>
 
-                <div className="bg-[#1E293B] rounded-2xl border border-gray-700/50 p-8 shadow-2xl">
+                <div className="bg-[#0F172A]/90 backdrop-blur-xl rounded-3xl border border-purple-500/30 p-8 shadow-2xl shadow-purple-950/40">
                     {inactivityMsg && (
                         <div className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl mb-6">
                             <Clock size={18} className="text-amber-400 shrink-0" />
@@ -119,7 +123,7 @@ function LoginForm() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="you@company.com"
-                                className="w-full px-4 py-3 bg-[#0F172A] border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
+                                className="w-full px-4 py-3 bg-[#0B0F19] border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-white placeholder-gray-500 transition-all text-sm"
                                 required
                             />
                         </div>
@@ -133,7 +137,7 @@ function LoginForm() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
-                                    className="w-full px-4 py-3 bg-[#0F172A] border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-gray-500 transition-all"
+                                    className="w-full px-4 py-3 bg-[#0B0F19] border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-white placeholder-gray-500 transition-all text-sm"
                                     required
                                 />
                                 <button
@@ -150,7 +154,7 @@ function LoginForm() {
                             id="login-submit"
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 mt-2"
+                            className="galaxy-btn-primary !w-full !py-3.5 !rounded-xl text-sm font-bold shadow-lg shadow-purple-600/25 flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
                         >
                             {loading ? (
                                 <><Loader2 size={18} className="animate-spin" /> Signing in...</>
@@ -159,7 +163,7 @@ function LoginForm() {
                             )}
                         </button>
 
-                        <p className="text-center text-sm text-gray-500">
+                        <p className="text-center text-sm text-gray-400">
                             Don&apos;t have an account?{' '}
                             <button type="button" onClick={() => router.push('/signup')} className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
                                 Create one free
@@ -168,7 +172,7 @@ function LoginForm() {
                     </form>
                 </div>
 
-                <p className="text-center text-xs text-gray-600 mt-6">Next-Gen AI ERP · 7-Day Free Trial</p>
+                <p className="text-center text-xs text-gray-500 mt-6">Next-Gen AI ERP · 1 App Free Forever · $1/mo Early Bird</p>
             </div>
         </div>
     );
@@ -176,7 +180,7 @@ function LoginForm() {
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-gray-400">Loading...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-[#020205] flex items-center justify-center text-gray-400">Loading...</div>}>
             <LoginForm />
         </Suspense>
     );

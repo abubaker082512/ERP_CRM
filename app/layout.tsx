@@ -413,7 +413,7 @@ export default function RootLayout({
     };
 
     return (
-        <html lang="en">
+        <html lang="en" className="bg-[#020205] text-white">
             <head>
                 {/* Explicit search engine icon links */}
                 <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -429,7 +429,7 @@ export default function RootLayout({
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
                 />
             </head>
-            <body className={`${inter.className} relative min-h-screen text-white bg-transparent`}>
+            <body className={`${inter.className} relative min-h-screen text-white bg-[#020205]`}>
                 <div className="aurora-bg" />
                 <CosmicBackground />
                 <GalaxyAppShell>{children}</GalaxyAppShell>

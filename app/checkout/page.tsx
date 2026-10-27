@@ -171,7 +171,7 @@ function CheckoutPageContent() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#070B16] text-white flex flex-col font-sans">
+      <div className="min-h-screen bg-[#020205] text-white flex flex-col font-sans relative overflow-hidden">
         <Navbar />
         <main className="flex-grow pt-32 pb-20 flex items-center justify-center px-4">
           <div className="max-w-md w-full bg-[#0F172A] border border-emerald-500/30 rounded-3xl p-8 text-center shadow-2xl space-y-6">
@@ -207,7 +207,7 @@ function CheckoutPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#070B16] text-white flex flex-col font-sans selection:bg-purple-500 selection:text-white">
+    <div className="min-h-screen bg-[#020205] text-white flex flex-col font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden">
       <Navbar />
 
       <main className="flex-grow pt-28 sm:pt-36 pb-20 relative z-10">

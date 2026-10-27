@@ -196,7 +196,7 @@ export default async function CompareSlugPage({ params }: CompareSlugProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B16] text-white flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-[#020205] text-white flex flex-col font-sans selection:bg-cyan-500 selection:text-black relative overflow-hidden">
       <Navbar />
       {/* JSON-LD Rich Snippet Schemas */}
       <script

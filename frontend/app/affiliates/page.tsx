@@ -38,7 +38,7 @@ export default function AffiliatesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020205]/60 text-white flex flex-col font-sans selection:bg-purple-500 selection:text-white relative z-10">
+    <div className="min-h-screen bg-[#020205] text-white flex flex-col font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden">
       <Navbar />
 
       <main className="flex-grow pt-28 sm:pt-36 pb-20 relative z-10 overflow-hidden">
