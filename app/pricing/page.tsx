@@ -369,7 +369,7 @@ export default function PricingPage() {
                             data-creem-theme="dark"
                             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95 text-center cursor-pointer"
                         >
-                            <Lock size={16} /> Pay Now (${isAnnual ? "$12/yr" : "$5/mo"}) <ArrowRight size={16} />
+                            <Lock size={16} /> Pay Now ({isAnnual ? "$12/yr" : "$5/mo"}) <ArrowRight size={16} />
                         </a>
                     </div>
 
@@ -434,7 +434,7 @@ export default function PricingPage() {
                             data-creem-theme="dark"
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 flex items-center justify-center gap-2 hover:border-pink-500/30 cursor-pointer"
                         >
-                            <Lock size={16} /> Pay Now (${isAnnual ? "$448.80/yr" : "$46.80/mo"}) <ArrowRight size={16} />
+                            <Lock size={16} /> Pay Now ({isAnnual ? "$448.80/yr" : "$46.80/mo"}) <ArrowRight size={16} />
                         </a>
                     </div>
                 </div>
