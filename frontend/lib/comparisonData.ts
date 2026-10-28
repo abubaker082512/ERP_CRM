@@ -322,4 +322,54 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
       { q: "How much can our business save by switching from Zoho CRM to Beraxis?", a: "A 5-user sales team on Zoho CRM Professional or Zoho One typically spends $1,800 to $4,500 annually. On Beraxis, your team can lock in the Early Bird Standard Plan for just $12/year ($1/month), saving over $1,700 every single year." }
     ]
   }
+,
+  "salesforce-alternative": {
+    slug: "salesforce-alternative",
+    competitorName: "Salesforce Sales Cloud",
+    competitorTagline: "Enterprise CRM with Steep User Taxes and Disconnected ERP",
+    badge: "The Unified AI CRM & ERP",
+    heroHeadline: "The Modern Salesforce Alternative With 25 Million Built-In B2B Leads",
+    heroSubheadline: "Stop paying $150 to $300/user/month for an empty CRM that requires $10,000 in ZoomInfo credits and disconnected accounting tools. Beraxis unifies your sales pipeline with 25,000,000+ pre-loaded verified B2B leads, full GAAP double-entry accounting, and POS for $1/month.",
+    competitorCostAnnual: "$1,800 - $3,600 / user / yr",
+    beraxisCostAnnual: "$12/yr (Early Bird)",
+    annualSavings: "$3,588+/user/yr",
+    keySummary: "Salesforce pioneered cloud CRM 20 years ago, but it has become an expensive, bloated monolith. To actually generate revenue, you need costly consulting partners, Apollo/ZoomInfo add-ons, and external accounting software. Beraxis combines lead prospecting, visual pipeline deals, accounting, and inventory fulfillment in one unified AI command center.",
+    competitorFlaws: [
+      "Astronomical per-user seat pricing ($150 to $300/user/month for Enterprise Sales Cloud)",
+      "Empty contact database — forces you to spend thousands on ZoomInfo, Apollo, or Sales Navigator",
+      "Zero built-in double-entry general ledger accounting (requires third-party sync that frequently desyncs)",
+      "No native Point of Sale (POS) for physical counter sales or multi-warehouse fulfillment",
+      "Mandatory certified Salesforce administrators ($80k-$120k salary) or expensive agency retainers for basic workflows"
+    ],
+    beraxisWins: [
+      "Built-in 25,000,000+ verified B2B leads directory with AI intent scoring and 1-click CRM ingestion",
+      "Visual sales Kanban pipeline with instant proposal generation, e-signatures, and ledger conversion",
+      "Full GAAP/IFRS compliant double-entry general ledger, balance sheets, and real-time P&L included",
+      "Omnichannel touch POS and multi-warehouse inventory fulfillment included out of the box",
+      "Transparent $1/month Early Bird pricing ($12/year) with 1 App 100% Free Forever"
+    ],
+    matrix: [
+      { feature: "Visual Sales Kanban Pipeline", beraxis: true, competitor: true, note: "Both offer customizable deal stages and opportunity pipelines" },
+      { feature: "Built-in 25M+ Verified B2B Leads", beraxis: true, competitor: false, note: "Salesforce requires ZoomInfo ($15k/yr) or Apollo ($100+/mo)" },
+      { feature: "AI Buyer Intent Scoring", beraxis: true, competitor: "Einstein Addon ($50/user/mo)", note: "Automatically scores hot buying probability" },
+      { feature: "Full Double-Entry Accounting", beraxis: true, competitor: false, note: "Salesforce requires QuickBooks or NetSuite integration" },
+      { feature: "Point of Sale (POS) Integration", beraxis: true, competitor: false, note: "Beraxis runs touch POS on any browser or tablet" },
+      { feature: "Multi-Warehouse Stock Fulfillment", beraxis: true, competitor: false, note: "Closed deals instantly reserve inventory across bins" },
+      { feature: "AI Voice Pilot Operations", beraxis: true, competitor: false, note: "Voice-draft proposals and query pipeline metrics in sub-50ms" },
+      { feature: "Implementation Cost", beraxis: "$0 (Instant 30s Setup)", competitor: "$10,000 - $50,000+ Agency", note: "Zero consultant onboarding fees" },
+      { feature: "1 App Free Forever Tier", beraxis: true, competitor: false, note: "Beraxis requires zero credit card for free app tier" },
+      { feature: "Annual Cost per 5 Users", beraxis: "$60 / yr total", competitor: "$9,000 - $18,000 / yr", note: "99% cost reduction with complete operational ERP" }
+    ],
+    migrationSteps: [
+      { step: "01", title: "Export Salesforce Records", desc: "Download Accounts, Contacts, Leads, and Opportunities via Salesforce Data Export or Reports into CSV." },
+      { step: "02", title: "1-Click Beraxis CRM Import", desc: "Use our intelligent CSV mapper to recreate custom deal stages, map contact fields, and import lead values." },
+      { step: "03", title: "Activate 25M+ Lead Engine", desc: "Instantly tap the pre-verified B2B leads directory to inject high-intent prospect accounts into your sales pipeline." }
+    ],
+    faqs: [
+      { q: "How can Beraxis replace Salesforce for our sales team?", a: "Beraxis gives your sales team the exact visual Kanban pipeline, deal stage tracking, customer contact timelines, and activity logging they rely on in Salesforce. However, instead of an empty database, Beraxis includes 25M+ pre-verified B2B leads, native GAAP invoicing upon closing deals, and AI voice assistance." },
+      { q: "Do we need certified consultants to set up or maintain Beraxis?", a: "No. Salesforce often demands dedicated Salesforce administrators or agency consultants charging $150+/hour. Beraxis is self-serve, auto-configures your sales pipeline in under 30 seconds, and features no-code visual workflow automation." },
+      { q: "What happens when our sales team closes a deal in Beraxis?", a: "In Salesforce, closing a deal requires manually exporting data or relying on brittle sync connectors to push to QuickBooks. In Beraxis, moving a deal to 'Closed Won' automatically creates an official invoice in Accounting, reserves physical inventory if applicable, and sends a digital payment link to the client." },
+      { q: "How much can a 10-person company save by switching from Salesforce?", a: "A 10-person sales team on Salesforce Enterprise typically spends $18,000 to $36,000 annually in user licenses alone, plus $5,000 to $15,000 on prospecting databases like ZoomInfo. With Beraxis's Early Bird Standard Plan, 10 users cost only $120/year total—saving your company over $25,000 every single year." }
+    ]
+  }
 };
