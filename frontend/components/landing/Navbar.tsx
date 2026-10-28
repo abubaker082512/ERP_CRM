@@ -52,15 +52,15 @@ export default function Navbar() {
 
     return (
         <nav className="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 bg-[#0A0F1D]/90 backdrop-blur-md border-b border-white/10" style={{transform: 'translateZ(0)', willChange: 'transform'}}>
-            {/* Top Announcement Bar */}
-            <div className="bg-gradient-to-r from-purple-950/70 via-slate-900 to-indigo-950/70 border-b border-white/10 text-white text-[11px] sm:text-xs py-1.5 px-4 text-center font-medium flex items-center justify-center gap-2 flex-wrap">
-                <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+            {/* Top Announcement Bar with Specular Glass Polish */}
+            <div className="backdrop-blur-xl bg-gradient-to-r from-purple-950/80 via-slate-900/90 to-indigo-950/80 border-b border-white/10 text-white text-[11px] sm:text-xs py-2 px-4 text-center font-medium flex items-center justify-center gap-2 flex-wrap shadow-[inset_0_-1px_1px_rgba(255,255,255,0.08)]">
+                <span className="bg-purple-500/20 text-purple-300 border border-purple-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
                     Special Launch
                 </span>
                 <span className="text-gray-300">
                     Get all 28 AI ERP &amp; CRM modules + 1,500 Lead Credits/mo for just <strong className="text-white font-semibold">$1/month</strong> ($12/yr billed upfront).
                 </span>
-                <Link href="/pricing" className="text-purple-300 hover:text-white font-semibold ml-1 inline-flex items-center gap-0.5 hover:underline">
+                <Link href="/pricing" className="text-purple-300 hover:text-white font-bold ml-1 inline-flex items-center gap-0.5 hover:underline transition-colors">
                     View Plans <ArrowRight size={11} />
                 </Link>
             </div>

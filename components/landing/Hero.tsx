@@ -68,12 +68,12 @@ export default function Hero() {
                     Replace 5+ expensive, disconnected tools like Odoo, Salesforce, and QuickBooks. Run Accounting, POS, Inventory, HR &amp; CRM across 28 unified modules — with <strong className="text-cyan-300 font-semibold drop-shadow-[0_0_8px_rgba(103,232,249,0.3)]">integrated B2B lead discovery</strong> built-in.
                 </p>
 
-                {/* 4. Glassmorphic Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-2xl mx-auto mb-6 sm:mb-8">
+                {/* 4. Glassmorphic Action Buttons with Identical Height & Equal Spacing */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full max-w-4xl mx-auto mb-8 sm:mb-10">
                     {/* Primary Button: Vibrant Frosted Jewel Glass */}
                     <Link 
                         href="/signup" 
-                        className="group relative w-full sm:w-auto min-h-[48px] px-6 py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-xl bg-gradient-to-r from-purple-600/90 via-pink-600/90 to-purple-600/90 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 border border-white/30 hover:border-white/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),0_12px_32px_-6px_rgba(168,85,247,0.5)] hover:shadow-[inset_0_1px_2px_rgba(255,255,255,0.7),0_16px_40px_-6px_rgba(236,72,153,0.65)] hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer overflow-hidden"
+                        className="group relative w-full sm:w-auto h-[52px] min-h-[52px] px-6 py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2.5 transition-all duration-200 backdrop-blur-xl bg-gradient-to-r from-purple-600/90 via-pink-600/90 to-purple-600/90 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 border border-white/30 hover:border-white/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),0_12px_32px_-6px_rgba(168,85,247,0.5)] hover:shadow-[inset_0_1px_2px_rgba(255,255,255,0.7),0_16px_40px_-6px_rgba(236,72,153,0.65)] hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer overflow-hidden whitespace-nowrap"
                     >
                         {/* Glass Sheen Glare */}
                         <div className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-1000 ease-out pointer-events-none" />
@@ -84,7 +84,7 @@ export default function Hero() {
                     {/* Secondary Button: Frosted Smoky-Violet Glass */}
                     <a 
                         href="#pricing" 
-                        className="group relative w-full sm:w-auto min-h-[48px] px-6 py-3.5 rounded-xl font-bold text-sm text-purple-100 hover:text-white flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-xl bg-gradient-to-b from-white/[0.12] via-purple-950/40 to-white/[0.04] hover:bg-purple-900/40 border border-purple-400/40 hover:border-purple-300/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_8px_24px_rgba(0,0,0,0.35)] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.45),0_12px_30px_rgba(147,51,234,0.35)] hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+                        className="group relative w-full sm:w-auto h-[52px] min-h-[52px] px-6 py-3.5 rounded-xl font-bold text-sm text-purple-100 hover:text-white flex items-center justify-center gap-2.5 transition-all duration-200 backdrop-blur-xl bg-gradient-to-b from-white/[0.12] via-purple-950/40 to-white/[0.04] hover:bg-purple-900/40 border border-purple-400/40 hover:border-purple-300/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_8px_24px_rgba(0,0,0,0.35)] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.45),0_12px_30px_rgba(147,51,234,0.35)] hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer whitespace-nowrap"
                     >
                         <Flame size={16} className="text-amber-400 group-hover:scale-110 transition-transform" />
                         <span>Get All 28 Apps for $1/mo</span>
@@ -94,7 +94,7 @@ export default function Hero() {
                     <button
                         type="button"
                         onClick={() => setIsCalcOpen(true)}
-                        className="group relative w-full sm:w-auto min-h-[48px] px-6 py-3.5 rounded-xl font-bold text-sm text-gray-200 hover:text-white flex items-center justify-center gap-2 transition-all duration-200 backdrop-blur-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/20 hover:border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_8px_20px_rgba(0,0,0,0.3)] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),0_12px_24px_rgba(0,0,0,0.4)] hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+                        className="group relative w-full sm:w-auto h-[52px] min-h-[52px] px-6 py-3.5 rounded-xl font-bold text-sm text-gray-200 hover:text-white flex items-center justify-center gap-2.5 transition-all duration-200 backdrop-blur-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/20 hover:border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_8px_20px_rgba(0,0,0,0.3)] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),0_12px_24px_rgba(0,0,0,0.4)] hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer whitespace-nowrap"
                     >
                         <Calculator size={16} className="text-cyan-400 group-hover:rotate-12 transition-transform" />
                         <span>Savings Calculator</span>
@@ -102,29 +102,29 @@ export default function Hero() {
                 </div>
 
                 {/* 5. Frosted Glass Trust Proof Checklist Strip */}
-                <div className="inline-flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full backdrop-blur-xl bg-white/[0.04] border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_6px_20px_rgba(0,0,0,0.25)] text-xs sm:text-sm text-gray-300 font-medium mb-8 sm:mb-10 max-w-full">
-                    <span className="flex items-center gap-1.5">
+                <div className="inline-flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 px-5 sm:px-7 py-2.5 rounded-full backdrop-blur-xl bg-white/[0.05] border border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_6px_20px_rgba(0,0,0,0.3)] text-xs sm:text-sm text-gray-300 font-medium mb-8 sm:mb-10 max-w-full">
+                    <span className="flex items-center gap-1.5 whitespace-nowrap">
                         <span className="p-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                             <Check size={11} strokeWidth={3} />
                         </span>
                         <span>1 App 100% Free Forever</span>
                     </span>
                     <span className="hidden sm:inline text-white/20">•</span>
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1.5 whitespace-nowrap">
                         <span className="p-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                             <Check size={11} strokeWidth={3} />
                         </span>
                         <span>No Credit Card Required</span>
                     </span>
                     <span className="hidden sm:inline text-white/20">•</span>
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1.5 whitespace-nowrap">
                         <span className="p-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                             <Check size={11} strokeWidth={3} />
                         </span>
                         <span>30-Second Setup</span>
                     </span>
                     <span className="hidden sm:inline text-white/20">•</span>
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1.5 whitespace-nowrap">
                         <span className="p-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                             <Check size={11} strokeWidth={3} />
                         </span>
@@ -133,49 +133,49 @@ export default function Hero() {
                 </div>
 
                 {/* 6. Luxury Floating Glass Dock Strip (Enterprise Trust Badges) */}
-                <div className="w-full max-w-4xl p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl backdrop-blur-2xl bg-gradient-to-b from-white/[0.09] via-[#0A0E1A]/70 to-[#0A0E1A]/90 border border-white/20 hover:border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_20px_50px_-10px_rgba(0,0,0,0.6),0_0_40px_rgba(168,85,247,0.12)] transition-all">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 text-left">
+                <div className="w-full max-w-4xl p-2.5 sm:p-3 rounded-2xl sm:rounded-3xl backdrop-blur-2xl bg-gradient-to-b from-white/[0.09] via-[#0A0E1A]/75 to-[#0A0E1A]/95 border border-white/20 hover:border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_20px_50px_-10px_rgba(0,0,0,0.6),0_0_40px_rgba(168,85,247,0.12)] transition-all">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 text-left">
                         {/* Feature 1 */}
-                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-purple-500/30 transition-all cursor-default">
+                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40 transition-all cursor-default shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
                             <div className="p-2 sm:p-2.5 rounded-xl bg-purple-500/15 border border-purple-400/30 text-purple-400 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] group-hover:scale-110 group-hover:border-purple-300 transition-all shrink-0">
                                 <ShieldCheck size={18} />
                             </div>
                             <div className="min-w-0">
-                                <div className="text-xs sm:text-sm text-white font-bold truncate">Enterprise Security</div>
-                                <div className="text-[10px] sm:text-[11px] text-gray-400 truncate">256-Bit Encrypted</div>
+                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap">Enterprise Security</div>
+                                <div className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap">256-Bit Encrypted</div>
                             </div>
                         </div>
 
                         {/* Feature 2 */}
-                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-cyan-500/30 transition-all cursor-default">
+                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-cyan-500/40 transition-all cursor-default shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
                             <div className="p-2 sm:p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-400 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] group-hover:scale-110 group-hover:border-cyan-300 transition-all shrink-0">
                                 <Globe size={18} />
                             </div>
                             <div className="min-w-0">
-                                <div className="text-xs sm:text-sm text-white font-bold truncate">Leads Directory</div>
-                                <div className="text-[10px] sm:text-[11px] text-gray-400 truncate">10,000+ Verified B2B</div>
+                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap">Leads Directory</div>
+                                <div className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap">10,000+ Verified B2B</div>
                             </div>
                         </div>
 
                         {/* Feature 3 */}
-                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-amber-500/30 transition-all cursor-default">
+                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-amber-500/40 transition-all cursor-default shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
                             <div className="p-2 sm:p-2.5 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-400 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] group-hover:scale-110 group-hover:border-amber-300 transition-all shrink-0">
                                 <Zap size={18} />
                             </div>
                             <div className="min-w-0">
-                                <div className="text-xs sm:text-sm text-white font-bold truncate">Instant Sync</div>
-                                <div className="text-[10px] sm:text-[11px] text-gray-400 truncate">Real-Time Cloud</div>
+                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap">Instant Sync</div>
+                                <div className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap">Real-Time Cloud</div>
                             </div>
                         </div>
 
                         {/* Feature 4 */}
-                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-pink-500/30 transition-all cursor-default">
+                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-pink-500/40 transition-all cursor-default shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
                             <div className="p-2 sm:p-2.5 rounded-xl bg-pink-500/15 border border-pink-400/30 text-pink-400 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] group-hover:scale-110 group-hover:border-pink-300 transition-all shrink-0">
                                 <Sparkles size={18} />
                             </div>
                             <div className="min-w-0">
-                                <div className="text-xs sm:text-sm text-white font-bold truncate">28 Unified Apps</div>
-                                <div className="text-[10px] sm:text-[11px] text-gray-400 truncate">All-in-One Platform</div>
+                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap">28 Unified Apps</div>
+                                <div className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap">All-in-One Platform</div>
                             </div>
                         </div>
                     </div>

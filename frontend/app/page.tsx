@@ -136,16 +136,16 @@ export default function Home() {
                     </p>
                 </div>
 
-                {/* Billing Cycle Toggle */}
+                {/* Billing Cycle Toggle with Frosted Glass Dock */}
                 <div className="flex justify-center mb-10">
-                    <div className="inline-flex items-center p-1.5 bg-[#0B0F19] border border-white/10 rounded-2xl shadow-xl">
+                    <div className="inline-flex items-center p-1.5 rounded-2xl backdrop-blur-2xl bg-white/[0.04] border border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_12px_30px_rgba(0,0,0,0.5)]">
                         <button
                             type="button"
                             onClick={() => setBillingCycle("annually")}
-                            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                            className={`h-[42px] px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
                                 isAnnual
-                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25"
-                                    : "text-gray-400 hover:text-white"
+                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_8px_20px_rgba(168,85,247,0.35)] scale-[1.02]"
+                                    : "text-gray-300 hover:text-white hover:bg-white/5 border border-transparent"
                             }`}
                         >
                             <span>Annually ($1/mo Early Bird)</span>
@@ -156,10 +156,10 @@ export default function Home() {
                         <button
                             type="button"
                             onClick={() => setBillingCycle("monthly")}
-                            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            className={`h-[42px] px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                                 !isAnnual
-                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25"
-                                    : "text-gray-400 hover:text-white"
+                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_8px_20px_rgba(168,85,247,0.35)] scale-[1.02]"
+                                    : "text-gray-300 hover:text-white hover:bg-white/5 border border-transparent"
                             }`}
                         >
                             <span>Monthly ($5/mo Early Bird)</span>
@@ -368,7 +368,7 @@ export default function Home() {
                     </span>
                     <span className="flex items-center gap-2">
                         <CreditCard size={16} className="text-purple-400" />
-                        <span>Powered by Paddle (Cards, Apple Pay, Google Pay, PayPal)</span>
+                        <span>Instant Checkout (Visa, Mastercard, Amex, Apple Pay, Google Pay)</span>
                     </span>
                     <span className="flex items-center gap-2">
                         <CheckCircle size={16} className="text-amber-400" />

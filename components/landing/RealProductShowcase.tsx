@@ -85,59 +85,61 @@ export default function RealProductShowcase() {
                 </p>
             </div>
 
-            {/* Interactive Screen Selector Tabs */}
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-8">
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("apps")}
-                    className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer border ${
-                        activeTab === "apps"
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-purple-400/50 shadow-lg shadow-purple-500/25 scale-[1.02]"
-                            : "bg-[#0F172A]/80 text-gray-400 hover:text-white border-white/10 hover:border-white/20"
-                    }`}
-                >
-                    <Grid3x3 size={15} className={activeTab === "apps" ? "text-white" : "text-purple-400"} />
-                    <span>Apps Cockpit (28 Modules)</span>
-                </button>
+            {/* Interactive Screen Selector Tabs with Classy Frosted Glass Dock */}
+            <div className="flex justify-center mb-8">
+                <div className="inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl backdrop-blur-2xl bg-white/[0.04] border border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_12px_30px_rgba(0,0,0,0.5)]">
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("apps")}
+                        className={`h-[44px] px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+                            activeTab === "apps"
+                                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_8px_20px_rgba(168,85,247,0.35)] scale-[1.02]"
+                                : "text-gray-300 hover:text-white hover:bg-white/5 border border-transparent"
+                        }`}
+                    >
+                        <Grid3x3 size={15} className={activeTab === "apps" ? "text-white" : "text-purple-400"} />
+                        <span>Apps Cockpit (28 Modules)</span>
+                    </button>
 
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("industry")}
-                    className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer border ${
-                        activeTab === "industry"
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-purple-400/50 shadow-lg shadow-purple-500/25 scale-[1.02]"
-                            : "bg-[#0F172A]/80 text-gray-400 hover:text-white border-white/10 hover:border-white/20"
-                    }`}
-                >
-                    <Building2 size={15} className={activeTab === "industry" ? "text-white" : "text-pink-400"} />
-                    <span>12 Industry Archetypes</span>
-                </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("industry")}
+                        className={`h-[44px] px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+                            activeTab === "industry"
+                                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_8px_20px_rgba(168,85,247,0.35)] scale-[1.02]"
+                                : "text-gray-300 hover:text-white hover:bg-white/5 border border-transparent"
+                        }`}
+                    >
+                        <Building2 size={15} className={activeTab === "industry" ? "text-white" : "text-pink-400"} />
+                        <span>12 Industry Archetypes</span>
+                    </button>
 
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("dashboard")}
-                    className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer border ${
-                        activeTab === "dashboard"
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-purple-400/50 shadow-lg shadow-purple-500/25 scale-[1.02]"
-                            : "bg-[#0F172A]/80 text-gray-400 hover:text-white border-white/10 hover:border-white/20"
-                    }`}
-                >
-                    <LayoutDashboard size={15} className={activeTab === "dashboard" ? "text-white" : "text-cyan-400"} />
-                    <span>Executive Dashboard &amp; AI</span>
-                </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("dashboard")}
+                        className={`h-[44px] px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+                            activeTab === "dashboard"
+                                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_8px_20px_rgba(168,85,247,0.35)] scale-[1.02]"
+                                : "text-gray-300 hover:text-white hover:bg-white/5 border border-transparent"
+                        }`}
+                    >
+                        <LayoutDashboard size={15} className={activeTab === "dashboard" ? "text-white" : "text-cyan-400"} />
+                        <span>Executive Dashboard &amp; AI</span>
+                    </button>
 
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("workspace")}
-                    className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer border ${
-                        activeTab === "workspace"
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-purple-400/50 shadow-lg shadow-purple-500/25 scale-[1.02]"
-                            : "bg-[#0F172A]/80 text-gray-400 hover:text-white border-white/10 hover:border-white/20"
-                    }`}
-                >
-                    <Briefcase size={15} className={activeTab === "workspace" ? "text-white" : "text-amber-400"} />
-                    <span>Multi-Company Workspace</span>
-                </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("workspace")}
+                        className={`h-[44px] px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+                            activeTab === "workspace"
+                                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_8px_20px_rgba(168,85,247,0.35)] scale-[1.02]"
+                                : "text-gray-300 hover:text-white hover:bg-white/5 border border-transparent"
+                        }`}
+                    >
+                        <Briefcase size={15} className={activeTab === "workspace" ? "text-white" : "text-amber-400"} />
+                        <span>Multi-Company Workspace</span>
+                    </button>
+                </div>
             </div>
 
             {/* Glassmorphic Application Browser Window with Real System Picture */}
