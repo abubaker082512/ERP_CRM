@@ -127,7 +127,14 @@ export const metadata: Metadata = {
         "Salesforce pricing alternative",
         "QuickBooks Online alternative",
         "QuickBooks vs Beraxis",
-        "Beraxis vs QuickBooks"
+        "Beraxis vs QuickBooks",
+        "Donate to Beraxis",
+        "Donate to green tech",
+        "Environmental Protection Fund",
+        "Carbon neutral cloud ERP",
+        "Green cloud computing",
+        "Paperless business software fund",
+        "Open sustainability wall sponsor"
     ],
     other: {
         "revisit-after": "1 days",

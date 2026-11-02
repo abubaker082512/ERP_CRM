@@ -19,7 +19,14 @@ export const metadata: Metadata = {
     "Support small business digitalization",
     "Carbon offset business software",
     "Nonprofit ERP sponsor",
-    "Beraxis environmental fund"
+    "Beraxis environmental fund",
+    "Buy a coffee for open source developer",
+    "Green cloud verified badge",
+    "Zero-waste digital ERP badge",
+    "Open sustainability wall sponsor",
+    "Dofollow sponsor backlink",
+    "Sponsor a student software license",
+    "Sustainable software donation"
   ],
   alternates: {
     canonical: "https://www.beraxis.online/donate",
@@ -56,6 +63,15 @@ export default function DonateLayout({
   const donateSchema = {
     "@context": "https://schema.org",
     "@graph": [
+      {
+        "@type": "Offer",
+        "name": "BERAXIS Community & Environmental Sponsorship",
+        "price": "3.00",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
+        "url": "https://www.beraxis.online/donate",
+        "description": "Contributions starting at $3.00 USD directly fund green cloud computing, tree planting, and student business licenses.",
+      },
       {
         "@type": "DonateAction",
         "name": "Donate to BERAXIS Environmental Protection & Community Fund",
