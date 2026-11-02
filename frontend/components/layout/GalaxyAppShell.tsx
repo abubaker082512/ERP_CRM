@@ -12,6 +12,7 @@ import GalaxyTopBar from './GalaxyTopBar';
 import CommandOverlay from '../antigravity/CommandOverlay';
 import BeraxisSupportWidgets from '../support/BeraxisSupportWidgets';
 import InactivitySessionTracker from '../auth/InactivitySessionTracker';
+import DonationMilestoneToast from '../common/DonationMilestoneToast';
 import { BranchProvider, useBranchContext } from '@/lib/branchContext';
 
 const navItems = [
@@ -418,6 +419,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
             {/* Persistent Support Widgets: WhatsApp on Left, AI Support on Right */}
             {mounted && <BeraxisSupportWidgets />}
+            {mounted && <DonationMilestoneToast />}
 
             {/* Inactivity Auto-Logout & Session Tracker (1 minute idle limit) */}
             {mounted && <InactivitySessionTracker />}

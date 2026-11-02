@@ -1,0 +1,23 @@
+<svg width="220" height="52" viewBox="0 0 220 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="1" y="1" width="218" height="50" rx="12" fill="#0A1120" stroke="#10B981" stroke-width="1.5"/>
+  <rect x="4" y="4" width="212" height="44" rx="9" fill="url(#paint0_linear)" fill-opacity="0.1"/>
+  
+  <!-- Eco Leaf / Shield Icon -->
+  <g transform="translate(12, 11)">
+    <circle cx="15" cy="15" r="14" fill="#064E3B" stroke="#10B981" stroke-width="1.5"/>
+    <path d="M15 8C15 8 20 12 20 17C20 20.5 17.5 22 15 22C12.5 22 10 20.5 10 17C10 12 15 8 15 8Z" fill="#34D399"/>
+    <path d="M15 13V22" stroke="#064E3B" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M13 16L15 18L18 14" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Badge Typography -->
+  <text fill="#10B981" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="8.5" font-weight="800" letter-spacing="0.12em" x="50" y="21">100% GREEN CLOUD</text>
+  <text fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11.5" font-weight="700" letter-spacing="0.02em" x="50" y="36">Verified by Beraxis</text>
+
+  <defs>
+    <linearGradient id="paint0_linear" x1="4" y1="4" x2="216" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10B981"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+</svg>

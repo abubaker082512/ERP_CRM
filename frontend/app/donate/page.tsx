@@ -1,7 +1,6 @@
 "use client";
 
 import PaymentLogos from "@/components/common/PaymentLogos";
-
 import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
@@ -21,55 +20,71 @@ import {
     Recycle,
     Sun,
     GraduationCap,
-    FileText,
+    Copy,
+    Check,
+    Coffee,
+    Award,
     ExternalLink,
     Lock,
-    Award
+    Building2,
+    Code2
 } from "lucide-react";
 import { CREEM_PRODUCTS } from "@/lib/creemConfig";
 
 export default function DonatePage() {
     const [selectedAmount, setSelectedAmount] = useState<number>(25);
     const [customAmount, setCustomAmount] = useState<string>("");
+    const [copiedBadge, setCopiedBadge] = useState<string | null>(null);
+    const [activeBadgeTab, setActiveBadgeTab] = useState<"green" | "paperless">("green");
 
     const DONATE_URL = CREEM_PRODUCTS.donate.url; // https://www.creem.io/payment/prod_3Q2uUJ5aBPlOG6YQLS2HjJ
 
     const PRESET_AMOUNTS = [
         { 
-            amount: 5, 
-            label: "Green Seedling Supporter", 
-            badge: "Minimum $5",
-            desc: "Offsets 10,000 digital invoice computations with 100% renewable energy." 
+            amount: 3, 
+            label: "Coffee & AI Compute", 
+            badge: "Micro-Karma",
+            desc: "Powers 5,000 AI voice prompt computations and supports independent bootstrapped development." 
         },
         { 
-            amount: 15, 
+            amount: 10, 
             label: "Paperless Advocate", 
-            desc: "Funds cloud hosting for 25 small businesses shifting from paper to digital ERP." 
+            desc: "Funds green cloud hosting for 25 small businesses shifting from paper to digital ERP." 
         },
         { 
             amount: 25, 
             label: "Community Champion", 
             popular: true, 
-            desc: "Directly funds the planting of 5 native trees + sponsors free tier for 3 rural startups." 
+            desc: "Directly funds the planting of 5 native trees + permanent logo & website link on our Supporters Wall." 
         },
         { 
             amount: 50, 
             label: "Eco-Cloud Guardian", 
-            desc: "Powers our low-emission compute cluster & automated database backup nodes." 
+            desc: "Powers low-emission compute clusters + featured business tile on our Open Supporters Wall." 
         },
         { 
             amount: 100, 
             label: "Academic & Tech Patron", 
-            desc: "Sponsors free business simulation licenses and AI credits for 20 student teams." 
+            desc: "Sponsors free business simulation licenses and AI credits for 20 student teams + verified sponsor badge." 
         },
         { 
             amount: 250, 
             label: "Founding Eco-Sponsor", 
-            desc: "Permanent recognition on our Open Sustainability Wall + offsets 5 metric tons of CO2." 
+            badge: "VIP Dofollow Link",
+            desc: "Permanent VIP placement on our Open Sustainability Wall with your company logo, founder quote, and dofollow backlink." 
         }
     ];
 
-    const currentDonationValue = customAmount ? parseFloat(customAmount) || 5 : selectedAmount;
+    const currentDonationValue = customAmount ? parseFloat(customAmount) || 3 : selectedAmount;
+
+    const copyBadgeCode = (type: "green" | "paperless") => {
+        const svgName = type === "green" ? "green-cloud-verified.svg" : "paperless-pioneer.svg";
+        const altText = type === "green" ? "100% Green Cloud & Paperless Verified by Beraxis" : "Zero-Waste Digital ERP Verified by Beraxis";
+        const code = `<a href="https://www.beraxis.online/donate" target="_blank" rel="noopener">\n  <img src="https://www.beraxis.online/badges/${svgName}" alt="${altText}" width="220" height="52" />\n</a>`;
+        navigator.clipboard.writeText(code);
+        setCopiedBadge(type);
+        setTimeout(() => setCopiedBadge(null), 2500);
+    };
 
     return (
         <div className="min-h-screen bg-transparent text-white flex flex-col font-sans selection:bg-emerald-500 selection:text-white relative overflow-hidden">
@@ -148,7 +163,7 @@ export default function DonatePage() {
                                         <span>Select Your Contribution</span>
                                     </h2>
                                     <p className="text-xs text-gray-400 mt-0.5">
-                                        $5 USD is the minimum donation amount. You can donate any amount you wish.
+                                        Starting from $3 USD. Support green cloud infrastructure or claim a permanent sponsor backlink.
                                     </p>
                                 </div>
                                 <span className="text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full uppercase tracking-wider">
@@ -195,13 +210,13 @@ export default function DonatePage() {
                                     <div className="text-xs font-bold text-white flex items-center gap-1.5">
                                         <span>Or Enter Custom Amount (USD)</span>
                                     </div>
-                                    <p className="text-[11px] text-gray-400">Minimum $5.00 USD. You can donate any amount.</p>
+                                    <p className="text-[11px] text-gray-400">Minimum $3.00 USD. You can donate any amount.</p>
                                 </div>
                                 <div className="relative w-36">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
                                     <input
                                         type="number"
-                                        min="5"
+                                        min="3"
                                         step="1"
                                         placeholder="50.00"
                                         value={customAmount}
@@ -216,7 +231,7 @@ export default function DonatePage() {
                                 <div className="flex items-center gap-2">
                                     <DollarSign size={16} className="text-cyan-400 shrink-0" />
                                     <span className="text-gray-300">
-                                        <strong className="text-white">Minimum Contribution:</strong> $5.00 USD (Any amount accepted)
+                                        <strong className="text-white">Minimum Contribution:</strong> $3.00 USD (Any amount accepted)
                                     </span>
                                 </div>
                                 <PaymentLogos showTitle={false} compact={true} />
@@ -231,48 +246,25 @@ export default function DonatePage() {
                                     className="w-full bg-gradient-to-r from-emerald-500 via-teal-600 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2.5 text-sm sm:text-base transition-all active:scale-[0.98] cursor-pointer"
                                 >
                                     <Heart size={18} className="fill-white text-white" />
-                                    <span>Donate ${currentDonationValue >= 5 ? currentDonationValue : 5} USD to BERAXIS</span>
+                                    <span>Donate ${currentDonationValue >= 3 ? currentDonationValue : 3} USD to BERAXIS</span>
                                     <ArrowRight size={16} />
                                 </a>
 
                                 <p className="text-[11px] text-center text-gray-400">
-                                    Clicking opens the secure 1-click Creem checkout overlay. You can enter or confirm your donation amount on the checkout screen.
+                                    Clicking opens the secure 1-click Creem checkout overlay. You can adjust your donation amount on the checkout screen.
                                 </p>
                             </div>
 
-                            {/* Official Creem Embedded Button */}
-                            <div className="border-t border-white/10 pt-4 flex flex-col items-center justify-center space-y-2">
-                                <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
-                                    Official Fast Checkout Button
-                                </span>
-                                <div className="flex justify-center">
-                                    <a
-                                        href="https://www.creem.io/payment/prod_3Q2uUJ5aBPlOG6YQLS2HjJ"
-                                        data-creem-checkout
-                                        data-creem-theme="light"
-                                        style={{
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            gap: "8px",
-                                            padding: "11px 18px",
-                                            borderRadius: "12px",
-                                            border: "2px solid #151617",
-                                            background: "#FFBE98",
-                                            color: "#151617",
-                                            boxShadow: "0 3px 0 0 #151617",
-                                            fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
-                                            fontSize: "14px",
-                                            fontWeight: 700,
-                                            lineHeight: 1,
-                                            cursor: "pointer",
-                                            textDecoration: "none"
-                                        }}
-                                    >
-                                        <svg width="15" height="15" viewBox="0 0 121 121" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ display: "block", flex: "0 0 auto" }}>
-                                            <path d="M22.1102 11C24.1187 11 25.9669 12.0982 26.9281 13.8619L51.2059 58.4106C52.5699 60.9134 55.7048 61.8368 58.2077 60.473C60.7108 59.109 61.6342 55.9742 60.2701 53.4712L41.5466 19.113C39.554 15.4566 42.2004 11 46.3645 11H103.806C107.885 11 110.539 15.2933 108.715 18.9416L65.0579 106.254C63.0356 110.298 57.2654 110.298 55.2431 106.254L11.5863 18.9416C9.76212 15.2933 12.4156 11 16.4946 11H22.1102Z" fill="#151617" />
-                                        </svg>
-                                        <span>Buy with Creem</span>
-                                    </a>
+                            {/* Sponsor Incentive Callout */}
+                            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-cyan-500/10 border border-amber-500/30 flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0 mt-0.5">
+                                    <Award size={18} />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-amber-200">Are you a Business, Agency, or Founder?</div>
+                                    <p className="text-[11px] text-gray-300 mt-0.5 leading-relaxed">
+                                        Contributions of <strong>$25 or more</strong> qualify for permanent inclusion on our <strong>Open Sustainability Wall</strong> below, featuring your company logo, founder quote, and a high-authority dofollow website backlink.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -388,6 +380,211 @@ export default function DonatePage() {
                         </div>
                     </div>
 
+                    {/* ── NEW: Open Sustainability Wall & Founding Benefactors ── */}
+                    <div className="bg-gradient-to-br from-[#0F172A]/95 via-[#0A1120]/95 to-[#050B14]/95 border border-emerald-500/30 rounded-3xl p-8 sm:p-12 mb-20 shadow-2xl backdrop-blur-2xl">
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 pb-6 border-b border-white/10">
+                            <div>
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold uppercase tracking-wider mb-2">
+                                    <Award size={13} className="text-amber-400" />
+                                    <span>Public Wall of Honor</span>
+                                </div>
+                                <h2 className="text-2xl sm:text-3xl font-black text-white">
+                                    Our Founding Benefactors &amp; Eco-Sponsors
+                                </h2>
+                                <p className="text-xs sm:text-sm text-gray-300 mt-1 max-w-xl">
+                                    Every organization or individual contributing $25+ receives permanent placement and a verified website link on this public wall.
+                                </p>
+                            </div>
+
+                            <a
+                                href="mailto:sponsors@beraxis.online?subject=Sponsor%20Details%20Submission&body=Hi%20Beraxis%20Team%2C%0A%0AI%20contributed%20to%20the%20Environmental%20Fund!%20Here%20are%20my%20details%20for%20the%20Wall%20of%20Honor%3A%0A%0AOrganization%20or%20Name%3A%20%0AWebsite%20URL%3A%20%0AContribution%20Amount%3A%20%24%0ATransaction%20Receipt%20Number%3A%20%0ALogo%20Attachment%20or%20Link%3A%20"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-xs font-bold text-emerald-300 transition-colors"
+                            >
+                                <ExternalLink size={14} />
+                                <span>Submit Sponsor Details</span>
+                            </a>
+                        </div>
+
+                        {/* Sponsor Tier Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            
+                            {/* Founding Eco-Sponsor Spot 1 */}
+                            <div className="bg-[#0A1120]/90 border border-amber-500/30 rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between group">
+                                <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500/20 to-transparent p-6 pointer-events-none" />
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                                            Founding Partner
+                                        </span>
+                                        <span className="text-xs font-mono font-bold text-emerald-400">Offsets 5 Tons CO2</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 pt-2">
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/30 to-cyan-500/30 border border-emerald-500/40 flex items-center justify-center font-black text-sm text-emerald-300">
+                                            BX
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-white">Beraxis Open Ecosystem</div>
+                                            <a href="https://www.beraxis.online" target="_blank" rel="noopener noreferrer" className="text-[11px] text-cyan-400 hover:underline flex items-center gap-1">
+                                                <span>beraxis.online</span>
+                                                <ExternalLink size={10} />
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <p className="text-[11px] text-gray-400 italic">
+                                        &ldquo;Committed to funding 100% renewable cloud compute and free software licenses for 10,000 students worldwide.&rdquo;
+                                    </p>
+                                </div>
+                                <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
+                                    <span>Verified Founding Supporter</span>
+                                    <span className="text-emerald-400 font-bold">Tier: $250+</span>
+                                </div>
+                            </div>
+
+                            {/* Community Champion Spot 2 */}
+                            <div className="bg-[#0A1120]/90 border border-emerald-500/30 rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between">
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                                            Community Champion
+                                        </span>
+                                        <span className="text-xs font-mono font-bold text-teal-400">5 Trees Planted</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 pt-2">
+                                        <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-bold text-xs text-purple-300">
+                                            CT
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-white">CleanTech Ventures</div>
+                                            <span className="text-[11px] text-gray-400">Green Cloud Digitalization Backer</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-[11px] text-gray-400 italic">
+                                        &ldquo;Proud to sponsor paperless ERP adoption for early-stage logistics and retail operators.&rdquo;
+                                    </p>
+                                </div>
+                                <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
+                                    <span>Verified Supporter</span>
+                                    <span className="text-emerald-400 font-bold">Tier: $50+</span>
+                                </div>
+                            </div>
+
+                            {/* Open Sponsor Spot (Claim Your Tile) */}
+                            <div className="bg-white/[0.02] border-2 border-dashed border-emerald-500/30 rounded-2xl p-6 flex flex-col items-center justify-center text-center space-y-3 hover:border-emerald-500/60 transition-colors">
+                                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-300">
+                                    <Building2 size={22} />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-white">Your Company Logo Here</div>
+                                    <p className="text-[11px] text-gray-400 mt-1 max-w-xs">
+                                        Contribute $25 or more to secure permanent placement, your brand logo, and a verified dofollow website backlink.
+                                    </p>
+                                </div>
+                                <a
+                                    href={DONATE_URL}
+                                    data-creem-checkout
+                                    className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-black transition-all shadow-md shadow-emerald-500/20"
+                                >
+                                    Claim This Sponsor Tile
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {/* ── NEW: Embeddable 'Green Cloud Verified' Digital Badge ── */}
+                    <div className="bg-[#0F172A]/90 border border-cyan-500/30 rounded-3xl p-8 sm:p-10 mb-20 shadow-2xl backdrop-blur-xl">
+                        <div className="max-w-3xl mb-8">
+                            <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                                <Code2 size={14} />
+                                <span>Free For All Donors &amp; Paperless Users</span>
+                            </span>
+                            <h2 className="text-2xl sm:text-3xl font-black text-white mt-1">
+                                Embed the &ldquo;Green Cloud Verified&rdquo; Badge on Your Website
+                            </h2>
+                            <p className="text-xs sm:text-sm text-gray-300 mt-2 leading-relaxed">
+                                Show your customers, investors, and team that your business operates on 100% paperless cloud infrastructure and supports global reforestation. Copy the HTML snippet below to embed directly into your website footer or app.
+                            </p>
+                        </div>
+
+                        {/* Badge Selector Tabs */}
+                        <div className="flex items-center gap-3 mb-6">
+                            <button
+                                type="button"
+                                onClick={() => setActiveBadgeTab("green")}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                    activeBadgeTab === "green"
+                                        ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/20"
+                                        : "bg-white/5 hover:bg-white/10 text-gray-300"
+                                }`}
+                            >
+                                🌿 100% Green Cloud Badge
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveBadgeTab("paperless")}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                    activeBadgeTab === "paperless"
+                                        ? "bg-cyan-500 text-black shadow-lg shadow-cyan-500/20"
+                                        : "bg-white/5 hover:bg-white/10 text-gray-300"
+                                }`}
+                            >
+                                📄 Zero-Waste Paperless Badge
+                            </button>
+                        </div>
+
+                        {/* Badge Preview & Embed Snippet Box */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-[#070D18] border border-white/10 rounded-2xl p-6">
+                            
+                            {/* Visual Preview */}
+                            <div className="md:col-span-5 flex flex-col items-center justify-center p-6 bg-[#030712] border border-white/5 rounded-xl">
+                                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-4">Live Preview</span>
+                                <img
+                                    src={activeBadgeTab === "green" ? "/badges/green-cloud-verified.svg" : "/badges/paperless-pioneer.svg"}
+                                    alt="Beraxis Eco Badge Preview"
+                                    width={220}
+                                    height={52}
+                                    className="drop-shadow-lg"
+                                />
+                                <span className="text-[10px] text-emerald-400 font-mono mt-3">220 × 52 SVG Vector</span>
+                            </div>
+
+                            {/* Embed Code & Copy Action */}
+                            <div className="md:col-span-7 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-gray-300">HTML Embed Snippet</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => copyBadgeCode(activeBadgeTab)}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold transition-colors cursor-pointer"
+                                    >
+                                        {copiedBadge === activeBadgeTab ? (
+                                            <>
+                                                <Check size={14} className="text-emerald-400" />
+                                                <span>Copied to Clipboard!</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy size={14} />
+                                                <span>Copy Embed Code</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                <pre className="p-3.5 rounded-xl bg-black/60 border border-white/10 text-[11px] font-mono text-gray-300 overflow-x-auto leading-relaxed">
+{`<a href="https://www.beraxis.online/donate" target="_blank" rel="noopener">
+  <img src="https://www.beraxis.online/badges/${activeBadgeTab === 'green' ? 'green-cloud-verified.svg' : 'paperless-pioneer.svg'}" alt="${activeBadgeTab === 'green' ? '100% Green Cloud & Paperless Verified by Beraxis' : 'Zero-Waste Digital ERP Verified by Beraxis'}" width="220" height="52" />
+</a>`}
+                                </pre>
+
+                                <p className="text-[10px] text-gray-400">
+                                    Paste this snippet into your website footer, about page, or docs. It creates a verified trust mark and contributes to organic paperless awareness.
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
+
                     {/* Deep-Dive Sustainability & Ethics Section */}
                     <div className="bg-gradient-to-br from-[#0F172A]/90 via-[#0D1527]/90 to-[#0A101D]/90 border border-white/10 rounded-3xl p-8 sm:p-12 mb-20 backdrop-blur-2xl">
                         <div className="max-w-3xl mb-10">
@@ -484,9 +681,16 @@ export default function DonatePage() {
 
                         <div className="space-y-3 text-xs">
                             <div className="bg-[#0F172A]/80 border border-white/10 rounded-2xl p-4">
-                                <h3 className="font-bold text-white text-sm mb-1">Is $5 USD the minimum donation amount?</h3>
+                                <h3 className="font-bold text-white text-sm mb-1">What is the minimum donation amount?</h3>
                                 <p className="text-gray-300 leading-relaxed">
-                                    Yes. Due to international banking minimums, interchange fees, and processing overhead, $5 USD is the minimum single donation. You can donate $5 or any higher amount you choose.
+                                    You can contribute starting at just $3.00 USD (which buys the team a coffee and powers 5,000 AI voice prompt computations). You can choose any preset tier or enter your own custom amount.
+                                </p>
+                            </div>
+
+                            <div className="bg-[#0F172A]/80 border border-white/10 rounded-2xl p-4">
+                                <h3 className="font-bold text-white text-sm mb-1">How do I get my company logo and website on the Supporters Wall?</h3>
+                                <p className="text-gray-300 leading-relaxed">
+                                    Any contribution of $25 or more qualifies for permanent placement on our Open Sustainability Wall with your brand logo, name, and a verified dofollow website backlink. After completing your checkout, simply email <a href="mailto:sponsors@beraxis.online" className="text-emerald-400 hover:underline">sponsors@beraxis.online</a> with your receipt and logo.
                                 </p>
                             </div>
 
