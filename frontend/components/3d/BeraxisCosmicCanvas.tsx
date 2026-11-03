@@ -18,10 +18,7 @@ export default function BeraxisCosmicCanvas({
         const container = containerRef.current;
         if (!container) return;
 
-        // Detect mobile & low-power devices
-        const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
-        // ── 1. SCENE, CAMERA, RENDERER ──
+        // ── SCENE, CAMERA, RENDERER ──
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(
             55,
@@ -34,13 +31,11 @@ export default function BeraxisCosmicCanvas({
         const renderer = new THREE.WebGLRenderer({
             alpha: true,
             antialias: false,
-            powerPreference: "low-power",
-            precision: "lowp",
-            depth: false,
-            stencil: false
+            powerPreference: "high-performance",
+            precision: "mediump"
         });
-        // Render at 1.0 DPR (eliminates 4K/Retina GPU compositor stalls and saves 60%+ fill-rate)
-        renderer.setPixelRatio(1);
+        // Render particles at optimized DPI (eliminates heavy 4K/Retina GPU compositor stalls)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
         renderer.setSize(window.innerWidth, window.innerHeight);
 
         const canvas = renderer.domElement;
@@ -50,18 +45,19 @@ export default function BeraxisCosmicCanvas({
         canvas.style.width = "100%";
         canvas.style.height = "100%";
         canvas.style.pointerEvents = "none";
-        canvas.style.zIndex = "0";
+        canvas.style.zIndex = "1";
         canvas.style.transform = "translateZ(0)";
+        canvas.style.willChange = "transform";
         canvas.style.contain = "strict";
         container.appendChild(canvas);
 
-        // ── 2. COSMIC ROTATING PARTICLE GALAXY ──
+        // ── COSMIC ROTATING PARTICLE GALAXY ──
         const galaxyGroup = new THREE.Group();
         scene.add(galaxyGroup);
 
-        // Circular glow point sprite (cached once)
+        // Circular glow point sprite for soft, beautiful stars
         const createStarTexture = () => {
-            const size = 32; // Optimized from 64 to 32 (sharp enough for particles, 4x smaller GPU texture)
+            const size = 64;
             const c = document.createElement("canvas");
             c.width = size;
             c.height = size;
@@ -72,8 +68,9 @@ export default function BeraxisCosmicCanvas({
 
             const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
             gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
-            gradient.addColorStop(0.25, "rgba(220, 200, 255, 0.85)");
-            gradient.addColorStop(0.6, "rgba(139, 92, 246, 0.3)");
+            gradient.addColorStop(0.2, "rgba(220, 200, 255, 0.85)");
+            gradient.addColorStop(0.5, "rgba(139, 92, 246, 0.4)");
+            gradient.addColorStop(0.85, "rgba(139, 92, 246, 0.05)");
             gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
 
             ctx.fillStyle = gradient;
@@ -91,8 +88,8 @@ export default function BeraxisCosmicCanvas({
 
         const starTexture = createStarTexture();
 
-        // Optimized particle counts: 180 on desktop, 80 on mobile (looks lush and deep without bogging the GPU)
-        const particleCount1 = isMobile ? 80 : 180;
+        // Layer 1: Swirling Spiral Galaxy Stardust (400 particles)
+        const particleCount1 = 400;
         const geo1 = new THREE.BufferGeometry();
         const pos1 = new Float32Array(particleCount1 * 3);
         const col1 = new Float32Array(particleCount1 * 3);
@@ -106,6 +103,7 @@ export default function BeraxisCosmicCanvas({
         ];
 
         for (let i = 0; i < particleCount1; i++) {
+            // Spiral distribution
             const radius = 3 + Math.random() * 22;
             const spinAngle = radius * 0.4;
             const branchAngle = ((i % 3) * (2 * Math.PI)) / 3;
@@ -125,7 +123,7 @@ export default function BeraxisCosmicCanvas({
         geo1.setAttribute("color", new THREE.BufferAttribute(col1, 3));
 
         const mat1 = new THREE.PointsMaterial({
-            size: isMobile ? 0.32 : 0.38,
+            size: 0.38,
             map: starTexture,
             vertexColors: true,
             transparent: true,
@@ -137,8 +135,8 @@ export default function BeraxisCosmicCanvas({
         const galaxyParticles = new THREE.Points(geo1, mat1);
         galaxyGroup.add(galaxyParticles);
 
-        // Layer 2: Subtle Deep Space Ambient Nebula Dust (90 on desktop, 40 on mobile)
-        const particleCount2 = isMobile ? 40 : 90;
+        // Layer 2: Subtle Deep Space Ambient Nebula Dust (200 particles)
+        const particleCount2 = 200;
         const geo2 = new THREE.BufferGeometry();
         const pos2 = new Float32Array(particleCount2 * 3);
         const col2 = new Float32Array(particleCount2 * 3);
@@ -158,7 +156,7 @@ export default function BeraxisCosmicCanvas({
         geo2.setAttribute("color", new THREE.BufferAttribute(col2, 3));
 
         const mat2 = new THREE.PointsMaterial({
-            size: isMobile ? 0.22 : 0.25,
+            size: 0.25,
             map: starTexture,
             vertexColors: true,
             transparent: true,
@@ -170,30 +168,21 @@ export default function BeraxisCosmicCanvas({
         const ambientParticles = new THREE.Points(geo2, mat2);
         galaxyGroup.add(ambientParticles);
 
-        // ── 3. INTERACTIVE MOUSE PARALLAX & RESIZE (THROTTLED) ──
+        // ── INTERACTIVE MOUSE PARALLAX & RESIZE ──
         let mouseX = 0;
         let mouseY = 0;
         let smoothMouseX = 0;
         let smoothMouseY = 0;
 
-        let resizeTimer: ReturnType<typeof setTimeout> | null = null;
         const handleResize = () => {
-            if (resizeTimer) clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                const width = window.innerWidth;
-                const height = window.innerHeight;
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
-                renderer.setSize(width, height);
-            }, 100);
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
         };
 
-        let lastPointerTime = 0;
         const handlePointerMove = (e: MouseEvent | TouchEvent) => {
-            const now = performance.now();
-            if (now - lastPointerTime < 32) return; // Cap mouse tracking to 30Hz
-            lastPointerTime = now;
-
             let clientX = 0;
             let clientY = 0;
             if ("touches" in e && e.touches.length > 0) {
@@ -207,26 +196,13 @@ export default function BeraxisCosmicCanvas({
             mouseY = -(clientY / window.innerHeight) * 2 + 1;
         };
 
-        // ── 4. SCROLL PAUSE (CRUCIAL PERFORMANCE FIX) ──
-        // When user is actively scrolling, WebGL rendering pauses so the browser has 100% of GPU resources
-        let isScrolling = false;
-        let scrollEndTimer: ReturnType<typeof setTimeout> | null = null;
-        const handleScroll = () => {
-            isScrolling = true;
-            if (scrollEndTimer) clearTimeout(scrollEndTimer);
-            scrollEndTimer = setTimeout(() => {
-                isScrolling = false;
-            }, 120);
-        };
-
-        window.addEventListener("resize", handleResize, { passive: true });
-        window.addEventListener("scroll", handleScroll, { passive: true });
-
-        if (interactive && !isMobile) {
+        window.addEventListener("resize", handleResize);
+        if (interactive) {
             window.addEventListener("pointermove", handlePointerMove, { passive: true });
+            window.addEventListener("touchmove", handlePointerMove, { passive: true });
         }
 
-        // ── 5. 30 FPS CAPPED ANIMATION LOOP ──
+        // ── CONTINUOUS ROTATION ANIMATION LOOP ──
         let animationFrameId: number;
         const clock = new THREE.Clock();
         let isVisible = !document.hidden;
@@ -241,19 +217,9 @@ export default function BeraxisCosmicCanvas({
         };
         document.addEventListener("visibilitychange", handleVisibilityChange, { passive: true });
 
-        // 30 FPS frame throttle: Ambient background particles do not need 120 FPS
-        const targetFrameInterval = 1000 / 30; // 33.3ms per frame
-        let lastFrameTime = performance.now();
-
-        const animate = (currentTime: number) => {
+        const animate = () => {
             animationFrameId = requestAnimationFrame(animate);
-
-            if (!isVisible || isScrolling) return;
-
-            const elapsedSinceLast = currentTime - lastFrameTime;
-            if (elapsedSinceLast < targetFrameInterval) return;
-
-            lastFrameTime = currentTime - (elapsedSinceLast % targetFrameInterval);
+            if (!isVisible) return;
 
             const elapsedTime = clock.getElapsedTime();
 
@@ -262,31 +228,31 @@ export default function BeraxisCosmicCanvas({
             smoothMouseY += (mouseY - smoothMouseY) * 0.04;
 
             // Organic, hypnotic continuous galaxy rotation
-            galaxyParticles.rotation.y = elapsedTime * 0.035;
-            galaxyParticles.rotation.x = Math.sin(elapsedTime * 0.015) * 0.12;
+            galaxyParticles.rotation.y = elapsedTime * 0.04;
+            galaxyParticles.rotation.x = Math.sin(elapsedTime * 0.02) * 0.15;
+            galaxyParticles.rotation.z = Math.cos(elapsedTime * 0.015) * 0.1;
 
-            ambientParticles.rotation.y = -elapsedTime * 0.018;
+            ambientParticles.rotation.y = -elapsedTime * 0.02;
+            ambientParticles.rotation.x = elapsedTime * 0.015;
 
             // Gentle camera parallax giving 3D depth to the background
-            camera.position.x = smoothMouseX * 1.2;
-            camera.position.y = smoothMouseY * 1.0;
+            camera.position.x = smoothMouseX * 1.5;
+            camera.position.y = smoothMouseY * 1.2;
             camera.lookAt(0, 0, 0);
 
             renderer.render(scene, camera);
         };
 
-        animationFrameId = requestAnimationFrame(animate);
+        animate();
 
-        // ── 6. CLEANUP ──
+        // ── CLEANUP ──
         return () => {
             cancelAnimationFrame(animationFrameId);
-            if (resizeTimer) clearTimeout(resizeTimer);
-            if (scrollEndTimer) clearTimeout(scrollEndTimer);
             window.removeEventListener("resize", handleResize);
-            window.removeEventListener("scroll", handleScroll);
             document.removeEventListener("visibilitychange", handleVisibilityChange);
-            if (interactive && !isMobile) {
+            if (interactive) {
                 window.removeEventListener("pointermove", handlePointerMove);
+                window.removeEventListener("touchmove", handlePointerMove);
             }
 
             geo1.dispose();
@@ -306,7 +272,7 @@ export default function BeraxisCosmicCanvas({
         <div 
             ref={containerRef} 
             className={`pointer-events-none fixed inset-0 overflow-hidden ${className}`}
-            style={{ zIndex: 0 }}
+            style={{ zIndex: 1 }}
             aria-hidden="true"
         />
     );

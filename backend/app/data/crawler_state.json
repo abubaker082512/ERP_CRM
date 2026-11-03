@@ -1,8 +1,8 @@
 {
-  "current_index": 8005,
-  "total_harvested": 16937,
-  "last_batch_count": 49,
-  "last_run_at": "2026-11-03T17:49:40.337457+00:00",
+  "current_index": 9005,
+  "total_harvested": 17837,
+  "last_batch_count": 47,
+  "last_run_at": "2026-11-03T18:02:08.356992+00:00",
   "status": "active",
-  "message": "Harvested 49 leads at index 8005/10410"
+  "message": "Harvested 47 leads at index 9005/10410"
 }
