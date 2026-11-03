@@ -32,10 +32,10 @@ export default function Hero() {
 
     return (
         <section className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center pt-28 pb-12 sm:pt-32 sm:pb-16 lg:pt-36 lg:pb-20">
-            {/* Ambient Background Glows & Glass Refraction Light Centered with Viewport */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[950px] h-[350px] sm:h-[520px] bg-gradient-to-tr from-purple-600/20 via-pink-600/12 to-cyan-500/15 rounded-full blur-[140px] pointer-events-none" />
-            <div className="absolute top-1/3 left-4 sm:left-12 w-72 h-72 bg-purple-600/15 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute top-2/3 right-4 sm:right-12 w-72 h-72 bg-cyan-500/15 rounded-full blur-[100px] pointer-events-none" />
+            {/* Ambient Background Glows Centered with Viewport (Zero-Blur Radial Pass) */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[900px] h-[350px] sm:h-[500px] bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.18)_0%,rgba(236,72,153,0.10)_40%,rgba(6,182,212,0.08)_65%,transparent_75%)] pointer-events-none" />
+            <div className="absolute top-1/3 left-4 sm:left-12 w-64 h-64 bg-[radial-gradient(circle,rgba(168,85,247,0.12)_0%,transparent_70%)] pointer-events-none" />
+            <div className="absolute top-2/3 right-4 sm:right-12 w-64 h-64 bg-[radial-gradient(circle,rgba(6,182,212,0.10)_0%,transparent_70%)] pointer-events-none" />
 
             {/* Subtle Glass Noise/Grid Layer */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))] pointer-events-none" />

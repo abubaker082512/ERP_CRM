@@ -81,7 +81,7 @@ export default function FeaturesContent() {
       </div>
 
       {/* ── 2. Sticky Glassmorphic Filter & Search Bar ── */}
-      <div className="sticky top-20 z-40 mb-12 p-3 sm:p-4 rounded-2xl sm:rounded-3xl backdrop-blur-2xl bg-[#090D1A]/90 border border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_20px_40px_rgba(0,0,0,0.6)]">
+      <div className="sticky top-20 z-40 mb-12 p-3 sm:p-4 rounded-2xl sm:rounded-3xl backdrop-blur-xl bg-[#090D1A]/95 border border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_20px_40px_rgba(0,0,0,0.6)]">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           {/* Search Box */}
           <div className="relative flex-1">
@@ -169,7 +169,7 @@ export default function FeaturesContent() {
             return (
               <div
                 key={mod.id}
-                className={`group relative p-6 sm:p-7 rounded-3xl bg-[#090D1A]/90 backdrop-blur-xl border ${mod.border} hover:border-purple-400/50 transition-all duration-300 flex flex-col justify-between shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_12px_32px_rgba(0,0,0,0.5)] hover:-translate-y-1`}
+                className={`group relative p-6 sm:p-7 rounded-3xl bg-[#0B0F1E] border ${mod.border} hover:border-purple-400/50 transition-all duration-300 flex flex-col justify-between shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.5)] hover:-translate-y-1`}
               >
                 {/* Popular Ribbon */}
                 {mod.isPopular && (
@@ -241,7 +241,7 @@ export default function FeaturesContent() {
       )}
 
       {/* ── 4. Architecture & Technical Pillars (SEO Heavy) ── */}
-      <section className="mb-24 p-8 sm:p-12 rounded-3xl bg-[#090D1A]/90 border border-white/15 shadow-2xl backdrop-blur-2xl">
+      <section className="mb-24 p-8 sm:p-12 rounded-3xl bg-[#0B0F1E] border border-white/15 shadow-2xl">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs font-bold text-cyan-300 uppercase tracking-wider mb-4">
             <Zap size={14} className="text-cyan-400" />

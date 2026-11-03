@@ -88,7 +88,7 @@ body {
    ══════════════════════════════════════════════════════════════════════ */
 .galaxy-btn-primary {
   @apply relative inline-flex items-center justify-center gap-2.5 h-[50px] min-h-[50px] py-3.5 px-6 rounded-xl 
-         font-bold text-sm text-white backdrop-blur-xl
+         font-bold text-sm text-white backdrop-blur-md
          bg-gradient-to-r from-purple-600/95 via-pink-600/95 to-purple-600/95 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 
          border border-white/30 hover:border-white/50 
          shadow-[inset_0_1px_1px_rgba(255,255,255,0.45),0_12px_32px_-6px_rgba(168,85,247,0.45)]
@@ -99,7 +99,7 @@ body {
 
 .galaxy-btn-secondary {
   @apply relative inline-flex items-center justify-center gap-2.5 h-[50px] min-h-[50px] py-3.5 px-6 rounded-xl 
-         font-bold text-sm text-gray-200 hover:text-white backdrop-blur-xl
+         font-bold text-sm text-gray-200 hover:text-white backdrop-blur-md
          bg-white/[0.06] hover:bg-white/[0.12] 
          border border-white/20 hover:border-white/40 
          shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_8px_20px_rgba(0,0,0,0.3)]
@@ -110,7 +110,7 @@ body {
 
 .galaxy-btn-outline {
   @apply relative inline-flex items-center justify-center gap-2.5 h-[50px] min-h-[50px] py-3.5 px-6 rounded-xl 
-         font-bold text-sm text-purple-100 hover:text-white backdrop-blur-xl
+         font-bold text-sm text-purple-100 hover:text-white backdrop-blur-md
          bg-gradient-to-b from-white/[0.10] via-purple-950/40 to-white/[0.04] hover:bg-purple-900/40 
          border border-purple-400/40 hover:border-purple-300/80 
          shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_8px_24px_rgba(0,0,0,0.35)]

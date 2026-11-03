@@ -89,10 +89,15 @@ export default function InactivitySessionTracker() {
             localStorage.setItem("beraxis_user_session_start", Date.now().toString());
         }
 
-        // Interaction event listeners
+        // Interaction event listeners (throttled to avoid state thrashing)
         const activityEvents = ["mousemove", "keydown", "mousedown", "touchstart", "scroll", "click"];
+        let lastActivityReset = 0;
         const handleUserActivity = () => {
-            resetIdleTimer();
+            const now = Date.now();
+            if (now - lastActivityReset > 2500) {
+                lastActivityReset = now;
+                resetIdleTimer();
+            }
         };
 
         activityEvents.forEach(evt => {
