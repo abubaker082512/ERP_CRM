@@ -75,7 +75,7 @@ export default function Navbar() {
                             <img 
                                 src="/logo-full.png" 
                                 onError={(e) => { (e.target as HTMLImageElement).src = '/logo2.png'; }} 
-                                alt="Beraxis Autonomous AI ERP & CRM Platform" 
+                                alt="BERAXIS AI - #1 Autonomous AI ERP & CRM Platform (Free Odoo Alternative)" 
                                 className="h-8 sm:h-9 w-auto object-contain" 
                             />
                         </Link>
@@ -245,7 +245,7 @@ export default function Navbar() {
                                             </div>
                                             <div>
                                                 <div className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">Compare Competitors</div>
-                                                <div className="text-[10px] text-gray-400">vs Odoo, HubSpot, QuickBooks, Zoho.</div>
+                                                <div className="text-[10px] text-gray-400">#1 Odoo, HubSpot &amp; QuickBooks Alternative.</div>
                                             </div>
                                         </Link>
 

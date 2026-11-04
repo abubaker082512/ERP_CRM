@@ -13,11 +13,37 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 export const metadata: Metadata = {
     metadataBase: new URL("https://www.beraxis.online"),
     title: {
-        default: "Beraxis | AI ERP & CRM Software · Free Cloud ERP, CRM & POS System",
-        template: "%s | Beraxis"
+        default: "BERAXIS AI | Autonomous AI ERP & AI CRM · #1 Free Odoo Alternative (2026)",
+        template: "%s | BERAXIS AI"
     },
-    description: "The #1 AI ERP & CRM Software for growing businesses. Deploy Free ERP, Free CRM, Point of Sale (POS), Accounting, and Global B2B Leads Directory for $1/month across 12 custom industries.",
+    description: "BERAXIS AI is the #1 Autonomous AI ERP & AI CRM Software for growing businesses. Deploy Free AI ERP, Free AI CRM, Point of Sale (POS), Accounting, and 25M+ Global B2B Leads Directory for $1/month across 12 custom industries. The leading free alternative to Odoo, HubSpot, and Salesforce.",
     keywords: [
+        "BERAXIS AI",
+        "Beraxis AI",
+        "AI ERP",
+        "AI CRM",
+        "Autonomous AI ERP",
+        "AI ERP Software",
+        "AI CRM Software",
+        "AI Business Operating System",
+        "AI Accounting Software",
+        "AI Voice Pilot ERP",
+        "AI Invoice OCR",
+        "Odoo AI alternative",
+        "Odoo alternative",
+        "Odoo alternatives",
+        "Best Odoo alternative 2026",
+        "Free Odoo alternative",
+        "Odoo free alternative 2026",
+        "Odoo ERP alternative",
+        "Odoo Community alternative",
+        "Odoo Enterprise alternative",
+        "Odoo vs BERAXIS AI",
+        "BERAXIS AI vs Odoo",
+        "Odoo pricing alternative",
+        "Odoo competitors",
+        "Switch from Odoo to BERAXIS AI",
+        "Migrate from Odoo",
         "ERP",
         "CRM",
         "ERP Software",
@@ -141,9 +167,9 @@ export const metadata: Metadata = {
         "rating": "General",
         "distribution": "Global",
     },
-    authors: [{ name: "Beraxis Team", url: "https://www.beraxis.online" }],
-    creator: "Beraxis Platform",
-    publisher: "Beraxis Systems",
+    authors: [{ name: "BERAXIS AI Team", url: "https://www.beraxis.online" }],
+    creator: "BERAXIS AI Platform",
+    publisher: "BERAXIS AI Systems Inc.",
     formatDetection: {
         email: false,
         address: false,
@@ -166,10 +192,10 @@ export const metadata: Metadata = {
     },
     manifest: "/site.webmanifest",
     openGraph: {
-        title: "Beraxis | AI ERP & CRM Software · Free Cloud ERP, CRM & POS System",
-        description: "The #1 AI ERP & CRM Software for growing businesses. Deploy Free ERP, Free CRM, Point of Sale (POS), Accounting, and Global B2B Leads Directory for $1/month across 12 custom industries.",
+        title: "BERAXIS AI | Autonomous AI ERP & AI CRM · #1 Free Odoo Alternative (2026)",
+        description: "BERAXIS AI is the #1 Autonomous AI ERP & AI CRM Software for growing businesses. Deploy Free AI ERP, Free AI CRM, Point of Sale (POS), Accounting, and 25M+ Global B2B Leads Directory for $1/month across 12 custom industries. The leading free alternative to Odoo, HubSpot, and Salesforce.",
         url: "https://www.beraxis.online",
-        siteName: "Beraxis",
+        siteName: "BERAXIS AI",
         images: [
             {
                 url: "https://www.beraxis.online/og-image.png?v=3",
@@ -189,8 +215,8 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: "summary_large_image",
-        title: "Beraxis | AI ERP & CRM Software · Free Cloud ERP, CRM & POS System",
-        description: "The #1 AI ERP & CRM Software for growing businesses. Deploy Free ERP, Free CRM, Point of Sale (POS), Accounting, and Global B2B Leads Directory for $1/month across 12 custom industries.",
+        title: "BERAXIS AI | Autonomous AI ERP & AI CRM · #1 Free Odoo Alternative (2026)",
+        description: "BERAXIS AI is the #1 Autonomous AI ERP & AI CRM Software for growing businesses. Deploy Free AI ERP, Free AI CRM, Point of Sale (POS), Accounting, and 25M+ Global B2B Leads Directory for $1/month across 12 custom industries. The leading free alternative to Odoo, HubSpot, and Salesforce.",
         images: ["https://www.beraxis.online/og-image.png?v=3"],
         creator: "@beraxis",
     },
@@ -221,9 +247,9 @@ export default function RootLayout({
             {
                 "@type": "Organization",
                 "@id": "https://www.beraxis.online/#organization",
-                "name": "Beraxis",
-                "legalName": "Beraxis Systems Inc.",
-                "alternateName": ["Beraxis ERP", "Beraxis CRM", "Beraxis AI", "Beraxis AI ERP"],
+                "name": "BERAXIS AI",
+                "legalName": "BERAXIS AI Systems Inc.",
+                "alternateName": ["BERAXIS AI", "Beraxis AI", "Beraxis", "Beraxis AI ERP", "Beraxis AI CRM", "Autonomous AI ERP"],
                 "url": "https://www.beraxis.online",
                 "logo": {
                     "@type": "ImageObject",
@@ -250,8 +276,8 @@ export default function RootLayout({
                 "@type": "WebSite",
                 "@id": "https://www.beraxis.online/#website",
                 "url": "https://www.beraxis.online",
-                "name": "Beraxis",
-                "alternateName": "Beraxis ERP",
+                "name": "BERAXIS AI",
+                "alternateName": ["BERAXIS AI ERP", "Beraxis AI"],
                 "publisher": {
                     "@id": "https://www.beraxis.online/#organization"
                 },
@@ -264,7 +290,8 @@ export default function RootLayout({
             {
                 "@type": "SoftwareApplication",
                 "@id": "https://www.beraxis.online/#software",
-                "name": "Beraxis",
+                "name": "BERAXIS AI Autonomous Enterprise Suite",
+                "alternateName": "BERAXIS AI",
                 "operatingSystem": "Cloud, Web, iOS, Android",
                 "applicationCategory": "BusinessApplication",
                 "offers": [
@@ -311,10 +338,10 @@ export default function RootLayout({
                     },
                     {
                         "@type": "Question",
-                        "name": "How does Beraxis compare to Odoo and HubSpot?",
+                        "name": "What is the best free Odoo alternative in 2026?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Unlike Odoo (which charges high fees per module) and HubSpot (which imposes steep pricing tiers based on contact counts), Beraxis includes all 28 modules, unlimited user seats, and 1,500 monthly lead generation credits for just $1.00/month."
+                            "text": "BERAXIS AI is rated the #1 best free Odoo alternative in 2026. Unlike Odoo (which charges $24.90–$37.40/user/month, strips dynamic accounting from Community, and requires thousands in consultant fees), BERAXIS AI includes all 28 modules, AI OCR bill scanner, AI Voice Pilot, double-entry accounting, and 1,500 monthly lead generation credits with a 1-App Free Forever tier or $1.00/month Early Bird plan."
                         }
                     },
                     {

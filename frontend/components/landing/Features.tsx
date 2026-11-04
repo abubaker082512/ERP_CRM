@@ -269,7 +269,7 @@ export default function Features() {
                             Capability & ROI Analysis
                         </span>
                         <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-                            Why Businesses Are Moving Away From <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Legacy Tools to Beraxis</span>
+                            Why Businesses Are Moving Away From <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Legacy Tools &amp; Odoo to BERAXIS AI</span>
                         </h2>
                         <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">
                             See how Beraxis delivers 10x faster performance, native Voice AI, and predictable transparent pricing compared to clunky legacy platforms.
@@ -282,8 +282,8 @@ export default function Features() {
                             <thead>
                                 <tr className="border-b border-white/10 text-xs sm:text-sm uppercase tracking-wider text-gray-400">
                                     <th className="py-4 px-6">Capability / Feature</th>
-                                    <th className="py-4 px-6 bg-purple-500/10 text-purple-300 font-bold rounded-t-xl">Beraxis ERP</th>
-                                    <th className="py-4 px-6 text-gray-400">Other Tools & Legacy Suites</th>
+                                    <th className="py-4 px-6 bg-purple-500/10 text-purple-300 font-bold rounded-t-xl">BERAXIS AI</th>
+                                    <th className="py-4 px-6 text-gray-400">Odoo &amp; Legacy ERP Suites</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5 text-sm sm:text-base">

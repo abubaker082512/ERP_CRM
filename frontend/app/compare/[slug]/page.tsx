@@ -155,7 +155,7 @@ export async function generateMetadata({ params }: CompareSlugProps): Promise<Me
     };
   }
 
-  const title = `Best Free ${comp.competitorName} Alternative (2026) | Beraxis AI`;
+  const title = `Best Free ${comp.competitorName} Alternative (2026) | BERAXIS AI`;
   const description = `${comp.heroHeadline}. ${comp.heroSubheadline.slice(0, 150)}... Save ${comp.annualSavings} annually with double-entry accounting, CRM, POS, and verified B2B leads for $1/mo.`;
 
   return {
@@ -189,7 +189,7 @@ export async function generateMetadata({ params }: CompareSlugProps): Promise<Me
       title,
       description,
       url: `https://www.beraxis.online/compare/${comp.slug}`,
-      siteName: "Beraxis AI",
+      siteName: "BERAXIS AI",
       images: [
         {
           url: "https://www.beraxis.online/social_media_assets/ad4_carousel_comparison_square.png",
@@ -228,7 +228,8 @@ export default async function CompareSlugPage({ params }: CompareSlugProps) {
   const softwareSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "Beraxis AI Autonomous ERP & CRM",
+    "name": "BERAXIS AI Autonomous Enterprise Suite",
+    "alternateName": "BERAXIS AI",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web, iOS, Android, Cloud",
     "description": comp.heroSubheadline,

@@ -18,7 +18,7 @@ export interface BlogPost {
 export const BLOG_POSTS: BlogPost[] = [
     {
         slug: "why-businesses-are-switching-from-odoo-hubspot-zoho-to-beraxis",
-        title: "Why Growing Businesses Are Switching from Odoo, HubSpot, Zoho, and Salesforce to Beraxis in 2026",
+        title: "Why Growing Businesses Are Switching from Odoo, HubSpot, Zoho, and Salesforce to BERAXIS AI in 2026",
         excerpt: "A comprehensive financial and operational comparison of the big four enterprise SaaS suites—Odoo, HubSpot, Zoho, and Salesforce—and why modern operators are consolidating onto Beraxis's unified, AI-powered $1/month ecosystem.",
         category: "Software Comparisons",
         author: {
@@ -511,7 +511,7 @@ Compare full details on our dedicated [Zoho CRM Alternative Comparison Page](/co
     },
     {
         slug: "odoo-vs-beraxis-the-hidden-consultant-trap",
-        title: "Odoo vs Beraxis: The True Cost of Implementation Consultants vs. Instant AI ERP",
+        title: "Best Free Odoo Alternative (2026): The True Cost of Implementation Consultants vs. BERAXIS AI",
         excerpt: "An architectural and financial breakdown of Odoo's broken module upgrades, the Community vs. Enterprise dilemma, and why modern operators choose Beraxis's 30-second setup.",
         category: "Cost & Architecture",
         author: {

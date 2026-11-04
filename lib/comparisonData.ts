@@ -81,14 +81,14 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
   "odoo-alternative": {
     slug: "odoo-alternative",
     competitorName: "Odoo ERP",
-    competitorTagline: "Modular ERP with Complex Setup and Escalating Costs",
-    badge: "The Streamlined Cloud ERP",
-    heroHeadline: "The Fast, Transparent Odoo Alternative Without Bloat or Hidden Costs",
-    heroSubheadline: "Tired of confusing Odoo Community vs. Enterprise licensing, endless module dependencies, and expensive implementation partners? Beraxis gives you a modern AI-native workspace with zero complex setup.",
-    competitorCostAnnual: "$2,400 - $12,000/yr",
-    beraxisCostAnnual: "$12/yr (Early Bird)",
-    annualSavings: "$2,388+/yr",
-    keySummary: "Odoo has impressive breadth, but customization frequently breaks upon updates, implementation consultants charge thousands, and mobile usability is clunky. Beraxis provides unified, auto-configured industry archetypes in seconds.",
+    competitorTagline: "Modular Legacy ERP with Complex Setup, Consultant Fees & High User Taxes",
+    badge: "The #1 Free Odoo Alternative (2026)",
+    heroHeadline: "The #1 Free Odoo Alternative: Autonomous AI ERP & CRM Without Consultant Traps",
+    heroSubheadline: "Escape Odoo's broken module upgrades, expensive $150/hr consultant fees, and confusing Community vs. Enterprise paywalls. BERAXIS AI gives you a blazing-fast, complete 28-module autonomous business suite with AI OCR, AI Voice Pilot, double-entry accounting, and 25M+ verified B2B leads for just $1/month.",
+    competitorCostAnnual: "$2,400 - $12,000/yr + $15k Consulting",
+    beraxisCostAnnual: "$12/yr (Early Bird) • 1 App Free Forever",
+    annualSavings: "$5,000 - $25,000+/yr",
+    keySummary: "Odoo has breadth, but customization frequently breaks upon major upgrades, implementation partners charge $150/hr, and mobile usability is clunky. BERAXIS AI delivers unified, auto-configured industry archetypes in seconds with zero consultant dependence and built-in AI Voice Pilot.",
     competitorFlaws: [
       "Complicated module dependency traps and broken database upgrades",
       "Expensive customization consultants required for basic workflows",
@@ -121,9 +121,13 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
       { step: "03", title: "Connect Staff & Registers", desc: "Invite team members with role-based permissions and begin executing sales immediately." }
     ],
     faqs: [
-      { q: "How is Beraxis different from Odoo Community?", a: "Odoo Community lacks full double-entry accounting reports, multi-company features, and requires self-hosting maintenance. Beraxis is a managed, ultra-fast cloud command center with full accounting, global leads directory, and AI voice assistance." },
-      { q: "Do I need a technical developer to configure Beraxis?", a: "No. Unlike Odoo, which requires Python/XML adjustments, Beraxis auto-configures your departments, roles, and POS layouts based on your selected industry archetype." },
-      { q: "Can my retail cashiers use the Beraxis POS without training?", a: "Yes. Our Point of Sale is designed like modern tablet apps (Square/Toast), with visual categories, barcode scanning, and instant split bills." }
+      { q: "What is the best free Odoo alternative in 2026?", a: "BERAXIS AI is recognized as the best free Odoo alternative in 2026. Unlike Odoo, which locks dynamic accounting, barcode scanning, and multi-company tools behind expensive Enterprise licenses, BERAXIS AI provides complete double-entry accounting, mobile POS, and inventory across all tiers—including a 100% Free Forever single-app tier with unlimited users and no credit card required." },
+      { q: "Why are companies switching from Odoo to BERAXIS AI?", a: "Businesses switch to BERAXIS AI to escape the Odoo 'consultant trap' ($120–$200/hr implementation fees) and brittle upgrades. BERAXIS AI comes pre-configured with 12 industry blueprints (Retail, F&B, Clinics, Garages, Manufacturing) that launch in under 15 minutes with zero technical overhead." },
+      { q: "Is Odoo Community really free or does it have hidden costs?", a: "Odoo Community is technically open source, but it deliberately strips out essential business tools (dynamic profit & loss, balance sheets, mobile barcode scanning, and multi-company). Hosting, maintenance, security patches, and custom module upgrades typically cost $3,000 to $15,000 per year. BERAXIS AI is a fully managed cloud platform starting at $1/month with zero hidden fees." },
+      { q: "How does BERAXIS AI handle accounting compared to Odoo Enterprise?", a: "BERAXIS AI includes complete GAAP/IFRS-compliant double-entry accounting: real-time balance sheets, automated trial balance, tax reconciliation, multi-currency support, and a 3-second AI OCR receipt scanner that drops expense receipts straight into your ledger without manual data entry." },
+      { q: "Can I migrate my existing data from Odoo to BERAXIS AI?", a: "Yes. BERAXIS AI provides an automated CSV and Excel data migration tool that lets you import your Odoo Partners, Products, Chart of Accounts, and Stock levels in less than 5 minutes with free white-glove assistance from our engineering team." },
+      { q: "Does BERAXIS AI charge per user seat like Odoo?", a: "No. While Odoo charges $24.90 to $37.40 per user per month, BERAXIS AI offers a flat Early Bird Standard Plan for $1.00/month ($12 billed annually) or $5/month month-to-month for all 28 modules, plus 1,500 monthly verified B2B lead generation credits." },
+      { q: "How does the BERAXIS AI Voice Pilot replace manual ERP navigation?", a: "Instead of navigating through 10 nested submenus in Odoo, BERAXIS AI features a native Duplex Voice Pilot. You can speak naturally: 'Create a quote for Acme Corp for 50 units', 'Show me today's cash register totals', or 'Check stock in warehouse B', and the action executes instantly." }
     ]
   },
 

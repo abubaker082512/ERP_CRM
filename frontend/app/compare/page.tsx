@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 export default function CompareHubPage() {
-  const [selectedCompetitor, setSelectedCompetitor] = useState<string>("quickbooks-alternative");
+  const [selectedCompetitor, setSelectedCompetitor] = useState<string>("odoo-alternative");
   const comparisonList = Object.values(COMPARISONS);
   const activeComp = COMPARISONS[selectedCompetitor] || comparisonList[0];
 
@@ -50,7 +50,7 @@ export default function CompareHubPage() {
               <span>Transparent Software Comparisons</span>
             </div>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
-              Why High-Growth Businesses Are Replacing Their <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400">Entire SaaS Stack</span> With Beraxis
+              Why High-Growth Businesses Are Replacing Odoo & Legacy SaaS With <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400">BERAXIS AI</span>
             </h1>
             <p className="text-gray-400 text-sm sm:text-lg max-w-2xl mx-auto font-light leading-relaxed">
               Stop paying \$400+/month for fragmented apps, brittle integrations, and \$20,000 consultant onboarding. See how Beraxis unifies your operations for just \$1/month.

@@ -20,12 +20,12 @@ export default function Footer() {
                             <img 
                                 src="/logo-full.png" 
                                 onError={(e) => { (e.target as HTMLImageElement).src = '/logo2.png'; }} 
-                                alt="Beraxis Autonomous AI ERP & CRM Platform" 
+                                alt="BERAXIS AI - #1 Autonomous AI ERP & CRM Platform" 
                                 className="h-8 w-auto object-contain" 
                             />
                         </Link>
                         <p className="text-xs text-gray-400 font-light leading-relaxed max-w-sm">
-                            The #1 autonomous AI ERP &amp; CRM command center. Unify 28 business modules with built-in global B2B leads directory, point of sale, smart inventory, and voice assist pilot for $1/month.
+                            BERAXIS AI is the #1 autonomous AI ERP &amp; CRM command center. Unify 28 business modules with built-in 25M+ global B2B leads directory, point of sale, double-entry accounting, smart inventory, and AI Voice Pilot for $1/month. The leading free alternative to Odoo and HubSpot.
                         </p>
                         
                         <div className="space-y-2 pt-2 text-xs">
@@ -121,7 +121,7 @@ export default function Footer() {
                         </h4>
                         <ul className="space-y-2.5 text-xs font-light">
                             <li><Link href="/compare/quickbooks-alternative" className="hover:text-white transition-colors">QuickBooks Alternative</Link></li>
-                            <li><Link href="/compare/odoo-alternative" className="hover:text-white transition-colors">Odoo ERP Alternative</Link></li>
+                            <li><Link href="/compare/odoo-alternative" className="hover:text-amber-300 font-semibold text-amber-400">⚡ Odoo AI Alternative (Free 2026)</Link></li>
                             <li><Link href="/compare/hubspot-alternative" className="hover:text-white transition-colors">HubSpot CRM Alternative</Link></li>
                             <li><Link href="/compare/zoho-crm-alternative" className="hover:text-white transition-colors">Zoho CRM Alternative</Link></li>
                             <li><Link href="/compare/salesforce-alternative" className="hover:text-white transition-colors font-medium text-cyan-300">Salesforce CRM Alternative</Link></li>
@@ -190,7 +190,7 @@ export default function Footer() {
 
                 {/* Bottom Copyright Bar */}
                 <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500">
-                    <p>© {currentYear} Beraxis Systems Inc. All rights reserved. The Premier Autonomous Cloud ERP &amp; AI CRM System.</p>
+                    <p>© {currentYear} BERAXIS AI Systems Inc. All rights reserved. The Premier Autonomous AI ERP &amp; AI CRM Suite · #1 Free Odoo Alternative.</p>
                     <div className="flex flex-wrap gap-4 text-xs">
                         <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy</Link>
                         <span>•</span>

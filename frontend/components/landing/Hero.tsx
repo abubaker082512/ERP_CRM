@@ -65,7 +65,7 @@ export default function Hero() {
 
                 {/* 3. Subheadline */}
                 <p className="text-sm sm:text-base md:text-lg text-gray-300 max-w-2xl mx-auto mb-6 sm:mb-8 font-normal leading-relaxed">
-                    Replace 5+ expensive, disconnected tools like Odoo, Salesforce, and QuickBooks. Run Accounting, POS, Inventory, HR &amp; CRM across 28 unified modules — with <strong className="text-cyan-300 font-semibold drop-shadow-[0_0_8px_rgba(103,232,249,0.3)]">integrated B2B lead discovery</strong> built-in.
+                    The #1 Free Odoo Alternative in 2026. Replace 5+ expensive, disconnected tools like Odoo, Salesforce, and QuickBooks with BERAXIS AI. Run Accounting, POS, Inventory, HR &amp; CRM across 28 unified modules — with <strong className="text-cyan-300 font-semibold drop-shadow-[0_0_8px_rgba(103,232,249,0.3)]">25M+ integrated B2B leads</strong> and AI Voice Pilot built-in.
                 </p>
 
                 {/* 4. Glassmorphic Action Buttons with Identical Height & Equal Spacing */}

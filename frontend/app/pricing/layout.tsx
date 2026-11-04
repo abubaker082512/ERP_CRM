@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Free ERP, Free CRM & $1/Mo Early Bird Pricing · Beraxis",
+  title: "Free AI ERP, Free AI CRM & $1/Mo Early Bird Pricing · BERAXIS AI (#1 Free Odoo Alternative)",
   description: "Start free with our Forever Free Tier (Free CRM, Free POS, or Free ERP). Unlock all 28 modules and 1,500 verified B2B lead credits/month for just $1/month ($12 billed annually) or $5/month month-to-month.",
   keywords: [
     "Free ERP",
@@ -15,7 +15,11 @@ export const metadata: Metadata = {
     "Affordable cloud ERP",
     "Cheapest CRM for small business",
     "Beraxis pricing",
+    "Odoo AI alternative",
+    "Best Odoo alternative 2026",
+    "Free Odoo alternative",
     "Odoo pricing alternative",
+    "BERAXIS AI",
     "HubSpot pricing alternative",
     "Zoho pricing alternative",
     "Salesforce pricing alternative",
@@ -30,7 +34,7 @@ export const metadata: Metadata = {
     title: "Free ERP & CRM Pricing · Forever Free or $1/Month Early Bird · Beraxis",
     description: "Forever Free Tier for Free CRM & POS. Or unlock all 28 enterprise modules and 1,500 verified lead credits/mo for $1/month ($12/yr).",
     url: "https://www.beraxis.online/pricing",
-    siteName: "Beraxis",
+    siteName: "BERAXIS AI",
     images: ["https://www.beraxis.online/og-image.png?v=3"],
     locale: "en_US",
     type: "website",
@@ -51,7 +55,7 @@ export default function PricingLayout({ children }: { children: React.ReactNode 
     "description": "Autonomous cloud ERP and CRM platform featuring 28 modules, verified B2B lead pool, double-entry accounting, touch POS, and AI Voice Pilot.",
     "brand": {
       "@type": "Brand",
-      "name": "Beraxis"
+      "name": "BERAXIS AI"
     },
     "offers": {
       "@type": "AggregateOffer",

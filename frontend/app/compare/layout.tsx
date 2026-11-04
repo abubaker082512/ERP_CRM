@@ -1,11 +1,27 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Compare Beraxis AI vs. Odoo, HubSpot, Zoho CRM, Salesforce & QuickBooks",
+  title: "Compare BERAXIS AI vs. Odoo, HubSpot, Zoho CRM, Salesforce & QuickBooks · #1 Free Odoo Alternative (2026)",
   description: "Comprehensive 2026 software comparisons. See why businesses are switching from Odoo, HubSpot, Zoho, Salesforce, and QuickBooks to Beraxis AI for unified double-entry accounting, 25M+ verified B2B leads, POS, and multi-warehouse ERP for $1/month.",
   keywords: [
+    "Odoo AI alternative",
+    "Best Odoo alternative 2026",
+    "Free Odoo alternative",
+    "Odoo free alternative 2026",
+    "Odoo AI alternative",
+    "Best Odoo alternative 2026",
+    "Free Odoo alternative",
+    "Odoo free alternative 2026",
     "Odoo alternative",
     "Odoo alternatives",
+    "Odoo vs BERAXIS AI",
+    "BERAXIS AI vs Odoo",
+    "Switch from Odoo to BERAXIS AI",
+    "BERAXIS AI",
+    "Odoo vs BERAXIS AI",
+    "BERAXIS AI vs Odoo",
+    "Switch from Odoo to BERAXIS AI",
+    "BERAXIS AI",
     "Best Odoo alternative 2026",
     "Odoo vs Beraxis",
     "HubSpot alternative",
@@ -41,7 +57,7 @@ export const metadata: Metadata = {
     canonical: "https://www.beraxis.online/compare",
   },
   openGraph: {
-    title: "Compare Beraxis AI vs. Odoo, HubSpot, Zoho CRM, Salesforce & QuickBooks",
+    title: "Compare BERAXIS AI vs. Odoo, HubSpot, Zoho CRM, Salesforce & QuickBooks · #1 Free Odoo Alternative (2026)",
     description: "Replace 5 fragmented tools and stop overpaying $400/month. Compare Beraxis AI head-to-head with Odoo, HubSpot, Zoho CRM, Salesforce, and QuickBooks.",
     url: "https://www.beraxis.online/compare",
     siteName: "Beraxis AI",
@@ -58,7 +74,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Compare Beraxis AI vs. Odoo, HubSpot, Zoho CRM, Salesforce & QuickBooks",
+    title: "Compare BERAXIS AI vs. Odoo, HubSpot, Zoho CRM, Salesforce & QuickBooks · #1 Free Odoo Alternative (2026)",
     description: "Stop paying the $400/mo SaaS tax. Full double-entry accounting, 25M+ verified B2B leads, POS, and ERP for $1/month.",
     images: ["https://www.beraxis.online/social_media_assets/ad4_carousel_comparison_square.png"],
   },
@@ -78,7 +94,7 @@ export default function CompareLayout({
       {
         "@type": "ListItem",
         "position": 1,
-        "name": "Beraxis vs. Odoo ERP",
+        "name": "BERAXIS AI vs. Odoo ERP (#1 Free 2026 Alternative)",
         "url": "https://www.beraxis.online/compare/odoo-alternative"
       },
       {
