@@ -378,6 +378,14 @@ export default function AppsDashboardPage() {
                             >
                                 <Plus size={14} /> + Add New Company
                             </button>
+                            <Link
+                                href="/migration"
+                                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-500/40 text-cyan-300 hover:text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
+                                title="Import historical data from QuickBooks, Odoo, HubSpot & Excel"
+                            >
+                                <Sparkles size={13} className="text-cyan-400" />
+                                <span>Migrate Data</span>
+                            </Link>
                         </>
                     )}
 

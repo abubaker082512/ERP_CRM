@@ -133,7 +133,8 @@ export default function Footer() {
                             <li><Link href="/leads-pool" className="hover:text-white transition-colors">B2B Leads Directory</Link></li>
                             <li><Link href="/affiliates" className="hover:text-purple-300 font-semibold text-purple-400">Affiliate Program</Link></li>
                             <li><Link href="/referrals" className="hover:text-white transition-colors">Customer Referrals</Link></li>
-                            <li><Link href="/digital-launch-hub.html" className="hover:text-white transition-colors">Digital Launch Hub</Link></li>
+                            <li><Link href="/migration" className="hover:text-cyan-300 font-semibold text-cyan-400">⚡ 1-Click Migration Hub</Link></li>
+                            <li><Link href="/shop" className="hover:text-white transition-colors">App Store &amp; Add-ons</Link></li>
                             <li><Link href="/donate" className="hover:text-rose-300 font-semibold text-rose-400">💙 Donate to Beraxis</Link></li>
                         </ul>
                     </div>
@@ -153,7 +154,7 @@ export default function Footer() {
                             <li><Link href="/privacy#gdpr" className="hover:text-white transition-colors">GDPR &amp; CCPA Rights</Link></li>
                             <li><Link href="/refund-policy" className="hover:text-white transition-colors font-medium text-emerald-400">Refund Policy (14-Day Money-Back)</Link></li>
                             <li><Link href="/acceptable-use" className="hover:text-white transition-colors font-medium text-purple-300">Acceptable Use Policy (AUP)</Link></li>
-                            <li><Link href="/sitemap.xml" className="hover:text-white transition-colors text-gray-500">XML Sitemap Index</Link></li>
+                            <li><Link href="/privacy" className="hover:text-white transition-colors text-gray-500">Security &amp; Compliance Center</Link></li>
                         </ul>
                     </div>
                 </div>

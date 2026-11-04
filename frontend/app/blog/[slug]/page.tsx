@@ -115,7 +115,7 @@ export default async function BlogPostPage({ params }: Props) {
                     <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500 hidden sm:inline">Share Analysis:</span>
                         <a
-                            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://beraxis.online/blog/${post.slug}`)}`}
+                            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://www.beraxis.online/blog/${post.slug}`)}`}
                             target="_blank"
                             rel="noreferrer"
                             className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-colors"
