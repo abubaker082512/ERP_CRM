@@ -76,6 +76,7 @@ export default function Footer() {
                         <ul className="space-y-2.5 text-xs font-light">
                             <li><Link href="/erp" className="hover:text-white transition-colors font-medium text-purple-300">Cloud ERP Software</Link></li>
                             <li><Link href="/crm-software" className="hover:text-white transition-colors font-medium text-blue-300">AI CRM Software</Link></li>
+                            <li><Link href="/ai" className="hover:text-cyan-300 transition-colors font-medium text-cyan-400">Autonomous AI Copilot</Link></li>
                             <li><Link href="/features/crm-pipeline" className="hover:text-white transition-colors">CRM Lead Pipeline</Link></li>
                             <li><Link href="/features/inventory" className="hover:text-white transition-colors">Smart Inventory</Link></li>
                             <li><Link href="/features/voice-pilot" className="hover:text-white transition-colors">AI Voice Pilot</Link></li>
@@ -84,7 +85,7 @@ export default function Footer() {
                             <li><Link href="/sales" className="hover:text-white transition-colors">Sales &amp; Quotations</Link></li>
                             <li><Link href="/payroll" className="hover:text-white transition-colors">HRMS &amp; Payroll</Link></li>
                             <li><Link href="/manufacturing" className="hover:text-white transition-colors">Manufacturing &amp; MRP</Link></li>
-                            <li><Link href="/apps" className="hover:text-white transition-colors">All 28 Apps Index</Link></li>
+                            <li><Link href="/apps" className="hover:text-white transition-colors">All 34+ Modules Index</Link></li>
                             <li><Link href="/features" className="hover:text-purple-300 font-semibold text-purple-400 flex items-center gap-1">Features Directory &rarr;</Link></li>
                         </ul>
                     </div>

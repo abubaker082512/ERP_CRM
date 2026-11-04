@@ -18,7 +18,8 @@ import {
     Gift, 
     PhoneCall, 
     Scale,
-    Leaf
+    Leaf,
+    Mic
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
@@ -154,6 +155,20 @@ export default function Navbar() {
                                         </Link>
 
                                         <Link
+                                            href="/ai"
+                                            onClick={() => setActiveDropdown(null)}
+                                            className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-colors group"
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-pink-500/15 border border-pink-500/30 text-pink-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                                <Mic size={16} />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-white group-hover:text-pink-300 transition-colors">AI Voice Pilot</div>
+                                                <div className="text-[11px] text-gray-400 leading-snug">Voice-driven autonomous copilot &amp; real-time OCR.</div>
+                                            </div>
+                                        </Link>
+
+                                        <Link
                                             href="/features"
                                             onClick={() => setActiveDropdown(null)}
                                             className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-colors group"
@@ -162,8 +177,8 @@ export default function Navbar() {
                                                 <Sparkles size={16} />
                                             </div>
                                             <div>
-                                                <div className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">Features &amp; 28 Apps</div>
-                                                <div className="text-[11px] text-gray-400 leading-snug">Full breakdown of all 28 integrated modules &amp; Studio tool.</div>
+                                                <div className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">Features &amp; 34+ Modules</div>
+                                                <div className="text-[11px] text-gray-400 leading-snug">Full breakdown of all 34+ integrated enterprise modules.</div>
                                             </div>
                                         </Link>
                                     </div>
@@ -364,9 +379,13 @@ export default function Navbar() {
                             <span>B2B Leads Directory</span>
                             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse ml-auto"></span>
                         </Link>
+                        <Link href="/ai" onClick={() => setIsOpen(false)} className="flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-gray-200 hover:text-white hover:bg-white/5 rounded-xl">
+                            <Mic size={16} className="text-pink-400" />
+                            <span>AI Voice Pilot</span>
+                        </Link>
                         <Link href="/features" onClick={() => setIsOpen(false)} className="flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-gray-200 hover:text-white hover:bg-white/5 rounded-xl">
                             <Sparkles size={16} className="text-emerald-400" />
-                            <span>Features &amp; 28 Apps</span>
+                            <span>Features &amp; 34+ Modules</span>
                         </Link>
                     </div>
 

@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/erp`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/crm-software`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
+    { url: `${baseUrl}/ai`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/leads-pool`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },
     { url: `${baseUrl}/compare`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },
     { url: `${baseUrl}/features`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },

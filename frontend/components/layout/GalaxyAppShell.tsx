@@ -44,6 +44,7 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
         pathname.startsWith('/sla') ||
         pathname.startsWith('/cookies') ||
         pathname.startsWith('/about') ||
+        pathname.startsWith('/ai') ||
         pathname.startsWith('/contact') ||
         pathname.startsWith('/pricing') ||
         pathname.startsWith('/donate') ||
@@ -231,6 +232,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         cleanPath.startsWith('/pricing') ||
         cleanPath.startsWith('/donate') || 
         cleanPath.startsWith('/about') || 
+        cleanPath.startsWith('/ai') || 
         cleanPath.startsWith('/contact') || 
         cleanPath.startsWith('/team') || 
         cleanPath.startsWith('/leads-pool') || 

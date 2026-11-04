@@ -7,6 +7,30 @@ const nextConfig = {
     typescript: {
         ignoreBuildErrors: true,
     },
+    async redirects() {
+        return [
+            {
+                source: '/voice',
+                destination: '/ai',
+                permanent: true,
+            },
+            {
+                source: '/voice-pilot',
+                destination: '/ai',
+                permanent: true,
+            },
+            {
+                source: '/artificial-intelligence',
+                destination: '/ai',
+                permanent: true,
+            },
+            {
+                source: '/lead-pool',
+                destination: '/leads-pool',
+                permanent: true,
+            },
+        ];
+    },
     // Proxy all /api/v1/* requests through Next.js to avoid browser CORS issues.
     // On Vercel, set BACKEND_INTERNAL_URL=https://galaxy-erp-backend.onrender.com
     async rewrites() {

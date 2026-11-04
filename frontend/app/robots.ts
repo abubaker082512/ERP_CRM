@@ -6,12 +6,12 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/super-admin/', '/billing/', '/checkout/'],
+        disallow: ['/api/', '/super-admin/', '/billing/', '/checkout/', '/_next/'],
       },
       {
         userAgent: 'Googlebot',
         allow: '/',
-        disallow: ['/api/', '/super-admin/', '/billing/', '/checkout/'],
+        disallow: ['/api/', '/super-admin/', '/billing/', '/checkout/', '/_next/'],
       },
       {
         userAgent: 'Googlebot-Image',
