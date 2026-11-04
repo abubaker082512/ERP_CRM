@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, ShoppingCart, Package, ShieldCheck, Zap, Sparkles, Mic, CheckCircle2, XCircle, ArrowRight, Globe, Database, PhoneCall, Mail } from 'lucide-react';
+import { LayoutDashboard, Users, ShoppingCart, Package, ShieldCheck, Zap, Sparkles, Mic, CheckCircle2, XCircle, ArrowRight, Globe, Database, PhoneCall, Mail, UploadCloud, MessageCircle, FileSpreadsheet } from 'lucide-react';
 import Link from 'next/link';
 
 const features = [
@@ -57,6 +57,27 @@ const features = [
         icon: ShieldCheck,
         color: "text-green-400",
         bg: "bg-green-500/10"
+    },
+    {
+        title: "Universal 1-Click Migration Hub",
+        description: "Seamlessly import historical records from QuickBooks, Odoo, HubSpot, Toast, Square & Excel with zero data loss and automated column mapping.",
+        icon: UploadCloud,
+        color: "text-purple-400",
+        bg: "bg-purple-500/10"
+    },
+    {
+        title: "Zero Vendor Lock-In Guarantee",
+        description: "Download your complete company database anytime in 1 click as an open JSON archive or export clean Excel/CSV spreadsheets for financial audits.",
+        icon: Database,
+        color: "text-emerald-400",
+        bg: "bg-emerald-500/10"
+    },
+    {
+        title: "WhatsApp Invoicing & Print Receipts",
+        description: "Generate print-ready A4/Letter tax receipts with verification QR stamps, or dispatch professional invoices to clients directly via WhatsApp in 1 click.",
+        icon: MessageCircle,
+        color: "text-pink-400",
+        bg: "bg-pink-500/10"
     }
 ];
 
@@ -101,6 +122,24 @@ const platformComparison = [
         feature: "Multi-Tenant Data Isolation",
         beraxis: "Supabase Row Level Security (RLS)",
         others: "Complex Fragile Database Sharding",
+        winner: "beraxis"
+    },
+    {
+        feature: "1-Click Data Migration",
+        beraxis: "Built-In (QuickBooks, Odoo, Excel)",
+        others: "Requires $3,000+ Consultants / Manual Re-entry",
+        winner: "beraxis"
+    },
+    {
+        feature: "Vendor Lock-In Policy",
+        beraxis: "Zero Lock-In (1-Click JSON/CSV Export)",
+        others: "Proprietary Database Traps & Export Limits",
+        winner: "beraxis"
+    },
+    {
+        feature: "WhatsApp Customer Invoicing",
+        beraxis: "1-Click Direct WhatsApp Share & Print PDF",
+        others: "Requires Expensive Third-Party SMS Integrations",
         winner: "beraxis"
     }
 ];
@@ -255,6 +294,102 @@ export default function Features() {
                                         <Mail size={11} /> Permuted MX
                                     </span>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                {/* Dedicated High-Impact Showcase: 1-Click Migration & Zero Lock-In */}
+                <div className="mb-24 bg-gradient-to-br from-purple-950/40 via-[#0B0F1E] to-cyan-950/30 border border-purple-500/30 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+                    
+                    <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                        <div>
+                            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wider mb-5">
+                                <UploadCloud size={14} className="text-purple-400" /> Universal Data Ingestion
+                            </div>
+                            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-5 leading-tight">
+                                Switch in 60 Seconds: <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-300">
+                                    1-Click Migration from QuickBooks, Odoo &amp; Excel
+                                </span>
+                            </h2>
+                            <p className="text-gray-300 text-base font-light leading-relaxed mb-6">
+                                Worried about moving your old records? Beraxis features a built-in automated migration parser that ingests your customers, invoices, inventory catalogs, and chart of accounts with zero data loss. Drag and drop any export file—our heuristic matcher handles the rest.
+                            </p>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3.5">
+                                    <div className="text-xl sm:text-2xl font-black text-purple-300">0%</div>
+                                    <div className="text-xs text-gray-400">Data Loss Guarantee</div>
+                                </div>
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3.5">
+                                    <div className="text-xl sm:text-2xl font-black text-cyan-300">8+</div>
+                                    <div className="text-xs text-gray-400">Platform Presets</div>
+                                </div>
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3.5 col-span-2 sm:col-span-1">
+                                    <div className="text-xl sm:text-2xl font-black text-emerald-400">&lt;60s</div>
+                                    <div className="text-xs text-gray-400">Instant Ingestion</div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-4">
+                                <Link 
+                                    href="/migration"
+                                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-6 py-3.5 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-purple-900/30 transition-all hover:scale-105"
+                                >
+                                    <span>Launch 1-Click Migration Hub</span> <ArrowRight size={17} />
+                                </Link>
+                                <Link 
+                                    href="/migration"
+                                    className="px-6 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-gray-200 hover:text-white font-medium text-sm transition-all flex items-center gap-2"
+                                >
+                                    <Database size={15} className="text-emerald-400" />
+                                    <span>Zero Vendor Lock-In Overview</span>
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Supported Import Platforms Box */}
+                        <div className="p-6 rounded-2xl bg-[#080D1A] border border-purple-500/30 shadow-xl space-y-4">
+                            <div className="flex items-center justify-between pb-3 border-b border-white/10 text-xs text-gray-400">
+                                <div className="flex items-center gap-2 font-mono text-purple-300">
+                                    <Sparkles size={14} /> SUPPORTED_DATA_SOURCES
+                                </div>
+                                <span className="bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded text-[10px] font-bold">Heuristic Auto-Mapping</span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                                    <span className="font-bold text-white">QuickBooks Online &amp; Desktop</span>
+                                </div>
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                                    <div className="w-2 h-2 rounded-full bg-purple-400" />
+                                    <span className="font-bold text-white">Odoo Community &amp; Enterprise</span>
+                                </div>
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                                    <div className="w-2 h-2 rounded-full bg-orange-400" />
+                                    <span className="font-bold text-white">HubSpot CRM &amp; Sales Hub</span>
+                                </div>
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                                    <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                                    <span className="font-bold text-white">Salesforce Sales Cloud</span>
+                                </div>
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                                    <div className="w-2 h-2 rounded-full bg-rose-400" />
+                                    <span className="font-bold text-white">Toast &amp; Square POS</span>
+                                </div>
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                                    <div className="w-2 h-2 rounded-full bg-amber-400" />
+                                    <span className="font-bold text-white">Custom Excel &amp; CSV Exports</span>
+                                </div>
+                            </div>
+
+                            <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 text-[11px] flex items-center gap-2">
+                                <ShieldCheck size={16} className="text-emerald-400 shrink-0" />
+                                <span>Zero Vendor Lock-In: Export your complete database in JSON/Excel anytime in 1 click.</span>
                             </div>
                         </div>
                     </div>

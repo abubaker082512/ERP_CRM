@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
+  UploadCloud,
+  Database,
   ShieldCheck,
   CheckCircle2,
   ArrowRight,
@@ -77,6 +79,37 @@ export default function FeaturesContent() {
             <Check size={14} className="text-emerald-400" />
             <span>No Credit Card Required</span>
           </span>
+        </div>
+      </div>
+
+      {/* ── 1.5. Universal Migration Hub & Zero Lock-In Showcase Banner ── */}
+      <div className="mb-14 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-purple-950/50 via-[#0B0F1E] to-cyan-950/40 border border-purple-500/30 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl backdrop-blur-xl">
+        <div className="space-y-2 text-center md:text-left">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-[11px] font-extrabold uppercase tracking-wider border border-purple-500/30">
+            <UploadCloud size={13} className="text-purple-400" /> Universal Data Ingestion &amp; Portability
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            Switching from QuickBooks, Odoo, Toast, or Excel?
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+            Import your historical customers, invoices, products, and general ledger in under 60 seconds with zero data loss. Plus, our <strong>Zero Vendor Lock-In Guarantee</strong> ensures you can download your complete database anytime in 1 click.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full sm:w-auto">
+          <Link
+            href="/migration"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all hover:scale-105 flex items-center justify-center gap-2"
+          >
+            <span>Launch Migration Hub</span>
+            <ArrowRight size={14} />
+          </Link>
+          <Link
+            href="/settings"
+            className="w-full sm:w-auto px-5 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-gray-200 hover:text-white font-medium text-xs transition-all flex items-center justify-center gap-2"
+          >
+            <Database size={14} className="text-emerald-400" />
+            <span>Zero Lock-In Exporter</span>
+          </Link>
         </div>
       </div>
 

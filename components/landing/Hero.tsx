@@ -13,7 +13,10 @@ import {
     X,
     Check,
     Layers,
-    Lock
+    Lock,
+    UploadCloud,
+    Database,
+    MessageCircle
 } from "lucide-react";
 import { initSocialAttribution } from "@/lib/abTesting";
 
@@ -135,55 +138,58 @@ export default function Hero() {
                 {/* 6. Luxury Floating Glass Dock Strip (Enterprise Trust Badges) */}
                 <div className="w-full max-w-4xl p-2.5 sm:p-3 rounded-2xl sm:rounded-3xl backdrop-blur-2xl bg-gradient-to-b from-white/[0.09] via-[#0A0E1A]/75 to-[#0A0E1A]/95 border border-white/20 hover:border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_20px_50px_-10px_rgba(0,0,0,0.6),0_0_40px_rgba(168,85,247,0.12)] transition-all">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 text-left">
-                        {/* Feature 1 */}
-                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40 transition-all cursor-default shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                        {/* Feature 1: Migration */}
+                        <Link href="/migration" className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40 transition-all cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
                             <div className="p-2 sm:p-2.5 rounded-xl bg-purple-500/15 border border-purple-400/30 text-purple-400 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] group-hover:scale-110 group-hover:border-purple-300 transition-all shrink-0">
-                                <ShieldCheck size={18} />
+                                <UploadCloud size={18} />
                             </div>
                             <div className="min-w-0">
-                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap">Enterprise Security</div>
-                                <div className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap">256-Bit Encrypted</div>
+                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap flex items-center gap-1">
+                                    <span>1-Click Migration</span>
+                                    <span className="text-[9px] px-1 py-0.2 rounded bg-purple-500/20 text-purple-300 font-extrabold">NEW</span>
+                                </div>
+                                <div className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap">QuickBooks, Odoo, Excel</div>
                             </div>
-                        </div>
+                        </Link>
 
-                        {/* Feature 2 */}
-                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-cyan-500/40 transition-all cursor-default shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                        {/* Feature 2: Leads Directory */}
+                        <Link href="/leads-pool" className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
                             <div className="p-2 sm:p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-400 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] group-hover:scale-110 group-hover:border-cyan-300 transition-all shrink-0">
                                 <Globe size={18} />
                             </div>
                             <div className="min-w-0">
-                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap">Leads Directory</div>
-                                <div className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap">10,000+ Verified B2B</div>
+                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap">B2B Leads Directory</div>
+                                <div className="text-[10px] sm:text-[11px] text-cyan-300 whitespace-nowrap font-semibold">48,000+ Contacts</div>
                             </div>
-                        </div>
+                        </Link>
 
-                        {/* Feature 3 */}
-                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-amber-500/40 transition-all cursor-default shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
-                            <div className="p-2 sm:p-2.5 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-400 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] group-hover:scale-110 group-hover:border-amber-300 transition-all shrink-0">
-                                <Zap size={18} />
+                        {/* Feature 3: Zero Vendor Lock-In */}
+                        <Link href="/migration" className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                            <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-400 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] group-hover:scale-110 group-hover:border-emerald-300 transition-all shrink-0">
+                                <Database size={18} />
                             </div>
                             <div className="min-w-0">
-                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap">Instant Sync</div>
-                                <div className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap">Real-Time Cloud</div>
+                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap">Zero Lock-In</div>
+                                <div className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap">Full JSON &amp; CSV Export</div>
                             </div>
-                        </div>
+                        </Link>
 
-                        {/* Feature 4 */}
-                        <div className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-pink-500/40 transition-all cursor-default shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                        {/* Feature 4: Enterprise Security */}
+                        <Link href="/security" className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-pink-500/40 transition-all cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
                             <div className="p-2 sm:p-2.5 rounded-xl bg-pink-500/15 border border-pink-400/30 text-pink-400 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] group-hover:scale-110 group-hover:border-pink-300 transition-all shrink-0">
-                                <Sparkles size={18} />
+                                <ShieldCheck size={18} />
                             </div>
                             <div className="min-w-0">
-                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap">28 Unified Apps</div>
-                                <div className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap">All-in-One Platform</div>
+                                <div className="text-xs sm:text-sm text-white font-bold whitespace-nowrap">Enterprise Security</div>
+                                <div className="text-[10px] sm:text-[11px] text-gray-400 whitespace-nowrap">256-Bit SSL &amp; Cloud RLS</div>
                             </div>
-                        </div>
+                        </Link>
                     </div>
                 </div>
 
             </div>
 
-            {/* Savings Calculator Modal with Frosted Glass Overlay & Card */}
+                        {/* Savings Calculator Modal with Frosted Glass Overlay & Card */}
             {isCalcOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl animate-in fade-in duration-200">
                     <div className="relative w-full max-w-lg bg-[#090D1A]/90 backdrop-blur-2xl border border-white/20 rounded-3xl p-6 sm:p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_25px_60px_rgba(0,0,0,0.8)] text-left">

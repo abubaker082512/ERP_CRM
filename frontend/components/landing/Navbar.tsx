@@ -19,7 +19,8 @@ import {
     PhoneCall, 
     Scale,
     Leaf,
-    Mic
+    Mic,
+    UploadCloud
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
@@ -165,6 +166,23 @@ export default function Navbar() {
                                             <div>
                                                 <div className="text-sm font-bold text-white group-hover:text-pink-300 transition-colors">AI Voice Pilot</div>
                                                 <div className="text-[11px] text-gray-400 leading-snug">Voice-driven autonomous copilot &amp; real-time OCR.</div>
+                                            </div>
+                                        </Link>
+
+                                        <Link
+                                            href="/migration"
+                                            onClick={() => setActiveDropdown(null)}
+                                            className="flex items-start gap-3 p-2.5 rounded-xl bg-purple-950/20 border border-purple-500/20 hover:border-purple-400/40 transition-colors group"
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                                <UploadCloud size={16} className="text-purple-400" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors flex items-center gap-1.5">
+                                                    <span>1-Click Migration Hub</span>
+                                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/30 text-purple-200 font-extrabold uppercase">Zero Loss</span>
+                                                </div>
+                                                <div className="text-[11px] text-gray-400 leading-snug">Import from QuickBooks, Odoo, HubSpot &amp; Excel in 60s.</div>
                                             </div>
                                         </Link>
 
@@ -382,6 +400,10 @@ export default function Navbar() {
                         <Link href="/ai" onClick={() => setIsOpen(false)} className="flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-gray-200 hover:text-white hover:bg-white/5 rounded-xl">
                             <Mic size={16} className="text-pink-400" />
                             <span>AI Voice Pilot</span>
+                        </Link>
+                        <Link href="/migration" onClick={() => setIsOpen(false)} className="flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-purple-300 hover:text-white bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                            <UploadCloud size={16} className="text-purple-400" />
+                            <span>1-Click Migration Hub</span>
                         </Link>
                         <Link href="/features" onClick={() => setIsOpen(false)} className="flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-gray-200 hover:text-white hover:bg-white/5 rounded-xl">
                             <Sparkles size={16} className="text-emerald-400" />

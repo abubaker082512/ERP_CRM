@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame, Building2, CreditCard, ShieldCheck } from "lucide-react";
+import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Sparkles, Zap, Flame, Building2, CreditCard, ShieldCheck, UploadCloud, Database, Share2 } from "lucide-react";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 import { CREEM_PRODUCTS, getCreemCheckoutUrl } from "@/lib/creemConfig";
 import { Heart, Lock } from "lucide-react";
@@ -128,9 +128,24 @@ export default function PricingPage() {
         { name: "Beraxis Studio Customizer", free: false, standard: false, custom: true },
         { name: "External API Integrations", free: false, standard: false, custom: true },
         { name: "Dedicated Isolated Cloud Databases", free: false, standard: false, custom: true },
+        { name: "1-Click Data Migration Hub", free: "Included (CSV)", standard: "Unlimited (All Platforms)", custom: "White-Glove Assisted Migration" },
+        { name: "Zero Vendor Lock-In (JSON/CSV Export)", free: true, standard: true, custom: true },
+        { name: "WhatsApp Customer Invoicing & Print PDF", free: true, standard: true, custom: true },
     ];
 
     const faqs = [
+        {
+            q: "Can I import historical data from QuickBooks, Odoo, HubSpot, or Excel?",
+            a: "Yes! Beraxis includes a Universal 1-Click Migration Hub (/migration). You can upload export files or paste CSV data directly from QuickBooks, Odoo, HubSpot, Salesforce, Zoho, Toast, Square, or custom spreadsheets. Our automated heuristic matcher maps your fields and validates all records before importing with zero data loss."
+        },
+        {
+            q: "Is there any vendor lock-in if I ever want to export my data?",
+            a: "Zero vendor lock-in. We believe your data belongs 100% to you. You can export your entire company database as a structured JSON archive or download individual CSV/Excel spreadsheets for invoices, leads, and inventory anytime in 1 click from your Settings dashboard."
+        },
+        {
+            q: "Can I print invoices or send them directly to customers on WhatsApp?",
+            a: "Yes! Every invoice includes a high-definition A4/Letter print preview and a 1-click 'Share via WhatsApp' button with pre-formatted invoice details, amount due, and verification links."
+        },
         {
             q: "How does company management work between Standard and Custom?",
             a: "The Standard Plan is designed for operating a single company workspace (1 Company) with all 28 modules unlocked. If your business operates multiple entities, subsidiaries, or legal branches, the Custom Enterprise plan includes 3 companies out-of-the-box, with extra companies available for $15/company/month."
@@ -488,6 +503,29 @@ export default function PricingPage() {
                             </a>
                             <span className="text-[11px] text-gray-400">Cancel anytime • Instant access</span>
                         </div>
+                    </div>
+                </div>
+
+                {/* 1-Click Migration & Zero Lock-In Banner */}
+                <div className="max-w-5xl mx-auto mb-16 rounded-3xl border border-purple-500/30 bg-gradient-to-r from-purple-950/40 via-[#0B0F1E] to-cyan-950/30 p-6 sm:p-8 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+                    <div className="space-y-1.5 text-center md:text-left">
+                        <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 inline-flex items-center gap-1.5 w-fit mx-auto md:mx-0">
+                            <UploadCloud size={12} className="text-purple-400" />
+                            <span>1-Click Data Migration</span>
+                        </span>
+                        <h4 className="text-xl font-black text-white">Switching from QuickBooks, Odoo, Toast or Excel?</h4>
+                        <p className="text-xs text-gray-300 max-w-xl">
+                            Import historical customers, invoices, products, and general ledger accounts in under 60 seconds with zero data loss. Plus, our <strong>Zero Vendor Lock-In guarantee</strong> lets you export your full database anytime in 1 click.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                        <Link
+                            href="/migration"
+                            className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs transition-all shadow-lg shadow-purple-600/30 flex items-center gap-2"
+                        >
+                            <span>Launch Migration Hub</span>
+                            <ArrowRight size={14} />
+                        </Link>
                     </div>
                 </div>
 
