@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import CosmicBackground from "@/components/CosmicBackground";
@@ -185,6 +186,24 @@ function MigrationContent() {
             <Navbar />
 
             <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-32 pb-24 w-full">
+                {/* Header with Export Link */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div className="space-y-1">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[10px] font-extrabold uppercase tracking-wider">
+                            <Sparkles size={11} className="text-purple-400" /> Universal Data Ingestion
+                        </div>
+                        <h1 className="text-2xl sm:text-3xl font-black text-white">Universal Migration Hub</h1>
+                        <p className="text-xs text-gray-400">Migrate your data from QuickBooks, Odoo, HubSpot, Toast, or Excel with zero data loss.</p>
+                    </div>
+                    <Link
+                        href="/settings"
+                        className="self-start sm:self-center shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-950/40 hover:bg-purple-900/60 border border-purple-500/30 text-xs font-bold text-purple-300 hover:text-white transition-all shadow-sm active:scale-95"
+                    >
+                        <Database size={14} className="text-purple-400" />
+                        <span>Export / Backup Data &rarr;</span>
+                    </Link>
+                </div>
+
                 {/* 4-Stage Stepper Navigation */}
                 <div className="mb-10 p-4 rounded-3xl bg-[#0F172A]/70 border border-white/10 backdrop-blur-xl shadow-2xl">
                     <div className="grid grid-cols-4 gap-2">

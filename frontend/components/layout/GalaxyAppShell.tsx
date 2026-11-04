@@ -268,6 +268,9 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         return (
             <BranchProvider>
                 {children}
+                {mounted && !cleanPath.startsWith('/meet') && !cleanPath.startsWith('/appointments/book') && (
+                    <BeraxisSupportWidgets />
+                )}
             </BranchProvider>
         );
     }

@@ -38,8 +38,53 @@ interface Message {
 function resolveSupportQuery(query: string): { text: string; action?: { label: string; href: string }; suggestedTopics?: string[] } {
     const q = query.toLowerCase().trim();
 
-    // CRM / Leads / Opportunities
-    if (q.includes("crm") || q.includes("lead") || q.includes("opportunity") || q.includes("deal") || q.includes("pipeline") || q.includes("customer")) {
+    // 1. Data Migration & Ingestion (QuickBooks, Odoo, HubSpot, Excel, CSV)
+    if (q.includes("migration") || q.includes("migrate") || q.includes("import") || q.includes("quickbooks") || q.includes("odoo") || q.includes("hubspot") || q.includes("salesforce") || q.includes("zoho") || q.includes("toast") || q.includes("square") || q.includes("excel") || q.includes("csv")) {
+        return {
+            text: "Yes! Our Universal 1-Click Migration Hub lets you import historical customers, invoices, products, and chart of accounts from QuickBooks, Odoo, HubSpot, Salesforce, Zoho, Toast, Square, or custom Excel/CSV with zero data loss.",
+            action: { label: "Open 1-Click Migration Hub →", href: "/migration" },
+            suggestedTopics: ["What is included in the $1/mo plan?", "How to export company data?", "Search 45,000+ B2B Leads"]
+        };
+    }
+
+    // 2. Billing / Pricing / Subscription / Early Bird / $1 Plan
+    if (q.includes("price") || q.includes("pricing") || q.includes("plan") || q.includes("cost") || q.includes("early bird") || q.includes("$1") || q.includes("1$") || q.includes("subscription") || q.includes("upgrade")) {
+        return {
+            text: "Beraxis offers a special launch early-bird rate: Get all 28+ AI ERP & CRM modules plus 1,500 verified B2B lead credits/month for just $1/month ($12/year billed upfront). We also offer a $10/mo standalone leads tier, backed by a 14-day money-back guarantee.",
+            action: { label: "View Plans & Pricing →", href: "/pricing" },
+            suggestedTopics: ["Can I import from QuickBooks?", "Is there a refund policy?", "How does Leads Pool work?"]
+        };
+    }
+
+    // 3. Leads Pool / Global B2B Directory / Prospecting
+    if (q.includes("lead") || q.includes("prospect") || q.includes("directory") || q.includes("contact") || q.includes("phone") || q.includes("email") || q.includes("b2b")) {
+        return {
+            text: "Beraxis includes a built-in Global B2B Leads Directory with over 45,000+ verified enterprise decision-makers across 50+ countries. Every paid subscriber receives 1,500 fresh lead credits monthly with direct mobile dials, WhatsApp numbers, and verified corporate emails.",
+            action: { label: "Explore Leads Directory →", href: "/leads-pool" },
+            suggestedTopics: ["What is included in the $1/mo plan?", "Open CRM Pipeline", "How to export leads to CSV?"]
+        };
+    }
+
+    // 4. Guarantee / Refund / Cancellation
+    if (q.includes("refund") || q.includes("guarantee") || q.includes("money back") || q.includes("cancel") || q.includes("safe")) {
+        return {
+            text: "All Beraxis subscriptions come with an unconditional 14-Day Money-Back Guarantee. If you're not completely thrilled with the system, request a full refund within 14 days with zero questions asked.",
+            action: { label: "Read Refund Policy →", href: "/refund-policy" },
+            suggestedTopics: ["View Pricing ($1/mo)", "Explore Migration Hub", "Contact Live Support"]
+        };
+    }
+
+    // 5. Data Backup & Zero Vendor Lock-In Export
+    if (q.includes("export") || q.includes("backup") || q.includes("lock-in") || q.includes("download data") || q.includes("portability")) {
+        return {
+            text: "Your business data belongs strictly to you. With our Zero Vendor Lock-In guarantee, you can download your complete company database as a JSON archive or export individual invoices, leads, and inventory as CSV/Excel anytime in 1 click.",
+            action: { label: "Open Backup & Export Center →", href: "/settings" },
+            suggestedTopics: ["Open 1-Click Migration Hub", "View Invoices", "CRM Pipeline"]
+        };
+    }
+
+    // 6. CRM / Pipeline
+    if (q.includes("crm") || q.includes("deal") || q.includes("pipeline") || q.includes("opportunity")) {
         return {
             text: "In Beraxis CRM, you can track leads across Kanban stages, score win probabilities with AI, and convert qualified leads into Sales Quotations in one click.",
             action: { label: "Open CRM Pipeline →", href: "/crm" },
@@ -47,25 +92,25 @@ function resolveSupportQuery(query: string): { text: string; action?: { label: s
         };
     }
 
-    // Invoice / Accounting / OCR / Bills / Payment
+    // 7. Invoice / Accounting / OCR / Bills / Payment
     if (q.includes("invoice") || q.includes("bill") || q.includes("receipt") || q.includes("accounting") || q.includes("ocr") || q.includes("tax") || q.includes("bank") || q.includes("finance")) {
         return {
-            text: "Beraxis Accounting features double-entry bookkeeping, automated bank reconciliation, and instant 3-Second AI OCR receipt parsing (drop any PDF supplier bill to auto-populate the ledger).",
-            action: { label: "Go to Accounting & Invoices →", href: "/accounting" },
-            suggestedTopics: ["How to manage inventory?", "How to run payroll?", "Open Sales Orders"]
+            text: "Beraxis Accounting features double-entry bookkeeping, automated bank reconciliation, and instant print-ready invoice receipts with 1-click WhatsApp customer delivery.",
+            action: { label: "Go to Accounting & Invoices →", href: "/accounting/customers" },
+            suggestedTopics: ["How to export invoices to CSV?", "View Point of Sale", "How to manage inventory?"]
         };
     }
 
-    // Sales / Quotations / Orders
+    // 8. Sales / Quotations / POS
     if (q.includes("sale") || q.includes("quote") || q.includes("quotation") || q.includes("order") || q.includes("pos") || q.includes("point of sale")) {
         return {
-            text: "You can create quotations, send email proposals with digital signatures, and confirm Sales Orders. Confirming an order automatically reserves inventory and drafts an invoice.",
+            text: "You can create quotations, send email proposals with digital signatures, and ring up sales in our touch-friendly omnichannel POS with KDS kitchen display.",
             action: { label: "Open Sales & Orders →", href: "/sales" },
             suggestedTopics: ["How to create an invoice?", "View Point of Sale", "Check Inventory stock"]
         };
     }
 
-    // Inventory / Warehouse / Stock / Products / MRP
+    // 9. Inventory / Stock / Products
     if (q.includes("inventory") || q.includes("stock") || q.includes("product") || q.includes("warehouse") || q.includes("mrp") || q.includes("manufacturing") || q.includes("barcode")) {
         return {
             text: "The Inventory module allows multi-warehouse stock tracking, predictive AI demand forecasting, barcode scanning, and Bill of Materials (BOM) manufacturing orders.",
@@ -74,8 +119,8 @@ function resolveSupportQuery(query: string): { text: string; action?: { label: s
         };
     }
 
-    // HR / Payroll / Employees / Attendance / Leave
-    if (q.includes("payroll") || q.includes("employee") || q.includes("salary") || q.includes("staff") || q.includes("attendance") || q.includes("leave") || q.includes("recruit")) {
+    // 10. HR / Payroll / Employees
+    if (q.includes("payroll") || q.includes("employee") || q.includes("salary") || q.includes("staff") || q.includes("attendance") || q.includes("leave")) {
         return {
             text: "Manage employee records, self-service leave requests, daily attendance check-ins, and generate monthly payroll salary slips with automated deductions.",
             action: { label: "Open HRMS & Payroll →", href: "/payroll" },
@@ -83,60 +128,24 @@ function resolveSupportQuery(query: string): { text: string; action?: { label: s
         };
     }
 
-    // Team / Users / Roles / Settings / Organization
-    if (q.includes("team") || q.includes("user") || q.includes("invite") || q.includes("role") || q.includes("permission") || q.includes("setting") || q.includes("company") || q.includes("currency")) {
+    // 11. Human Support / WhatsApp
+    if (q.includes("human") || q.includes("support") || q.includes("whatsapp") || q.includes("call") || q.includes("phone")) {
         return {
-            text: "In Settings & Team Management, you can configure your company details, currency, tax rates, invite team members, and assign role-based module permissions.",
-            action: { label: "Open Settings & Team →", href: "/settings" },
-            suggestedTopics: ["How to upgrade subscription?", "View Knowledge Base", "Contact Live Support"]
-        };
-    }
-
-    // Calendar / Appointments / Schedule
-    if (q.includes("calendar") || q.includes("appointment") || q.includes("meeting") || q.includes("schedule") || q.includes("booking") || q.includes("todo") || q.includes("task")) {
-        return {
-            text: "You can manage meetings, share public online appointment booking pages with clients, sync Google Calendar, and track personal To-Do tasks.",
-            action: { label: "Open Calendar & Bookings →", href: "/calendar" },
-            suggestedTopics: ["Open To-Do List", "View CRM Leads", "Discuss / Team Chat"]
-        };
-    }
-
-    // Reports / Dashboard / Analytics
-    if (q.includes("report") || q.includes("dashboard") || q.includes("analytic") || q.includes("kpi") || q.includes("profit") || q.includes("revenue") || q.includes("metric")) {
-        return {
-            text: "The Dashboards and Reports modules give real-time visibility into revenue, top-selling products, sales conversion rates, and cash flow forecasts.",
-            action: { label: "Open Real-Time Dashboards →", href: "/dashboard" },
-            suggestedTopics: ["Open Sales Reports", "Check Accounting P&L", "CRM Pipeline"]
-        };
-    }
-
-    // Billing / Upgrade / Plan / Pricing / Subscription
-    if (q.includes("upgrade") || q.includes("plan") || q.includes("pricing") || q.includes("billing") || q.includes("subscription") || q.includes("price") || q.includes("trial")) {
-        return {
-            text: "Beraxis offers a Free Starter Tier (1 Module Free Forever) or the All-in-One Pro Plan ($199/mo) which unlocks all 25+ enterprise modules and AI features.",
-            action: { label: "View Plans & Upgrade →", href: "/billing" },
-            suggestedTopics: ["Contact WhatsApp Support", "How to add team users?", "Open CRM"]
-        };
-    }
-
-    // Human Support / Contact / Help / WhatsApp
-    if (q.includes("human") || q.includes("support") || q.includes("contact") || q.includes("help") || q.includes("whatsapp") || q.includes("email") || q.includes("call")) {
-        return {
-            text: "Our dedicated support team is available via WhatsApp (+1 970 780 7993) and direct email at admin@beraxis.online. We are happy to assist you with free data migration and live walkthroughs!",
+            text: "Our dedicated support team is available via WhatsApp (+1 970 780 7993) and direct email at admin@beraxis.online. We are happy to assist you with free onboarding and migration assistance!",
             action: { label: "Chat on WhatsApp Now →", href: "https://wa.me/19707807993?text=Hi%20Beraxis%20Support%2C%20I%20need%20assistance%20with%20my%20workspace" },
-            suggestedTopics: ["How to import Excel data?", "How to invite staff?", "Accounting setup"]
+            suggestedTopics: ["Can I import from QuickBooks?", "View Pricing ($1/mo)", "Accounting setup"]
         };
     }
 
     // Default Fallback
     return {
-        text: `I'm your instant Beraxis Navigator. I can help guide you to any module, explain accounting OCR, CRM pipelines, stock management, or connect you with our live team!`,
-        action: { label: "Browse All Apps & Modules →", href: "/apps" },
+        text: "I'm your Beraxis Copilot. I can answer questions about data migration from QuickBooks/Odoo, the $1/month plan, 45,000+ B2B leads, or connect you with live WhatsApp support!",
+        action: { label: "Explore All 28+ Modules →", href: "/apps" },
         suggestedTopics: [
-            "How do I create an invoice?",
-            "How does AI Lead Scoring work?",
-            "How to manage inventory & stock?",
-            "How to invite team members?",
+            "Can I import from QuickBooks?",
+            "What is included in the $1/mo plan?",
+            "How does the Leads Pool work?",
+            "Is there a 14-day refund guarantee?",
             "Chat with WhatsApp Support"
         ]
     };
@@ -156,18 +165,17 @@ export default function BeraxisSupportWidgets() {
         {
             id: "welcome",
             sender: "bot",
-            text: "👋 Hi there! I'm your instant Beraxis AI Support Assistant. How can I help you streamline your operations today?",
+            text: "👋 Hi! I'm your Beraxis Copilot. How can I help you? Ask about our 1-click migration, $1/mo launch pricing, 45,000+ B2B leads, or any of our 28+ enterprise modules.",
             suggestedTopics: [
-                "How do I create an invoice?",
-                "How does AI Lead Scoring work?",
-                "How to manage inventory?",
-                "Where do I run payroll?",
-                "How to invite team members?"
+                "Can I import from QuickBooks?",
+                "What is included in the $1/mo plan?",
+                "How does the Leads Pool work?",
+                "Is there a 14-day refund guarantee?"
             ]
         }
     ]);
 
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+        const messagesEndRef = useRef<HTMLDivElement>(null);
     const widgetRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

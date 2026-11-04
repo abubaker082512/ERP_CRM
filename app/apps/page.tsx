@@ -55,6 +55,7 @@ import { useBranchContext } from "@/lib/branchContext";
 import { GLOBAL_INDUSTRIES, GlobalIndustryId, getIndustryById } from "@/lib/industryTaxonomy";
 import UniversalBranchSwitcher from "@/components/shared/UniversalBranchSwitcher";
 import BranchSetupWizardModal from "@/components/settings/BranchSetupWizardModal";
+import OnboardingChecklist from "@/components/onboarding/OnboardingChecklist";
 
 // Icon mapping for 12 global industries
 const INDUSTRY_ICON_MAP: Record<string, any> = {
@@ -699,7 +700,14 @@ export default function AppsDashboardPage() {
                     </div>
                 ) : (
                     /* ─── WORKSPACE APP GRID ─── */
-                    <div className="py-6 sm:py-12 animate-in fade-in duration-200 space-y-10">
+                    <div className="py-6 sm:py-12 animate-in fade-in duration-200 space-y-8">
+                        {/* Gamified Onboarding Launchpad Checklist */}
+                        <div className="max-w-4xl mx-auto">
+                            <OnboardingChecklist
+                                hasSelectedIndustry={hasSelectedIndustry}
+                                onOpenIndustryPicker={handleOpenIndustrySelection}
+                            />
+                        </div>
                         {isFreePlan && (
                             <div className="max-w-4xl mx-auto bg-gradient-to-r from-purple-950/60 via-[#0F172A]/90 to-amber-950/40 border border-purple-500/30 rounded-2xl p-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
                                 <div className="flex items-center gap-3">

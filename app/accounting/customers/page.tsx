@@ -3,8 +3,9 @@
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
 import { useState, useEffect } from "react";
-import { DollarSign, Plus, X, CheckCircle2 } from "lucide-react";
+import { DollarSign, Plus, X, CheckCircle2, Printer } from "lucide-react";
 import { useBranchContext } from "@/lib/branchContext";
+import InvoiceReceiptModal from "@/components/accounting/InvoiceReceiptModal";
 
 const MENU_ITEMS = [
     { name: "Dashboard", href: "/accounting" },
@@ -30,6 +31,7 @@ export default function AccountingCustomersPage() {
     const [currentView, setCurrentView] = useState<ViewType>("list");
     const [searchTerm, setSearchTerm] = useState("");
     const [showNewModal, setShowNewModal] = useState(false);
+    const [selectedReceiptInvoice, setSelectedReceiptInvoice] = useState<Invoice | null>(null);
 
     // New Invoice Form State
     const [customerName, setCustomerName] = useState("");
@@ -179,6 +181,7 @@ export default function AccountingCustomersPage() {
                                             ) : (
                                                 <span className="text-xs text-gray-500">Paid</span>
                                             )}
+                                            <button onClick={() => setSelectedReceiptInvoice(invoice)} className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-purple-300 hover:text-white transition-colors cursor-pointer ml-2" title="Print Receipt or Share via WhatsApp"><Printer size={13} /></button>
                                         </td>
                                     </tr>
                                 ))}
@@ -291,6 +294,10 @@ export default function AccountingCustomersPage() {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {selectedReceiptInvoice && (
+                <InvoiceReceiptModal invoice={selectedReceiptInvoice} onClose={() => setSelectedReceiptInvoice(null)} companyName={activeBranch?.name || "Beraxis Commercial Entity"} />
             )}
         </div>
     );

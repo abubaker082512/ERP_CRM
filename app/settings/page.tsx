@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import AppHeader from "@/components/layout/AppHeader";
 import { Settings, Save, Mail, Building2, Globe, Database, CreditCard, Scale, Plus, Trash2, Check, Search, ChevronDown, X, Printer } from "lucide-react";
+import DataExportCenter from "@/components/settings/DataExportCenter";
 
 // Default global units of measure
 const DEFAULT_UOMS = [
@@ -300,6 +301,7 @@ export default function SettingsPage() {
     { id: "email", label: "Email Setup", icon: Mail },
     { id: "users", label: "Users & Teams", icon: Globe },
     { id: "billing", label: "Billing & Plans", icon: CreditCard },
+    { id: "backup", label: "Data Backup & Export", icon: Database },
   ];
 
   const filteredLocales = WORLD_LOCALE_DATA.filter(loc => 
@@ -800,6 +802,11 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Data Backup & Portability Center */}
+            {activeTab === "backup" && (
+              <DataExportCenter />
             )}
 
           </div>
