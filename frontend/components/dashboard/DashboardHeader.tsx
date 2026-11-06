@@ -11,6 +11,7 @@ import {
     MessageSquare,
     Settings,
     RefreshCw,
+    UploadCloud,
     Sparkles,
     Zap
 } from "lucide-react";

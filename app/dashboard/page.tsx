@@ -46,7 +46,8 @@ import {
     Target,
     Crown,
     ExternalLink,
-    Lock
+    Lock,
+    UploadCloud
 } from 'lucide-react';
 
 type DashboardSummary = {
@@ -406,6 +407,36 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 )}
+
+                                {/* ── 1-CLICK DATA MIGRATION SPOTLIGHT ── */}
+                <div className="bg-gradient-to-r from-cyan-950/40 via-[#0e1628] to-purple-950/40 border border-cyan-500/30 rounded-3xl p-4 md:p-5 shadow-xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
+                    <div className="flex items-center gap-3.5">
+                        <div className="w-11 h-11 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                            <UploadCloud size={22} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className="bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                                    Zero Data Loss
+                                </span>
+                                <span className="text-gray-400 text-xs">• 1-Click Universal Migration</span>
+                            </div>
+                            <h3 className="text-sm md:text-base font-bold text-white mt-1">
+                                Have Historical Data in QuickBooks, Odoo, Toast, HubSpot, or Excel?
+                            </h3>
+                            <p className="text-gray-300 text-xs mt-0.5">
+                                Instantly import your existing customer directory, product catalog, chart of accounts, and past transactions into Beraxis.
+                            </p>
+                        </div>
+                    </div>
+                    <Link
+                        href="/migration"
+                        className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs md:text-sm font-extrabold px-4 py-2 rounded-xl shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-2 shrink-0 active:scale-95"
+                    >
+                        <UploadCloud size={15} />
+                        <span>Open Migration Hub</span>
+                    </Link>
+                </div>
 
                 {/* ── Quick Action Business Toolbar ── */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">

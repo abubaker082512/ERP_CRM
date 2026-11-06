@@ -35,6 +35,7 @@ import {
   HeartHandshake,
   Globe,
   Search,
+  UploadCloud,
   Filter
 } from "lucide-react";
 
@@ -57,6 +58,7 @@ const ICON_MAP: Record<string, any> = {
 
 // All available 30+ Enterprise Modules
 const ALL_SYSTEM_MODULES = [
+  { name: "1-Click Data Migration Hub", href: "/migration", category: "Operations", icon: UploadCloud, color: "bg-cyan-600" },
   { name: "Global Leads Pool (Verified Directory)", href: "/crm/leads-pool", category: "Sales & CRM", icon: Globe, color: "bg-cyan-500" },
   { name: "NGOs, Grants & Humanitarian Hub", href: "/ngos", category: "NGOs & Non-Profit", icon: HeartHandshake, color: "bg-rose-600" },
   { name: "Point of Sale (POS)", href: "/pos", category: "Commerce", icon: ShoppingBag, color: "bg-amber-600" },
@@ -694,6 +696,33 @@ export default function BranchSetupWizardModal({
           {/* STEP 4: PRE-FINALIZATION REVIEW & MODULE TOGGLES */}
           {step === 4 && (
             <div className="space-y-4">
+              {/* 1-Click Migration Banner for Switching Companies */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/50 via-slate-900 to-purple-950/40 border border-cyan-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                    <UploadCloud size={20} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white text-xs sm:text-sm">Switching from Another Software?</span>
+                      <span className="bg-cyan-500/20 text-cyan-300 text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-cyan-500/30 font-bold">1-Click Migration</span>
+                    </div>
+                    <p className="text-[11px] text-gray-300 mt-0.5">
+                      Import your past customers, products, and invoices from QuickBooks, Odoo, Toast, Square, or Excel with zero data loss.
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="/migration"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all shadow-md shadow-cyan-900/30 shrink-0 flex items-center gap-1.5"
+                >
+                  <UploadCloud size={14} />
+                  Launch Migration Hub
+                </a>
+              </div>
+
               <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-purple-950/40 border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">

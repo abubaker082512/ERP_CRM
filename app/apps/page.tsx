@@ -47,7 +47,8 @@ import {
     Lock,
     Crown,
     User,
-    Mic
+    Mic,
+    UploadCloud
 } from "lucide-react";
 import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
 import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
@@ -125,6 +126,7 @@ const allApps = [
     { name: "Calendar", icon: Calendar, color: "bg-yellow-600", href: "/calendar" },
     { name: "Surveys", icon: MessageSquare, color: "bg-blue-400", href: "/surveys" },
     { name: "Dashboards", icon: Grid3x3, color: "bg-pink-500", href: "/dashboard" },
+    { name: "Migration Hub", icon: UploadCloud, color: "bg-cyan-600", href: "/migration" },
     { name: "Settings", icon: Cog, color: "bg-[#64748b]", href: "/settings" }
 ];
 
@@ -381,7 +383,7 @@ export default function AppsDashboardPage() {
                             </button>
                             <Link
                                 href="/migration"
-                                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-500/40 text-cyan-300 hover:text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-500/40 text-cyan-300 hover:text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
                                 title="Import historical data from QuickBooks, Odoo, HubSpot & Excel"
                             >
                                 <Sparkles size={13} className="text-cyan-400" />
@@ -444,6 +446,34 @@ export default function AppsDashboardPage() {
                                     ← Back to active workspace ({activeBranch?.name})
                                 </button>
                             )}
+                        </div>
+
+                                                {/* ─── 1-CLICK MIGRATION CALLOUT FOR SWITCHING USERS ─── */}
+                        <div className="max-w-4xl mx-auto p-4 rounded-3xl bg-gradient-to-r from-cyan-950/60 via-[#0e1628] to-purple-950/50 border border-cyan-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-11 h-11 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                                    <UploadCloud size={22} />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-extrabold text-white text-sm">Switching from QuickBooks, Odoo, Toast, or Excel?</span>
+                                        <span className="bg-cyan-500/20 text-cyan-300 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-cyan-500/30">
+                                            1-Click Hub
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-300 text-xs mt-0.5">
+                                        Import your existing customers, products, chart of accounts, and sales history with zero data loss.
+                                    </p>
+                                </div>
+                            </div>
+                            <Link
+                                href="/migration"
+                                target="_blank"
+                                className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold px-4 py-2 rounded-xl shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap active:scale-95"
+                            >
+                                <UploadCloud size={14} />
+                                <span>Open Migration Hub</span>
+                            </Link>
                         </div>
 
                         {/* Step 1: 12 Clean Industry Squircle Icons */}

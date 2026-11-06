@@ -10,7 +10,8 @@ import {
     Bot,
     MessageSquare,
     Settings,
-    RefreshCw
+    RefreshCw,
+    UploadCloud
 } from "lucide-react";
 import UniversalModuleSearch from "@/components/shared/UniversalModuleSearch";
 import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
@@ -140,6 +141,16 @@ export default function DashboardHeader({
 
                 {/* Right Action Icons & User Profile Dropdown */}
                 <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                    {/* Migration Hub Quick Action */}
+                    <Link
+                        href="/migration"
+                        title="1-Click Migration Hub (QuickBooks, Odoo, Excel)"
+                        className="hidden sm:flex items-center gap-1.5 text-cyan-300 hover:text-white transition-colors px-2.5 py-1.5 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/30 text-xs font-semibold cursor-pointer shrink-0"
+                    >
+                        <UploadCloud size={14} className="text-cyan-400" />
+                        <span className="hidden xl:inline">Migrate Data</span>
+                    </Link>
+
                     <Link
                         href="/ai"
                         title="AI Business Assistant"
