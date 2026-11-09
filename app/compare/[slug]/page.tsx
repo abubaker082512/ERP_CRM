@@ -155,8 +155,12 @@ export async function generateMetadata({ params }: CompareSlugProps): Promise<Me
     };
   }
 
-  const title = `Best Free ${comp.competitorName} Alternative (2026) | BERAXIS AI`;
-  const description = `${comp.heroHeadline}. ${comp.heroSubheadline.slice(0, 150)}... Save ${comp.annualSavings} annually with double-entry accounting, CRM, POS, and verified B2B leads for $1/mo.`;
+  const title = comp.slug === 'odoo-alternative'
+    ? `Best Free Odoo Alternative (2026) – $1/Mo Cloud ERP | BERAXIS AI`
+    : `Best Free ${comp.competitorName} Alternative (2026) | BERAXIS AI`;
+  const description = comp.slug === 'odoo-alternative'
+    ? `Switch from Odoo in 15 mins. Save $2,400+/yr with built-in accounting, CRM, POS & AI receipt OCR. 1 App 100% Free Forever. No credit card required.`
+    : `${comp.heroHeadline}. ${comp.heroSubheadline.slice(0, 150)}... Save ${comp.annualSavings} annually with double-entry accounting, CRM, POS, and verified B2B leads for $1/mo.`;
 
   return {
     title,

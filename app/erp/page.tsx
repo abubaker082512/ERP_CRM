@@ -21,9 +21,15 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Cloud ERP Software | Best Free & Affordable ERP System 2026 | Beraxis",
-  description: "Beraxis is the premier AI Cloud ERP software. Unify 28 enterprise modules: double-entry accounting, multi-warehouse inventory, touch POS, HRMS payroll, and CRM for just $1/month. Start 1 app 100% free forever.",
+  title: "Affordable Cloud ERP Options with Monthly Subscription Pricing ($1/mo) | BERAXIS AI",
+  description: "Looking for affordable cloud ERP options with monthly subscription pricing? BERAXIS AI delivers full double-entry accounting, CRM, POS, and inventory for $1/month. 1 App 100% Free Forever.",
   keywords: [
+    "affordable cloud erp options with monthly subscription pricing",
+    "affordable cloud erp",
+    "cloud erp monthly subscription",
+    "1 dollar erp",
+    "one dollar erp",
+    "cheap erp for small business",
     "ERP",
     "ERP software",
     "Cloud ERP",

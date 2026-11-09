@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Free AI ERP, Free AI CRM & $1/Mo Early Bird Pricing · BERAXIS AI (#1 Free Odoo Alternative)",
-  description: "Start free with our Forever Free Tier (Free CRM, Free POS, or Free ERP). Unlock all 28 modules and 1,500 verified B2B lead credits/month for just $1/month ($12 billed annually) or $5/month month-to-month.",
+  title: "Affordable Cloud ERP with Monthly Subscription Pricing ($1/mo) · BERAXIS AI",
+  description: "Looking for affordable cloud ERP options with monthly subscription pricing? Deploy all 28 apps: double-entry accounting, CRM, POS & inventory for $1/month. 1 App 100% Free Forever with zero credit card.",
   keywords: [
     "Free ERP",
     "Free CRM",

@@ -53,6 +53,12 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
         pathname.startsWith('/referrals') ||
         pathname.startsWith('/blog') ||
         pathname.startsWith('/compare') ||
+        pathname.startsWith('/affordable-cloud-erp') ||
+        pathname.startsWith('/one-dollar-erp') ||
+        pathname.startsWith('/cheap-erp-for-small-business') ||
+        pathname.startsWith('/affordable-cloud-erp') ||
+        pathname.startsWith('/one-dollar-erp') ||
+        pathname.startsWith('/cheap-erp-for-small-business') ||
         pathname.startsWith('/features') ||
         pathname.startsWith('/industries') ||
         pathname.startsWith('/shop') ||

@@ -136,6 +136,10 @@ export default function Footer() {
                             <li><Link href="/migration" className="hover:text-cyan-300 font-semibold text-cyan-400">⚡ 1-Click Migration Hub</Link></li>
                             <li><Link href="/shop" className="hover:text-white transition-colors">App Store &amp; Add-ons</Link></li>
                             <li><Link href="/donate" className="hover:text-rose-300 font-semibold text-rose-400">💙 Donate to Beraxis</Link></li>
+                            <li className="pt-3 border-t border-white/5"><span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block mb-1">Affordable ERP</span></li>
+                            <li><Link href="/affordable-cloud-erp" className="hover:text-emerald-300 font-semibold text-emerald-400">⚡ Affordable Cloud ERP ($1/mo)</Link></li>
+                            <li><Link href="/one-dollar-erp" className="hover:text-cyan-300 font-semibold text-cyan-400">$1 Dollar ERP</Link></li>
+                            <li><Link href="/cheap-erp-for-small-business" className="hover:text-purple-300 font-semibold text-purple-400">Cheap ERP for Small Business</Link></li>
                         </ul>
                     </div>
 
@@ -164,6 +168,8 @@ export default function Footer() {
                     <div className="flex flex-wrap items-center gap-6">
                         <Link href="/about" className="text-gray-300 hover:text-white transition-colors">About Us</Link>
                         <Link href="/pricing" className="text-gray-300 hover:text-white transition-colors">Pricing ($1/mo Plan)</Link>
+                        <Link href="/affordable-cloud-erp" className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">Affordable Cloud ERP</Link>
+                        <Link href="/one-dollar-erp" className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">$1 ERP</Link>
                         <Link href="/donate" className="text-rose-400 hover:text-rose-300 font-semibold transition-colors">Donate</Link>
                         <Link href="/blog" className="text-gray-300 hover:text-white transition-colors">Insights &amp; Engineering Blog</Link>
                         <Link href="/contact" className="text-gray-300 hover:text-white transition-colors">Contact Support</Link>
