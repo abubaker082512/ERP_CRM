@@ -30,6 +30,7 @@ import Hero from "@/components/landing/Hero";
 import RealProductShowcase from "@/components/landing/RealProductShowcase";
 import Features from "@/components/landing/Features";
 import IndustryShowcase from "@/components/landing/IndustryShowcase";
+import Testimonials from "@/components/landing/Testimonials";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 import { CREEM_PRODUCTS, getCreemCheckoutUrl } from "@/lib/creemConfig";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
@@ -392,6 +393,9 @@ export default function Home() {
 
             {/* Industry Specific Configurations */}
             <IndustryShowcase />
+
+            {/* Real User Testimonials, Rankings & 100+ Users Social Proof */}
+            <Testimonials />
 
             {/* Simple FAQ Section for High Conversion */}
             <section className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

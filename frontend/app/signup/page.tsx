@@ -112,6 +112,27 @@ function SignupForm() {
                     <span>Referred by partner code <strong className="text-white font-mono">{referralCode}</strong>. 1 Month Free benefit attached to your account!</span>
                 </div>
             )}
+                        {/* 100+ Businesses Trust Strip */}
+            <div className="mb-6 p-3 rounded-2xl bg-gradient-to-r from-purple-950/40 via-[#0e1628] to-cyan-950/40 border border-purple-500/30 flex items-center justify-between gap-3 shadow-lg">
+                <div className="flex items-center gap-2.5">
+                    <div className="flex -space-x-2">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 border border-[#020205] flex items-center justify-center text-[9px] font-black text-white shadow-sm">MV</div>
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 border border-[#020205] flex items-center justify-center text-[9px] font-black text-white shadow-sm">SM</div>
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 border border-[#020205] flex items-center justify-center text-[8px] font-black text-white shadow-sm">+100</div>
+                    </div>
+                    <div>
+                        <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                            <span>100+ Active Workspaces</span>
+                            <span className="text-[10px] text-amber-400 font-bold">★ 4.9/5</span>
+                        </div>
+                        <div className="text-[10px] text-gray-400">Join growing founders &mdash; You can be next</div>
+                    </div>
+                </div>
+                <div className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full shrink-0">
+                    Live Setup
+                </div>
+            </div>
+
             <div className="bg-[#0F172A]/90 backdrop-blur-xl rounded-3xl border border-purple-500/30 p-8 shadow-2xl shadow-purple-950/40">
                 {error && (
                     <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg mb-5">
@@ -262,6 +283,14 @@ function SignupForm() {
                 </form>
             </div>
 
+            
+            {/* Verified Quote Snippet */}
+            <div className="mt-4 p-3 rounded-2xl bg-white/[0.03] border border-white/5 text-center text-xs text-gray-400 italic">
+                &ldquo;Migrated our entire customer database from QuickBooks in under 15 minutes. Best decision this year.&rdquo;
+                <div className="not-italic text-[10px] font-bold text-purple-300 mt-1">
+                    &mdash; Jason R., Verified Workspace Owner
+                </div>
+            </div>
             <p className="text-center text-xs text-gray-600 mt-6 relative z-10">By signing up you agree to our Terms of Service</p>
         </div>
     );

@@ -16,7 +16,8 @@ import {
     Lock,
     UploadCloud,
     Database,
-    MessageCircle
+    MessageCircle,
+    Star
 } from "lucide-react";
 import { initSocialAttribution } from "@/lib/abTesting";
 
@@ -102,6 +103,29 @@ export default function Hero() {
                         <Calculator size={16} className="text-cyan-400 group-hover:rotate-12 transition-transform" />
                         <span>Savings Calculator</span>
                     </button>
+                </div>
+
+                                {/* 4.5. 100+ Active Users & 4.9★ Social Proof Strip */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-4 mb-6">
+                    <div className="flex -space-x-2">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 border-2 border-[#020205] flex items-center justify-center text-[10px] font-extrabold text-white shadow-md">MV</div>
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 border-2 border-[#020205] flex items-center justify-center text-[10px] font-extrabold text-white shadow-md">SM</div>
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 border-2 border-[#020205] flex items-center justify-center text-[10px] font-extrabold text-white shadow-md">JR</div>
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 border-2 border-[#020205] flex items-center justify-center text-[10px] font-extrabold text-white shadow-md">DC</div>
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 border-2 border-[#020205] flex items-center justify-center text-[9px] font-black text-white shadow-md">+100</div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-300">
+                        <div className="flex text-amber-400">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                                <Star key={s} size={13} fill="currentColor" />
+                            ))}
+                        </div>
+                        <span className="font-bold text-white">4.9/5 Rating</span>
+                        <span className="text-gray-500">•</span>
+                        <span className="text-gray-300">
+                            Joined by <strong className="text-white">100+ businesses</strong> this quarter
+                        </span>
+                    </div>
                 </div>
 
                 {/* 5. Frosted Glass Trust Proof Checklist Strip */}

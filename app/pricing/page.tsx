@@ -638,6 +638,32 @@ export default function PricingPage() {
                     </div>
                 </div>
 
+                                {/* 100+ Users & Authority Rankings Strip */}
+                <div className="max-w-5xl mx-auto mb-20 p-6 sm:p-8 rounded-3xl border border-purple-500/30 bg-gradient-to-r from-purple-950/40 via-[#0e1628] to-cyan-950/40 backdrop-blur-xl shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="space-y-2 text-center md:text-left">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>100+ Active Workspaces Deployed</span>
+                        </div>
+                        <h4 className="text-xl sm:text-2xl font-black text-white">
+                            Join 100+ Fast-Growing Companies &mdash; <span className="text-pink-400">You Can Be Next</span>
+                        </h4>
+                        <p className="text-xs sm:text-sm text-gray-300 max-w-xl">
+                            Ranked <strong>4.9 / 5 Stars</strong> by operators in Clinics, Sports Clubs, Auto Garages, and Manufacturing. Start with 1 app 100% free forever or unlock all 28 apps for just $1/month.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+                        <Link
+                            href="/signup"
+                            className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-purple-600/30 transition-all flex items-center gap-2 active:scale-95 whitespace-nowrap"
+                        >
+                            <span>Deploy Your Workspace</span>
+                            <ArrowRight size={15} />
+                        </Link>
+                    </div>
+                </div>
+
                 {/* FAQ Accordion */}
                 <div className="max-w-4xl mx-auto mb-20 border-t border-white/5 pt-20">
                     <h3 className="text-2xl md:text-3xl font-extrabold text-center text-white mb-16">Frequently Asked Billing Questions</h3>
