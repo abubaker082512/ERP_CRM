@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Operational Intelligence, Architecture & Zudo Comparison Briefings",
+    title: "Operational Intelligence, Architecture & Zoho Comparison Briefings",
     description: "Strategic insights, architectural teardowns, and actionable comparisons on why fast-growing companies are migrating to Beraxis.",
     alternates: {
         canonical: "https://www.beraxis.online/blog",

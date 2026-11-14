@@ -26,7 +26,7 @@ export default function BlogIndexPage() {
     const [subscribed, setSubscribed] = useState(false);
     const [newsletterEmail, setNewsletterEmail] = useState("");
 
-    const categories = ["All", "Beraxis vs Zudo", "B2B Lead Generation", "AI & Voice ERP", "Cost & Architecture"];
+    const categories = ["All", "Beraxis vs Zoho", "B2B Lead Generation", "AI & Voice ERP", "Cost & Architecture"];
 
     const filteredPosts = useMemo(() => {
         return BLOG_POSTS.filter((post) => {
@@ -68,7 +68,7 @@ export default function BlogIndexPage() {
                         The Autonomous Enterprise <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-amber-400">Dispatch</span>
                     </h1>
                     <p className="text-gray-400 text-lg sm:text-xl max-w-3xl mx-auto mb-12 font-light leading-relaxed">
-                        In-depth articles, comparative analyses, and architectural breakdowns on how modern founders are abandoning legacy software suites like Zudo for unified voice AI and built-in lead intelligence.
+                        In-depth articles, comparative analyses, and architectural breakdowns on how modern founders are abandoning legacy software suites like Zoho for unified voice AI and built-in lead intelligence.
                     </p>
 
                     {/* Search & Filter Controls */}
@@ -78,7 +78,7 @@ export default function BlogIndexPage() {
                             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search articles, comparisons (e.g. 'Zudo', 'Leads Pool', 'Voice Pilot')..."
+                                placeholder="Search articles, comparisons (e.g. 'Zoho', 'Leads Pool', 'Voice Pilot')..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full bg-[#0D1322] border border-white/10 rounded-2xl pl-12 pr-4 py-3.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors shadow-xl"
@@ -230,7 +230,7 @@ export default function BlogIndexPage() {
                         Get Daily Strategic Insights on <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">ERP & Lead Velocity</span>
                     </h2>
                     <p className="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
-                        We publish daily breakdowns of modern SaaS architecture, comparison guides against legacy suites like Zudo, and actionable tactics to scale your revenue pipeline.
+                        We publish daily breakdowns of modern SaaS architecture, comparison guides against legacy suites like Zoho, and actionable tactics to scale your revenue pipeline.
                     </p>
 
                     {subscribed ? (
