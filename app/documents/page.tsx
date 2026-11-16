@@ -1,29 +1,40 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AppHeader from "@/components/layout/AppHeader";
 import { useBranchContext } from "@/lib/branchContext";
-import { 
-  Folder, 
-  FileText, 
-  Upload, 
-  Plus, 
-  Download, 
-  Trash2, 
-  Search, 
-  Tag, 
-  FileSpreadsheet, 
-  FileImage, 
-  FileCode, 
-  Share2, 
-  Lock, 
-  ExternalLink, 
-  Eye, 
-  Clock, 
-  Check, 
+import {
+  Folder,
+  FileText,
+  Upload,
+  Plus,
+  Download,
+  Trash2,
+  Search,
+  FileSpreadsheet,
+  FileImage,
+  FileCode,
+  Share2,
+  Lock,
   HardDrive,
-  Filter,
-  Layers
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  List,
+  ListOrdered,
+  Table as TableIcon,
+  Image as ImageIcon,
+  Minus,
+  Printer,
+  Sun,
+  Moon,
+  Save,
+  Sparkles,
+  Check
 } from "lucide-react";
 
 type DocCategory = "all" | "finance" | "hr" | "legal" | "product" | "marketing";
@@ -41,6 +52,7 @@ type DocumentItem = {
   isEncrypted: boolean;
   tags: string[];
   sha256: string;
+  htmlContent?: string;
 };
 
 type FolderItem = {
@@ -60,6 +72,21 @@ const DEFAULT_FOLDERS: FolderItem[] = [
   { id: "f-marketing", name: "Brand & Pitch Decks", category: "marketing", filesCount: 0, color: "text-cyan-400 bg-cyan-500/10" },
 ];
 
+const DOC_TEMPLATES: Record<string, { title: string; html: string }> = {
+  proposal: {
+    title: "Enterprise Partnership Proposal",
+    html: `<h1>Enterprise Partnership Proposal</h1><p><strong>Prepared by:</strong> BERAXIS Operations Team &nbsp;|&nbsp; <strong>Date:</strong> ${new Date().toLocaleDateString()}</p><hr/><h2>1. Executive Summary</h2><p>This proposal outlines a unified deployment plan to consolidate CRM, Accounting, Inventory, and Office Automation into a single cloud workspace.</p><h2>2. Scope &amp; Deliverables</h2><ul><li>Full data migration from legacy spreadsheets and ERP</li><li>Role-based team onboarding &amp; permission hierarchy</li><li>Automated invoicing, POS, and live KPI reporting</li></ul><h2>3. Investment Summary</h2><table border="1" style="width:100%;border-collapse:collapse;margin-top:8px;"><tr><th style="padding:8px;text-align:left;">Item</th><th style="padding:8px;text-align:left;">Timeline</th><th style="padding:8px;text-align:right;">Cost</th></tr><tr><td style="padding:8px;">Platform Deployment</td><td style="padding:8px;">Week 1</td><td style="padding:8px;text-align:right;">Included</td></tr><tr><td style="padding:8px;">Team Training</td><td style="padding:8px;">Week 2</td><td style="padding:8px;text-align:right;">Included</td></tr></table>`,
+  },
+  sop: {
+    title: "Standard Operating Procedure (SOP)",
+    html: `<h1>Standard Operating Procedure: Monthly Close</h1><p><strong>Department:</strong> Finance &amp; Operations &nbsp;|&nbsp; <strong>Version:</strong> 2.0</p><hr/><h2>Purpose</h2><p>Ensure accurate reconciliation of invoices, payroll, and inventory balances by the 3rd business day of each month.</p><h2>Step-by-Step Checklist</h2><ol><li>Verify all POS and Stripe/Creem settlements match ledger entries.</li><li>Run inventory valuation check in BERAXIS Sheets.</li><li>Export monthly P&amp;L and share executive summary in BERAXIS Slides.</li></ol>`,
+  },
+  minutes: {
+    title: "Executive Meeting Minutes",
+    html: `<h1>Weekly Leadership Sync — Minutes</h1><p><strong>Attendees:</strong> Operations, Sales, Finance</p><hr/><h2>Key Decisions</h2><ul><li>Approved Q1 outbound campaign using 1,500 monthly B2B lead credits.</li><li>Migrated all legacy Excel trackers into BERAXIS Sheets.</li></ul><h2>Action Items</h2><ul><li><strong>Sales Lead:</strong> Import 200 new prospects into CRM pipeline by Friday.</li><li><strong>Finance Lead:</strong> Finalize vendor payables audit.</li></ul>`,
+  },
+};
+
 export default function DocumentsPage() {
   const { activeBranch, getEntityStorageKey } = useBranchContext();
   const [folders, setFolders] = useState<FolderItem[]>(DEFAULT_FOLDERS);
@@ -67,70 +94,36 @@ export default function DocumentsPage() {
   const [selectedFolder, setSelectedFolder] = useState<string>("f-all");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [studioMode, setStudioMode] = useState<"editor" | "vault">("editor");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
-  // Modals & Drawers
+  // Word Editor state
+  const [docTitle, setDocTitle] = useState("Untitled Business Document");
+  const [activeDocId, setActiveDocId] = useState<string | null>(null);
+  const [wordStats, setWordStats] = useState({ words: 0, chars: 0 });
+  const [savedNotice, setSavedNotice] = useState(false);
+  const editorRef = useRef<HTMLDivElement | null>(null);
+
+  // Vault Modals
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState<DocumentItem | null>(null);
-  const [shareLinkDoc, setShareLinkDoc] = useState<DocumentItem | null>(null);
-  const [copiedLink, setCopiedLink] = useState(false);
-
-  // New File Upload Form
   const [uploadFileName, setUploadFileName] = useState("");
   const [uploadFolder, setUploadFolder] = useState("f-finance");
   const [uploadTags, setUploadTags] = useState("Confidential, Internal");
   const [uploadEncrypted, setUploadEncrypted] = useState(true);
-
-  // New Folder Form
   const [newFolderName, setNewFolderName] = useState("");
 
-  // Rich Document Composer (Word Alternative)
-  const [isComposerOpen, setIsComposerOpen] = useState(false);
-  const [docTitle, setDocTitle] = useState("");
-  const [docBody, setDocBody] = useState("");
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("beraxis_office_theme");
+    if (savedTheme === "light" || savedTheme === "dark") setTheme(savedTheme);
+  }, []);
 
-  const handleSaveComposedDoc = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!docTitle.trim()) return;
-    const cleanName = docTitle.trim().endsWith(".docx") ? docTitle.trim() : `${docTitle.trim()}.docx`;
-    const newDoc: DocumentItem = {
-      id: `doc-${Date.now()}`,
-      name: cleanName,
-      folderId: selectedFolder === "f-all" ? "f-product" : selectedFolder,
-      category: "product",
-      extension: "docx",
-      sizeMB: Number(Math.max(0.1, (docBody.length / 1024 / 1024)).toFixed(2)),
-      uploadedBy: "BERAXIS Docs Composer",
-      uploadedAt: new Date().toISOString().split("T")[0],
-      version: "v1.0",
-      isEncrypted: true,
-      tags: ["Composed", "Office Doc"],
-      sha256: `sha256-${Math.random().toString(36).slice(2, 10)}`,
-    };
-    const updated = [newDoc, ...documents];
-    setDocuments(updated);
-    try {
-      const key = getEntityStorageKey("documents_items");
-      localStorage.setItem(key, JSON.stringify(updated));
-    } catch {}
-    const blob = new Blob(
-      [`<html><head><meta charset="utf-8"><title>${docTitle}</title></head><body><h1>${docTitle}</h1><p>${docBody.replace(/\n/g, "<br/>")}</p></body></html>`],
-      { type: "application/msword" }
-    );
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${docTitle.trim().replace(/\s+/g, "_")}.doc`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setDocTitle("");
-    setDocBody("");
-    setIsComposerOpen(false);
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("beraxis_office_theme", next);
   };
 
-  // Entity-scoped data loading
   useEffect(() => {
     if (!activeBranch) return;
     const key = getEntityStorageKey("documents_items");
@@ -146,7 +139,136 @@ export default function DocumentsPage() {
     }
   }, [activeBranch?.id]);
 
-  const persistDocuments = (updated: DocumentItem[]) => {
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML === "") {
+      editorRef.current.innerHTML = DOC_TEMPLATES.proposal.html;
+      setDocTitle(DOC_TEMPLATES.proposal.title);
+      recomputeWordStats();
+    }
+  }, [studioMode]);
+
+  const recomputeWordStats = () => {
+    const text = editorRef.current?.innerText || "";
+    const trimmed = text.trim();
+    const words = trimmed ? trimmed.split(/\s+/).length : 0;
+    setWordStats({ words, chars: trimmed.length });
+  };
+
+  const exec = (command: string, value?: string) => {
+    editorRef.current?.focus();
+    document.execCommand(command, false, value);
+    recomputeWordStats();
+  };
+
+  const insertTable = () => {
+    const html = `<table border="1" style="width:100%;border-collapse:collapse;margin:12px 0;"><tr><th style="padding:8px;">Column A</th><th style="padding:8px;">Column B</th><th style="padding:8px;">Column C</th></tr><tr><td style="padding:8px;">Data 1</td><td style="padding:8px;">Data 2</td><td style="padding:8px;">Data 3</td></tr><tr><td style="padding:8px;">Data 4</td><td style="padding:8px;">Data 5</td><td style="padding:8px;">Data 6</td></tr></table><p><br/></p>`;
+    exec("insertHTML", html);
+  };
+
+  const insertImage = () => {
+    const url = window.prompt("Enter Image URL (https://...):");
+    if (url && url.trim()) {
+      exec("insertHTML", `<img src="${url.trim()}" alt="Inserted" style="max-width:100%;border-radius:8px;margin:10px 0;" />`);
+    }
+  };
+
+  const loadTemplate = (key: keyof typeof DOC_TEMPLATES) => {
+    const tpl = DOC_TEMPLATES[key];
+    setDocTitle(tpl.title);
+    setActiveDocId(null);
+    if (editorRef.current) {
+      editorRef.current.innerHTML = tpl.html;
+      recomputeWordStats();
+    }
+  };
+
+  const handleSaveToVault = () => {
+    const html = editorRef.current?.innerHTML || "";
+    const cleanName = docTitle.trim().endsWith(".docx") ? docTitle.trim() : `${docTitle.trim() || "Document"}.docx`;
+    let updated: DocumentItem[];
+    if (activeDocId) {
+      updated = documents.map((d) =>
+        d.id === activeDocId
+          ? { ...d, name: cleanName, htmlContent: html, uploadedAt: new Date().toISOString().split("T")[0] }
+          : d
+      );
+    } else {
+      const newId = `doc-${Date.now()}`;
+      setActiveDocId(newId);
+      const newDoc: DocumentItem = {
+        id: newId,
+        name: cleanName,
+        folderId: selectedFolder === "f-all" ? "f-product" : selectedFolder,
+        category: "product",
+        extension: "docx",
+        sizeMB: Number(Math.max(0.1, html.length / 1024 / 1024).toFixed(2)),
+        uploadedBy: "BERAXIS Word Studio",
+        uploadedAt: new Date().toISOString().split("T")[0],
+        version: "v1.0",
+        isEncrypted: true,
+        tags: ["Word Doc", "Rich Text"],
+        sha256: `sha256-${Math.random().toString(36).slice(2, 10)}`,
+        htmlContent: html,
+      };
+      updated = [newDoc, ...documents];
+    }
+    setDocuments(updated);
+    try {
+      const key = getEntityStorageKey("documents_items");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+    setSavedNotice(true);
+    setTimeout(() => setSavedNotice(false), 2000);
+  };
+
+  const handleDownloadWord = () => {
+    const html = editorRef.current?.innerHTML || "";
+    const blob = new Blob(
+      [
+        `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><title>${docTitle}</title><style>body{font-family:Calibri,Arial,sans-serif;line-height:1.6;padding:32px;}table{border-collapse:collapse;width:100%;}td,th{border:1px solid #cbd5e1;padding:8px;}</style></head><body>${html}</body></html>`,
+      ],
+      { type: "application/msword" }
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(docTitle || "document").replace(/\s+/g, "_")}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleUploadSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFileName.trim()) return;
+    const ext = uploadFileName.split(".").pop() || "pdf";
+    const newDoc: DocumentItem = {
+      id: `doc-${Date.now()}`,
+      name: uploadFileName.trim(),
+      folderId: uploadFolder,
+      category: "finance",
+      extension: ext,
+      sizeMB: 0.4,
+      uploadedBy: "Workspace User",
+      uploadedAt: new Date().toISOString().split("T")[0],
+      version: "v1.0",
+      isEncrypted: uploadEncrypted,
+      tags: uploadTags.split(",").map((t) => t.trim()).filter(Boolean),
+      sha256: `sha256-${Math.random().toString(36).slice(2, 10)}`,
+    };
+    const updated = [newDoc, ...documents];
+    setDocuments(updated);
+    try {
+      const key = getEntityStorageKey("documents_items");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+    setUploadFileName("");
+    setIsUploadModalOpen(false);
+  };
+
+  const handleDeleteDoc = (id: string) => {
+    const updated = documents.filter((d) => d.id !== id);
     setDocuments(updated);
     try {
       const key = getEntityStorageKey("documents_items");
@@ -154,608 +276,440 @@ export default function DocumentsPage() {
     } catch {}
   };
 
-  const handleUploadSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!uploadFileName.trim()) return;
-
-    const ext = uploadFileName.split(".").pop() || "pdf";
-    const targetFolder = folders.find(f => f.id === uploadFolder) || folders[1];
-
-    const newDoc: DocumentItem = {
-      id: `DOC-${(1000 + documents.length + 1).toString()}`,
-      name: uploadFileName,
-      folderId: targetFolder.id,
-      category: targetFolder.category,
-      extension: ext.toLowerCase(),
-      sizeMB: parseFloat((Math.random() * 4 + 0.5).toFixed(1)),
-      uploadedBy: "Current User",
-      uploadedAt: new Date().toISOString().split("T")[0],
-      version: "v1.0",
-      isEncrypted: uploadEncrypted,
-      tags: uploadTags.split(",").map(t => t.trim()),
-      sha256: Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")
-    };
-
-    const updated = [newDoc, ...documents];
-    persistDocuments(updated);
-    setFolders(folders.map(f => f.id === targetFolder.id ? { ...f, filesCount: f.filesCount + 1 } : f));
-    setIsUploadModalOpen(false);
-    setUploadFileName("");
-  };
-
   const handleCreateFolder = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
-
-    const newFold: FolderItem = {
-      id: `f-${newFolderName.toLowerCase().replace(/\s+/g, "-")}`,
-      name: newFolderName,
-      category: "all",
-      filesCount: 0,
-      color: "text-purple-400 bg-purple-500/10"
-    };
-
-    setFolders([...folders, newFold]);
-    setIsNewFolderModalOpen(false);
-    setNewFolderName("");
-  };
-
-  const handleDeleteDoc = (docId: string) => {
-    setDocuments(documents.filter(d => d.id !== docId));
-    if (selectedDoc && selectedDoc.id === docId) setSelectedDoc(null);
-  };
-
-  const handleCopyShareLink = (docId: string) => {
-    const link = `https://access.beraxis.online/doc/share/${docId}`;
-    navigator.clipboard.writeText(link);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
-
-  const exportDocsCSV = () => {
-    const headers = ["Document ID", "File Name", "Extension", "Folder", "Size (MB)", "Uploaded By", "Uploaded Date", "Version", "Encrypted", "SHA-256 Hash"];
-    const rows = documents.map(d => [
-      d.id,
-      `"${d.name}"`,
-      d.extension,
-      d.folderId,
-      d.sizeMB,
-      `"${d.uploadedBy}"`,
-      d.uploadedAt,
-      d.version,
-      d.isEncrypted ? "Yes" : "No",
-      d.sha256
+    setFolders((prev) => [
+      ...prev,
+      {
+        id: `f-${Date.now()}`,
+        name: newFolderName.trim(),
+        category: "product",
+        filesCount: 0,
+        color: "text-cyan-400 bg-cyan-500/10",
+      },
     ]);
-
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `enterprise_documents_${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setNewFolderName("");
+    setIsNewFolderModalOpen(false);
   };
 
-  const getFileIcon = (ext: string) => {
-    if (ext.includes("pdf")) return <FileText className="text-red-400" size={24} />;
-    if (ext.includes("xls") || ext.includes("csv")) return <FileSpreadsheet className="text-emerald-400" size={24} />;
-    if (ext.includes("png") || ext.includes("jpg") || ext.includes("svg")) return <FileImage className="text-blue-400" size={24} />;
-    return <FileCode className="text-purple-400" size={24} />;
-  };
-
-  const filteredDocs = documents.filter(doc => {
-    const matchesSearch = doc.name.toLowerCase().includes(search.toLowerCase()) ||
-                          doc.tags.some(t => t.toLowerCase().includes(search.toLowerCase())) ||
-                          doc.uploadedBy.toLowerCase().includes(search.toLowerCase());
+  const filteredDocs = documents.filter((doc) => {
+    const matchesSearch =
+      doc.name.toLowerCase().includes(search.toLowerCase()) ||
+      doc.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
     const matchesFolder = selectedFolder === "f-all" || doc.folderId === selectedFolder;
     return matchesSearch && matchesFolder;
   });
 
   const totalStorageUsed = documents.reduce((acc, d) => acc + d.sizeMB, 0).toFixed(1);
+  const isLight = theme === "light";
 
   return (
-    <div className="flex flex-col h-screen bg-[#0a0d14] text-white">
-      <AppHeader title="Documents & Vault" />
+    <div className={`flex flex-col h-screen ${isLight ? "bg-slate-100 text-slate-900" : "bg-[#0a0d14] text-white"}`}>
+      <AppHeader title="BERAXIS Docs — Word Processor & Encrypted Vault" />
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - Folders & Storage meter */}
-        <div className="w-64 border-r border-gray-800 bg-[#0e121c] p-4 flex flex-col justify-between shrink-0">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-800">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Vault Folders</span>
-              <button
-                onClick={() => setIsNewFolderModalOpen(true)}
-                className="text-purple-400 hover:text-purple-300 p-1 hover:bg-purple-600/10 rounded"
-                title="Create Folder"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-
-            {/* Folders List */}
-            <div className="space-y-1">
-              {folders.map(fold => (
-                <button
-                  key={fold.id}
-                  onClick={() => setSelectedFolder(fold.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                    selectedFolder === fold.id
-                      ? "bg-purple-600 text-white shadow-md shadow-purple-900/40"
-                      : "text-gray-400 hover:bg-gray-800/60 hover:text-white"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 truncate">
-                    <Folder size={15} className={selectedFolder === fold.id ? "text-white" : "text-purple-400"} />
-                    <span className="truncate">{fold.name}</span>
-                  </div>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    selectedFolder === fold.id ? "bg-purple-800 text-white" : "bg-gray-800 text-gray-400"
-                  }`}>
-                    {documents.filter(d => fold.id === "f-all" || d.folderId === fold.id).length}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Storage Quota Usage */}
-          <div className="bg-gray-900/90 border border-gray-800 p-3.5 rounded-xl space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5 text-gray-300">
-                <HardDrive size={14} className="text-purple-400" />
-                <span className="font-bold">Encrypted Vault</span>
-              </div>
-              <span className="font-bold text-purple-400">{totalStorageUsed} MB</span>
-            </div>
-            <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-purple-500 h-1.5 rounded-full transition-all"
-                style={{ width: `${Math.min(100, (parseFloat(totalStorageUsed) / 500) * 100)}%` }}
-              ></div>
-            </div>
-            <p className="text-[10px] text-gray-500">{totalStorageUsed} MB of 500.0 MB utilized (AES-256)</p>
-          </div>
+      {/* Top Mode & Theme Switcher Bar */}
+      <div className={`px-5 py-2.5 border-b flex flex-wrap items-center justify-between gap-3 print:hidden ${isLight ? "bg-white border-slate-200" : "bg-[#0e121c] border-gray-800"}`}>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setStudioMode("editor")}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+              studioMode === "editor"
+                ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
+                : isLight
+                ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                : "bg-white/5 text-gray-300 hover:bg-white/10"
+            }`}
+          >
+            <FileText size={14} /> Word Processor (A4 Studio)
+          </button>
+          <button
+            onClick={() => setStudioMode("vault")}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+              studioMode === "vault"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-600/25"
+                : isLight
+                ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                : "bg-white/5 text-gray-300 hover:bg-white/10"
+            }`}
+          >
+            <Lock size={14} /> Encrypted Vault ({documents.length})
+          </button>
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0d14] p-5 space-y-4">
-          {/* Top Search & Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#111622] p-3 rounded-xl border border-gray-800">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-2.5 text-gray-500" size={16} />
-              <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search files by name, tags, or author..."
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex bg-gray-900 p-1 rounded-lg border border-gray-800">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`px-2.5 py-1 rounded text-xs font-semibold ${viewMode === "grid" ? "bg-gray-800 text-white" : "text-gray-400"}`}
-                >
-                  Grid
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`px-2.5 py-1 rounded text-xs font-semibold ${viewMode === "list" ? "bg-gray-800 text-white" : "text-gray-400"}`}
-                >
-                  List
-                </button>
-              </div>
-
-              <button
-                onClick={exportDocsCSV}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800/80 hover:bg-gray-700 text-gray-200 rounded-lg text-xs font-semibold border border-gray-700 transition-all active:scale-95"
-              >
-                <Download size={13} /> Export CSV
-              </button>
-
-              <button
-                onClick={() => setIsComposerOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-blue-600/30 transition-all active:scale-95 cursor-pointer"
-              >
-                <FileText size={13} /> New Doc (Word)
-              </button>
-
-              <button
-                onClick={() => setIsUploadModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95 cursor-pointer"
-              >
-                <Upload size={13} /> Upload Document
-              </button>
-            </div>
-          </div>
-
-          {/* Documents Content View */}
-          <div className="flex-1 overflow-y-auto">
-            {filteredDocs.length === 0 ? (
-              <div className="h-64 flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-gray-800 rounded-2xl">
-                <FileText size={40} className="mb-2 opacity-40 text-purple-400" />
-                <p className="text-sm font-semibold">No documents found</p>
-                <p className="text-xs text-gray-600 mt-1">Upload a file or select a different folder.</p>
-              </div>
-            ) : viewMode === "grid" ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredDocs.map(doc => (
-                  <div
-                    key={doc.id}
-                    onClick={() => setSelectedDoc(doc)}
-                    className="galaxy-card p-4 border border-gray-800 hover:border-purple-500/50 bg-[#111622] hover:bg-[#161c2d] rounded-xl transition-all cursor-pointer group flex flex-col justify-between space-y-3"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="p-3 bg-gray-900 rounded-xl border border-gray-800">
-                        {getFileIcon(doc.extension)}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {doc.isEncrypted && (
-                          <span title="AES-256 Encrypted" className="p-1 bg-emerald-500/10 text-emerald-400 rounded">
-                            <Lock size={12} />
-                          </span>
-                        )}
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-400">
-                          {doc.version}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2">
-                        {doc.name}
-                      </h4>
-                      <p className="text-[11px] text-gray-500 mt-1">
-                        {doc.sizeMB} MB • Uploaded {doc.uploadedAt}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1">
-                      {doc.tags.map((t, idx) => (
-                        <span key={idx} className="text-[9px] font-semibold bg-gray-900 text-gray-400 px-2 py-0.5 rounded border border-gray-800">
-                          #{t}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="pt-2 border-t border-gray-800/80 flex items-center justify-between text-xs text-gray-400" onClick={e => e.stopPropagation()}>
-                      <button
-                        onClick={() => setShareLinkDoc(doc)}
-                        className="text-purple-400 hover:text-purple-300 flex items-center gap-1 text-[11px] font-semibold"
-                      >
-                        <Share2 size={12} /> Share
-                      </button>
-                      <button
-                        onClick={() => handleDeleteDoc(doc.id)}
-                        className="text-gray-500 hover:text-red-400 p-1"
-                        title="Delete Document"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="galaxy-card bg-[#111622] rounded-xl border border-gray-800 overflow-hidden">
-                <table className="w-full text-left text-sm text-gray-300">
-                  <thead className="bg-gray-900/90 text-gray-400 uppercase text-[11px] font-bold border-b border-gray-800 tracking-wider">
-                    <tr>
-                      <th className="px-4 py-3">File Name</th>
-                      <th className="px-4 py-3">Size</th>
-                      <th className="px-4 py-3">Version</th>
-                      <th className="px-4 py-3">Uploaded By</th>
-                      <th className="px-4 py-3">Upload Date</th>
-                      <th className="px-4 py-3">Security</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-800/60">
-                    {filteredDocs.map(doc => (
-                      <tr
-                        key={doc.id}
-                        onClick={() => setSelectedDoc(doc)}
-                        className="hover:bg-gray-800/40 transition-colors cursor-pointer"
-                      >
-                        <td className="px-4 py-3 flex items-center gap-2.5 font-semibold text-white">
-                          {getFileIcon(doc.extension)}
-                          <span>{doc.name}</span>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-400">{doc.sizeMB} MB</td>
-                        <td className="px-4 py-3 text-xs font-mono text-purple-400">{doc.version}</td>
-                        <td className="px-4 py-3 text-xs text-gray-300">{doc.uploadedBy}</td>
-                        <td className="px-4 py-3 text-xs text-gray-400">{doc.uploadedAt}</td>
-                        <td className="px-4 py-3">
-                          {doc.isEncrypted ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                              AES-256
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-gray-500">Standard</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
-                          <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => setShareLinkDoc(doc)}
-                              className="p-1 text-purple-400 hover:text-white"
-                              title="Share"
-                            >
-                              <Share2 size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteDoc(doc.id)}
-                              className="p-1 text-gray-500 hover:text-red-400"
-                              title="Delete"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 cursor-pointer transition-all ${
+              isLight
+                ? "bg-slate-100 border-slate-300 text-slate-800 hover:bg-slate-200"
+                : "bg-white/5 border-white/15 text-gray-200 hover:bg-white/10"
+            }`}
+          >
+            {isLight ? <Moon size={14} className="text-indigo-600" /> : <Sun size={14} className="text-amber-400" />}
+            <span>{isLight ? "Dark Mode" : "Light Mode"}</span>
+          </button>
         </div>
       </div>
 
-      {/* DOCUMENT PREVIEW DRAWER MODAL */}
-      {selectedDoc && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#111622] border border-gray-700 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative">
-            <div className="flex justify-between items-start border-b border-gray-800 pb-3">
-              <div className="flex items-center gap-3">
-                {getFileIcon(selectedDoc.extension)}
-                <div>
-                  <h3 className="text-base font-bold text-white">{selectedDoc.name}</h3>
-                  <p className="text-xs text-gray-400">{selectedDoc.sizeMB} MB • {selectedDoc.version}</p>
+      {studioMode === "editor" ? (
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left Templates & Saved Docs Sidebar */}
+          <aside className={`w-64 border-r p-4 flex flex-col justify-between shrink-0 overflow-y-auto print:hidden ${isLight ? "bg-white border-slate-200" : "bg-[#0e121c] border-gray-800"}`}>
+            <div className="space-y-5">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-gray-400"}`}>
+                    1-Click Templates
+                  </span>
+                  <button
+                    onClick={() => {
+                      setDocTitle("Untitled Document");
+                      setActiveDocId(null);
+                      if (editorRef.current) {
+                        editorRef.current.innerHTML = "<h1>Untitled Document</h1><p>Start typing here...</p>";
+                        recomputeWordStats();
+                      }
+                    }}
+                    className="text-blue-500 hover:text-blue-400 text-xs font-bold flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <Plus size={14} /> Blank
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  <button
+                    onClick={() => loadTemplate("proposal")}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${isLight ? "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700" : "bg-white/5 hover:bg-white/10 border-white/10 text-gray-200"}`}
+                  >
+                    Enterprise Proposal
+                  </button>
+                  <button
+                    onClick={() => loadTemplate("sop")}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${isLight ? "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700" : "bg-white/5 hover:bg-white/10 border-white/10 text-gray-200"}`}
+                  >
+                    SOP Checklist
+                  </button>
+                  <button
+                    onClick={() => loadTemplate("minutes")}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer ${isLight ? "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700" : "bg-white/5 hover:bg-white/10 border-white/10 text-gray-200"}`}
+                  >
+                    Meeting Minutes
+                  </button>
                 </div>
               </div>
-              <button onClick={() => setSelectedDoc(null)} className="text-gray-400 hover:text-white">✕</button>
+
+              {documents.filter((d) => d.htmlContent).length > 0 && (
+                <div>
+                  <span className={`text-[11px] font-bold uppercase tracking-wider block mb-2 ${isLight ? "text-slate-500" : "text-gray-400"}`}>
+                    Saved Docs
+                  </span>
+                  <div className="space-y-1">
+                    {documents
+                      .filter((d) => d.htmlContent)
+                      .map((d) => (
+                        <button
+                          key={d.id}
+                          onClick={() => {
+                            setActiveDocId(d.id);
+                            setDocTitle(d.name.replace(/\.docx$/i, ""));
+                            if (editorRef.current && d.htmlContent) {
+                              editorRef.current.innerHTML = d.htmlContent;
+                              recomputeWordStats();
+                            }
+                          }}
+                          className={`w-full text-left px-2.5 py-2 rounded-lg text-xs truncate cursor-pointer ${
+                            activeDocId === d.id
+                              ? "bg-blue-600/20 text-blue-500 font-bold"
+                              : isLight
+                              ? "hover:bg-slate-100 text-slate-700"
+                              : "hover:bg-white/5 text-gray-300"
+                          }`}
+                        >
+                          {d.name}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="bg-gray-900/80 p-4 rounded-xl border border-gray-800 space-y-2 text-xs">
-              <div className="flex justify-between text-gray-400">
-                <span>Document ID:</span>
-                <span className="font-mono text-white">{selectedDoc.id}</span>
+            <div className={`p-3 rounded-xl border text-[11px] ${isLight ? "bg-blue-50 border-blue-200 text-blue-900" : "bg-blue-500/10 border-blue-500/20 text-blue-200"}`}>
+              <div className="font-bold flex items-center gap-1.5 mb-1">
+                <Sparkles size={13} className="text-blue-500" /> Full Word Studio
               </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Uploaded By:</span>
-                <span className="text-white">{selectedDoc.uploadedBy}</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Upload Timestamp:</span>
-                <span className="text-white">{selectedDoc.uploadedAt}</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Cryptographic SHA-256:</span>
-                <span className="font-mono text-[10px] text-purple-400 truncate max-w-[200px]">{selectedDoc.sha256}</span>
-              </div>
+              <p className={isLight ? "text-slate-600" : "text-gray-400"}>
+                Format headings, tables, images, and lists on an A4 page. Export directly to `.doc` or PDF.
+              </p>
             </div>
+          </aside>
 
-            <div className="pt-2 flex justify-between items-center">
-              <button
-                onClick={() => setShareLinkDoc(selectedDoc)}
-                className="flex items-center gap-1.5 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-purple-300 rounded-lg text-xs font-bold"
-              >
-                <Share2 size={14} /> Create Public Share Link
-              </button>
-              <button
-                onClick={() => alert(`Downloading simulated ${selectedDoc.name}`)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-purple-600/30"
-              >
-                <Download size={14} /> Download File
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SHARE LINK MODAL */}
-      {shareLinkDoc && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#111622] border border-gray-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Share2 size={18} className="text-purple-400" /> Shareable Secure Link
-            </h3>
-            <p className="text-xs text-gray-400">
-              Anyone with this link can view <strong className="text-white">{shareLinkDoc.name}</strong> until expiration.
-            </p>
-
-            <div className="flex items-center gap-2 bg-gray-900 border border-gray-700 rounded-lg p-2">
-              <input
-                readOnly
-                value={`https://access.beraxis.online/doc/share/${shareLinkDoc.id}`}
-                className="bg-transparent text-xs text-gray-200 flex-1 focus:outline-none font-mono"
-              />
-              <button
-                onClick={() => handleCopyShareLink(shareLinkDoc.id)}
-                className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-bold flex items-center gap-1"
-              >
-                {copiedLink ? <Check size={12} /> : "Copy"}
-              </button>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setShareLinkDoc(null)}
-                className="px-4 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs font-bold"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* UPLOAD FILE MODAL */}
-      {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <form onSubmit={handleUploadSubmit} className="bg-[#111622] border border-gray-700 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Upload size={20} className="text-purple-400" /> Upload Document to Vault
-            </h3>
-
-            <div>
-              <label className="text-xs font-bold text-gray-300 block mb-1">File Name with Extension *</label>
-              <input
-                type="text"
-                required
-                value={uploadFileName}
-                onChange={e => setUploadFileName(e.target.value)}
-                placeholder="e.g. Q4_Executive_Summary.pdf"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-gray-300 block mb-1">Destination Folder</label>
-                <select
-                  value={uploadFolder}
-                  onChange={e => setUploadFolder(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-                >
-                  {folders.filter(f => f.id !== "f-all").map(f => (
-                    <option key={f.id} value={f.id}>{f.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-300 block mb-1">Tags (comma separated)</label>
+          {/* Word Editor Canvas */}
+          <main className="flex-1 flex flex-col overflow-hidden">
+            {/* Formatting Ribbon */}
+            <div className={`border-b px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 print:hidden ${isLight ? "bg-white border-slate-200" : "bg-[#0c111b] border-gray-800"}`}>
+              <div className="flex flex-wrap items-center gap-1.5">
                 <input
                   type="text"
-                  value={uploadTags}
-                  onChange={e => setUploadTags(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  value={docTitle}
+                  onChange={(e) => setDocTitle(e.target.value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border w-48 focus:outline-none focus:border-blue-500 ${
+                    isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-white/5 border-white/10 text-white"
+                  }`}
                 />
+                <select
+                  onChange={(e) => exec("formatBlock", e.target.value)}
+                  defaultValue="p"
+                  className={`px-2 py-1.5 rounded-lg text-xs border cursor-pointer ${
+                    isLight ? "bg-slate-50 border-slate-300 text-slate-800" : "bg-[#111827] border-gray-700 text-gray-200"
+                  }`}
+                >
+                  <option value="p">Normal Text</option>
+                  <option value="h1">Heading 1</option>
+                  <option value="h2">Heading 2</option>
+                  <option value="h3">Heading 3</option>
+                </select>
+                <button onClick={() => exec("bold")} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Bold"><Bold size={14} /></button>
+                <button onClick={() => exec("italic")} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Italic"><Italic size={14} /></button>
+                <button onClick={() => exec("underline")} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Underline"><Underline size={14} /></button>
+                <button onClick={() => exec("strikeThrough")} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Strikethrough"><Strikethrough size={14} /></button>
+                <span className="w-px h-4 bg-gray-600/40 mx-1" />
+                <button onClick={() => exec("justifyLeft")} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Align Left"><AlignLeft size={14} /></button>
+                <button onClick={() => exec("justifyCenter")} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Align Center"><AlignCenter size={14} /></button>
+                <button onClick={() => exec("justifyRight")} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Align Right"><AlignRight size={14} /></button>
+                <span className="w-px h-4 bg-gray-600/40 mx-1" />
+                <button onClick={() => exec("insertUnorderedList")} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Bullet List"><List size={14} /></button>
+                <button onClick={() => exec("insertOrderedList")} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Numbered List"><ListOrdered size={14} /></button>
+                <button onClick={insertTable} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Insert 3x3 Table"><TableIcon size={14} /></button>
+                <button onClick={insertImage} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Insert Image URL"><ImageIcon size={14} /></button>
+                <button onClick={() => exec("insertHorizontalRule")} className="p-1.5 rounded hover:bg-blue-500/20 cursor-pointer" title="Divider"><Minus size={14} /></button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSaveToVault}
+                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow"
+                >
+                  {savedNotice ? <Check size={13} /> : <Save size={13} />}
+                  <span>{savedNotice ? "Saved!" : "Save to Vault"}</span>
+                </button>
+                <button
+                  onClick={handleDownloadWord}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow"
+                >
+                  <Download size={13} /> <span>Export .DOC</span>
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 cursor-pointer ${
+                    isLight ? "bg-slate-100 border-slate-300 text-slate-800 hover:bg-slate-200" : "bg-white/5 border-white/10 text-gray-200 hover:bg-white/10"
+                  }`}
+                >
+                  <Printer size={13} /> <span>PDF</span>
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-2">
-              <input
-                type="checkbox"
-                id="enc-chk"
-                checked={uploadEncrypted}
-                onChange={e => setUploadEncrypted(e.target.checked)}
-                className="rounded bg-gray-900 border-gray-700 text-purple-600 focus:ring-purple-500"
+            {/* A4 Paper Surface */}
+            <div className={`flex-1 overflow-y-auto p-6 sm:p-10 ${isLight ? "bg-slate-200/70" : "bg-[#06080e]"}`}>
+              <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={recomputeWordStats}
+                className={`max-w-[816px] min-h-[1056px] mx-auto p-10 sm:p-14 rounded-xl shadow-2xl focus:outline-none prose max-w-none leading-relaxed ${
+                  isLight
+                    ? "bg-white text-slate-900 border border-slate-300"
+                    : "bg-[#111726] text-gray-100 border border-gray-800 prose-invert"
+                }`}
               />
-              <label htmlFor="enc-chk" className="text-xs text-gray-300 font-semibold cursor-pointer">
-                Apply AES-256 Vault Encryption & Generate Checksum
-              </label>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-gray-800">
-              <button
-                type="button"
-                onClick={() => setIsUploadModalOpen(false)}
-                className="px-4 py-2 bg-gray-800 text-gray-300 hover:text-white rounded-lg text-xs font-bold"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-purple-600/30"
-              >
-                Upload File
-              </button>
+            {/* Status Footer */}
+            <div className={`border-t px-5 py-1.5 flex items-center justify-between text-[11px] font-mono print:hidden ${isLight ? "bg-white border-slate-200 text-slate-600" : "bg-[#0c111b] border-gray-800 text-gray-400"}`}>
+              <span>BERAXIS Docs WYSIWYG Studio</span>
+              <div className="flex items-center gap-4">
+                <span>Words: <strong>{wordStats.words}</strong></span>
+                <span>Characters: <strong>{wordStats.chars}</strong></span>
+                <span>Read Time: <strong>{Math.max(1, Math.ceil(wordStats.words / 200))} min</strong></span>
+              </div>
+            </div>
+          </main>
+        </div>
+      ) : (
+        /* ENCRYPTED VAULT MODE */
+        <div className="flex-1 flex overflow-hidden">
+          <div className={`w-64 border-r p-4 flex flex-col justify-between shrink-0 ${isLight ? "bg-white border-slate-200" : "bg-[#0e121c] border-gray-800"}`}>
+            <div className="space-y-4">
+              <div className={`flex items-center justify-between pb-2 border-b ${isLight ? "border-slate-200" : "border-gray-800"}`}>
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Vault Folders</span>
+                <button onClick={() => setIsNewFolderModalOpen(true)} className="text-purple-400 hover:text-purple-300 p-1 rounded cursor-pointer">
+                  <Plus size={16} />
+                </button>
+              </div>
+              <div className="space-y-1">
+                {folders.map((fold) => (
+                  <button
+                    key={fold.id}
+                    onClick={() => setSelectedFolder(fold.id)}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      selectedFolder === fold.id
+                        ? "bg-purple-600 text-white"
+                        : isLight
+                        ? "text-slate-600 hover:bg-slate-100"
+                        : "text-gray-400 hover:bg-gray-800/60 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 truncate">
+                      <Folder size={15} />
+                      <span className="truncate">{fold.name}</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/20">
+                      {documents.filter((d) => fold.id === "f-all" || d.folderId === fold.id).length}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={`border p-3.5 rounded-xl space-y-2 ${isLight ? "bg-slate-50 border-slate-200" : "bg-gray-900/90 border-gray-800"}`}>
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5">
+                  <HardDrive size={14} className="text-purple-400" />
+                  <span className="font-bold">Encrypted Vault</span>
+                </div>
+                <span className="font-bold text-purple-400">{totalStorageUsed} MB</span>
+              </div>
+              <div className="w-full bg-gray-700/30 rounded-full h-1.5 overflow-hidden">
+                <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (parseFloat(totalStorageUsed) / 500) * 100)}%` }} />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col overflow-hidden p-5 space-y-4">
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border ${isLight ? "bg-white border-slate-200" : "bg-[#111622] border-gray-800"}`}>
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-2.5 text-gray-500" size={16} />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search vault files..."
+                  className={`w-full border rounded-lg pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:border-purple-500 ${isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-gray-900 border-gray-700 text-white"}`}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer ${isLight ? "bg-slate-100 border-slate-300" : "bg-gray-900 border-gray-700"}`}
+                >
+                  {viewMode === "grid" ? "List View" : "Grid View"}
+                </button>
+                <button
+                  onClick={() => setIsUploadModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold cursor-pointer"
+                >
+                  <Upload size={13} /> Upload File
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              {filteredDocs.length === 0 ? (
+                <div className="h-64 flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-gray-700/40 rounded-2xl">
+                  <FileText size={40} className="mb-2 opacity-40 text-purple-400" />
+                  <p className="text-sm font-semibold">No documents in vault yet</p>
+                  <p className="text-xs mt-1">Create one in Word Processor mode and click &ldquo;Save to Vault&rdquo;.</p>
+                </div>
+              ) : (
+                <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-2"}>
+                  {filteredDocs.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className={`p-4 rounded-2xl border flex items-center justify-between gap-3 ${isLight ? "bg-white border-slate-200" : "bg-[#111622] border-gray-800"}`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        {doc.extension.includes("xls") ? (
+                          <FileSpreadsheet className="text-emerald-400 shrink-0" size={22} />
+                        ) : doc.extension.includes("png") ? (
+                          <FileImage className="text-blue-400 shrink-0" size={22} />
+                        ) : (
+                          <FileCode className="text-purple-400 shrink-0" size={22} />
+                        )}
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold truncate">{doc.name}</div>
+                          <div className="text-[10px] text-gray-400">{doc.uploadedAt} • {doc.sizeMB} MB</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {doc.htmlContent && (
+                          <button
+                            onClick={() => {
+                              setActiveDocId(doc.id);
+                              setDocTitle(doc.name.replace(/\.docx$/i, ""));
+                              setStudioMode("editor");
+                              setTimeout(() => {
+                                if (editorRef.current && doc.htmlContent) {
+                                  editorRef.current.innerHTML = doc.htmlContent;
+                                  recomputeWordStats();
+                                }
+                              }, 0);
+                            }}
+                            className="px-2 py-1 rounded bg-blue-600 text-white text-[10px] font-bold cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteDoc(doc.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-400 cursor-pointer"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <form onSubmit={handleUploadSubmit} className="bg-[#111622] border border-gray-700 text-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <h3 className="text-base font-bold">Upload Document to Vault</h3>
+            <input
+              type="text"
+              required
+              value={uploadFileName}
+              onChange={(e) => setUploadFileName(e.target.value)}
+              placeholder="e.g. Q4_Financial_Audit.pdf"
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white"
+            />
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setIsUploadModalOpen(false)} className="px-4 py-2 bg-gray-800 rounded-lg text-xs font-bold">Cancel</button>
+              <button type="submit" className="px-5 py-2 bg-purple-600 rounded-lg text-xs font-bold">Upload</button>
             </div>
           </form>
         </div>
       )}
 
-      {/* CREATE FOLDER MODAL */}
       {isNewFolderModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <form onSubmit={handleCreateFolder} className="bg-[#111622] border border-gray-700 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Folder size={18} className="text-purple-400" /> Create New Vault Folder
-            </h3>
+          <form onSubmit={handleCreateFolder} className="bg-[#111622] border border-gray-700 text-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+            <h3 className="text-base font-bold">Create Vault Folder</h3>
             <input
               type="text"
               required
               value={newFolderName}
-              onChange={e => setNewFolderName(e.target.value)}
+              onChange={(e) => setNewFolderName(e.target.value)}
               placeholder="e.g. Tax Filings 2026"
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white"
             />
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsNewFolderModalOpen(false)}
-                className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-xs font-bold"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold"
-              >
-                Create
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* RICH DOCUMENT COMPOSER MODAL (WORD ALTERNATIVE) */}
-      {isComposerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <form onSubmit={handleSaveComposedDoc} className="bg-[#111622] border border-gray-700 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <FileText size={18} className="text-blue-400" /> BERAXIS Docs — Built-In Word Alternative
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsComposerOpen(false)}
-                className="text-gray-400 hover:text-white text-xs font-bold"
-              >
-                Close
-              </button>
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-300 block mb-1">Document Title</label>
-              <input
-                type="text"
-                required
-                value={docTitle}
-                onChange={e => setDocTitle(e.target.value)}
-                placeholder="e.g. Q4 Standard Operating Procedure"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-300 block mb-1">Document Content</label>
-              <textarea
-                rows={10}
-                required
-                value={docBody}
-                onChange={e => setDocBody(e.target.value)}
-                placeholder="Write memos, contracts, SOPs, or client proposals directly inside BERAXIS..."
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 leading-relaxed"
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-2 border-t border-gray-800">
-              <button
-                type="button"
-                onClick={() => setIsComposerOpen(false)}
-                className="px-4 py-2 bg-gray-800 text-gray-300 hover:text-white rounded-lg text-xs font-bold"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-blue-600/30"
-              >
-                Save to Vault &amp; Download .DOC
-              </button>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setIsNewFolderModalOpen(false)} className="px-3 py-1.5 bg-gray-800 rounded-lg text-xs font-bold">Cancel</button>
+              <button type="submit" className="px-4 py-1.5 bg-purple-600 rounded-lg text-xs font-bold">Create</button>
             </div>
           </form>
         </div>

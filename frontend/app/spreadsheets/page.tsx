@@ -1,6 +1,16 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import * as XLSX from "xlsx";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid
+} from "recharts";
 import AppHeader from "@/components/layout/AppHeader";
 import { useBranchContext } from "@/lib/branchContext";
 import {
@@ -22,7 +32,10 @@ import {
   AlignRight,
   DollarSign,
   Percent,
-  Undo2
+  Undo2,
+  Sun,
+  Moon,
+  BarChart3
 } from "lucide-react";
 
 type CellFormat = {
@@ -52,7 +65,7 @@ type SheetWorkbook = {
 
 const COL_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-const BG_MAP: Record<NonNullable<CellFormat["bg"]>, string> = {
+const BG_MAP_DARK: Record<NonNullable<CellFormat["bg"]>, string> = {
   none: "",
   emerald: "bg-emerald-500/15",
   purple: "bg-purple-500/15",
@@ -60,12 +73,18 @@ const BG_MAP: Record<NonNullable<CellFormat["bg"]>, string> = {
   blue: "bg-blue-500/15",
 };
 
+const BG_MAP_LIGHT: Record<NonNullable<CellFormat["bg"]>, string> = {
+  none: "",
+  emerald: "bg-emerald-100",
+  purple: "bg-purple-100",
+  amber: "bg-amber-100",
+  blue: "bg-blue-100",
+};
+
 const TEMPLATES: Record<string, { name: string; tabs: SheetTab[] }> = {
   blank: {
     name: "Untitled Workbook",
-    tabs: [
-      { id: "tab-1", name: "Sheet 1", rows: 22, cols: 10, cells: {}, formats: {} },
-    ],
+    tabs: [{ id: "tab-1", name: "Sheet 1", rows: 22, cols: 10, cells: {}, formats: {} }],
   },
   pnl: {
     name: "Monthly P&L Budget",
@@ -121,8 +140,8 @@ const TEMPLATES: Record<string, { name: string; tabs: SheetTab[] }> = {
           C11: "=C4-C9",
           D11: "=D4-D9",
           E11: "=E4-E9",
-          A12: "Avg Monthly Profit",
-          B12: "=AVERAGE(B11:D11)",
+          A12: "Margin Status",
+          B12: "=IF(E11>50000, Healthy, Review)",
         },
         formats: {
           A1: { bold: true, bg: "purple" },
@@ -153,7 +172,7 @@ const TEMPLATES: Record<string, { name: string; tabs: SheetTab[] }> = {
           C3: { align: "right", numFormat: "currency" },
           D3: { align: "right", numFormat: "currency" },
           E3: { align: "right", numFormat: "currency" },
-          B12: { bold: true, align: "right", numFormat: "currency" },
+          B12: { bold: true, align: "center" },
         },
       },
       {
@@ -241,58 +260,6 @@ const TEMPLATES: Record<string, { name: string; tabs: SheetTab[] }> = {
       },
     ],
   },
-  inventory: {
-    name: "Inventory Valuation Sheet",
-    tabs: [
-      {
-        id: "tab-inv",
-        name: "Stock Valuation",
-        rows: 16,
-        cols: 8,
-        cells: {
-          A1: "SKU",
-          B1: "Item Name",
-          C1: "Qty On Hand",
-          D1: "Unit Cost",
-          E1: "Total Value",
-          A2: "SKU-101",
-          B2: "Enterprise POS Terminal",
-          C2: "28",
-          D2: "320",
-          E2: "=C2*D2",
-          A3: "SKU-102",
-          B3: "Thermal Receipt Printer",
-          C3: "64",
-          D3: "85",
-          E3: "=C3*D3",
-          A4: "SKU-103",
-          B4: "Wireless Barcode Scanner",
-          C4: "110",
-          D4: "45",
-          E4: "=C4*D4",
-          A6: "Total Stock Units",
-          C6: "=SUM(C2:C4)",
-          A7: "Total Inventory Asset",
-          E7: "=SUM(E2:E4)",
-        },
-        formats: {
-          A1: { bold: true, bg: "purple" },
-          B1: { bold: true, bg: "purple" },
-          C1: { bold: true, align: "right", bg: "purple" },
-          D1: { bold: true, align: "right", bg: "purple" },
-          E1: { bold: true, align: "right", bg: "purple" },
-          D2: { align: "right", numFormat: "currency" },
-          D3: { align: "right", numFormat: "currency" },
-          D4: { align: "right", numFormat: "currency" },
-          E2: { align: "right", numFormat: "currency" },
-          E3: { align: "right", numFormat: "currency" },
-          E4: { align: "right", numFormat: "currency" },
-          A7: { bold: true, bg: "emerald" },
-          E7: { bold: true, align: "right", numFormat: "currency", bg: "emerald" },
-        },
-      },
-    ],
-  },
 };
 
 function cellId(colIdx: number, rowIdx: number): string {
@@ -363,6 +330,52 @@ function evaluateCell(
   };
 
   try {
+    // IF(cond, trueVal, falseVal)
+    const ifMatch = expr.match(/^IF\(([^,]+),([^,]+),([^)]+)\)$/i);
+    if (ifMatch) {
+      const condRaw = ifMatch[1].trim();
+      const tVal = ifMatch[2].trim().replace(/^["']|["']$/g, "");
+      const fVal = ifMatch[3].trim().replace(/^["']|["']$/g, "");
+      const cmp = condRaw.match(/^([A-Za-z]+\d+|\d+(?:\.\d+)?)\s*(>=|<=|!=|=|>|<)\s*([A-Za-z]+\d+|\d+(?:\.\d+)?)$/);
+      if (cmp) {
+        const left = /^[A-Za-z]+\d+$/.test(cmp[1]) ? getNum(cmp[1].toUpperCase()) : parseFloat(cmp[1]);
+        const right = /^[A-Za-z]+\d+$/.test(cmp[3]) ? getNum(cmp[3].toUpperCase()) : parseFloat(cmp[3]);
+        const op = cmp[2];
+        const ok =
+          op === ">" ? left > right :
+          op === "<" ? left < right :
+          op === ">=" ? left >= right :
+          op === "<=" ? left <= right :
+          op === "!=" ? left !== right :
+          left === right;
+        return ok ? tVal : fVal;
+      }
+    }
+
+    // CONCAT(a, b, ...)
+    const concatMatch = expr.match(/^CONCAT\(([^)]+)\)$/i);
+    if (concatMatch) {
+      return concatMatch[1]
+        .split(",")
+        .map((arg) => {
+          const t = arg.trim();
+          if (/^[A-Za-z]+\d+$/.test(t)) return evaluateCell(t.toUpperCase(), cells, nextVisited);
+          return t.replace(/^["']|["']$/g, "");
+        })
+        .join("");
+    }
+
+    // ROUND(val, digits)
+    const roundMatch = expr.match(/^ROUND\(([^,]+),([^)]+)\)$/i);
+    if (roundMatch) {
+      const target = roundMatch[1].trim();
+      const val = /^[A-Za-z]+\d+$/.test(target) ? getNum(target.toUpperCase()) : parseFloat(target);
+      const digits = parseInt(roundMatch[2].trim(), 10) || 0;
+      const factor = Math.pow(10, digits);
+      return String(Math.round(val * factor) / factor);
+    }
+
+    // Aggregate functions
     const fnMatch = expr.match(/^(SUM|AVERAGE|AVG|MIN|MAX|COUNT)\(([^)]+)\)$/i);
     if (fnMatch) {
       const fn = fnMatch[1].toUpperCase();
@@ -403,40 +416,32 @@ function formatDisplay(rawEvaluated: string, fmt?: CellFormat): string {
   return rawEvaluated;
 }
 
-function parseCsvLine(line: string): string[] {
-  const out: string[] = [];
-  let cur = "";
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        cur += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (ch === "," && !inQuotes) {
-      out.push(cur.trim());
-      cur = "";
-    } else {
-      cur += ch;
-    }
-  }
-  out.push(cur.trim());
-  return out;
-}
-
 export default function SpreadsheetsPage() {
   const { activeBranch, getEntityStorageKey } = useBranchContext();
   const [workbooks, setWorkbooks] = useState<SheetWorkbook[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [selectedCell, setSelectedCell] = useState<string>("A1");
+  const [rangeAnchor, setRangeAnchor] = useState<string>("A1");
+  const [rangeEnd, setRangeEnd] = useState<string>("A1");
+  const [isDragging, setIsDragging] = useState<boolean>(false);
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [formulaInput, setFormulaInput] = useState<string>("");
   const [copiedNotice, setCopiedNotice] = useState(false);
   const [undoStack, setUndoStack] = useState<SheetWorkbook[][]>([]);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [showChart, setShowChart] = useState<boolean>(false);
   const cellInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("beraxis_office_theme");
+    if (savedTheme === "light" || savedTheme === "dark") setTheme(savedTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("beraxis_office_theme", next);
+  };
 
   useEffect(() => {
     if (!activeBranch) return;
@@ -465,6 +470,12 @@ export default function SpreadsheetsPage() {
     setActiveId(defaultWb.id);
     setFormulaInput(defaultWb.tabs[0].cells["A1"] || "");
   }, [activeBranch?.id]);
+
+  useEffect(() => {
+    const onUp = () => setIsDragging(false);
+    window.addEventListener("mouseup", onUp);
+    return () => window.removeEventListener("mouseup", onUp);
+  }, []);
 
   const persistWorkbooks = (updated: SheetWorkbook[], pushUndo = true) => {
     if (pushUndo && workbooks.length > 0) {
@@ -503,24 +514,25 @@ export default function SpreadsheetsPage() {
 
   const activeFormat = activeTab?.formats?.[selectedCell] || {};
 
-  // Keyboard Ctrl+Z Undo
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && editingCell === null) {
-        e.preventDefault();
-        handleUndo();
+  const selectedRangeCells = useMemo(() => {
+    const start = parseCellRef(rangeAnchor);
+    const end = parseCellRef(rangeEnd);
+    if (!start || !end) return new Set<string>([selectedCell]);
+    const set = new Set<string>();
+    for (let r = Math.min(start.row, end.row); r <= Math.max(start.row, end.row); r++) {
+      for (let c = Math.min(start.col, end.col); c <= Math.max(start.col, end.col); c++) {
+        set.add(cellId(c, r));
       }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  });
+    }
+    return set;
+  }, [rangeAnchor, rangeEnd, selectedCell]);
 
   const handleSelectCell = (id: string, focusInput = false) => {
     setSelectedCell(id);
+    setRangeAnchor(id);
+    setRangeEnd(id);
     setFormulaInput(activeTab?.cells[id] || "");
-    if (focusInput) {
-      setTimeout(() => cellInputRefs.current[id]?.focus(), 0);
-    }
+    if (focusInput) setTimeout(() => cellInputRefs.current[id]?.focus(), 0);
   };
 
   const updateActiveTab = (updater: (tab: SheetTab) => SheetTab, pushUndo = true) => {
@@ -548,14 +560,11 @@ export default function SpreadsheetsPage() {
 
   const toggleFormat = (patch: Partial<CellFormat>) => {
     updateActiveTab((tab) => {
-      const prev = tab.formats?.[selectedCell] || {};
-      return {
-        ...tab,
-        formats: {
-          ...tab.formats,
-          [selectedCell]: { ...prev, ...patch },
-        },
-      };
+      const nextFormats = { ...tab.formats };
+      selectedRangeCells.forEach((cid) => {
+        nextFormats[cid] = { ...(nextFormats[cid] || {}), ...patch };
+      });
+      return { ...tab, formats: nextFormats };
     });
   };
 
@@ -569,10 +578,9 @@ export default function SpreadsheetsPage() {
       activeTabId: clonedTabs[0].id,
       tabs: clonedTabs,
     };
-    const updated = [newWb, ...workbooks];
-    persistWorkbooks(updated);
+    persistWorkbooks([newWb, ...workbooks]);
     setActiveId(newWb.id);
-    setSelectedCell("A1");
+    handleSelectCell("A1");
     setFormulaInput(clonedTabs[0].cells["A1"] || "");
   };
 
@@ -586,100 +594,96 @@ export default function SpreadsheetsPage() {
       cells: {},
       formats: {},
     };
-    const updated = workbooks.map((wb) =>
-      wb.id === activeWorkbook.id
-        ? { ...wb, activeTabId: newTab.id, tabs: [...wb.tabs, newTab] }
-        : wb
+    persistWorkbooks(
+      workbooks.map((wb) =>
+        wb.id === activeWorkbook.id ? { ...wb, activeTabId: newTab.id, tabs: [...wb.tabs, newTab] } : wb
+      )
     );
-    persistWorkbooks(updated);
-    setSelectedCell("A1");
+    handleSelectCell("A1");
     setFormulaInput("");
   };
 
-  const deleteWorkbook = (id: string) => {
-    if (workbooks.length <= 1) return;
-    const updated = workbooks.filter((w) => w.id !== id);
-    persistWorkbooks(updated);
-    if (activeId === id) {
-      setActiveId(updated[0].id);
-      setSelectedCell("A1");
-      setFormulaInput(updated[0].tabs[0]?.cells["A1"] || "");
-    }
-  };
-
-  const exportCsv = () => {
-    if (!activeWorkbook || !activeTab) return;
-    const lines: string[] = [];
-    for (let r = 0; r < activeTab.rows; r++) {
-      const rowVals: string[] = [];
-      for (let c = 0; c < activeTab.cols; c++) {
-        const val = evaluateCell(cellId(c, r), activeTab.cells);
-        const escaped = val.includes(",") || val.includes('"') ? `"${val.replace(/"/g, '""')}"` : val;
-        rowVals.push(escaped);
+  // True .xlsx Multi-Sheet Export via SheetJS
+  const exportXlsx = () => {
+    if (!activeWorkbook) return;
+    const wb = XLSX.utils.book_new();
+    activeWorkbook.tabs.forEach((tab) => {
+      const aoa: (string | number)[][] = [];
+      for (let r = 0; r < tab.rows; r++) {
+        const rowArr: (string | number)[] = [];
+        for (let c = 0; c < tab.cols; c++) {
+          const val = evaluateCell(cellId(c, r), tab.cells);
+          const num = Number(val);
+          rowArr.push(val !== "" && Number.isFinite(num) ? num : val);
+        }
+        aoa.push(rowArr);
       }
-      lines.push(rowVals.join(","));
-    }
-    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${activeWorkbook.name}_${activeTab.name}`.replace(/\s+/g, "_").toLowerCase() + ".csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      XLSX.utils.book_append_sheet(wb, ws, tab.name.slice(0, 31));
+    });
+    XLSX.writeFile(wb, `${activeWorkbook.name.replace(/\s+/g, "_")}.xlsx`);
   };
 
-  const handleImportCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // True .xlsx / .csv Import via SheetJS
+  const handleImportSpreadsheet = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      const text = String(reader.result || "");
-      const rows = text.split(/\r?\n/).filter((line) => line.length > 0);
-      const newCells: Record<string, string> = {};
-      let maxCols = 8;
-      rows.forEach((line, rIdx) => {
-        const cols = parseCsvLine(line);
-        maxCols = Math.max(maxCols, Math.min(cols.length, 22));
-        cols.slice(0, 22).forEach((val, cIdx) => {
-          if (val !== "") newCells[cellId(cIdx, rIdx)] = val;
+    reader.onload = (evt) => {
+      const data = evt.target?.result;
+      if (!data) return;
+      const wb = XLSX.read(data, { type: "array" });
+      const tabs: SheetTab[] = wb.SheetNames.map((sheetName, idx) => {
+        const ws = wb.Sheets[sheetName];
+        const aoa = XLSX.utils.sheet_to_json<(string | number)[]>(ws, { header: 1 });
+        const cells: Record<string, string> = {};
+        let maxCols = 8;
+        aoa.forEach((rowArr, rIdx) => {
+          maxCols = Math.max(maxCols, Math.min(rowArr.length, 22));
+          rowArr.slice(0, 22).forEach((val, cIdx) => {
+            if (val !== undefined && val !== null && String(val) !== "") {
+              cells[cellId(cIdx, rIdx)] = String(val);
+            }
+          });
         });
+        return {
+          id: `tab-${Date.now()}-${idx}`,
+          name: sheetName,
+          rows: Math.max(18, aoa.length + 4),
+          cols: maxCols,
+          cells,
+          formats: {},
+        };
       });
-      const tabId = `tab-${Date.now()}`;
+      if (tabs.length === 0) return;
       const newWb: SheetWorkbook = {
         id: `wb-${Date.now()}`,
-        name: file.name.replace(/\.(csv|xlsx)$/i, ""),
+        name: file.name.replace(/\.(xlsx|xls|csv)$/i, ""),
         updatedAt: new Date().toISOString().split("T")[0],
-        activeTabId: tabId,
-        tabs: [
-          {
-            id: tabId,
-            name: "Imported Sheet",
-            rows: Math.max(18, rows.length + 4),
-            cols: maxCols,
-            cells: newCells,
-            formats: {},
-          },
-        ],
+        activeTabId: tabs[0].id,
+        tabs,
       };
       persistWorkbooks([newWb, ...workbooks]);
       setActiveId(newWb.id);
-      setSelectedCell("A1");
-      setFormulaInput(newCells["A1"] || "");
+      handleSelectCell("A1");
+      setFormulaInput(tabs[0].cells["A1"] || "");
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
     e.target.value = "";
   };
 
-  // Live Excel-style Status Bar metrics for active column
-  const columnStats = useMemo(() => {
+  // Live Status Bar Stats (for selected range or active column)
+  const rangeStats = useMemo(() => {
     if (!activeTab) return { count: 0, sum: 0, avg: 0 };
-    const parsed = parseCellRef(selectedCell);
-    if (!parsed) return { count: 0, sum: 0, avg: 0 };
+    const targets =
+      selectedRangeCells.size > 1
+        ? Array.from(selectedRangeCells)
+        : Array.from({ length: activeTab.rows }, (_, r) =>
+            cellId(parseCellRef(selectedCell)?.col || 0, r)
+          );
     const nums: number[] = [];
-    for (let r = 0; r < activeTab.rows; r++) {
-      const v = evaluateCell(cellId(parsed.col, r), activeTab.cells);
+    for (const id of targets) {
+      const v = evaluateCell(id, activeTab.cells);
       if (v !== "" && !Number.isNaN(Number(v))) nums.push(Number(v));
     }
     const sum = nums.reduce((a, b) => a + b, 0);
@@ -688,46 +692,57 @@ export default function SpreadsheetsPage() {
       sum: Math.round(sum * 100) / 100,
       avg: nums.length ? Math.round((sum / nums.length) * 100) / 100 : 0,
     };
-  }, [activeTab, selectedCell]);
+  }, [activeTab, selectedRangeCells, selectedCell]);
+
+  // Chart data derived from rows 2..12 where col A is label and col B is numeric
+  const chartData = useMemo(() => {
+    if (!activeTab) return [];
+    const data: { name: string; value: number }[] = [];
+    for (let r = 1; r < Math.min(activeTab.rows, 14); r++) {
+      const label = evaluateCell(cellId(0, r), activeTab.cells);
+      const valStr = evaluateCell(cellId(1, r), activeTab.cells);
+      const num = Number(valStr);
+      if (label && valStr !== "" && Number.isFinite(num)) {
+        data.push({ name: label.slice(0, 18), value: num });
+      }
+    }
+    return data;
+  }, [activeTab]);
 
   const handleCellKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, rIdx: number, cIdx: number) => {
     if (!activeTab) return;
     if (e.key === "Enter" || e.key === "ArrowDown") {
       e.preventDefault();
       setEditingCell(null);
-      const nextR = Math.min(activeTab.rows - 1, rIdx + 1);
-      handleSelectCell(cellId(cIdx, nextR), true);
+      handleSelectCell(cellId(cIdx, Math.min(activeTab.rows - 1, rIdx + 1)), true);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setEditingCell(null);
-      const prevR = Math.max(0, rIdx - 1);
-      handleSelectCell(cellId(cIdx, prevR), true);
+      handleSelectCell(cellId(cIdx, Math.max(0, rIdx - 1)), true);
     } else if (e.key === "Tab") {
       e.preventDefault();
       setEditingCell(null);
-      const nextC = Math.min(activeTab.cols - 1, cIdx + 1);
-      handleSelectCell(cellId(nextC, rIdx), true);
+      handleSelectCell(cellId(Math.min(activeTab.cols - 1, cIdx + 1), rIdx), true);
     }
   };
 
+  const isLight = theme === "light";
+  const BG_MAP = isLight ? BG_MAP_LIGHT : BG_MAP_DARK;
+
   return (
-    <div className="flex flex-col h-screen bg-[#0a0d14] text-white">
-      <AppHeader title="BERAXIS Sheets — Built-In Excel Alternative" />
+    <div className={`flex flex-col h-screen ${isLight ? "bg-slate-100 text-slate-900" : "bg-[#0a0d14] text-white"}`}>
+      <AppHeader title="BERAXIS Sheets — Full Excel Studio (.XLSX)" />
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
-        <aside className="w-64 border-r border-gray-800 bg-[#0e121c] p-4 flex flex-col justify-between shrink-0 overflow-y-auto">
+        <aside className={`w-64 border-r p-4 flex flex-col justify-between shrink-0 overflow-y-auto ${isLight ? "bg-white border-slate-200" : "bg-[#0e121c] border-gray-800"}`}>
           <div className="space-y-5">
             <div>
-              <div className="flex items-center justify-between pb-2 border-b border-gray-800 mb-3">
+              <div className={`flex items-center justify-between pb-2 border-b mb-3 ${isLight ? "border-slate-200" : "border-gray-800"}`}>
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
                   Workbooks ({workbooks.length})
                 </span>
-                <button
-                  onClick={() => createFromTemplate("blank")}
-                  className="text-emerald-400 hover:text-emerald-300 p-1 hover:bg-emerald-500/10 rounded cursor-pointer"
-                  title="New Blank Workbook"
-                >
+                <button onClick={() => createFromTemplate("blank")} className="text-emerald-500 hover:text-emerald-400 p-1 rounded cursor-pointer">
                   <Plus size={16} />
                 </button>
               </div>
@@ -735,29 +750,33 @@ export default function SpreadsheetsPage() {
                 {workbooks.map((wb) => (
                   <div
                     key={wb.id}
-                    className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold cursor-pointer ${
                       activeWorkbook?.id === wb.id
-                        ? "bg-emerald-600/20 text-emerald-300 border border-emerald-500/40"
-                        : "text-gray-400 hover:bg-gray-800/60 hover:text-white border border-transparent"
+                        ? isLight
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-300"
+                          : "bg-emerald-600/20 text-emerald-300 border border-emerald-500/40"
+                        : isLight
+                        ? "text-slate-600 hover:bg-slate-100"
+                        : "text-gray-400 hover:bg-gray-800/60 hover:text-white"
                     }`}
                     onClick={() => {
                       setActiveId(wb.id);
                       const tab = wb.tabs.find((t) => t.id === wb.activeTabId) || wb.tabs[0];
-                      setSelectedCell("A1");
+                      handleSelectCell("A1");
                       setFormulaInput(tab?.cells["A1"] || "");
                     }}
                   >
                     <div className="flex items-center gap-2 truncate">
-                      <FileSpreadsheet size={14} className="shrink-0 text-emerald-400" />
+                      <FileSpreadsheet size={14} className="shrink-0 text-emerald-500" />
                       <span className="truncate">{wb.name}</span>
                     </div>
                     {workbooks.length > 1 && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          deleteWorkbook(wb.id);
+                          persistWorkbooks(workbooks.filter((w) => w.id !== wb.id));
                         }}
-                        className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 p-0.5"
+                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-0.5"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -769,52 +788,41 @@ export default function SpreadsheetsPage() {
 
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
-                1-Click Business Templates
+                Templates
               </span>
               <div className="space-y-1.5">
                 <button
                   onClick={() => createFromTemplate("pnl")}
-                  className="w-full text-left px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-gray-300 flex items-center gap-2 cursor-pointer"
+                  className={`w-full text-left px-3 py-2 rounded-xl border text-xs flex items-center gap-2 cursor-pointer ${isLight ? "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700" : "bg-white/5 hover:bg-white/10 border-white/10 text-gray-300"}`}
                 >
-                  <TrendingUp size={13} className="text-emerald-400" />
+                  <TrendingUp size={13} className="text-emerald-500" />
                   <span>Monthly P&amp;L Budget</span>
                 </button>
                 <button
                   onClick={() => createFromTemplate("sales")}
-                  className="w-full text-left px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-gray-300 flex items-center gap-2 cursor-pointer"
+                  className={`w-full text-left px-3 py-2 rounded-xl border text-xs flex items-center gap-2 cursor-pointer ${isLight ? "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700" : "bg-white/5 hover:bg-white/10 border-white/10 text-gray-300"}`}
                 >
-                  <Calculator size={13} className="text-cyan-400" />
+                  <Calculator size={13} className="text-cyan-500" />
                   <span>Sales Pipeline Forecast</span>
-                </button>
-                <button
-                  onClick={() => createFromTemplate("inventory")}
-                  className="w-full text-left px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-gray-300 flex items-center gap-2 cursor-pointer"
-                >
-                  <Table size={13} className="text-purple-400" />
-                  <span>Inventory Valuation</span>
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="mt-6 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-200 space-y-1">
-            <div className="font-bold flex items-center gap-1.5 text-emerald-300">
-              <Sparkles size={13} /> No Excel License Needed
+          <div className={`p-3 rounded-xl border text-[11px] space-y-1 ${isLight ? "bg-emerald-50 border-emerald-200 text-emerald-900" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-200"}`}>
+            <div className="font-bold flex items-center gap-1.5">
+              <Sparkles size={13} className="text-emerald-500" /> Excel .XLSX Compatible
             </div>
-            <p className="text-gray-400 leading-relaxed">
-              Multi-tab workbooks, cell formatting,{" "}
-              <code className="text-emerald-300">=SUM()</code>,{" "}
-              <code className="text-emerald-300">=AVERAGE()</code>,{" "}
-              <code className="text-emerald-300">=MIN()</code>,{" "}
-              <code className="text-emerald-300">=MAX()</code>, and CSV export.
+            <p className={isLight ? "text-slate-600" : "text-gray-400"}>
+              Supports multi-sheet `.xlsx`, drag-select stats, charts, `=SUM()`, `=IF()`, `=ROUND()`, and `=CONCAT()`.
             </p>
           </div>
         </aside>
 
-        {/* Main Grid Workspace */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-[#070a11]">
-          {/* Top Actions & Formatting Ribbon */}
-          <div className="border-b border-gray-800 bg-[#0c111b] px-4 py-2.5 space-y-2.5">
+        {/* Main Grid */}
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {/* Top Ribbon */}
+          <div className={`border-b px-4 py-2.5 space-y-2.5 ${isLight ? "bg-white border-slate-200" : "bg-[#0c111b] border-gray-800"}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-1 min-w-[260px]">
                 <input
@@ -827,9 +835,9 @@ export default function SpreadsheetsPage() {
                       false
                     );
                   }}
-                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 w-48"
+                  className={`border rounded-lg px-3 py-1.5 text-sm font-bold w-44 focus:outline-none focus:border-emerald-500 ${isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-white/5 border-white/10 text-white"}`}
                 />
-                <span className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-mono font-bold">
+                <span className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-xs font-mono font-bold">
                   {selectedCell}
                 </span>
                 <input
@@ -840,268 +848,228 @@ export default function SpreadsheetsPage() {
                     setFormulaInput(e.target.value);
                     updateCellValue(selectedCell, e.target.value);
                   }}
-                  className="flex-1 bg-[#070a11] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-mono text-gray-100 focus:outline-none focus:border-emerald-500"
+                  className={`flex-1 border rounded-lg px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-emerald-500 ${isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-[#070a11] border-gray-700 text-gray-100"}`}
                 />
               </div>
 
               <div className="flex items-center gap-1.5">
                 <button
+                  onClick={toggleTheme}
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer ${isLight ? "bg-slate-100 border-slate-300 text-slate-800" : "bg-white/5 border-white/10 text-gray-200"}`}
+                  title="Toggle Light / Dark Theme"
+                >
+                  {isLight ? <Moon size={13} /> : <Sun size={13} className="text-amber-400" />}
+                  <span>{isLight ? "Dark" : "Light"}</span>
+                </button>
+                <button
+                  onClick={() => setShowChart(!showChart)}
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer ${showChart ? "bg-purple-600 text-white border-purple-500" : isLight ? "bg-slate-100 border-slate-300 text-slate-800" : "bg-white/5 border-white/10 text-gray-200"}`}
+                >
+                  <BarChart3 size={13} /> <span>Chart</span>
+                </button>
+                <button
                   onClick={handleUndo}
                   disabled={undoStack.length === 0}
-                  className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 border border-white/10 text-xs font-semibold flex items-center gap-1 cursor-pointer"
-                  title="Undo (Ctrl+Z)"
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs cursor-pointer disabled:opacity-30 ${isLight ? "bg-slate-100 border-slate-300" : "bg-white/5 border-white/10"}`}
+                  title="Undo"
                 >
                   <Undo2 size={13} />
                 </button>
-                <button
-                  onClick={() => {
-                    if (!activeTab) return;
-                    navigator.clipboard.writeText(evaluateCell(selectedCell, activeTab.cells));
-                    setCopiedNotice(true);
-                    setTimeout(() => setCopiedNotice(false), 1500);
-                  }}
-                  className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold flex items-center gap-1 cursor-pointer"
-                >
-                  {copiedNotice ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                  <span>{copiedNotice ? "Copied" : "Copy"}</span>
-                </button>
-                <label className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold flex items-center gap-1 cursor-pointer">
-                  <Upload size={13} className="text-cyan-400" />
-                  <span>Import CSV</span>
-                  <input type="file" accept=".csv" onChange={handleImportCsv} className="hidden" />
+                <label className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 cursor-pointer ${isLight ? "bg-slate-100 border-slate-300 text-slate-800" : "bg-white/5 border-white/10 text-gray-200"}`}>
+                  <Upload size={13} className="text-cyan-500" />
+                  <span>Import .XLSX/.CSV</span>
+                  <input type="file" accept=".xlsx,.xls,.csv" onChange={handleImportSpreadsheet} className="hidden" />
                 </label>
                 <button
-                  onClick={exportCsv}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer"
+                  onClick={exportXlsx}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow cursor-pointer"
                 >
-                  <Download size={13} /> <span>Export Excel / CSV</span>
+                  <Download size={13} /> <span>Export .XLSX</span>
                 </button>
               </div>
             </div>
 
             {/* Formatting Toolbar */}
-            <div className="flex flex-wrap items-center gap-2 text-xs pt-1 border-t border-white/5">
-              <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
+            <div className={`flex flex-wrap items-center gap-2 text-xs pt-1 border-t ${isLight ? "border-slate-200" : "border-white/5"}`}>
+              <button onClick={() => toggleFormat({ bold: !activeFormat.bold })} className={`p-1.5 rounded cursor-pointer ${activeFormat.bold ? "bg-emerald-600 text-white" : "hover:bg-emerald-500/20"}`}><Bold size={13} /></button>
+              <button onClick={() => toggleFormat({ italic: !activeFormat.italic })} className={`p-1.5 rounded cursor-pointer ${activeFormat.italic ? "bg-emerald-600 text-white" : "hover:bg-emerald-500/20"}`}><Italic size={13} /></button>
+              <span className="w-px h-4 bg-gray-500/30" />
+              <button onClick={() => toggleFormat({ align: "left" })} className={`p-1.5 rounded cursor-pointer ${activeFormat.align === "left" ? "bg-emerald-600 text-white" : "hover:bg-emerald-500/20"}`}><AlignLeft size={13} /></button>
+              <button onClick={() => toggleFormat({ align: "center" })} className={`p-1.5 rounded cursor-pointer ${activeFormat.align === "center" ? "bg-emerald-600 text-white" : "hover:bg-emerald-500/20"}`}><AlignCenter size={13} /></button>
+              <button onClick={() => toggleFormat({ align: "right" })} className={`p-1.5 rounded cursor-pointer ${activeFormat.align === "right" ? "bg-emerald-600 text-white" : "hover:bg-emerald-500/20"}`}><AlignRight size={13} /></button>
+              <span className="w-px h-4 bg-gray-500/30" />
+              <button onClick={() => toggleFormat({ numFormat: activeFormat.numFormat === "currency" ? "auto" : "currency" })} className={`px-2 py-1 rounded font-bold cursor-pointer ${activeFormat.numFormat === "currency" ? "bg-emerald-600 text-white" : "hover:bg-emerald-500/20"}`}><DollarSign size={12} /></button>
+              <button onClick={() => toggleFormat({ numFormat: activeFormat.numFormat === "percent" ? "auto" : "percent" })} className={`px-2 py-1 rounded font-bold cursor-pointer ${activeFormat.numFormat === "percent" ? "bg-emerald-600 text-white" : "hover:bg-emerald-500/20"}`}><Percent size={12} /></button>
+              <span className="w-px h-4 bg-gray-500/30" />
+              {(["none", "emerald", "purple", "amber", "blue"] as const).map((color) => (
                 <button
-                  onClick={() => toggleFormat({ bold: !activeFormat.bold })}
-                  className={`p-1.5 rounded cursor-pointer ${activeFormat.bold ? "bg-emerald-600 text-white" : "text-gray-300 hover:bg-white/10"}`}
-                  title="Bold"
-                >
-                  <Bold size={13} />
-                </button>
-                <button
-                  onClick={() => toggleFormat({ italic: !activeFormat.italic })}
-                  className={`p-1.5 rounded cursor-pointer ${activeFormat.italic ? "bg-emerald-600 text-white" : "text-gray-300 hover:bg-white/10"}`}
-                  title="Italic"
-                >
-                  <Italic size={13} />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
-                <button
-                  onClick={() => toggleFormat({ align: "left" })}
-                  className={`p-1.5 rounded cursor-pointer ${(!activeFormat.align || activeFormat.align === "left") ? "bg-emerald-600 text-white" : "text-gray-300 hover:bg-white/10"}`}
-                >
-                  <AlignLeft size={13} />
-                </button>
-                <button
-                  onClick={() => toggleFormat({ align: "center" })}
-                  className={`p-1.5 rounded cursor-pointer ${activeFormat.align === "center" ? "bg-emerald-600 text-white" : "text-gray-300 hover:bg-white/10"}`}
-                >
-                  <AlignCenter size={13} />
-                </button>
-                <button
-                  onClick={() => toggleFormat({ align: "right" })}
-                  className={`p-1.5 rounded cursor-pointer ${activeFormat.align === "right" ? "bg-emerald-600 text-white" : "text-gray-300 hover:bg-white/10"}`}
-                >
-                  <AlignRight size={13} />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
-                <button
-                  onClick={() =>
-                    toggleFormat({
-                      numFormat: activeFormat.numFormat === "currency" ? "auto" : "currency",
-                    })
-                  }
-                  className={`px-2 py-1 rounded font-bold flex items-center gap-0.5 cursor-pointer ${
-                    activeFormat.numFormat === "currency" ? "bg-emerald-600 text-white" : "text-gray-300 hover:bg-white/10"
-                  }`}
-                  title="Format as Currency ($)"
-                >
-                  <DollarSign size={12} />
-                </button>
-                <button
-                  onClick={() =>
-                    toggleFormat({
-                      numFormat: activeFormat.numFormat === "percent" ? "auto" : "percent",
-                    })
-                  }
-                  className={`px-2 py-1 rounded font-bold flex items-center gap-0.5 cursor-pointer ${
-                    activeFormat.numFormat === "percent" ? "bg-emerald-600 text-white" : "text-gray-300 hover:bg-white/10"
-                  }`}
-                  title="Format as Percentage (%)"
-                >
-                  <Percent size={12} />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-lg border border-white/10">
-                <span className="text-[10px] text-gray-400 uppercase font-bold">Fill:</span>
-                {(["none", "emerald", "purple", "amber", "blue"] as const).map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => toggleFormat({ bg: color })}
-                    className={`w-4 h-4 rounded-full border cursor-pointer ${
-                      color === "none"
-                        ? "bg-transparent border-gray-500"
-                        : color === "emerald"
-                        ? "bg-emerald-500 border-emerald-300"
-                        : color === "purple"
-                        ? "bg-purple-500 border-purple-300"
-                        : color === "amber"
-                        ? "bg-amber-500 border-amber-300"
-                        : "bg-blue-500 border-blue-300"
-                    } ${activeFormat.bg === color ? "ring-2 ring-white" : ""}`}
-                    title={`Fill: ${color}`}
-                  />
-                ))}
-              </div>
-
+                  key={color}
+                  onClick={() => toggleFormat({ bg: color })}
+                  className={`w-4 h-4 rounded-full border cursor-pointer ${
+                    color === "none" ? "bg-transparent border-gray-400" :
+                    color === "emerald" ? "bg-emerald-500 border-emerald-300" :
+                    color === "purple" ? "bg-purple-500 border-purple-300" :
+                    color === "amber" ? "bg-amber-500 border-amber-300" : "bg-blue-500 border-blue-300"
+                  } ${activeFormat.bg === color ? "ring-2 ring-emerald-400" : ""}`}
+                />
+              ))}
               <button
                 onClick={() => updateActiveTab((tab) => ({ ...tab, rows: tab.rows + 5 }))}
-                className="ml-auto px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+                className="ml-auto px-2.5 py-1 rounded-lg bg-emerald-600/15 text-emerald-500 font-bold flex items-center gap-1 cursor-pointer"
               >
                 <Plus size={12} /> +5 Rows
               </button>
             </div>
           </div>
 
-          {/* Spreadsheet Grid */}
-          {activeTab && (
-            <div className="flex-1 overflow-auto">
-              <table className="border-collapse w-full text-xs">
-                <thead className="sticky top-0 z-10 bg-[#101624]">
-                  <tr>
-                    <th className="w-12 min-w-[48px] border border-gray-800 bg-[#0c111b] text-gray-500 font-mono py-2">
-                      #
-                    </th>
-                    {Array.from({ length: activeTab.cols }).map((_, cIdx) => (
-                      <th
-                        key={cIdx}
-                        className="min-w-[130px] border border-gray-800 text-gray-300 font-bold py-2 px-2 text-center"
-                      >
-                        {COL_LETTERS[cIdx]}
+          {/* Grid + Optional Live Chart */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {activeTab && (
+              <div className="flex-1 overflow-auto">
+                <table className="border-collapse w-full text-xs select-none">
+                  <thead className={`sticky top-0 z-10 ${isLight ? "bg-slate-200 text-slate-700" : "bg-[#101624] text-gray-300"}`}>
+                    <tr>
+                      <th className={`w-12 min-w-[48px] border font-mono py-2 ${isLight ? "border-slate-300 bg-slate-200" : "border-gray-800 bg-[#0c111b] text-gray-500"}`}>
+                        #
                       </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.from({ length: activeTab.rows }).map((_, rIdx) => (
-                    <tr key={rIdx} className="hover:bg-white/[0.02]">
-                      <td className="border border-gray-800 bg-[#0c111b] text-gray-500 font-mono text-center py-1.5 select-none">
-                        {rIdx + 1}
-                      </td>
-                      {Array.from({ length: activeTab.cols }).map((__, cIdx) => {
-                        const id = cellId(cIdx, rIdx);
-                        const isSelected = selectedCell === id;
-                        const isEditing = editingCell === id;
-                        const rawVal = activeTab.cells[id] || "";
-                        const evaluated = evaluateCell(id, activeTab.cells);
-                        const fmt = activeTab.formats?.[id];
-                        const displayVal = isEditing ? rawVal : formatDisplay(evaluated, fmt);
-                        const isFormula = rawVal.startsWith("=");
+                      {Array.from({ length: activeTab.cols }).map((_, cIdx) => (
+                        <th key={cIdx} className={`min-w-[130px] border font-bold py-2 px-2 text-center ${isLight ? "border-slate-300" : "border-gray-800"}`}>
+                          {COL_LETTERS[cIdx]}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: activeTab.rows }).map((_, rIdx) => (
+                      <tr key={rIdx}>
+                        <td className={`border font-mono text-center py-1.5 ${isLight ? "border-slate-300 bg-slate-100 text-slate-500" : "border-gray-800 bg-[#0c111b] text-gray-500"}`}>
+                          {rIdx + 1}
+                        </td>
+                        {Array.from({ length: activeTab.cols }).map((__, cIdx) => {
+                          const id = cellId(cIdx, rIdx);
+                          const isSelected = selectedCell === id;
+                          const inRange = selectedRangeCells.has(id);
+                          const isEditing = editingCell === id;
+                          const rawVal = activeTab.cells[id] || "";
+                          const evaluated = evaluateCell(id, activeTab.cells);
+                          const fmt = activeTab.formats?.[id];
+                          const displayVal = isEditing ? rawVal : formatDisplay(evaluated, fmt);
+                          const isFormula = rawVal.startsWith("=");
 
-                        return (
-                          <td
-                            key={id}
-                            className={`border border-gray-800 p-0 ${BG_MAP[fmt?.bg || "none"]} ${
-                              isSelected ? "ring-2 ring-emerald-400 z-10 relative" : ""
-                            }`}
-                          >
-                            <input
-                              ref={(el) => {
-                                cellInputRefs.current[id] = el;
-                              }}
-                              type="text"
-                              value={displayVal}
-                              onFocus={() => {
-                                setEditingCell(id);
+                          return (
+                            <td
+                              key={id}
+                              onMouseDown={() => {
+                                setIsDragging(true);
                                 handleSelectCell(id);
                               }}
-                              onBlur={() => setEditingCell(null)}
-                              onKeyDown={(e) => handleCellKeyDown(e, rIdx, cIdx)}
-                              onChange={(e) => {
-                                setFormulaInput(e.target.value);
-                                updateCellValue(id, e.target.value);
+                              onMouseEnter={() => {
+                                if (isDragging) setRangeEnd(id);
                               }}
-                              className={`w-full h-8 px-2.5 bg-transparent focus:outline-none text-xs ${
-                                fmt?.bold ? "font-bold text-white" : ""
-                              } ${fmt?.italic ? "italic" : ""} ${
-                                fmt?.align === "right"
-                                  ? "text-right"
-                                  : fmt?.align === "center"
-                                  ? "text-center"
-                                  : "text-left"
-                              } ${isFormula ? "text-emerald-300 font-mono" : "text-gray-200"}`}
-                            />
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                              className={`border p-0 ${isLight ? "border-slate-300 bg-white" : "border-gray-800"} ${BG_MAP[fmt?.bg || "none"]} ${
+                                isSelected
+                                  ? "ring-2 ring-emerald-500 z-10 relative"
+                                  : inRange
+                                  ? isLight
+                                    ? "bg-emerald-50/80"
+                                    : "bg-emerald-500/10"
+                                  : ""
+                              }`}
+                            >
+                              <input
+                                ref={(el) => {
+                                  cellInputRefs.current[id] = el;
+                                }}
+                                type="text"
+                                value={displayVal}
+                                onFocus={() => {
+                                  setEditingCell(id);
+                                  handleSelectCell(id);
+                                }}
+                                onBlur={() => setEditingCell(null)}
+                                onKeyDown={(e) => handleCellKeyDown(e, rIdx, cIdx)}
+                                onChange={(e) => {
+                                  setFormulaInput(e.target.value);
+                                  updateCellValue(id, e.target.value);
+                                }}
+                                className={`w-full h-8 px-2.5 bg-transparent focus:outline-none text-xs ${
+                                  fmt?.bold ? "font-bold" : ""
+                                } ${fmt?.italic ? "italic" : ""} ${
+                                  fmt?.align === "right" ? "text-right" : fmt?.align === "center" ? "text-center" : "text-left"
+                                } ${
+                                  isFormula
+                                    ? isLight
+                                      ? "text-emerald-700 font-mono"
+                                      : "text-emerald-300 font-mono"
+                                    : isLight
+                                    ? "text-slate-900"
+                                    : "text-gray-200"
+                                }`}
+                              />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-          {/* Bottom Sheet Tabs + Excel Status Bar */}
+            {showChart && chartData.length > 0 && (
+              <div className={`h-56 border-t p-4 ${isLight ? "bg-white border-slate-200" : "bg-[#0c111b] border-gray-800"}`}>
+                <div className="text-xs font-bold mb-2 flex items-center gap-2">
+                  <BarChart3 size={14} className="text-emerald-500" />
+                  <span>Live Sheet Chart (Column A vs Column B)</span>
+                </div>
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={isLight ? "#e2e8f0" : "#1f2937"} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: isLight ? "#475569" : "#9ca3af" }} />
+                    <YAxis tick={{ fontSize: 11, fill: isLight ? "#475569" : "#9ca3af" }} />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#10b981" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Tabs + Live Range Stats */}
           {activeWorkbook && (
-            <div className="border-t border-gray-800 bg-[#0c111b] px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className={`border-t px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs ${isLight ? "bg-white border-slate-200 text-slate-600" : "bg-[#0c111b] border-gray-800 text-gray-400"}`}>
               <div className="flex items-center gap-1.5 overflow-x-auto">
                 {activeWorkbook.tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => {
                       persistWorkbooks(
-                        workbooks.map((w) =>
-                          w.id === activeWorkbook.id ? { ...w, activeTabId: tab.id } : w
-                        ),
+                        workbooks.map((w) => (w.id === activeWorkbook.id ? { ...w, activeTabId: tab.id } : w)),
                         false
                       );
-                      setSelectedCell("A1");
+                      handleSelectCell("A1");
                       setFormulaInput(tab.cells["A1"] || "");
                     }}
-                    className={`px-3 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-lg font-semibold cursor-pointer ${
                       activeTab?.id === tab.id
-                        ? "bg-emerald-600/25 text-emerald-300 border border-emerald-500/40"
-                        : "bg-white/5 text-gray-400 hover:text-white border border-transparent"
+                        ? "bg-emerald-600 text-white"
+                        : isLight
+                        ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                        : "bg-white/5 text-gray-400 hover:text-white"
                     }`}
                   >
                     {tab.name}
                   </button>
                 ))}
-                <button
-                  onClick={addSheetTab}
-                  className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-emerald-400 font-bold flex items-center gap-1 cursor-pointer"
-                  title="Add Sheet Tab"
-                >
+                <button onClick={addSheetTab} className="px-2 py-1 rounded-lg text-emerald-500 font-bold flex items-center gap-1 cursor-pointer">
                   <Plus size={13} /> Sheet
                 </button>
               </div>
 
-              <div className="flex items-center gap-4 text-[11px] text-gray-400 font-mono">
-                <span>
-                  Col Count: <strong className="text-white">{columnStats.count}</strong>
-                </span>
-                <span>
-                  Col Avg: <strong className="text-cyan-300">{columnStats.avg}</strong>
-                </span>
-                <span>
-                  Col Sum: <strong className="text-emerald-300">{columnStats.sum}</strong>
-                </span>
+              <div className="flex items-center gap-4 text-[11px] font-mono">
+                <span>Count: <strong className={isLight ? "text-slate-900" : "text-white"}>{rangeStats.count}</strong></span>
+                <span>Avg: <strong className="text-cyan-500">{rangeStats.avg}</strong></span>
+                <span>Sum: <strong className="text-emerald-500">{rangeStats.sum}</strong></span>
               </div>
             </div>
           )}

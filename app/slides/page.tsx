@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import PptxGenJS from "pptxgenjs";
 import AppHeader from "@/components/layout/AppHeader";
 import { useBranchContext } from "@/lib/branchContext";
 import {
@@ -15,16 +16,26 @@ import {
   Sparkles,
   Palette,
   Layout,
-  Copy
+  Copy,
+  Download,
+  ArrowUp,
+  ArrowDown,
+  Sun,
+  Moon
 } from "lucide-react";
 
-type SlideTheme = "purple" | "cyan" | "emerald" | "amber";
+type SlideTheme = "purple" | "cyan" | "emerald" | "amber" | "corporate";
+type SlideLayout = "cover" | "bullets" | "split" | "kpi";
 
 type SlideItem = {
   id: string;
+  layout?: SlideLayout;
   title: string;
   subtitle: string;
   bullets: string[];
+  kpiValue?: string;
+  kpiLabel?: string;
+  imageUrl?: string;
   notes: string;
 };
 
@@ -36,30 +47,55 @@ type DeckItem = {
   slides: SlideItem[];
 };
 
-const THEME_STYLES: Record<SlideTheme, { label: string; bg: string; accent: string; badge: string }> = {
+const THEME_STYLES: Record<
+  SlideTheme,
+  { label: string; bg: string; hexBg: string; hexText: string; hexAccent: string; accent: string; badge: string; isLightSlide?: boolean }
+> = {
   purple: {
     label: "Galaxy Purple",
     bg: "from-[#1a1033] via-[#0b0f1e] to-[#080b14]",
+    hexBg: "0B0F1E",
+    hexText: "FFFFFF",
+    hexAccent: "C084FC",
     accent: "text-purple-400",
     badge: "bg-purple-500/20 text-purple-300 border-purple-500/30",
   },
   cyan: {
     label: "Ocean Cyan",
     bg: "from-[#0a2334] via-[#091220] to-[#060912]",
+    hexBg: "091220",
+    hexText: "FFFFFF",
+    hexAccent: "22D3EE",
     accent: "text-cyan-400",
     badge: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
   },
   emerald: {
     label: "Executive Emerald",
     bg: "from-[#092920] via-[#091418] to-[#060910]",
+    hexBg: "091418",
+    hexText: "FFFFFF",
+    hexAccent: "34D399",
     accent: "text-emerald-400",
     badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
   },
   amber: {
     label: "Amber Gold",
     bg: "from-[#2d1c08] via-[#131018] to-[#080910]",
+    hexBg: "131018",
+    hexText: "FFFFFF",
+    hexAccent: "FBBF24",
     accent: "text-amber-400",
     badge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+  },
+  corporate: {
+    label: "Clean White",
+    bg: "from-white via-slate-50 to-slate-100",
+    hexBg: "FFFFFF",
+    hexText: "0F172A",
+    hexAccent: "4F46E5",
+    accent: "text-indigo-600",
+    badge: "bg-indigo-100 text-indigo-700 border-indigo-200",
+    isLightSlide: true,
   },
 };
 
@@ -70,28 +106,32 @@ const DECK_TEMPLATES: Record<string, Omit<DeckItem, "id" | "updatedAt">> = {
     slides: [
       {
         id: "s1",
+        layout: "cover",
         title: "Q4 Executive Business Review",
         subtitle: "Operational Velocity, Revenue Growth & Forecast",
         bullets: [
-          "42% Quarter-over-Quarter recurring revenue expansion",
-          "Unified CRM, Accounting & Inventory in one cockpit",
-          "Zero external office software licensing overhead",
+          "Unified CRM, Accounting, Inventory & Office Automation",
+          "Zero external software licensing overhead",
         ],
-        notes: "Open with key wins and highlight operational efficiency gains.",
+        notes: "Open with key wins.",
       },
       {
         id: "s2",
-        title: "Financial & Margin Summary",
-        subtitle: "Live metrics synced directly from BERAXIS Accounting",
+        layout: "kpi",
+        title: "Revenue & Margin Expansion",
+        subtitle: "Live metrics synced from BERAXIS Accounting",
+        kpiValue: "+42%",
+        kpiLabel: "Quarter-over-Quarter ARR Growth",
         bullets: [
-          "Gross margin improved by +6.4% via automated reordering",
+          "Gross margin improved +6.4% via automated reordering",
           "Receivables cycle reduced from 28 days to 9 days",
-          "Annual software savings of $18,400 across 25 seats",
+          "Saved $18,400/yr by replacing Office 365 & legacy CRM",
         ],
-        notes: "Walk through cost consolidation and cashflow velocity.",
+        notes: "Walk through cost consolidation.",
       },
       {
         id: "s3",
+        layout: "bullets",
         title: "Next Quarter Strategic Priorities",
         subtitle: "Scaling outbound pipeline & multi-branch execution",
         bullets: [
@@ -99,35 +139,38 @@ const DECK_TEMPLATES: Record<string, Omit<DeckItem, "id" | "updatedAt">> = {
           "Enable Voice Pilot hands-free order creation for field reps",
           "Expand automated warehouse fulfillment workflows",
         ],
-        notes: "Confirm department owners and Q1 KPI targets.",
+        notes: "Confirm department owners.",
       },
     ],
   },
   proposal: {
     name: "Client Sales Proposal",
-    theme: "cyan",
+    theme: "corporate",
     slides: [
       {
         id: "s1",
+        layout: "cover",
         title: "Strategic Partnership Proposal",
         subtitle: "Prepared Exclusively for Your Executive Team",
         bullets: [
           "Turnkey implementation completed in under 14 days",
-          "Dedicated onboarding specialist & 1-click data migration",
           "Predictable flat-rate pricing with zero hidden fees",
         ],
-        notes: "Customize client name and highlight rapid ROI timeline.",
+        notes: "Customize client name.",
       },
       {
         id: "s2",
+        layout: "split",
         title: "Scope & Deliverables",
         subtitle: "End-to-end execution milestones",
         bullets: [
-          "Phase 1: Data migration from legacy spreadsheets & ERP",
-          "Phase 2: Role-based team onboarding & workflow automation",
+          "Phase 1: Data migration from Excel & legacy ERP",
+          "Phase 2: Team onboarding & workflow automation",
           "Phase 3: Live KPI dashboards & executive reporting",
         ],
-        notes: "Emphasize zero downtime during transition.",
+        kpiValue: "14 Days",
+        kpiLabel: "Full Go-Live Timeline",
+        notes: "Emphasize zero downtime.",
       },
     ],
   },
@@ -139,6 +182,18 @@ export default function SlidesPage() {
   const [activeDeckId, setActiveDeckId] = useState<string>("");
   const [activeSlideIdx, setActiveSlideIdx] = useState<number>(0);
   const [isPresenting, setIsPresenting] = useState<boolean>(false);
+  const [studioTheme, setStudioTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("beraxis_office_theme");
+    if (saved === "light" || saved === "dark") setStudioTheme(saved);
+  }, []);
+
+  const toggleStudioTheme = () => {
+    const next = studioTheme === "dark" ? "light" : "dark";
+    setStudioTheme(next);
+    localStorage.setItem("beraxis_office_theme", next);
+  };
 
   useEffect(() => {
     if (!activeBranch) return;
@@ -202,11 +257,12 @@ export default function SlidesPage() {
         ? {
             id: `deck-${Date.now()}`,
             name: "Untitled Presentation",
-            theme: "purple",
+            theme: studioTheme === "light" ? "corporate" : "purple",
             updatedAt: new Date().toISOString().split("T")[0],
             slides: [
               {
                 id: `s-${Date.now()}`,
+                layout: "cover",
                 title: "Presentation Title",
                 subtitle: "Add a compelling subtitle here",
                 bullets: ["Key point 1", "Key point 2", "Key point 3"],
@@ -223,8 +279,7 @@ export default function SlidesPage() {
               id: `s-${Date.now()}-${idx}`,
             })),
           };
-    const updated = [newDeck, ...decks];
-    persistDecks(updated);
+    persistDecks([newDeck, ...decks]);
     setActiveDeckId(newDeck.id);
     setActiveSlideIdx(0);
   };
@@ -247,99 +302,203 @@ export default function SlidesPage() {
     if (!activeDeck) return;
     const newSlide: SlideItem = {
       id: `s-${Date.now()}`,
+      layout: "bullets",
       title: `Slide ${activeDeck.slides.length + 1}`,
       subtitle: "Section Overview",
       bullets: ["First insight or metric", "Second action item"],
       notes: "",
     };
-    const updated = decks.map((d) =>
-      d.id === activeDeck.id ? { ...d, slides: [...d.slides, newSlide] } : d
+    persistDecks(
+      decks.map((d) => (d.id === activeDeck.id ? { ...d, slides: [...d.slides, newSlide] } : d))
     );
-    persistDecks(updated);
     setActiveSlideIdx(activeDeck.slides.length);
+  };
+
+  const moveSlide = (dir: -1 | 1) => {
+    if (!activeDeck) return;
+    const target = activeSlideIdx + dir;
+    if (target < 0 || target >= activeDeck.slides.length) return;
+    const slides = [...activeDeck.slides];
+    const [moved] = slides.splice(activeSlideIdx, 1);
+    slides.splice(target, 0, moved);
+    persistDecks(decks.map((d) => (d.id === activeDeck.id ? { ...d, slides } : d)));
+    setActiveSlideIdx(target);
   };
 
   const duplicateSlide = () => {
     if (!activeDeck || !activeSlide) return;
-    const copy: SlideItem = {
-      ...activeSlide,
-      id: `s-${Date.now()}`,
-      title: `${activeSlide.title} (Copy)`,
-    };
+    const copy: SlideItem = { ...activeSlide, id: `s-${Date.now()}`, title: `${activeSlide.title} (Copy)` };
     const slides = [...activeDeck.slides];
     slides.splice(activeSlideIdx + 1, 0, copy);
-    const updated = decks.map((d) => (d.id === activeDeck.id ? { ...d, slides } : d));
-    persistDecks(updated);
+    persistDecks(decks.map((d) => (d.id === activeDeck.id ? { ...d, slides } : d)));
     setActiveSlideIdx(activeSlideIdx + 1);
   };
 
   const deleteSlide = (idx: number) => {
     if (!activeDeck || activeDeck.slides.length <= 1) return;
     const slides = activeDeck.slides.filter((_, i) => i !== idx);
-    const updated = decks.map((d) => (d.id === activeDeck.id ? { ...d, slides } : d));
-    persistDecks(updated);
+    persistDecks(decks.map((d) => (d.id === activeDeck.id ? { ...d, slides } : d)));
     setActiveSlideIdx((prev) => Math.max(0, Math.min(prev, slides.length - 1)));
   };
 
-  const handlePrintDeck = () => {
-    window.print();
+  // True .pptx Export via PptxGenJS
+  const exportPptx = () => {
+    if (!activeDeck) return;
+    const pptx = new PptxGenJS();
+    pptx.title = activeDeck.name;
+    const t = THEME_STYLES[activeDeck.theme];
+
+    activeDeck.slides.forEach((s) => {
+      const slide = pptx.addSlide();
+      slide.background = { color: t.hexBg };
+
+      if (s.layout === "cover") {
+        slide.addText(s.title, {
+          x: 0.8, y: 1.8, w: 8.4, h: 1.4,
+          fontSize: 36, bold: true, color: t.hexText, align: "center",
+        });
+        slide.addText(s.subtitle, {
+          x: 1.0, y: 3.3, w: 8.0, h: 0.7,
+          fontSize: 18, color: t.hexAccent, align: "center",
+        });
+      } else {
+        slide.addText(s.title, {
+          x: 0.7, y: 0.5, w: 8.6, h: 0.8,
+          fontSize: 28, bold: true, color: t.hexText,
+        });
+        slide.addText(s.subtitle, {
+          x: 0.7, y: 1.25, w: 8.6, h: 0.5,
+          fontSize: 15, color: t.hexAccent,
+        });
+        const bulletItems = s.bullets.filter(Boolean).map((b) => ({
+          text: b,
+          options: { bullet: true, color: t.hexText, fontSize: 16, breakLine: true },
+        }));
+        if (s.layout === "kpi" && s.kpiValue) {
+          slide.addText(s.kpiValue, {
+            x: 0.7, y: 2.0, w: 3.0, h: 1.2,
+            fontSize: 44, bold: true, color: t.hexAccent,
+          });
+          slide.addText(s.kpiLabel || "", {
+            x: 0.7, y: 3.2, w: 3.0, h: 0.6,
+            fontSize: 13, color: t.hexText,
+          });
+          if (bulletItems.length) {
+            slide.addText(bulletItems, { x: 4.0, y: 2.0, w: 5.3, h: 3.2, valign: "top" });
+          }
+        } else if (bulletItems.length) {
+          slide.addText(bulletItems, { x: 0.7, y: 2.0, w: 8.6, h: 3.2, valign: "top" });
+        }
+      }
+      if (s.notes) slide.addNotes(s.notes);
+    });
+
+    pptx.writeFile({ fileName: `${activeDeck.name.replace(/\s+/g, "_")}.pptx` });
   };
 
-  return (
-    <div className="flex flex-col h-screen bg-[#0a0d14] text-white">
-      <AppHeader title="BERAXIS Slides — Built-In PowerPoint Alternative" />
+  const isLight = studioTheme === "light";
+  const layout = activeSlide?.layout || "bullets";
 
-      {/* Fullscreen Presenter Mode */}
-      {isPresenting && activeDeck && activeSlide && (
-        <div
-          className={`fixed inset-0 z-50 bg-gradient-to-br ${themeStyle.bg} flex flex-col justify-between p-10 sm:p-16`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`px-3 py-1 rounded-full text-xs font-bold border ${themeStyle.badge}`}>
-              {activeDeck.name} · Slide {activeSlideIdx + 1} / {activeDeck.slides.length}
-            </span>
-            <button
-              onClick={() => setIsPresenting(false)}
-              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-            >
-              <X size={15} /> Exit (ESC)
-            </button>
+  const renderSlideInner = (slide: SlideItem, fullscreen = false) => {
+    const textMain = themeStyle.isLightSlide ? "text-slate-900" : "text-white";
+    const textBody = themeStyle.isLightSlide ? "text-slate-700" : "text-gray-200";
+    const l = slide.layout || "bullets";
+
+    if (l === "cover") {
+      return (
+        <div className="my-auto text-center space-y-4 px-4">
+          <h2 className={`${fullscreen ? "text-5xl sm:text-6xl" : "text-3xl sm:text-4xl"} font-black leading-tight ${textMain}`}>
+            {slide.title || "Untitled Slide"}
+          </h2>
+          <p className={`${fullscreen ? "text-xl sm:text-2xl" : "text-base sm:text-lg"} font-semibold ${themeStyle.accent}`}>
+            {slide.subtitle}
+          </p>
+          <div className="pt-4 flex flex-wrap justify-center gap-3">
+            {slide.bullets.filter(Boolean).map((b, i) => (
+              <span key={i} className={`px-3 py-1 rounded-full text-xs border ${themeStyle.badge}`}>
+                {b}
+              </span>
+            ))}
           </div>
+        </div>
+      );
+    }
 
-          <div className="max-w-5xl mx-auto w-full space-y-8">
-            <div className="space-y-3">
-              <h1 className="text-4xl sm:text-6xl font-black text-white leading-tight">
-                {activeSlide.title}
-              </h1>
-              <p className={`text-xl sm:text-2xl font-medium ${themeStyle.accent}`}>
-                {activeSlide.subtitle}
-              </p>
+    if (l === "kpi" || l === "split") {
+      return (
+        <div className="my-auto grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+          <div className="md:col-span-5 space-y-2 p-5 rounded-2xl bg-black/15 border border-white/10">
+            <div className={`${fullscreen ? "text-6xl" : "text-4xl"} font-black ${themeStyle.accent}`}>
+              {slide.kpiValue || "+42%"}
             </div>
-            <ul className="space-y-4 pt-4">
-              {activeSlide.bullets.filter(Boolean).map((b, i) => (
-                <li key={i} className="flex items-start gap-4 text-xl sm:text-2xl text-gray-200">
-                  <span className={`mt-2 w-3 h-3 rounded-full shrink-0 bg-current ${themeStyle.accent}`} />
+            <div className={`text-xs font-semibold uppercase tracking-wider ${textBody}`}>
+              {slide.kpiLabel || "Key Metric"}
+            </div>
+            {slide.imageUrl && (
+              <img src={slide.imageUrl} alt="Slide visual" className="mt-3 rounded-xl max-h-32 w-full object-cover" />
+            )}
+          </div>
+          <div className="md:col-span-7 space-y-3">
+            <h2 className={`${fullscreen ? "text-4xl" : "text-2xl sm:text-3xl"} font-black leading-tight ${textMain}`}>
+              {slide.title}
+            </h2>
+            <p className={`text-sm font-medium ${themeStyle.accent}`}>{slide.subtitle}</p>
+            <ul className="space-y-2 pt-2">
+              {slide.bullets.filter(Boolean).map((b, i) => (
+                <li key={i} className={`flex items-start gap-2.5 ${fullscreen ? "text-lg" : "text-sm"} ${textBody}`}>
+                  <span className={`mt-2 w-2 h-2 rounded-full shrink-0 bg-current ${themeStyle.accent}`} />
                   <span>{b}</span>
                 </li>
               ))}
             </ul>
           </div>
+        </div>
+      );
+    }
 
+    return (
+      <div className="space-y-4 my-auto">
+        <h2 className={`${fullscreen ? "text-4xl sm:text-5xl" : "text-2xl sm:text-4xl"} font-black leading-tight ${textMain}`}>
+          {slide.title || "Untitled Slide"}
+        </h2>
+        <p className={`${fullscreen ? "text-xl" : "text-sm sm:text-lg"} font-medium ${themeStyle.accent}`}>
+          {slide.subtitle}
+        </p>
+        <ul className="space-y-2.5 pt-2">
+          {slide.bullets.filter(Boolean).map((bullet, idx) => (
+            <li key={idx} className={`flex items-start gap-3 ${fullscreen ? "text-xl" : "text-sm sm:text-base"} ${textBody}`}>
+              <span className={`mt-2 w-2 h-2 rounded-full shrink-0 bg-current ${themeStyle.accent}`} />
+              <span>{bullet}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
+  return (
+    <div className={`flex flex-col h-screen ${isLight ? "bg-slate-100 text-slate-900" : "bg-[#0a0d14] text-white"}`}>
+      <AppHeader title="BERAXIS Slides — Full PowerPoint Studio (.PPTX)" />
+
+      {/* Fullscreen Presenter Mode */}
+      {isPresenting && activeDeck && activeSlide && (
+        <div className={`fixed inset-0 z-50 bg-gradient-to-br ${themeStyle.bg} flex flex-col justify-between p-10 sm:p-16`}>
+          <div className="flex items-center justify-between">
+            <span className={`px-3 py-1 rounded-full text-xs font-bold border ${themeStyle.badge}`}>
+              {activeDeck.name} · Slide {activeSlideIdx + 1} / {activeDeck.slides.length}
+            </span>
+            <button onClick={() => setIsPresenting(false)} className="px-3 py-2 rounded-xl bg-black/30 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+              <X size={15} /> Exit (ESC)
+            </button>
+          </div>
+          <div className="max-w-5xl mx-auto w-full">{renderSlideInner(activeSlide, true)}</div>
           <div className="flex items-center justify-between text-xs text-gray-400">
-            <span>Use Left / Right arrow keys to navigate</span>
+            <span>Arrow keys to navigate</span>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveSlideIdx((i) => Math.max(0, i - 1))}
-                disabled={activeSlideIdx === 0}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white font-bold flex items-center gap-1 cursor-pointer"
-              >
+              <button onClick={() => setActiveSlideIdx((i) => Math.max(0, i - 1))} disabled={activeSlideIdx === 0} className="px-4 py-2 rounded-xl bg-black/30 disabled:opacity-30 text-white font-bold flex items-center gap-1 cursor-pointer">
                 <ChevronLeft size={15} /> Prev
               </button>
-              <button
-                onClick={() => setActiveSlideIdx((i) => Math.min(activeDeck.slides.length - 1, i + 1))}
-                disabled={activeSlideIdx === activeDeck.slides.length - 1}
-                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-30 text-white font-bold flex items-center gap-1 cursor-pointer"
-              >
+              <button onClick={() => setActiveSlideIdx((i) => Math.min(activeDeck.slides.length - 1, i + 1))} disabled={activeSlideIdx === activeDeck.slides.length - 1} className="px-4 py-2 rounded-xl bg-purple-600 disabled:opacity-30 text-white font-bold flex items-center gap-1 cursor-pointer">
                 Next <ChevronRight size={15} />
               </button>
             </div>
@@ -348,19 +507,13 @@ export default function SlidesPage() {
       )}
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar: Decks & Slide Thumbnails */}
-        <aside className="w-72 border-r border-gray-800 bg-[#0e121c] p-4 flex flex-col justify-between shrink-0 overflow-y-auto print:hidden">
+        {/* Left Sidebar */}
+        <aside className={`w-72 border-r p-4 flex flex-col justify-between shrink-0 overflow-y-auto print:hidden ${isLight ? "bg-white border-slate-200" : "bg-[#0e121c] border-gray-800"}`}>
           <div className="space-y-5">
             <div>
-              <div className="flex items-center justify-between pb-2 border-b border-gray-800 mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                  Your Decks ({decks.length})
-                </span>
-                <button
-                  onClick={() => createDeck("blank")}
-                  className="text-purple-400 hover:text-purple-300 p-1 hover:bg-purple-500/10 rounded cursor-pointer"
-                  title="New Blank Deck"
-                >
+              <div className={`flex items-center justify-between pb-2 border-b mb-3 ${isLight ? "border-slate-200" : "border-gray-800"}`}>
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Decks ({decks.length})</span>
+                <button onClick={() => createDeck("blank")} className="text-purple-500 p-1 rounded cursor-pointer">
                   <Plus size={16} />
                 </button>
               </div>
@@ -368,17 +521,18 @@ export default function SlidesPage() {
                 {decks.map((d) => (
                   <button
                     key={d.id}
-                    onClick={() => {
-                      setActiveDeckId(d.id);
-                      setActiveSlideIdx(0);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                    onClick={() => { setActiveDeckId(d.id); setActiveSlideIdx(0); }}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer ${
                       activeDeck?.id === d.id
-                        ? "bg-purple-600/20 text-purple-300 border border-purple-500/40"
-                        : "text-gray-400 hover:bg-gray-800/60 hover:text-white border border-transparent"
+                        ? isLight
+                          ? "bg-purple-50 text-purple-700 border border-purple-300"
+                          : "bg-purple-600/20 text-purple-300 border border-purple-500/40"
+                        : isLight
+                        ? "text-slate-600 hover:bg-slate-100"
+                        : "text-gray-400 hover:bg-gray-800/60"
                     }`}
                   >
-                    <Presentation size={14} className="shrink-0 text-purple-400" />
+                    <Presentation size={14} className="shrink-0 text-purple-500" />
                     <span className="truncate">{d.name}</span>
                   </button>
                 ))}
@@ -388,14 +542,9 @@ export default function SlidesPage() {
             {activeDeck && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                    Slides ({activeDeck.slides.length})
-                  </span>
-                  <button
-                    onClick={addSlide}
-                    className="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 cursor-pointer"
-                  >
-                    <Plus size={13} /> Add Slide
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Slides ({activeDeck.slides.length})</span>
+                  <button onClick={addSlide} className="text-xs text-cyan-500 font-bold flex items-center gap-1 cursor-pointer">
+                    <Plus size={13} /> Add
                   </button>
                 </div>
                 <div className="space-y-2">
@@ -403,27 +552,23 @@ export default function SlidesPage() {
                     <div
                       key={s.id}
                       onClick={() => setActiveSlideIdx(idx)}
-                      className={`group p-2.5 rounded-xl border transition-all cursor-pointer ${
+                      className={`group p-2.5 rounded-xl border cursor-pointer ${
                         idx === activeSlideIdx
                           ? "bg-purple-500/15 border-purple-500/50"
-                          : "bg-white/[0.03] border-white/10 hover:border-white/25"
+                          : isLight
+                          ? "bg-slate-50 border-slate-200"
+                          : "bg-white/[0.03] border-white/10"
                       }`}
                     >
                       <div className="flex items-center justify-between text-[11px] font-bold text-gray-400 mb-1">
-                        <span>Slide {idx + 1}</span>
+                        <span>Slide {idx + 1} • {s.layout || "bullets"}</span>
                         {activeDeck.slides.length > 1 && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteSlide(idx);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400"
-                          >
+                          <button onClick={(e) => { e.stopPropagation(); deleteSlide(idx); }} className="opacity-0 group-hover:opacity-100 hover:text-red-500">
                             <Trash2 size={12} />
                           </button>
                         )}
                       </div>
-                      <div className="text-xs font-semibold text-white truncate">{s.title}</div>
+                      <div className="text-xs font-semibold truncate">{s.title}</div>
                     </div>
                   ))}
                 </div>
@@ -431,69 +576,38 @@ export default function SlidesPage() {
             )}
 
             <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
-                1-Click Deck Templates
-              </span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Templates</span>
               <div className="space-y-1.5">
-                <button
-                  onClick={() => createDeck("qbr")}
-                  className="w-full text-left px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-gray-300 flex items-center gap-2 cursor-pointer"
-                >
-                  <Layout size={13} className="text-purple-400" />
-                  <span>Quarterly Business Review</span>
+                <button onClick={() => createDeck("qbr")} className={`w-full text-left px-3 py-2 rounded-xl border text-xs flex items-center gap-2 cursor-pointer ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-gray-300"}`}>
+                  <Layout size={13} className="text-purple-500" /> <span>Quarterly Business Review</span>
                 </button>
-                <button
-                  onClick={() => createDeck("proposal")}
-                  className="w-full text-left px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-gray-300 flex items-center gap-2 cursor-pointer"
-                >
-                  <Sparkles size={13} className="text-cyan-400" />
-                  <span>Client Sales Proposal</span>
+                <button onClick={() => createDeck("proposal")} className={`w-full text-left px-3 py-2 rounded-xl border text-xs flex items-center gap-2 cursor-pointer ${isLight ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-gray-300"}`}>
+                  <Sparkles size={13} className="text-cyan-500" /> <span>Client Sales Proposal</span>
                 </button>
               </div>
             </div>
           </div>
-
-          <div className="mt-5 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-[11px] text-purple-200">
-            <div className="font-bold text-purple-300 mb-1">No PowerPoint Needed</div>
-            <p className="text-gray-400">
-              Build client decks, QBRs, and team briefings directly inside BERAXIS and present fullscreen or export to PDF.
-            </p>
-          </div>
         </aside>
 
-        {/* Main Slide Canvas & Editor */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-[#070a11]">
-          {/* Top Toolbar */}
+        {/* Main Studio */}
+        <main className="flex-1 flex flex-col overflow-hidden">
           {activeDeck && (
-            <div className="border-b border-gray-800 bg-[#0c111b] px-5 py-3 flex flex-wrap items-center justify-between gap-3 print:hidden">
-              <div className="flex items-center gap-3">
+            <div className={`border-b px-5 py-3 flex flex-wrap items-center justify-between gap-3 print:hidden ${isLight ? "bg-white border-slate-200" : "bg-[#0c111b] border-gray-800"}`}>
+              <div className="flex flex-wrap items-center gap-2">
                 <input
                   type="text"
                   value={activeDeck.name}
-                  onChange={(e) => {
-                    const updated = decks.map((d) =>
-                      d.id === activeDeck.id ? { ...d, name: e.target.value } : d
-                    );
-                    persistDecks(updated);
-                  }}
-                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm font-bold text-white focus:outline-none focus:border-purple-500"
+                  onChange={(e) => persistDecks(decks.map((d) => (d.id === activeDeck.id ? { ...d, name: e.target.value } : d)))}
+                  className={`border rounded-lg px-3 py-1.5 text-sm font-bold w-44 focus:outline-none ${isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-white/5 border-white/10 text-white"}`}
                 />
-
-                <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2 py-1">
+                <div className={`flex items-center gap-1 border rounded-lg px-2 py-1 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10"}`}>
                   <Palette size={13} className="text-gray-400" />
                   {(Object.keys(THEME_STYLES) as SlideTheme[]).map((t) => (
                     <button
                       key={t}
-                      onClick={() => {
-                        const updated = decks.map((d) =>
-                          d.id === activeDeck.id ? { ...d, theme: t } : d
-                        );
-                        persistDecks(updated);
-                      }}
+                      onClick={() => persistDecks(decks.map((d) => (d.id === activeDeck.id ? { ...d, theme: t } : d)))}
                       className={`px-2 py-0.5 rounded text-[11px] font-semibold capitalize cursor-pointer ${
-                        activeDeck.theme === t
-                          ? "bg-purple-600 text-white"
-                          : "text-gray-400 hover:text-white"
+                        activeDeck.theme === t ? "bg-purple-600 text-white" : "text-gray-400"
                       }`}
                     >
                       {t}
@@ -502,119 +616,86 @@ export default function SlidesPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={duplicateSlide}
-                  className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Copy size={13} /> Duplicate Slide
+              <div className="flex items-center gap-1.5">
+                <button onClick={toggleStudioTheme} className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer ${isLight ? "bg-slate-100 border-slate-300 text-slate-800" : "bg-white/5 border-white/10 text-gray-200"}`}>
+                  {isLight ? <Moon size={13} /> : <Sun size={13} className="text-amber-400" />}
+                  <span>{isLight ? "Dark" : "Light"}</span>
                 </button>
-                <button
-                  onClick={handlePrintDeck}
-                  className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Printer size={13} /> Export PDF
+                <button onClick={() => moveSlide(-1)} disabled={activeSlideIdx === 0} className={`p-1.5 rounded-lg border disabled:opacity-30 cursor-pointer ${isLight ? "border-slate-300" : "border-white/10"}`} title="Move Slide Up"><ArrowUp size={13} /></button>
+                <button onClick={() => moveSlide(1)} disabled={activeSlideIdx === activeDeck.slides.length - 1} className={`p-1.5 rounded-lg border disabled:opacity-30 cursor-pointer ${isLight ? "border-slate-300" : "border-white/10"}`} title="Move Slide Down"><ArrowDown size={13} /></button>
+                <button onClick={duplicateSlide} className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 cursor-pointer ${isLight ? "border-slate-300" : "border-white/10"}`}>
+                  <Copy size={13} />
                 </button>
-                <button
-                  onClick={() => setIsPresenting(true)}
-                  className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-purple-600/25 cursor-pointer"
-                >
-                  <Play size={13} /> Present Fullscreen
+                <button onClick={() => window.print()} className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 cursor-pointer ${isLight ? "border-slate-300" : "border-white/10"}`}>
+                  <Printer size={13} /> PDF
+                </button>
+                <button onClick={exportPptx} className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                  <Download size={13} /> Export .PPTX
+                </button>
+                <button onClick={() => setIsPresenting(true)} className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                  <Play size={13} /> Present
                 </button>
               </div>
             </div>
           )}
 
-          {/* Live Slide Canvas + Controls */}
           {activeDeck && activeSlide && (
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Visual 16:9 Slide Preview */}
-              <div
-                className={`max-w-4xl mx-auto aspect-video rounded-3xl bg-gradient-to-br ${themeStyle.bg} border border-white/15 p-8 sm:p-12 shadow-2xl flex flex-col justify-between`}
-              >
+              <div className={`max-w-4xl mx-auto aspect-video rounded-3xl bg-gradient-to-br ${themeStyle.bg} border border-white/15 p-8 sm:p-12 shadow-2xl flex flex-col justify-between`}>
                 <div className="flex items-center justify-between">
-                  <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${themeStyle.badge}`}>
-                    {activeDeck.name}
-                  </span>
-                  <span className="text-xs text-gray-400 font-mono">
-                    {activeSlideIdx + 1} / {activeDeck.slides.length}
-                  </span>
+                  <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${themeStyle.badge}`}>{activeDeck.name}</span>
+                  <span className="text-xs text-gray-400 font-mono">{activeSlideIdx + 1} / {activeDeck.slides.length}</span>
                 </div>
-
-                <div className="space-y-4 my-auto">
-                  <h2 className="text-2xl sm:text-4xl font-black text-white leading-tight">
-                    {activeSlide.title || "Untitled Slide"}
-                  </h2>
-                  <p className={`text-sm sm:text-lg font-medium ${themeStyle.accent}`}>
-                    {activeSlide.subtitle}
-                  </p>
-                  <ul className="space-y-2.5 pt-2">
-                    {activeSlide.bullets.filter(Boolean).map((bullet, idx) => (
-                      <li key={idx} className="flex items-start gap-3 text-sm sm:text-base text-gray-200">
-                        <span className={`mt-2 w-2 h-2 rounded-full shrink-0 bg-current ${themeStyle.accent}`} />
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
+                {renderSlideInner(activeSlide)}
                 <div className="text-[11px] text-gray-500 flex items-center justify-between">
-                  <span>Powered by BERAXIS Slides</span>
+                  <span>BERAXIS Slides (.PPTX Ready)</span>
                   <span>{activeDeck.updatedAt}</span>
                 </div>
               </div>
 
-              {/* Slide Content Editor */}
-              <div className="max-w-4xl mx-auto bg-[#0e121c] border border-gray-800 rounded-2xl p-5 grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
+              <div className={`max-w-4xl mx-auto border rounded-2xl p-5 grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden ${isLight ? "bg-white border-slate-200" : "bg-[#0e121c] border-gray-800"}`}>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-1">
-                      Slide Headline
-                    </label>
-                    <input
-                      type="text"
-                      value={activeSlide.title}
-                      onChange={(e) => updateCurrentSlide({ title: e.target.value })}
-                      className="w-full bg-[#070a11] border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-                    />
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Slide Layout</label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {(["cover", "bullets", "split", "kpi"] as SlideLayout[]).map((l) => (
+                        <button
+                          key={l}
+                          onClick={() => updateCurrentSlide({ layout: l })}
+                          className={`py-1.5 rounded-lg text-[11px] font-bold capitalize cursor-pointer ${
+                            layout === l ? "bg-purple-600 text-white" : isLight ? "bg-slate-100 text-slate-700" : "bg-white/5 text-gray-300"
+                          }`}
+                        >
+                          {l}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-1">
-                      Subtitle
-                    </label>
-                    <input
-                      type="text"
-                      value={activeSlide.subtitle}
-                      onChange={(e) => updateCurrentSlide({ subtitle: e.target.value })}
-                      className="w-full bg-[#070a11] border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-                    />
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Slide Headline</label>
+                    <input type="text" value={activeSlide.title} onChange={(e) => updateCurrentSlide({ title: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-sm ${isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-[#070a11] border-gray-700 text-white"}`} />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-1">
-                      Speaker Notes
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={activeSlide.notes}
-                      onChange={(e) => updateCurrentSlide({ notes: e.target.value })}
-                      placeholder="Private notes for the presenter..."
-                      className="w-full bg-[#070a11] border border-gray-700 rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-purple-500"
-                    />
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Subtitle</label>
+                    <input type="text" value={activeSlide.subtitle} onChange={(e) => updateCurrentSlide({ subtitle: e.target.value })} className={`w-full border rounded-xl px-3 py-2 text-sm ${isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-[#070a11] border-gray-700 text-white"}`} />
                   </div>
+                  {(layout === "kpi" || layout === "split") && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="text" placeholder="Metric (e.g. +42%)" value={activeSlide.kpiValue || ""} onChange={(e) => updateCurrentSlide({ kpiValue: e.target.value })} className={`border rounded-xl px-3 py-1.5 text-xs ${isLight ? "bg-slate-50 border-slate-300" : "bg-[#070a11] border-gray-700"}`} />
+                      <input type="text" placeholder="Metric Label" value={activeSlide.kpiLabel || ""} onChange={(e) => updateCurrentSlide({ kpiLabel: e.target.value })} className={`border rounded-xl px-3 py-1.5 text-xs ${isLight ? "bg-slate-50 border-slate-300" : "bg-[#070a11] border-gray-700"}`} />
+                    </div>
+                  )}
                 </div>
 
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-1">
-                    Bullet Points (one per line)
-                  </label>
-                  <textarea
-                    rows={7}
-                    value={activeSlide.bullets.join("\n")}
-                    onChange={(e) =>
-                      updateCurrentSlide({ bullets: e.target.value.split("\n") })
-                    }
-                    className="w-full bg-[#070a11] border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-purple-500 leading-relaxed"
-                  />
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Bullet Points (one per line)</label>
+                    <textarea rows={5} value={activeSlide.bullets.join("\n")} onChange={(e) => updateCurrentSlide({ bullets: e.target.value.split("\n") })} className={`w-full border rounded-xl px-3 py-2 text-sm leading-relaxed ${isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-[#070a11] border-gray-700 text-gray-200"}`} />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Speaker Notes</label>
+                    <textarea rows={2} value={activeSlide.notes} onChange={(e) => updateCurrentSlide({ notes: e.target.value })} placeholder="Private presenter notes..." className={`w-full border rounded-xl px-3 py-2 text-xs ${isLight ? "bg-slate-50 border-slate-300 text-slate-900" : "bg-[#070a11] border-gray-700 text-gray-200"}`} />
+                  </div>
                 </div>
               </div>
             </div>
