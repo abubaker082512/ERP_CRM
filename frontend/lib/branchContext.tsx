@@ -59,6 +59,13 @@ export const MODULE_NAME_TO_HREF: Record<string, string> = {
   "Contracts": "/employees/contracts",
   "Helpdesk": "/helpdesk",
   "Documents": "/documents",
+  "Docs (Word)": "/documents",
+  "Spreadsheets": "/spreadsheets",
+  "Sheets (Excel)": "/spreadsheets",
+  "Slides & Decks": "/slides",
+  "Slides (PPT)": "/slides",
+  "Slides (PowerPoint)": "/slides",
+  "Migration Hub": "/migration",
   "Knowledge": "/knowledge",
   "Discuss": "/discuss",
   "Surveys": "/surveys",
@@ -523,6 +530,24 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (!activeBranch || !activeBranch.enabledModules) return true;
+
+    // Built-in Office Automation & Workspace Productivity apps are always available on non-free plans
+    const CORE_OFFICE_MODULES = [
+      "/spreadsheets",
+      "/slides",
+      "/documents",
+      "/knowledge",
+      "/calendar",
+      "/todo",
+      "/meet",
+      "/discuss",
+      "/sign",
+      "/migration"
+    ];
+    if (CORE_OFFICE_MODULES.some(m => moduleHref === m || moduleHref.startsWith(`${m}/`))) {
+      return true;
+    }
+
     return activeBranch.enabledModules.includes(moduleHref);
   };
 

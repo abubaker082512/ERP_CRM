@@ -114,9 +114,9 @@ const allApps = [
 
     // Specialized Subsystems
     { name: "Sign", icon: PenTool, color: "bg-[#06b6d4]", href: "/sign" },
-    { name: "Documents", icon: BookOpen, color: "bg-[#3b82f6]", href: "/documents" },
-    { name: "Spreadsheets", icon: FileSpreadsheet, color: "bg-emerald-600", href: "/spreadsheets" },
-    { name: "Slides & Decks", icon: Presentation, color: "bg-indigo-600", href: "/slides" },
+    { name: "Docs (Word)", icon: BookOpen, color: "bg-[#3b82f6]", href: "/documents" },
+    { name: "Sheets (Excel)", icon: FileSpreadsheet, color: "bg-emerald-600", href: "/spreadsheets" },
+    { name: "Slides (PPT)", icon: Presentation, color: "bg-indigo-600", href: "/slides" },
     { name: "Helpdesk", icon: CheckSquare, color: "bg-[#6366f1]", href: "/helpdesk" },
     { name: "Reports", icon: PieChart, color: "bg-[#7e22ce]", href: "/reports" },
     { name: "Vehicle Jobs", icon: Wrench, color: "bg-red-600", href: "/automotive" },
