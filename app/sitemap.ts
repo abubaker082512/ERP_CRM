@@ -51,7 +51,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const featureRoutes: MetadataRoute.Sitemap = [
     'crm-pipeline',
     'inventory',
-    'voice-pilot'
+    'voice-pilot',
+    'office-suite'
   ].map(slug => ({
     url: `${baseUrl}/features/${slug}`,
     lastModified: now,

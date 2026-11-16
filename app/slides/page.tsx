@@ -5,6 +5,7 @@ import PptxGenJS from "pptxgenjs";
 import AppHeader from "@/components/layout/AppHeader";
 import { useBranchContext } from "@/lib/branchContext";
 import { importPptxFile } from "@/lib/office/pptxImporter";
+import { generateOfficeDeck } from "@/lib/office/aiOfficeGenerator";
 import {
   Presentation,
   Plus,
@@ -683,6 +684,27 @@ export default function SlidesPage() {
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    onClick={() => {
+                      const topic = window.prompt("What presentation should BERAXIS AI generate? (e.g. Q4 Investor Update, Sales Pitch)");
+                      if (!topic) return;
+                      const gen = generateOfficeDeck(topic);
+                      const newDeck: DeckItem = {
+                        id: `deck-${Date.now()}`,
+                        name: gen.name,
+                        theme: studioTheme === "light" ? "corporate" : "purple",
+                        updatedAt: new Date().toISOString().split("T")[0],
+                        slides: gen.slides,
+                      };
+                      persistDecks([newDeck, ...decks]);
+                      setActiveDeckId(newDeck.id);
+                      setActiveSlideIdx(0);
+                      setIsGridOverview(false);
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Sparkles size={13} /> <span>AI Deck</span>
+                  </button>
                   <button onClick={toggleStudioTheme} className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer ${isLight ? "bg-slate-100 border-slate-300" : "bg-white/5 border-white/10"}`}>
                     {isLight ? <Moon size={13} /> : <Sun size={13} className="text-amber-400" />}
                     <span>{isLight ? "Dark" : "Light"}</span>

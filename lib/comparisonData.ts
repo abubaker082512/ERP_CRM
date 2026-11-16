@@ -375,5 +375,94 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
       { q: "What happens when our sales team closes a deal in Beraxis?", a: "In Salesforce, closing a deal requires manually exporting data or relying on brittle sync connectors to push to QuickBooks. In Beraxis, moving a deal to 'Closed Won' automatically creates an official invoice in Accounting, reserves physical inventory if applicable, and sends a digital payment link to the client." },
       { q: "How much can a 10-person company save by switching from Salesforce?", a: "A 10-person sales team on Salesforce Enterprise typically spends $18,000 to $36,000 annually in user licenses alone, plus $5,000 to $15,000 on prospecting databases like ZoomInfo. With Beraxis's Early Bird Standard Plan, 10 users cost only $120/year total—saving your company over $25,000 every single year." }
     ]
+  },
+  "microsoft-365-alternative": {
+    slug: "microsoft-365-alternative",
+    competitorName: "Microsoft 365 (Excel, Word, PowerPoint)",
+    competitorTagline: "Disconnected Office Licenses With Zero ERP, CRM, or Accounting",
+    badge: "All-in-One Office + ERP Suite",
+    heroHeadline: "The Best Microsoft 365 Alternative: Excel, Word, PowerPoint + Full ERP Built In",
+    heroSubheadline: "Stop paying $12 to $24/user/month for Microsoft Excel, Word, PowerPoint, and Teams—only to manually copy-paste data into QuickBooks or your CRM. Beraxis unifies native .XLSX Spreadsheets, .DOCX Word Studio, .PPTX Slides, WebRTC Meet, and 30+ ERP apps for $1/month.",
+    competitorCostAnnual: "$150 - $288 / user / yr (+ ERP costs)",
+    beraxisCostAnnual: "$12/yr (Early Bird)",
+    annualSavings: "$276+/user/yr",
+    keySummary: "Microsoft 365 gives you spreadsheets, documents, and slides—but zero CRM, zero double-entry accounting, zero POS, and zero B2B leads. Businesses end up paying for both Microsoft 365 and 4+ separate SaaS tools. Beraxis includes native Sheets (.xlsx), Docs (.docx with custom A4/Letter page sizes), Slides (.pptx), and WebRTC Video Meet inside one unified ERP command center.",
+    competitorFlaws: [
+      "Charges $12–$24/user/month forever just for Word, Excel, PowerPoint, and Teams",
+      "Zero built-in CRM, B2B Lead Pool, Point of Sale (POS), or Double-Entry Accounting",
+      "Manual copy-pasting between Excel files and accounting or inventory systems causes costly errors",
+      "Requires separate add-ons or third-party tools for e-Signatures and project workflows",
+      "No unified multi-company workspace or AI Voice Pilot across operations"
+    ],
+    beraxisWins: [
+      "Built-in BERAXIS Sheets with .XLSX import/export, VLOOKUP, SUMIF, Pivot Tables, Conditional Formatting & Charts",
+      "Built-in BERAXIS Docs with true .DOCX import/export, A4/Letter/Legal page sizes, tables, and Light/Dark themes",
+      "Built-in BERAXIS Slides with .PPTX import/export, layouts, transitions, and Fullscreen Presenter Mode",
+      "Built-in WebRTC HD Video Meet, Team Chat, Calendar, and legally binding e-Signatures",
+      "Full 30+ module AI ERP, CRM, Accounting & 25M+ B2B Leads included for $1/month (or 1 App Free Forever)"
+    ],
+    matrix: [
+      { feature: "Spreadsheets (.XLSX + Formulas)", beraxis: true, competitor: true, note: "Beraxis supports VLOOKUP, XLOOKUP, SUMIF, Pivot Tables & .XLSX round-trip" },
+      { feature: "Word Processor (.DOCX + Page Sizes)", beraxis: true, competitor: true, note: "A4, US Letter, Legal, A5, Portrait/Landscape & .DOCX export" },
+      { feature: "Presentations (.PPTX + Presenter)", beraxis: true, competitor: true, note: "Includes .PPTX import/export, layouts & fullscreen transitions" },
+      { feature: "HD Video Meetings & Screen Share", beraxis: true, competitor: true, note: "Built-in WebRTC Meet rooms with zero downloads" },
+      { feature: "Full AI CRM & 25M+ B2B Leads", beraxis: true, competitor: false, note: "Microsoft 365 requires Dynamics 365 ($65-$135/user/mo extra)" },
+      { feature: "Double-Entry Accounting & Invoicing", beraxis: true, competitor: false, note: "Full general ledger, P&L, balance sheets & WhatsApp invoices included" },
+      { feature: "Omnichannel POS & Inventory", beraxis: true, competitor: false, note: "Multi-warehouse stock, barcode & touch POS built in" },
+      { feature: "Light & Dark Studio Themes", beraxis: true, competitor: true, note: "1-click Light paper mode & Dark studio mode across all office apps" },
+      { feature: "1 App Free Forever Tier", beraxis: true, competitor: false, note: "Microsoft 365 desktop suite requires paid subscription" }
+    ],
+    migrationSteps: [
+      { step: "01", title: "Upload Existing .XLSX, .DOCX & .PPTX Files", desc: "Import your existing Excel workbooks, Word documents, and PowerPoint decks directly into Beraxis in 1 click." },
+      { step: "02", title: "Connect Operations & Finance", desc: "Link your team's spreadsheets and documents directly with live CRM pipelines, Accounting, and Inventory." },
+      { step: "03", title: "Cancel Redundant Office Licenses", desc: "Save $150–$288 per employee every year by running office automation and ERP from one platform." }
+    ],
+    faqs: [
+      { q: "Can Beraxis really replace Microsoft Excel, Word, and PowerPoint?", a: "Yes. BERAXIS Sheets supports .xlsx multi-sheet import/export, VLOOKUP, XLOOKUP, SUMIF, COUNTIF, Pivot Tables, Conditional Formatting, and multi-type Charts. BERAXIS Docs supports true .docx import/export with custom A4/Letter/Legal page sizes, and BERAXIS Slides supports .pptx import/export with presenter transitions." },
+      { q: "Can I open files shared by clients who still use Microsoft Office?", a: "Absolutely. You can import .xlsx, .docx, and .pptx files sent by clients, edit them in Beraxis, and export them back as native .xlsx, .docx, or .pptx files." },
+      { q: "Do I pay extra for the Office Automation apps?", a: "No. Docs, Sheets, Slides, Calendar, To-Do, Discuss, Sign, and Meet are 100% included inside the $1/month Early Bird Standard Plan (and selectable on the Forever Free tier)." }
+    ]
+  },
+  "google-workspace-alternative": {
+    slug: "google-workspace-alternative",
+    competitorName: "Google Workspace (Docs, Sheets, Slides, Meet)",
+    competitorTagline: "Cloud Office Tools Without Any Business Operations or ERP Engine",
+    badge: "Office + Autonomous ERP",
+    heroHeadline: "The Smarter Google Workspace Alternative Built for Growing Businesses",
+    heroSubheadline: "Google Workspace charges $7 to $18/user/month for Docs, Sheets, Slides, and Meet—but gives you zero CRM, zero invoicing, zero inventory, and zero B2B leads. Get all your cloud office tools PLUS a complete 30+ module AI ERP in Beraxis for $1/month.",
+    competitorCostAnnual: "$84 - $216 / user / yr",
+    beraxisCostAnnual: "$12/yr (Early Bird)",
+    annualSavings: "$204+/user/yr",
+    keySummary: "Startups love cloud collaboration, but outgrow fragmented Google Sheets trackers fast. Beraxis delivers cloud Sheets, Docs, Slides, and WebRTC Video Meet natively alongside your real CRM pipeline, double-entry accounting, POS, and 25M+ B2B leads directory.",
+    competitorFlaws: [
+      "Charges per user every month while offering zero CRM, Accounting, Inventory, or HR modules",
+      "Businesses end up managing fragile operations in dozens of disconnected Google Sheets",
+      "Requires paid third-party tools like DocuSign, HubSpot, QuickBooks, and Apollo on top",
+      "No native industry blueprints for retail, clinics, restaurants, real estate, or agencies"
+    ],
+    beraxisWins: [
+      "Unified cloud Sheets, Docs, Slides, Calendar, Meet, and Team Chat inside one workspace",
+      "Replaces fragile spreadsheet trackers with real Kanban CRM, Accounting, and Inventory",
+      "Full .XLSX, .DOCX, and .PPTX file compatibility with Light & Dark studio themes",
+      "Includes 1,500 monthly verified B2B lead credits and AI Voice Pilot at $1/month"
+    ],
+    matrix: [
+      { feature: "Cloud Sheets, Docs & Slides", beraxis: true, competitor: true, note: "Both run in any browser with zero desktop installation" },
+      { feature: "In-Browser Video Meetings (Meet)", beraxis: true, competitor: true, note: "WebRTC HD video, screen share & recording included" },
+      { feature: "Native CRM & Sales Pipelines", beraxis: true, competitor: false, note: "Google Workspace has no built-in CRM" },
+      { feature: "Double-Entry Accounting & POS", beraxis: true, competitor: false, note: "Full invoicing, GL, payroll & POS built into Beraxis" },
+      { feature: "25M+ B2B Leads Directory", beraxis: true, competitor: false, note: "1-click prospect import included in Beraxis" },
+      { feature: "Built-in e-Signatures (Sign)", beraxis: true, competitor: "Paid Add-on", note: "Legally binding contract signing included at $0 extra" },
+      { feature: "Price per User / Month", beraxis: "$1/mo (Early Bird)", competitor: "$7 - $18/mo", note: "Save up to 94% while getting a complete ERP" }
+    ],
+    migrationSteps: [
+      { step: "01", title: "Download Your Sheets, Docs & Slides", desc: "Export your Google Sheets as .xlsx, Google Docs as .docx, and Google Slides as .pptx." },
+      { step: "02", title: "1-Click Import into Beraxis", desc: "Open them directly inside BERAXIS Sheets, Docs, and Slides or migrate customer/product sheets via the Migration Hub." },
+      { step: "03", title: "Run Everything in One Place", desc: "Manage documents, spreadsheets, meetings, CRM, and accounting from one unified login." }
+    ],
+    faqs: [
+      { q: "Does Beraxis replace Google Sheets, Google Docs, Google Slides, and Google Meet?", a: "Yes. Beraxis includes native browser-based Sheets, Docs, Slides, Calendar, To-Do, and WebRTC Meet rooms—plus complete ERP, CRM, and Accounting." },
+      { q: "Can we switch between Light paper mode and Dark mode?", a: "Yes! Every Beraxis office app includes a 1-click Light/Dark studio toggle so your team can work comfortably day or night." }
+    ]
   }
 };

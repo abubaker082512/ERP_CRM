@@ -12,6 +12,7 @@ import {
   importDocxFile,
   exportDocxFile
 } from "@/lib/office/docxUtils";
+import { generateOfficeDoc } from "@/lib/office/aiOfficeGenerator";
 import {
   Folder,
   FileText,
@@ -220,6 +221,18 @@ export default function DocumentsPage() {
       headerText,
       footerText,
     });
+  };
+
+  const handleAiDraft = async () => {
+    const topic = window.prompt("What document should BERAXIS AI draft? (e.g. Client Partnership Proposal, NDA, Q4 Marketing Plan)");
+    if (!topic) return;
+    const res = await generateOfficeDoc(topic);
+    setDocTitle(res.title);
+    setActiveDocId(null);
+    if (editorRef.current) {
+      editorRef.current.innerHTML = res.html;
+      recomputeWordStats();
+    }
   };
 
   const handleFindReplaceAll = (e: React.FormEvent) => {
@@ -502,6 +515,9 @@ export default function DocumentsPage() {
                 </div>
 
                 <div className="flex items-center gap-1.5">
+                  <button onClick={handleAiDraft} className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold flex items-center gap-1 cursor-pointer shadow">
+                    <Sparkles size={13} /> <span>AI Draft</span>
+                  </button>
                   <label className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 cursor-pointer ${isLight ? "bg-slate-100 border-slate-300" : "bg-white/5 border-white/10"}`}>
                     <Upload size={13} className="text-cyan-500" /> <span>Import .DOCX</span>
                     <input type="file" accept=".docx" onChange={handleImportDocx} className="hidden" />

@@ -12,6 +12,7 @@ import {
 } from "@/lib/office/formulaEngine";
 import SheetChartPanel from "@/components/office/SheetChartPanel";
 import PivotTableModal from "@/components/office/PivotTableModal";
+import { generateOfficeSheet } from "@/lib/office/aiOfficeGenerator";
 import {
   FileSpreadsheet,
   Plus,
@@ -721,6 +722,17 @@ export default function SpreadsheetsPage() {
               </div>
 
               <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  onClick={() => {
+                    const topic = window.prompt("What sheet should BERAXIS AI build? (e.g. Q2 Marketing Budget, Sales Tracker)");
+                    if (!topic) return;
+                    const gen = generateOfficeSheet(topic);
+                    addSheetTab(gen.title, gen.cells);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <Sparkles size={13} /> <span>AI Sheet</span>
+                </button>
                 <button onClick={toggleTheme} className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer ${isLight ? "bg-slate-100 border-slate-300" : "bg-white/5 border-white/10"}`}>
                   {isLight ? <Moon size={13} /> : <Sun size={13} className="text-amber-400" />}
                   <span>{isLight ? "Dark" : "Light"}</span>
