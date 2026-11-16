@@ -48,7 +48,9 @@ import {
     Crown,
     User,
     Mic,
-    UploadCloud
+    UploadCloud,
+    FileSpreadsheet,
+    Presentation
 } from "lucide-react";
 import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
 import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
@@ -113,6 +115,8 @@ const allApps = [
     // Specialized Subsystems
     { name: "Sign", icon: PenTool, color: "bg-[#06b6d4]", href: "/sign" },
     { name: "Documents", icon: BookOpen, color: "bg-[#3b82f6]", href: "/documents" },
+    { name: "Spreadsheets", icon: FileSpreadsheet, color: "bg-emerald-600", href: "/spreadsheets" },
+    { name: "Slides & Decks", icon: Presentation, color: "bg-indigo-600", href: "/slides" },
     { name: "Helpdesk", icon: CheckSquare, color: "bg-[#6366f1]", href: "/helpdesk" },
     { name: "Reports", icon: PieChart, color: "bg-[#7e22ce]", href: "/reports" },
     { name: "Vehicle Jobs", icon: Wrench, color: "bg-red-600", href: "/automotive" },

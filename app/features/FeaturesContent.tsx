@@ -58,7 +58,7 @@ export default function FeaturesContent() {
         </h1>
 
         <p className="text-base sm:text-lg text-gray-300 font-light leading-relaxed max-w-3xl mx-auto mb-8">
-          Replace 8+ fragmented, expensive subscriptions (Salesforce, QuickBooks, Odoo, Toast, ZoomInfo, DocuSign, Gusto). Every core, specialized, and minor operational module operates synchronously from a single high-performance cockpit.
+          Replace 10+ fragmented, expensive subscriptions (Salesforce, QuickBooks, Odoo, Microsoft Excel, PowerPoint, Word, Google Workspace, Toast, ZoomInfo, DocuSign). Every ERP, CRM, and office automation tool operates synchronously from one cockpit.
         </p>
 
         {/* Action Badges */}

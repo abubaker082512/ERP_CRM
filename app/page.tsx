@@ -279,6 +279,10 @@ export default function Home() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-purple-400 shrink-0" size={14} />
+                                    <span><strong>Built-In Office Suite:</strong> Sheets, Slides, Docs &amp; e-Sign (No Excel/PowerPoint needed)</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle className="text-purple-400 shrink-0" size={14} />
                                     <span>Priority 24/7 WhatsApp &amp; Ticket Support</span>
                                 </div>
                             </div>

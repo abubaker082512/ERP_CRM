@@ -365,7 +365,11 @@ export default function PricingPage() {
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <Check className="text-purple-400" size={16} />
-                                    <span className="font-semibold text-white">All 28 Business Modules unlocked</span>
+                                    <span className="font-semibold text-white">All 30+ Business &amp; Office Modules unlocked</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <Check className="text-purple-400 shrink-0" size={16} />
+                                    <span>Built-In Spreadsheets, Slides &amp; Docs (No Excel/PowerPoint needed)</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <Check className="text-purple-400" size={16} />

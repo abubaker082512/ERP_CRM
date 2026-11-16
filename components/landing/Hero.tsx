@@ -69,7 +69,7 @@ export default function Hero() {
 
                 {/* 3. Subheadline */}
                 <p className="text-sm sm:text-base md:text-lg text-gray-300 max-w-2xl mx-auto mb-6 sm:mb-8 font-normal leading-relaxed">
-                    The #1 Free Odoo Alternative in 2026. Replace 5+ expensive, disconnected tools like Odoo, Salesforce, and QuickBooks with BERAXIS AI. Run Accounting, POS, Inventory, HR &amp; CRM across 28 unified modules — with <strong className="text-cyan-300 font-semibold drop-shadow-[0_0_8px_rgba(103,232,249,0.3)]">25M+ integrated B2B leads</strong> and AI Voice Pilot built-in.
+                    The #1 Free Odoo Alternative in 2026. No need to buy <strong className="text-white font-semibold">Microsoft Excel, PowerPoint, Word, Odoo, QuickBooks, or HubSpot</strong> — BERAXIS AI covers all ERP, CRM, and Office Automation in 30+ unified modules, with <strong className="text-cyan-300 font-semibold drop-shadow-[0_0_8px_rgba(103,232,249,0.3)]">25M+ integrated B2B leads</strong> and AI Voice Pilot built-in.
                 </p>
 
                 {/* 4. Glassmorphic Action Buttons with Identical Height & Equal Spacing */}
@@ -149,6 +149,13 @@ export default function Hero() {
                             <Check size={11} strokeWidth={3} />
                         </span>
                         <span>30-Second Setup</span>
+                    </span>
+                    <span className="hidden sm:inline text-white/20">•</span>
+                    <span className="flex items-center gap-1.5 whitespace-nowrap">
+                        <span className="p-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            <Check size={11} strokeWidth={3} />
+                        </span>
+                        <span>Built-In Sheets, Slides &amp; Docs</span>
                     </span>
                     <span className="hidden sm:inline text-white/20">•</span>
                     <span className="flex items-center gap-1.5 whitespace-nowrap">
@@ -254,7 +261,7 @@ export default function Hero() {
 
                             <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md">
                                 <div className="flex justify-between text-xs text-gray-300 mb-2 font-medium">
-                                    <span>Current Monthly Spend on Other Tools</span>
+                                    <span>Current Monthly Spend (Excel/365, CRM, ERP)</span>
                                     <span className="text-white font-bold bg-pink-500/20 px-2.5 py-0.5 rounded-full border border-pink-500/30 text-pink-200">${calcCurrentSpend}/mo</span>
                                 </div>
                                 <input

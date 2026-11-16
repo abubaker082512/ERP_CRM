@@ -16,7 +16,7 @@ export const metadata: Metadata = {
         default: "BERAXIS AI | Autonomous AI ERP & AI CRM · #1 Free Odoo Alternative (2026)",
         template: "%s | BERAXIS AI"
     },
-    description: "BERAXIS AI is the #1 Autonomous AI ERP & AI CRM Software for growing businesses. Deploy Free AI ERP, Free AI CRM, Point of Sale (POS), Accounting, and 25M+ Global B2B Leads Directory for $1/month across 12 custom industries. The leading free alternative to Odoo, HubSpot, and Salesforce.",
+    description: "BERAXIS AI is the #1 Autonomous AI ERP, CRM & Office Automation Software. No need to buy Microsoft Excel, PowerPoint, Word, Odoo, HubSpot, or QuickBooks — deploy Spreadsheets, Slides, Docs, Accounting, POS & 25M+ B2B Leads for $1/month or 1 App Free Forever.",
     keywords: [
         "BERAXIS AI",
         "Beraxis AI",
@@ -116,6 +116,14 @@ export const metadata: Metadata = {
         "Toast POS alternative",
         "Square POS alternative for small business",
         "Apollo alternative with built-in CRM",
+        "Microsoft Excel alternative",
+        "PowerPoint alternative for business",
+        "Microsoft 365 alternative with ERP",
+        "Google Workspace alternative for startups",
+        "All-in-one office automation and ERP",
+        "ERP with built-in spreadsheets and presentations",
+        "Business operations automation software",
+        "Free spreadsheet and presentation software",
         "padel club management software",
         "padel court booking and POS system",
         "automotive garage workshop ERP",
@@ -193,7 +201,7 @@ export const metadata: Metadata = {
     manifest: "/site.webmanifest",
     openGraph: {
         title: "BERAXIS AI | Autonomous AI ERP & AI CRM · #1 Free Odoo Alternative (2026)",
-        description: "BERAXIS AI is the #1 Autonomous AI ERP & AI CRM Software for growing businesses. Deploy Free AI ERP, Free AI CRM, Point of Sale (POS), Accounting, and 25M+ Global B2B Leads Directory for $1/month across 12 custom industries. The leading free alternative to Odoo, HubSpot, and Salesforce.",
+        description: "BERAXIS AI is the #1 Autonomous AI ERP, CRM & Office Automation Software. No need to buy Microsoft Excel, PowerPoint, Word, Odoo, HubSpot, or QuickBooks — deploy Spreadsheets, Slides, Docs, Accounting, POS & 25M+ B2B Leads for $1/month or 1 App Free Forever.",
         url: "https://www.beraxis.online",
         siteName: "BERAXIS AI",
         images: [
@@ -216,7 +224,7 @@ export const metadata: Metadata = {
     twitter: {
         card: "summary_large_image",
         title: "BERAXIS AI | Autonomous AI ERP & AI CRM · #1 Free Odoo Alternative (2026)",
-        description: "BERAXIS AI is the #1 Autonomous AI ERP & AI CRM Software for growing businesses. Deploy Free AI ERP, Free AI CRM, Point of Sale (POS), Accounting, and 25M+ Global B2B Leads Directory for $1/month across 12 custom industries. The leading free alternative to Odoo, HubSpot, and Salesforce.",
+        description: "BERAXIS AI is the #1 Autonomous AI ERP, CRM & Office Automation Software. No need to buy Microsoft Excel, PowerPoint, Word, Odoo, HubSpot, or QuickBooks — deploy Spreadsheets, Slides, Docs, Accounting, POS & 25M+ B2B Leads for $1/month or 1 App Free Forever.",
         images: ["https://www.beraxis.online/og-image.png?v=3"],
         creator: "@beraxis",
     },
@@ -319,7 +327,10 @@ export default function RootLayout({
                     "Omnichannel Touch Point of Sale (POS)",
                     "Multi-Warehouse Inventory & Barcode Tracking",
                     "HRMS, Attendance & Payroll Management",
-                    "12 Industry Operational Blueprints"
+                    "12 Industry Operational Blueprints",
+                    "Built-In Spreadsheets with Live Formulas (Excel Alternative)",
+                    "Interactive Slide & Presentation Builder (PowerPoint Alternative)",
+                    "Enterprise Document Composer, Vault, e-Signatures & Team Meet"
                 ],
                 "description": "Beraxis is an autonomous AI ERP & CRM platform featuring Free CRM, Free POS, and Free ERP modules, Global B2B Leads Directory, accounting, inventory, and Voice Pilot for $1/month.",
                 "url": "https://www.beraxis.online"
@@ -398,6 +409,14 @@ export default function RootLayout({
                         "acceptedAnswer": {
                             "@type": "Answer",
                             "text": "The AI Voice Pilot allows business owners and staff to control their ERP using natural voice commands. You can issue instructions such as 'Create a $500 invoice for Acme Corp' or 'Check inventory for SKU-402', and the autonomous engine executes the workflow in real-time."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Do I still need to buy Microsoft Excel, PowerPoint, Word, or Google Workspace with Beraxis?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "No! Beraxis includes built-in Spreadsheets (with live =SUM/=AVERAGE formulas and Excel/CSV export), Slides & Pitch Decks (with fullscreen presenter mode and PDF export), a Document Composer & Encrypted Vault, e-Signatures, Video Meet, Calendar, and Team Chat—saving you $12 to $24 per user every month in extra office software."
                         }
                     },
                     {

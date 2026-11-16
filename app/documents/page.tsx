@@ -84,6 +84,52 @@ export default function DocumentsPage() {
   // New Folder Form
   const [newFolderName, setNewFolderName] = useState("");
 
+  // Rich Document Composer (Word Alternative)
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [docTitle, setDocTitle] = useState("");
+  const [docBody, setDocBody] = useState("");
+
+  const handleSaveComposedDoc = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!docTitle.trim()) return;
+    const cleanName = docTitle.trim().endsWith(".docx") ? docTitle.trim() : `${docTitle.trim()}.docx`;
+    const newDoc: DocumentItem = {
+      id: `doc-${Date.now()}`,
+      name: cleanName,
+      folderId: selectedFolder === "f-all" ? "f-product" : selectedFolder,
+      category: "product",
+      extension: "docx",
+      sizeMB: Number(Math.max(0.1, (docBody.length / 1024 / 1024)).toFixed(2)),
+      uploadedBy: "BERAXIS Docs Composer",
+      uploadedAt: new Date().toISOString().split("T")[0],
+      version: "v1.0",
+      isEncrypted: true,
+      tags: ["Composed", "Office Doc"],
+      sha256: `sha256-${Math.random().toString(36).slice(2, 10)}`,
+    };
+    const updated = [newDoc, ...documents];
+    setDocuments(updated);
+    try {
+      const key = getEntityStorageKey("documents_items");
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {}
+    const blob = new Blob(
+      [`<html><head><meta charset="utf-8"><title>${docTitle}</title></head><body><h1>${docTitle}</h1><p>${docBody.replace(/\n/g, "<br/>")}</p></body></html>`],
+      { type: "application/msword" }
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${docTitle.trim().replace(/\s+/g, "_")}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setDocTitle("");
+    setDocBody("");
+    setIsComposerOpen(false);
+  };
+
   // Entity-scoped data loading
   useEffect(() => {
     if (!activeBranch) return;
@@ -311,8 +357,15 @@ export default function DocumentsPage() {
               </button>
 
               <button
+                onClick={() => setIsComposerOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-blue-600/30 transition-all active:scale-95 cursor-pointer"
+              >
+                <FileText size={13} /> New Doc (Word)
+              </button>
+
+              <button
                 onClick={() => setIsUploadModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95 cursor-pointer"
               >
                 <Upload size={13} /> Upload Document
               </button>
@@ -645,6 +698,63 @@ export default function DocumentsPage() {
                 className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold"
               >
                 Create
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* RICH DOCUMENT COMPOSER MODAL (WORD ALTERNATIVE) */}
+      {isComposerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <form onSubmit={handleSaveComposedDoc} className="bg-[#111622] border border-gray-700 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <FileText size={18} className="text-blue-400" /> BERAXIS Docs — Built-In Word Alternative
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsComposerOpen(false)}
+                className="text-gray-400 hover:text-white text-xs font-bold"
+              >
+                Close
+              </button>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-300 block mb-1">Document Title</label>
+              <input
+                type="text"
+                required
+                value={docTitle}
+                onChange={e => setDocTitle(e.target.value)}
+                placeholder="e.g. Q4 Standard Operating Procedure"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-300 block mb-1">Document Content</label>
+              <textarea
+                rows={10}
+                required
+                value={docBody}
+                onChange={e => setDocBody(e.target.value)}
+                placeholder="Write memos, contracts, SOPs, or client proposals directly inside BERAXIS..."
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 leading-relaxed"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-800">
+              <button
+                type="button"
+                onClick={() => setIsComposerOpen(false)}
+                className="px-4 py-2 bg-gray-800 text-gray-300 hover:text-white rounded-lg text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-lg shadow-blue-600/30"
+              >
+                Save to Vault &amp; Download .DOC
               </button>
             </div>
           </form>

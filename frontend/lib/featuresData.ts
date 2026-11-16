@@ -26,7 +26,9 @@ import {
   Dumbbell,
   HeartHandshake,
   Barcode,
-  Building2
+  Building2,
+  FileSpreadsheet,
+  Presentation
 } from "lucide-react";
 
 export interface EnterpriseModule {
@@ -600,11 +602,43 @@ export const ALL_ENTERPRISE_MODULES: EnterpriseModule[] = [
     replaces: "Playtomic, Mindbody ($150-$300/mo)",
     highlights: ["Court & Slot Grid Reservation", "Coach & Private Lesson Booking", "Member Subscriptions & Passes", "Pro-Shop Equipment Rentals"],
     href: "/club"
+  },
+  // ─── Office Automation & Productivity ──────────────────────────────────────
+  {
+    id: "spreadsheets",
+    title: "BERAXIS Sheets (Spreadsheets)",
+    category: "Office & Productivity",
+    badge: "Excel Alternative",
+    icon: FileSpreadsheet,
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/15",
+    border: "border-emerald-500/30",
+    description: "Built-in spreadsheet engine with live formulas (=SUM, =AVERAGE, =MIN, =MAX, =COUNT), financial & inventory templates, and 1-click CSV/Excel import & export. Zero Microsoft Excel license needed.",
+    replaces: "Microsoft Excel, Google Sheets ($12-$24/user/mo)",
+    highlights: ["Live Formula Evaluation", "P&L & Sales Forecast Templates", "1-Click Excel/CSV Import & Export", "Branch-Scoped Cloud Sync"],
+    href: "/spreadsheets",
+    isPopular: true
+  },
+  {
+    id: "slides",
+    title: "BERAXIS Slides & Pitch Decks",
+    category: "Office & Productivity",
+    badge: "PowerPoint Alternative",
+    icon: Presentation,
+    color: "text-indigo-400",
+    bg: "bg-indigo-500/15",
+    border: "border-indigo-500/30",
+    description: "Create executive slide decks, quarterly business reviews, and client sales proposals natively inside BERAXIS. Includes theme presets, speaker notes, fullscreen presenter mode, and PDF export.",
+    replaces: "Microsoft PowerPoint, Google Slides, Pitch ($15/user/mo)",
+    highlights: ["Fullscreen Presenter Mode", "QBR & Sales Proposal Templates", "4 Executive Theme Presets", "Instant PDF Deck Export"],
+    href: "/slides",
+    isPopular: true
   }
 ];
 
 export const MODULE_CATEGORIES = [
   "All",
+  "Office & Productivity",
   "Sales & CRM",
   "Finance & Accounting",
   "Supply Chain",

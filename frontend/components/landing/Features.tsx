@@ -78,6 +78,13 @@ const features = [
         icon: MessageCircle,
         color: "text-pink-400",
         bg: "bg-pink-500/10"
+    },
+    {
+        title: "Built-In Sheets, Slides & Docs",
+        description: "Stop paying for Microsoft Excel, PowerPoint, Word, or Google Workspace. Create formula-driven spreadsheets, executive slide decks, and rich documents natively inside BERAXIS.",
+        icon: FileSpreadsheet,
+        color: "text-emerald-400",
+        bg: "bg-emerald-500/10"
     }
 ];
 
@@ -141,6 +148,12 @@ const platformComparison = [
         beraxis: "1-Click Direct WhatsApp Share & Print PDF",
         others: "Requires Expensive Third-Party SMS Integrations",
         winner: "beraxis"
+    },
+    {
+        feature: "Office Suite (Excel, PowerPoint, Word)",
+        beraxis: "Built-In Sheets, Slides, Docs & e-Sign ($0 Extra)",
+        others: "Extra $12–$24/user/mo for Microsoft 365 / Google Workspace",
+        winner: "beraxis"
     }
 ];
 
@@ -155,7 +168,7 @@ export default function Features() {
                         Everything You Need To <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">Scale Your Business</span>
                     </h2>
                     <p className="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto font-light leading-relaxed">
-                        Replace fragmented software with one unified, deeply integrated AI ERP command center.
+                        BERAXIS has everything covered — replace ERP, CRM, Excel, PowerPoint, Word, and 10+ fragmented subscriptions with one effortless operating system.
                     </p>
                 </div>
 
