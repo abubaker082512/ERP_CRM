@@ -45,6 +45,25 @@ const nextConfig = {
             },
         ];
     },
+    webpack(config: any, { isServer, webpack }: { isServer: boolean; webpack: any }) {
+        config.plugins.push(
+            new webpack.NormalModuleReplacementPlugin(/^node:/, (resource: any) => {
+                resource.request = resource.request.replace(/^node:/, '');
+            })
+        );
+        if (!isServer) {
+            config.resolve.fallback = {
+                ...config.resolve.fallback,
+                fs: false,
+                https: false,
+                http: false,
+                path: false,
+                os: false,
+                express: false,
+            };
+        }
+        return config;
+    },
 };
 
 export default nextConfig;
