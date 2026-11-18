@@ -283,7 +283,7 @@ export default function PitchDeckPage() {
 
         {/* SLIDE 3: THE SOLUTION */}
         {currentSlide === 3 && (
-          <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-center text-center">
             <div className="lg:col-span-5 space-y-3">
               <div className="bg-[#0B1120]/90 border border-cyan-500/30 rounded-2xl p-4">
                 <h4 className="text-sm font-bold text-cyan-400">1. 30-Second Industry Blueprints</h4>
@@ -311,13 +311,29 @@ export default function PitchDeckPage() {
               </div>
             </div>
 
-            <div className="lg:col-span-7">
-              <div className="bg-[#0B1120] border border-white/15 rounded-2xl p-3 shadow-2xl">
+            <div className="lg:col-span-7 space-y-3">
+              <div className="bg-[#0B1120] border border-white/15 rounded-2xl p-2.5 shadow-2xl">
                 <img
                   src="/deck_assets/dashboard_hero.jpg"
-                  alt="BERAXIS AI Live Platform"
-                  className="w-full h-auto rounded-xl object-cover max-h-[380px]"
+                  alt="BERAXIS AI Live Frontpage"
+                  className="w-full h-auto rounded-xl object-cover max-h-[210px]"
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#0B1120] border border-white/15 rounded-2xl p-2 shadow-xl">
+                  <img
+                    src="/images/showcase/apps-screen.png"
+                    alt="BERAXIS AI 28 Unified Apps Cockpit"
+                    className="w-full h-auto rounded-lg object-cover max-h-[160px]"
+                  />
+                </div>
+                <div className="bg-[#0B1120] border border-white/15 rounded-2xl p-2 shadow-xl">
+                  <img
+                    src="/images/showcase/dashboard-screen.png"
+                    alt="BERAXIS AI Live Executive Dashboard"
+                    className="w-full h-auto rounded-lg object-cover max-h-[160px]"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -380,7 +396,7 @@ export default function PitchDeckPage() {
 
         {/* SLIDE 5: PRODUCT DEPTH */}
         {currentSlide === 5 && (
-          <div className="w-full max-w-6xl space-y-5">
+          <div className="w-full max-w-6xl space-y-5 text-center">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
               <div className="bg-[#0B1120]/90 border border-cyan-500/30 rounded-2xl p-5 space-y-2">
                 <h4 className="text-sm font-bold text-cyan-400">Financial &amp; Accounting Core</h4>
@@ -432,6 +448,23 @@ export default function PitchDeckPage() {
                   <li>9. NGOs &amp; Grants | 10. MRP</li>
                   <li>11. Logistics | 12. Agencies</li>
                 </ul>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#0B1120] border border-white/15 rounded-2xl p-2.5 shadow-xl">
+                <img
+                  src="/images/showcase/apps-screen.png"
+                  alt="BERAXIS AI 34+ Unified Enterprise Apps"
+                  className="w-full h-auto rounded-xl object-cover max-h-[190px]"
+                />
+              </div>
+              <div className="bg-[#0B1120] border border-white/15 rounded-2xl p-2.5 shadow-xl">
+                <img
+                  src="/images/showcase/industry-screen.png"
+                  alt="BERAXIS AI 12 Industry Archetypes"
+                  className="w-full h-auto rounded-xl object-cover max-h-[190px]"
+                />
               </div>
             </div>
           </div>
