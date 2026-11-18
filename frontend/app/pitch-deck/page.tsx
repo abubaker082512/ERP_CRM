@@ -213,9 +213,9 @@ export default function PitchDeckPage() {
               </div>
 
               <div className="flex flex-wrap items-center justify-center gap-4 pt-2 text-xs text-slate-400">
-                <span>🏢 <strong>US Office:</strong> Miami, Florida</span>
+                <span>🏢 <strong>Headquarters:</strong> Islamabad, Pakistan</span>
                 <span>•</span>
-                <span>⚡ <strong>Engineering Hub:</strong> Islamabad</span>
+                <span>💎 <strong>Early Bird:</strong> $1.00 USD/user/mo → <strong>Standard:</strong> $24.99 USD/user/mo</span>
                 <span>•</span>
                 <span>🌐 <strong>Live Product:</strong> www.beraxis.online</span>
               </div>
@@ -387,7 +387,7 @@ export default function PitchDeckPage() {
                   <Globe size={18} /> Global Payment &amp; Ops Ready
                 </h3>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Dual-presence footprint with US Office (Miami, FL) and Engineering Center (Islamabad). Live international billing via Creem Merchant of Record, Paddle, Stripe, DirectPay, and 30+ cryptocurrencies.
+                  Headquartered in Islamabad, Pakistan with capital-efficient engineering execution. Live international billing via Creem Merchant of Record, Paddle, Stripe, DirectPay, and 30+ cryptocurrencies.
                 </p>
               </div>
             </div>
@@ -544,7 +544,7 @@ export default function PitchDeckPage() {
 
         {/* SLIDE 8: BUSINESS MODEL & PRICING WEDGE */}
         {currentSlide === 8 && (
-          <div className="w-full max-w-6xl space-y-6">
+          <div className="w-full max-w-6xl space-y-6 text-center">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-[#0B1120]/90 border border-emerald-500/30 rounded-2xl p-6 space-y-3">
                 <span className="text-[11px] bg-emerald-500/15 text-emerald-300 px-2.5 py-1 rounded-full font-bold uppercase">
@@ -561,28 +561,29 @@ export default function PitchDeckPage() {
 
               <div className="bg-gradient-to-b from-purple-950/50 to-[#0B1120] border border-purple-500/50 rounded-2xl p-6 space-y-3 shadow-xl">
                 <span className="text-[11px] bg-purple-500/20 text-purple-300 px-2.5 py-1 rounded-full font-bold uppercase">
-                  Tier 2 • Land &amp; Expand Core
+                  Tier 2 • Early Bird Launch Wedge
                 </span>
-                <h3 className="text-xl font-extrabold text-white">Standard All-28 Suite</h3>
-                <div className="text-3xl font-black text-purple-300">$1/mo <span className="text-xs font-normal text-slate-400">Early Bird → $31.10/mo</span></div>
+                <h3 className="text-xl font-extrabold text-white">Early Bird All-28 Suite</h3>
+                <div className="text-3xl font-black text-purple-300">$1.00 USD <span className="text-xs font-normal text-slate-400">/ user / mo</span></div>
                 <ul className="text-xs text-slate-300 space-y-1.5 pt-2">
-                  <li>• Unlocks all 28 enterprise modules</li>
+                  <li>• Introductory Early Bird rate ($12/yr billed annually)</li>
+                  <li>• Unlocks all 28+ enterprise modules</li>
                   <li>• 1,500 verified B2B lead credits/month</li>
                   <li>• 3.1s AI Receipt OCR &amp; Voice Pilot</li>
-                  <li>• Undercuts Odoo &amp; QuickBooks by 90%+</li>
                 </ul>
               </div>
 
               <div className="bg-[#0B1120]/90 border border-cyan-500/30 rounded-2xl p-6 space-y-3">
                 <span className="text-[11px] bg-cyan-500/15 text-cyan-300 px-2.5 py-1 rounded-full font-bold uppercase">
-                  Tier 3 • High-ARPU Expansion
+                  Tier 3 • Post-Early Bird Standard
                 </span>
-                <h3 className="text-xl font-extrabold text-white">Custom Pro &amp; AI Usage</h3>
-                <div className="text-3xl font-black text-cyan-400">$46.80/mo <span className="text-xs font-normal text-slate-400">+ Usage</span></div>
+                <h3 className="text-xl font-extrabold text-white">Standard Per-User Scale</h3>
+                <div className="text-3xl font-black text-cyan-400">$24.99 USD <span className="text-xs font-normal text-slate-400">/ user / mo</span></div>
                 <ul className="text-xs text-slate-300 space-y-1.5 pt-2">
+                  <li>• Post-launch recurring price per user per month</li>
                   <li>• Multi-company &amp; multi-branch consolidation</li>
                   <li>• Native Cold Email &amp; AI Voice Calling</li>
-                  <li>• Usage expansion: $0.12/min AI calling &amp; bulk lead packs (+$185/mo ARPU)</li>
+                  <li>• Usage expansion: $0.12/min AI calling &amp; bulk lead packs</li>
                 </ul>
               </div>
             </div>

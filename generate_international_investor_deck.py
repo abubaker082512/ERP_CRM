@@ -60,7 +60,7 @@ def draw_investor_deck_bg(canvas_obj, doc):
 
     canvas_obj.setFont("Helvetica", 7.8)
     canvas_obj.setFillColor(colors.HexColor("#64748B"))
-    canvas_obj.drawString(36, 14, "Confidential Investor Memorandum • BERAXIS AI Systems Inc. (Miami, FL & Islamabad) • support@beraxis.online")
+    canvas_obj.drawString(36, 14, "Confidential Investor Memorandum • BERAXIS AI (HQ: Islamabad, Pakistan) • support@beraxis.online")
     canvas_obj.drawRightString(w - 36, 14, f"Slide {page_num} of {TOTAL_SLIDES}")
     
     canvas_obj.restoreState()
@@ -242,8 +242,8 @@ def generate_international_investor_deck():
     s1.append(Spacer(1, 16))
     s1.append(Paragraph(
         "<b>Live Platform:</b> https://www.beraxis.online &nbsp;&nbsp;|&nbsp;&nbsp; "
-        "<b>US HQ:</b> Miami, Florida &nbsp;&nbsp;|&nbsp;&nbsp; "
-        "<b>Engineering Hub:</b> Islamabad &nbsp;&nbsp;|&nbsp;&nbsp; "
+        "<b>Headquarters:</b> Islamabad, Pakistan &nbsp;&nbsp;|&nbsp;&nbsp; "
+        "<b>Early Bird:</b> $1/mo → <b>Regular:</b> $24.99/user/mo &nbsp;&nbsp;|&nbsp;&nbsp; "
         "<b>Contact:</b> +1 (970) 780-7993",
         ParagraphStyle('CoverFoot', fontName='Helvetica', fontSize=8.5, leading=12, textColor=colors.HexColor('#94A3B8'), alignment=1)
     ))
@@ -394,7 +394,7 @@ def generate_international_investor_deck():
             ),
             Paragraph(
                 "• <b>Global Merchant of Record (MoR):</b> Live checkout integrated via Creem, Paddle, Stripe, DirectPay, and 30+ Cryptocurrencies.<br/>"
-                "• <b>Dual-Presence Operations:</b> US Office in Miami, FL + dedicated R&D and Operations Center in Islamabad.<br/>"
+                "• <b>Headquarters &amp; R&amp;D Hub:</b> Centrally operated from Islamabad, Pakistan with capital-efficient engineering velocity.<br/>"
                 "• <b>99.9% Uptime SLA:</b> Multi-tenant PostgreSQL with strict Row-Level Security (RLS) and 256-bit encryption.",
                 card_body
             )
@@ -534,39 +534,39 @@ def generate_international_investor_deck():
     # SLIDE 8: Business Model & Disruptive PLG Pricing Wedge
     # =========================================================================
     s8 = [
-        Paragraph("Business Model: Product-Led Wedge → High-ARPU Enterprise Expansion", title_style),
-        Paragraph("Frictionless entry eliminates buyer resistance while usage-based AI & multi-seat scaling drive 132% NRR", subtitle_style)
+        Paragraph("Business Model: $1.00 Early Bird Wedge → $24.99/User/Mo Standard Scale", title_style),
+        Paragraph("Frictionless $1.00 USD launch pricing drives rapid adoption before scaling to $24.99 USD per user per month", subtitle_style)
     ]
     pricing_tiers = [
         [
             Paragraph("<b>Tier 1: Forever Free (PQL Wedge)</b>", card_title_green),
-            Paragraph("<b>Tier 2: Standard Suite ($1 Launch → $31.10/mo)</b>", card_title_cyan),
-            Paragraph("<b>Tier 3: Custom Pro & Usage ($46.80/mo + Usage)</b>", card_title_purple)
+            Paragraph("<b>Tier 2: Early Bird ($1.00/User/Mo)</b>", card_title_cyan),
+            Paragraph("<b>Tier 3: Standard Full Suite ($24.99/User/Mo)</b>", card_title_purple)
         ],
         [
             Paragraph(
                 "<b>Price:</b> $0 Forever (No Credit Card)<br/><br/>"
                 "• Pick <b>any 1 full ERP module</b> (CRM, POS, or Accounting) free forever.<br/>"
-                "• Unlimited records & transactions.<br/>"
+                "• Unlimited records &amp; transactions.<br/>"
                 "• 50 Starter B2B Lead Previews.<br/><br/>"
                 "<b>Strategic Role:</b> Viral top-of-funnel customer acquisition hook that converts 65%+ of visitors into active workspaces.",
                 card_body
             ),
             Paragraph(
-                "<b>Price:</b> $1/mo Early Bird ($12/yr) | $31.10/mo Regular<br/><br/>"
-                "• Unlocks <b>all 28 enterprise modules</b>.<br/>"
+                "<b>Launch Offer:</b> $1.00 USD / user / month<br/><br/>"
+                "• Limited-time Early Bird introductory rate ($12/yr billed annually).<br/>"
+                "• Unlocks <b>all 28+ enterprise modules</b>.<br/>"
                 "• <b>1,500 verified B2B lead credits/mo</b>.<br/>"
-                "• 3.1s AI Receipt OCR & Voice Pilot.<br/>"
-                "• 12 Industry Blueprints.<br/><br/>"
-                "<b>Strategic Role:</b> Irresistible land-and-expand offer that undercuts Odoo & QuickBooks by 90%+.",
+                "• 3.1s AI Receipt OCR &amp; Voice Pilot.<br/><br/>"
+                "<b>Strategic Role:</b> Zero-friction land-and-expand wedge to rapidly capture market share from Odoo &amp; QuickBooks.",
                 card_body
             ),
             Paragraph(
-                "<b>Price:</b> $15.99 Early Bird | $46.80/mo + Consumption<br/><br/>"
-                "• Multi-company & multi-branch consolidation.<br/>"
-                "• Custom white-label branding.<br/>"
-                "• Native Cold Email & AI Voice Calling engine.<br/>"
-                "• Usage expansion: AI calling minutes ($0.12/min), extra OCR & B2B lead packs (+$185/mo avg ARPU expansion).",
+                "<b>Post-Early Bird Rate:</b> $24.99 USD / user / month<br/><br/>"
+                "• Standard recurring per-seat pricing as early-bird cohorts graduate and teams add staff seats.<br/>"
+                "• Multi-company &amp; multi-branch consolidation.<br/>"
+                "• Native Cold Email &amp; AI Voice Calling engine.<br/>"
+                "• Usage expansion: AI calling minutes ($0.12/min), extra OCR &amp; B2B lead packs (+132% NRR).",
                 card_body
             )
         ]
@@ -585,7 +585,7 @@ def generate_international_investor_deck():
     s8.append(t_price)
     s8.append(Spacer(1, 10))
     s8.append(Paragraph(
-        "<b>The Land-and-Expand Economics:</b> Once a company's accounting ledger, inventory, and POS run on BERAXIS AI, switching costs become high, and multi-seat + AI usage upgrades scale blended ARPU to <b>$200+/month</b>.",
+        "<b>The Land-and-Expand Economics:</b> Early adopters onboard at <b>$1.00 USD/user/mo</b>; post-launch accounts and additional team seats scale at <b>$24.99 USD/user/mo</b> (a 10-user SMB generates $249.90/mo + AI usage credits).",
         quote_box
     ))
     story.append(wrap_centered_slide(s8))
