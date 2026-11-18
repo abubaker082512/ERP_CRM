@@ -41,9 +41,15 @@ def draw_investor_deck_bg(canvas_obj, doc):
 
     # 4. Running Header (on slides 2 to 12)
     if page_num > 1:
+        icon_path = os.path.join(FRONTEND_PUBLIC_DIR, "icon.png")
+        if os.path.exists(icon_path):
+            canvas_obj.drawImage(icon_path, 36, h - 25, width=13, height=13, mask='auto')
+            header_x = 54
+        else:
+            header_x = 36
         canvas_obj.setFont("Helvetica-Bold", 8.5)
         canvas_obj.setFillColor(colors.HexColor("#38BDF8"))
-        canvas_obj.drawString(36, h - 22, "BERAXIS AI  |  INTERNATIONAL INVESTOR PITCH DECK (2026)")
+        canvas_obj.drawString(header_x, h - 22, "BERAXIS AI  |  INTERNATIONAL INVESTOR PITCH DECK (2026)")
         
         canvas_obj.setFont("Helvetica-Bold", 8)
         canvas_obj.setFillColor(colors.HexColor("#34D399"))
@@ -194,12 +200,14 @@ def generate_international_investor_deck():
     # SLIDE 1: Centered Cover Slide
     # =========================================================================
     s1 = []
-    logo_path = os.path.join(BASE_DIR, "logo2.png")
+    logo_path = os.path.join(FRONTEND_PUBLIC_DIR, "logo-full.png")
+    if not os.path.exists(logo_path):
+        logo_path = os.path.join(FRONTEND_PUBLIC_DIR, "icon.png")
     if os.path.exists(logo_path):
-        img_logo = RLImage(logo_path, width=54, height=54)
+        img_logo = RLImage(logo_path, width=196, height=52)
         img_logo.hAlign = 'CENTER'
         s1.append(img_logo)
-    s1.append(Spacer(1, 10))
+    s1.append(Spacer(1, 12))
     s1.append(Paragraph(
         "<font color='#34D399'><b>[ MILESTONE ACHIEVED: 100+ ACTIVE USERS ONBOARDED WITH $0 PAID AD SPEND ]</b></font>",
         ParagraphStyle('MilestoneBadge', fontName='Helvetica-Bold', fontSize=10, leading=14, alignment=1)
