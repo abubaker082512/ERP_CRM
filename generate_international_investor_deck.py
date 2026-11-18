@@ -241,10 +241,10 @@ def generate_international_investor_deck():
     s1.append(t_pill)
     s1.append(Spacer(1, 16))
     s1.append(Paragraph(
-        "<b>Live Platform:</b> https://www.beraxis.online &nbsp;&nbsp;|&nbsp;&nbsp; "
+        "<b>Investment Round:</b> <font color='#34D399'>Raising $3.0M USD (Up to 30% Equity)</font> &nbsp;&nbsp;|&nbsp;&nbsp; "
         "<b>Headquarters:</b> Islamabad, Pakistan &nbsp;&nbsp;|&nbsp;&nbsp; "
         "<b>Early Bird:</b> $1/mo → <b>Regular:</b> $24.99/user/mo &nbsp;&nbsp;|&nbsp;&nbsp; "
-        "<b>Contact:</b> +1 (970) 780-7993",
+        "<b>Web:</b> www.beraxis.online",
         ParagraphStyle('CoverFoot', fontName='Helvetica', fontSize=8.5, leading=12, textColor=colors.HexColor('#94A3B8'), alignment=1)
     ))
     story.append(wrap_centered_slide(s1))
@@ -714,33 +714,33 @@ def generate_international_investor_deck():
     # SLIDE 12: Capital Allocation, Leadership & Investment Close
     # =========================================================================
     s12 = [
-        Paragraph("The Investment Opportunity: Scaling Category Leadership", title_style),
-        Paragraph("Deploying strategic growth capital to accelerate global distribution, AI autonomy, and channel partnerships", subtitle_style)
+        Paragraph("The Investment Ask: Raising $3.0M USD for Up to 30% Equity", title_style),
+        Paragraph("Deploying $3,000,000 USD in growth capital to accelerate global distribution, AI autonomy, and channel partnerships", subtitle_style)
     ]
     alloc_data = [
-        [Paragraph("<b>Use of Funds Category</b>", card_title_cyan), Paragraph("<b>Allocation</b>", card_title_green), Paragraph("<b>Execution Milestones & Expected ROI</b>", card_title_cyan)],
+        [Paragraph("<b>Use of Funds Category</b>", card_title_cyan), Paragraph("<b>Allocation ($3.0M)</b>", card_title_green), Paragraph("<b>Execution Milestones &amp; Expected ROI</b>", card_title_cyan)],
         [
-            Paragraph("<b>1. Autonomous AI & Product R&D</b>", card_body_center),
-            Paragraph("<b>40%</b>", card_body_center),
+            Paragraph("<b>1. Autonomous AI &amp; Product R&amp;D</b>", card_body_center),
+            Paragraph("<b>40% ($1.20M)</b>", card_body_center),
             Paragraph("Sub-second Duplex Voice Pilot v2, autonomous bookkeeping agents, mobile native apps, and 50+ global banking/tax integrations.", card_body)
         ],
         [
-            Paragraph("<b>2. Global GTM & Outbound Engine</b>", card_body_center),
-            Paragraph("<b>35%</b>", card_body_center),
+            Paragraph("<b>2. Global GTM &amp; Outbound Engine</b>", card_body_center),
+            Paragraph("<b>35% ($1.05M)</b>", card_body_center),
             Paragraph("Scale performance acquisition, AI outbound calling fleets, and high-intent search capture across US, UK, Europe, and MENA.", card_body)
         ],
         [
             Paragraph("<b>3. Channel Partner Ecosystem</b>", card_body_center),
-            Paragraph("<b>15%</b>", card_body_center),
+            Paragraph("<b>15% ($450K)</b>", card_body_center),
             Paragraph("Onboard 250+ CPA firms, bookkeepers, and ERP migration agencies on our 30% recurring partner program to drive bulk SMB migrations.", card_body)
         ],
         [
-            Paragraph("<b>4. Enterprise Security & Concierge</b>", card_body_center),
-            Paragraph("<b>10%</b>", card_body_center),
+            Paragraph("<b>4. Enterprise Security &amp; Concierge</b>", card_body_center),
+            Paragraph("<b>10% ($300K)</b>", card_body_center),
             Paragraph("SOC-2 Type II certification, ISO-27001 compliance, and 24/7 white-glove data migration engineers.", card_body)
         ]
     ]
-    t_alloc = Table(alloc_data, colWidths=[175, 85, 450], hAlign='CENTER')
+    t_alloc = Table(alloc_data, colWidths=[175, 105, 430], hAlign='CENTER')
     t_alloc.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#111C33')),
         ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#0F172A')),
@@ -757,7 +757,7 @@ def generate_international_investor_deck():
     final_cta = [
         [
             Paragraph(
-                "<font size='13' color='#F8FAFC'><b>Partner With BERAXIS AI — The Future of Autonomous Enterprise Operations</b></font><br/>"
+                "<font size='13' color='#F8FAFC'><b>Investment Round: Raising $3,000,000 USD for Up to 30% Equity</b></font><br/>"
                 "<font size='9' color='#34D399'><b>[ 100+ Active Users Milestone Achieved &nbsp;&nbsp;|&nbsp;&nbsp; 28 Live Enterprise Modules &nbsp;&nbsp;|&nbsp;&nbsp; 26.6x LTV:CAC ]</b></font><br/><br/>"
                 "<font size='9.5' color='#38BDF8'><b>Live Platform:</b> https://www.beraxis.online</font> &nbsp;&nbsp;•&nbsp;&nbsp; "
                 "<font size='9.5' color='#C084FC'><b>Investor Relations:</b> support@beraxis.online</font> &nbsp;&nbsp;•&nbsp;&nbsp; "

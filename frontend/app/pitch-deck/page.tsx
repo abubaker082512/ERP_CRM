@@ -44,7 +44,7 @@ const SLIDES: SlideData[] = [
   { id: 9, tag: "09 / UNIT ECONOMICS", title: "World-Class Efficiency: 26.6x LTV:CAC & 84% Margin", subtitle: "Serverless edge architecture and programmatic organic distribution yield elite SaaS metrics" },
   { id: 10, tag: "10 / GO-TO-MARKET", title: "4 Scalable Global Distribution Engines", subtitle: "Repeatable, low-CAC acquisition channels scaling from 100+ users to 18,000+ global accounts" },
   { id: 11, tag: "11 / FINANCIALS", title: "5-Year Financial Forecast: $835K → $62.0M ARR", subtitle: "Milestone-driven scaling trajectory across North America, Europe, UK, and MENA" },
-  { id: 12, tag: "12 / THE ASK & VISION", title: "Partner With BERAXIS AI — Category Leadership", subtitle: "Deploying strategic growth capital to scale autonomous AI, global GTM, and partner channels" }
+  { id: 12, tag: "12 / THE ASK & VISION", title: "Raising $3.0M USD for Up to 30% Equity", subtitle: "Deploying $3,000,000 USD in growth capital to scale autonomous AI, global GTM, and partner channels" }
 ];
 
 export default function PitchDeckPage() {
@@ -213,11 +213,11 @@ export default function PitchDeckPage() {
               </div>
 
               <div className="flex flex-wrap items-center justify-center gap-4 pt-2 text-xs text-slate-400">
+                <span>💰 <strong className="text-emerald-400">Raising:</strong> $3.0M USD (Up to 30% Equity)</span>
+                <span>•</span>
                 <span>🏢 <strong>Headquarters:</strong> Islamabad, Pakistan</span>
                 <span>•</span>
                 <span>💎 <strong>Early Bird:</strong> $1.00 USD/user/mo → <strong>Standard:</strong> $24.99 USD/user/mo</span>
-                <span>•</span>
-                <span>🌐 <strong>Live Product:</strong> www.beraxis.online</span>
               </div>
             </div>
           </div>
@@ -698,30 +698,33 @@ export default function PitchDeckPage() {
           <div className="w-full max-w-5xl space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="bg-[#0B1120]/90 border border-cyan-500/30 rounded-2xl p-4">
-                <div className="text-2xl font-black text-cyan-400">40%</div>
+                <div className="text-2xl font-black text-cyan-400">40% ($1.20M)</div>
                 <div className="text-xs font-bold text-white mt-1">Autonomous AI &amp; R&amp;D</div>
                 <div className="text-[11px] text-slate-400 mt-1">Voice Pilot v2, mobile apps &amp; 50+ banking/tax APIs</div>
               </div>
               <div className="bg-[#0B1120]/90 border border-purple-500/30 rounded-2xl p-4">
-                <div className="text-2xl font-black text-purple-400">35%</div>
+                <div className="text-2xl font-black text-purple-400">35% ($1.05M)</div>
                 <div className="text-xs font-bold text-white mt-1">Global GTM &amp; Sales</div>
                 <div className="text-[11px] text-slate-400 mt-1">Scale US, UK, EU &amp; MENA acquisition funnels</div>
               </div>
               <div className="bg-[#0B1120]/90 border border-emerald-500/30 rounded-2xl p-4">
-                <div className="text-2xl font-black text-emerald-400">15%</div>
+                <div className="text-2xl font-black text-emerald-400">15% ($450K)</div>
                 <div className="text-xs font-bold text-white mt-1">Channel Ecosystem</div>
                 <div className="text-[11px] text-slate-400 mt-1">Onboard 250+ accounting &amp; ERP partner agencies</div>
               </div>
               <div className="bg-[#0B1120]/90 border border-amber-500/30 rounded-2xl p-4">
-                <div className="text-2xl font-black text-amber-400">10%</div>
+                <div className="text-2xl font-black text-amber-400">10% ($300K)</div>
                 <div className="text-xs font-bold text-white mt-1">Security &amp; Concierge</div>
                 <div className="text-[11px] text-slate-400 mt-1">SOC-2 Type II &amp; 24/7 migration engineers</div>
               </div>
             </div>
 
             <div className="bg-gradient-to-r from-sky-950/50 via-[#0B1120] to-purple-950/50 border border-cyan-500/40 rounded-3xl p-8 text-center space-y-5 shadow-2xl">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-extrabold uppercase tracking-wider">
+                Investment Round Open • Raising $3,000,000 USD for Up to 30% Equity
+              </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white">
-                Join Us in Building the #1 Autonomous AI Operating System for Global Business
+                Partner With BERAXIS AI — The Future of Autonomous Business Operations
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto">
                 Product is 100% built and live in production. 100+ users milestone achieved with $0 ad spend. Ready to scale globally.
