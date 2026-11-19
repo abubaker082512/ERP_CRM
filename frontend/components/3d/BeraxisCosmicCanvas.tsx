@@ -34,8 +34,8 @@ export default function BeraxisCosmicCanvas({
             powerPreference: "high-performance",
             precision: "mediump"
         });
-        // Render particles at optimized DPI (eliminates heavy 4K/Retina GPU compositor stalls)
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+        // Render at 1x DPI for smooth, lag-free GPU compositing
+        renderer.setPixelRatio(1);
         renderer.setSize(window.innerWidth, window.innerHeight);
 
         const canvas = renderer.domElement;
@@ -202,10 +202,18 @@ export default function BeraxisCosmicCanvas({
             window.addEventListener("touchmove", handlePointerMove, { passive: true });
         }
 
-        // ── CONTINUOUS ROTATION ANIMATION LOOP ──
+        // ── CONTINUOUS ROTATION ANIMATION LOOP (Throttled to ~28fps & Paused Off-Screen) ──
         let animationFrameId: number;
         const clock = new THREE.Clock();
         let isVisible = !document.hidden;
+        let isNearTop = window.scrollY < window.innerHeight * 1.35;
+        const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+        let lastRenderMs = 0;
+
+        const handleScroll = () => {
+            isNearTop = window.scrollY < window.innerHeight * 1.35;
+        };
+        window.addEventListener("scroll", handleScroll, { passive: true });
 
         const handleVisibilityChange = () => {
             isVisible = !document.hidden;
@@ -217,9 +225,15 @@ export default function BeraxisCosmicCanvas({
         };
         document.addEventListener("visibilitychange", handleVisibilityChange, { passive: true });
 
-        const animate = () => {
+        // Render initial frame immediately
+        renderer.render(scene, camera);
+
+        const animate = (now: number = 0) => {
+            if (prefersReducedMotion) return;
             animationFrameId = requestAnimationFrame(animate);
-            if (!isVisible) return;
+            if (!isVisible || !isNearTop) return;
+            if (now - lastRenderMs < 35) return; // ~28fps cap eliminates GPU saturation
+            lastRenderMs = now;
 
             const elapsedTime = clock.getElapsedTime();
 
@@ -249,6 +263,7 @@ export default function BeraxisCosmicCanvas({
         return () => {
             cancelAnimationFrame(animationFrameId);
             window.removeEventListener("resize", handleResize);
+            window.removeEventListener("scroll", handleScroll);
             document.removeEventListener("visibilitychange", handleVisibilityChange);
             if (interactive) {
                 window.removeEventListener("pointermove", handlePointerMove);

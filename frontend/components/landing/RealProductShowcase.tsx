@@ -87,7 +87,7 @@ export default function RealProductShowcase() {
 
             {/* Interactive Screen Selector Tabs with Classy Frosted Glass Dock */}
             <div className="flex justify-center mb-8">
-                <div className="inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl backdrop-blur-2xl bg-white/[0.04] border border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_12px_30px_rgba(0,0,0,0.5)]">
+                <div className="inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl bg-[#0A0E1A]/90 border border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_12px_30px_rgba(0,0,0,0.5)]">
                     <button
                         type="button"
                         onClick={() => setActiveTab("apps")}

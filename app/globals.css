@@ -34,18 +34,18 @@ body {
 }
 
 .glass-panel {
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-panel-interactive {
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.25s ease-out;
+  transition: transform 0.2s ease-out, border-color 0.2s ease-out, background-color 0.2s ease-out;
 }
 
 .glass-panel-interactive:hover {
@@ -88,8 +88,8 @@ body {
    ══════════════════════════════════════════════════════════════════════ */
 .galaxy-btn-primary {
   @apply relative inline-flex items-center justify-center gap-2.5 h-[50px] min-h-[50px] py-3.5 px-6 rounded-xl 
-         font-bold text-sm text-white backdrop-blur-xl
-         bg-gradient-to-r from-purple-600/95 via-pink-600/95 to-purple-600/95 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 
+         font-bold text-sm text-white
+         bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 
          border border-white/30 hover:border-white/50 
          shadow-[inset_0_1px_1px_rgba(255,255,255,0.45),0_12px_32px_-6px_rgba(168,85,247,0.45)]
          hover:shadow-[inset_0_1px_2px_rgba(255,255,255,0.65),0_16px_40px_-6px_rgba(236,72,153,0.55)]
@@ -99,8 +99,8 @@ body {
 
 .galaxy-btn-secondary {
   @apply relative inline-flex items-center justify-center gap-2.5 h-[50px] min-h-[50px] py-3.5 px-6 rounded-xl 
-         font-bold text-sm text-gray-200 hover:text-white backdrop-blur-xl
-         bg-white/[0.06] hover:bg-white/[0.12] 
+         font-bold text-sm text-gray-200 hover:text-white
+         bg-[#0F172A]/85 hover:bg-[#1E293B]/90 
          border border-white/20 hover:border-white/40 
          shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_8px_20px_rgba(0,0,0,0.3)]
          hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.45),0_12px_28px_rgba(0,0,0,0.45)]
@@ -110,8 +110,8 @@ body {
 
 .galaxy-btn-outline {
   @apply relative inline-flex items-center justify-center gap-2.5 h-[50px] min-h-[50px] py-3.5 px-6 rounded-xl 
-         font-bold text-sm text-purple-100 hover:text-white backdrop-blur-xl
-         bg-gradient-to-b from-white/[0.10] via-purple-950/40 to-white/[0.04] hover:bg-purple-900/40 
+         font-bold text-sm text-purple-100 hover:text-white
+         bg-gradient-to-b from-purple-950/70 to-[#0A0E1A]/90 hover:bg-purple-900/50 
          border border-purple-400/40 hover:border-purple-300/80 
          shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_8px_24px_rgba(0,0,0,0.35)]
          hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.45),0_12px_30px_rgba(147,51,234,0.35)]
@@ -123,21 +123,21 @@ body {
    CLASSY GLASS STRIPS & DOCKS SYSTEM
    ══════════════════════════════════════════════════════════════════════ */
 .galaxy-glass-strip {
-  @apply inline-flex items-center gap-2 px-5 py-2 rounded-full backdrop-blur-xl
-         bg-white/[0.04] border border-white/15 
+  @apply inline-flex items-center gap-2 px-5 py-2 rounded-full backdrop-blur-sm
+         bg-[#0A0E1A]/80 border border-white/15 
          shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_6px_20px_rgba(0,0,0,0.25)];
 }
 
 .galaxy-glass-dock {
-  @apply backdrop-blur-2xl bg-gradient-to-b from-white/[0.08] via-[#0A0E1A]/80 to-[#0A0E1A]/95
+  @apply backdrop-blur-sm bg-gradient-to-b from-[#13192B]/90 via-[#0A0E1A]/90 to-[#0A0E1A]/95
          border border-white/20 hover:border-white/30 
          shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_20px_50px_-10px_rgba(0,0,0,0.6)]
          rounded-2xl sm:rounded-3xl;
 }
 
 .galaxy-glass-pill {
-  @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full backdrop-blur-xl
-         bg-white/[0.06] border border-white/20
+  @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full backdrop-blur-sm
+         bg-[#0A0E1A]/80 border border-white/20
          shadow-[inset_0_1px_1px_rgba(255,255,255,0.35)];
 }
 
