@@ -16,6 +16,7 @@ import { DEFAULT_PRICING_CONFIG, PricingConfig } from '@/lib/pricingConfig';
 
 export type Workspace = { 
     id: string; 
+    user_id?: string;
     name: string; 
     owner_email: string; 
     member_count: number; 
@@ -456,6 +457,21 @@ function SuperAdminPageContent() {
         setIsLoggedIn(true);
         fetchAllData();
         fetchExperimentsData();
+
+        // Real-time auto-sync every 15s and on window focus so new signups appear immediately
+        const intervalId = setInterval(() => {
+            fetchAllData(0, true);
+        }, 15000);
+        const onFocus = () => fetchAllData(0, true);
+        if (typeof window !== 'undefined') {
+            window.addEventListener('focus', onFocus);
+        }
+        return () => {
+            clearInterval(intervalId);
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('focus', onFocus);
+            }
+        };
     }, []);
 
     const showToast = (msg: string) => {
@@ -463,16 +479,20 @@ function SuperAdminPageContent() {
         setTimeout(() => setToastMessage(null), 4000);
     };
 
-    const fetchAllData = async (retryCount = 0) => {
-        setLoading(true);
+    const fetchAllData = async (retryCount = 0, silent = false) => {
+        if (!silent) setLoading(true);
         setError(null);
+        let overviewLoaded = false;
         
         // 1. Instantly load native overview in parallel (<50ms) so no tabs are empty
         try {
-            const overviewRes = await fetch("/api/admin/overview");
+            const overviewRes = await fetch(`/api/admin/overview?t=${Date.now()}`, { cache: "no-store" });
             if (overviewRes.ok) {
                 const fb = await overviewRes.json();
-                if (Array.isArray(fb.workspaces) && fb.workspaces.length > 0) setWorkspaces(fb.workspaces);
+                if (Array.isArray(fb.workspaces) && fb.workspaces.length > 0) {
+                    setWorkspaces(fb.workspaces);
+                    overviewLoaded = true;
+                }
                 if (Array.isArray(fb.users) && fb.users.length > 0) setUsers(fb.users);
                 if (Array.isArray(fb.tenants) && fb.tenants.length > 0) setTenants(fb.tenants);
                 if (Array.isArray(fb.payments) && fb.payments.length > 0) setPayments(fb.payments);
@@ -510,15 +530,15 @@ function SuperAdminPageContent() {
                 fetchAPI("/super-admin/audit-logs").catch(() => null),
             ]);
 
-            if (wsRes?.ok) {
+            if (wsRes?.ok && !overviewLoaded) {
                 const data = await wsRes.json();
                 if (Array.isArray(data) && data.length > 0) setWorkspaces(prev => (data.length >= prev.length ? data : prev));
             }
-            if (statsRes?.ok) {
+            if (statsRes?.ok && !overviewLoaded) {
                 const data = await statsRes.json();
                 if (data && typeof data === 'object') setStats(data);
             }
-            if (usersRes?.ok) {
+            if (usersRes?.ok && !overviewLoaded) {
                 const data = await usersRes.json();
                 if (Array.isArray(data) && data.length > 0) setUsers(prev => (data.length >= prev.length ? data : prev));
             }
@@ -526,7 +546,7 @@ function SuperAdminPageContent() {
                 const data = await salesRes.json();
                 if (Array.isArray(data) && data.length > 0) setSales(data);
             }
-            if (tenantsRes?.ok) {
+            if (tenantsRes?.ok && !overviewLoaded) {
                 const data = await tenantsRes.json();
                 if (Array.isArray(data) && data.length > 0) setTenants(data);
             }
@@ -872,44 +892,55 @@ function SuperAdminPageContent() {
         if (!wsForm.name.trim() || !wsForm.owner_email.trim()) return;
 
         try {
-            const res = await fetchAPI("/super-admin/users/create", {
+            const res = await fetch("/api/admin/users", {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     email: wsForm.owner_email.trim(),
                     password: "Company@123456",
                     name: wsForm.name.trim(),
+                    company_name: wsForm.name.trim(),
                     role: "owner",
-                    plan: wsForm.plan
+                    plan: wsForm.plan,
+                    seats: Number(wsForm.member_count) || 1
                 })
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             if (res.ok) {
-                showToast(`🏢 Company Workspace '${wsForm.name}' created with active owner!`);
+                showToast(`🏢 Company Workspace '${wsForm.name}' created and persisted!`);
                 setIsCreateWorkspaceOpen(false);
-                setWsForm({ name: "", owner_email: "", plan: "Standard Plan", member_count: 5 });
-                fetchAllData();
+                setWsForm({ name: "", owner_email: "", plan: "One App Free", member_count: 1 });
+                await fetchAllData(0, true);
             } else {
-                const newWs: Workspace = {
-                    id: `ws_${Date.now()}`,
-                    name: wsForm.name.trim(),
-                    owner_email: wsForm.owner_email.trim(),
-                    member_count: Number(wsForm.member_count) || 1,
-                    plan: wsForm.plan,
-                    created_at: new Date().toISOString()
-                };
-                setWorkspaces([newWs, ...workspaces]);
-                setIsCreateWorkspaceOpen(false);
-                showToast(`🏢 Company Workspace '${newWs.name}' created!`);
+                alert(`Error: ${data.error || "Failed to create company workspace"}`);
             }
         } catch (err: any) {
             alert(`Error: ${err.message}`);
         }
     };
 
-    const handleDeleteWorkspace = (id: string, name: string) => {
-        if (!confirm(`Archive / Delete Company '${name}' and detach all resources?`)) return;
-        setWorkspaces(workspaces.filter(w => w.id !== id));
-        showToast(`🗑️ Company '${name}' archived.`);
+    const handleDeleteWorkspace = async (id: string, name: string) => {
+        if (!confirm(`Delete Company '${name}' and revoke its user account permanently?`)) return;
+        const targetWs = workspaces.find(w => w.id === id);
+        const query = new URLSearchParams();
+        if (targetWs?.user_id) query.set("id", targetWs.user_id);
+        else query.set("id", id);
+        if (targetWs?.owner_email) query.set("email", targetWs.owner_email);
+
+        try {
+            const res = await fetch(`/api/admin/users?${query.toString()}`, { method: "DELETE" });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+                setWorkspaces(prev => prev.filter(w => w.id !== id));
+                setUsers(prev => prev.filter(u => u.email !== targetWs?.owner_email));
+                showToast(`🗑️ Company '${name}' permanently deleted.`);
+                await fetchAllData(0, true);
+            } else {
+                alert(`Error: ${data.error || "Failed to delete company"}`);
+            }
+        } catch (err: any) {
+            alert(`Error: ${err.message}`);
+        }
     };
 
     const handleEnterWorkspace = (ws: Workspace) => {
@@ -926,24 +957,28 @@ function SuperAdminPageContent() {
     const handleUpdatePlan = async () => {
         if (!isChangePlanOpen) return;
         try {
-            const res = await fetchAPI(`/super-admin/tenants/${isChangePlanOpen.id}/plan`, {
-                method: "PUT",
+            const res = await fetch("/api/admin/users", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    id: isChangePlanOpen.id,
+                    user_id: isChangePlanOpen.user_id,
+                    email: isChangePlanOpen.owner_email,
                     plan: selectedPlanInput,
                     subscription_status: "active"
                 })
             });
+            const data = await res.json().catch(() => ({}));
             if (res.ok) {
-                showToast(`⭐ Workspace plan upgraded to ${selectedPlanInput}!`);
+                setWorkspaces(prev => prev.map(w => w.id === isChangePlanOpen.id ? { ...w, plan: selectedPlanInput } : w));
+                showToast(`⭐ Workspace plan updated to ${selectedPlanInput}!`);
                 setIsChangePlanOpen(null);
-                fetchAllData();
+                await fetchAllData(0, true);
             } else {
-                setWorkspaces(workspaces.map(w => w.id === isChangePlanOpen.id ? { ...w, plan: selectedPlanInput } : w));
-                setIsChangePlanOpen(null);
-                showToast(`⭐ Workspace plan updated.`);
+                alert(`Error: ${data.error || "Failed to update plan"}`);
             }
-        } catch (err) {
-            alert("Failed to update plan");
+        } catch (err: any) {
+            alert(`Failed to update plan: ${err.message}`);
         }
     };
 
@@ -953,18 +988,19 @@ function SuperAdminPageContent() {
         if (!userForm.email.trim()) return;
 
         try {
-            const res = await fetchAPI("/super-admin/users/create", {
+            const res = await fetch("/api/admin/users", {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(userForm)
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             if (res.ok) {
-                showToast(`👤 User '${userForm.email}' created and provisioned!`);
+                showToast(`👤 User '${userForm.email}' created and persisted!`);
                 setIsCreateUserOpen(false);
-                setUserForm({ name: "", email: "", password: "User@123456", role: "user", plan: "Standard Plan", workspace_id: "" });
-                fetchAllData();
+                setUserForm({ name: "", email: "", password: "User@123456", role: "user", plan: "One App Free", workspace_id: "" });
+                await fetchAllData(0, true);
             } else {
-                alert(`Error: ${data.detail || "Failed to create user"}`);
+                alert(`Error: ${data.error || data.detail || "Failed to create user"}`);
             }
         } catch (err: any) {
             alert(`Error: ${err.message}`);
@@ -974,17 +1010,22 @@ function SuperAdminPageContent() {
     const handleResetPassword = async () => {
         if (!isResetPasswordOpen || !newPasswordInput.trim()) return;
         try {
-            const res = await fetchAPI(`/super-admin/users/${isResetPasswordOpen.id}/reset-password`, {
-                method: "PUT",
-                body: JSON.stringify({ new_password: newPasswordInput.trim() })
+            const res = await fetch("/api/admin/users", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: isResetPasswordOpen.id,
+                    email: isResetPasswordOpen.email,
+                    password: newPasswordInput.trim()
+                })
             });
+            const d = await res.json().catch(() => ({}));
             if (res.ok) {
                 showToast(`🔑 Password updated for ${isResetPasswordOpen.email}!`);
                 setIsResetPasswordOpen(null);
                 setNewPasswordInput("");
             } else {
-                const d = await res.json();
-                alert(`Error: ${d.detail || "Failed to reset password"}`);
+                alert(`Error: ${d.error || d.detail || "Failed to reset password"}`);
             }
         } catch (err: any) {
             alert(`Error: ${err.message}`);
@@ -994,25 +1035,41 @@ function SuperAdminPageContent() {
     const handleDeleteUser = async (userId: string, email: string) => {
         if (!confirm(`Delete user ${email}? This will revoke access permanently.`)) return;
         try {
-            await fetchAPI(`/super-admin/users/${userId}`, { method: "DELETE" });
-            setUsers(users.filter(u => u.id !== userId));
-            showToast(`🗑️ User ${email} deleted.`);
-        } catch (err) {
-            setUsers(users.filter(u => u.id !== userId));
-            showToast(`🗑️ User ${email} removed.`);
+            const query = new URLSearchParams({ id: userId, email });
+            const res = await fetch(`/api/admin/users?${query.toString()}`, { method: "DELETE" });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+                setUsers(prev => prev.filter(u => u.id !== userId));
+                setWorkspaces(prev => prev.filter(w => w.owner_email !== email));
+                showToast(`🗑️ User ${email} permanently deleted.`);
+                await fetchAllData(0, true);
+            } else {
+                alert(`Error: ${data.error || "Failed to delete user"}`);
+            }
+        } catch (err: any) {
+            alert(`Error: ${err.message}`);
         }
     };
 
     const handleTenantAction = async (tenantId: string, action: "activate" | "deactivate" | "extend-trial") => {
         setActionLoading(`${tenantId}-${action}`);
         try {
-            const res = await fetchAPI(`/super-admin/tenants/${tenantId}/${action}`, { method: "POST" });
+            const targetTenant = tenants.find(t => t.id === tenantId);
+            const res = await fetch("/api/admin/users", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: tenantId,
+                    email: targetTenant?.email,
+                    action
+                })
+            });
             if (res.ok) {
-                showToast(`Action '${action}' applied successfully.`);
-                await fetchAllData();
+                showToast(`Action '${action}' applied and persisted.`);
+                await fetchAllData(0, true);
             } else {
-                const e = await res.json().catch(() => ({ detail: "Action failed" }));
-                alert(`Error: ${e.detail}`);
+                const e = await res.json().catch(() => ({ error: "Action failed" }));
+                alert(`Error: ${e.error || e.detail}`);
             }
         } catch (e: any) {
             alert(`Exception: ${e.message}`);

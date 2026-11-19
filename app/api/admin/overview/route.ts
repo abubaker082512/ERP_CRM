@@ -20,21 +20,25 @@ export async function GET() {
   let rawUsers: any[] = [];
 
   try {
-    const adminUrl = `${SUPABASE_URL}/auth/v1/admin/users?per_page=100`;
-    const resp = await fetch(adminUrl, {
-      headers: {
-        apikey: SUPABASE_SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
-      },
-      cache: "no-store"
-    });
+    for (let page = 1; page <= 20; page++) {
+      const adminUrl = `${SUPABASE_URL}/auth/v1/admin/users?page=${page}&per_page=100`;
+      const resp = await fetch(adminUrl, {
+        headers: {
+          apikey: SUPABASE_SERVICE_ROLE_KEY,
+          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+        },
+        cache: "no-store"
+      });
 
-    if (resp.ok) {
+      if (!resp.ok) break;
       const data = await resp.json();
-      if (Array.isArray(data.users) && data.users.length > 0) {
-        rawUsers = data.users;
-      }
+      const batch = Array.isArray(data.users) ? data.users : [];
+      rawUsers.push(...batch);
+      if (batch.length < 100) break;
     }
+    rawUsers.sort(
+      (a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    );
   } catch (err) {
     console.warn("[AdminOverview] Supabase Auth Admin REST API fetch failed:", err);
   }
@@ -58,11 +62,12 @@ export async function GET() {
       }
 
       const isAdmin = SUPER_ADMIN_EMAILS.includes(email) || email.endsWith("@beraxis.online") || email.endsWith("@erp-crm.com");
-      const plan = isAdmin ? "Admin Full Control" : (meta.plan && meta.plan !== "Standard Plan ($1/mo)" && meta.plan !== "Standard Plan" ? meta.plan : "One App Free");
-      const memberCount = isAdmin ? 8 : (meta.seats || 1);
+      const plan = meta.plan ? meta.plan : (isAdmin ? "Admin Full Control" : "One App Free");
+      const memberCount = meta.seats !== undefined ? Number(meta.seats) : (isAdmin ? 8 : 1);
 
       return {
         id: `ws-${u.id.slice(0, 12)}`,
+        user_id: u.id,
         name: company,
         owner_email: email,
         member_count: memberCount,
@@ -84,26 +89,29 @@ export async function GET() {
       }
 
       const isAdmin = SUPER_ADMIN_EMAILS.includes(email) || email.endsWith("@beraxis.online") || email.endsWith("@erp-crm.com");
-      const role = isAdmin ? "super_admin" : (meta.role || "owner");
+      const role = meta.role || (isAdmin ? "super_admin" : "owner");
 
       return {
         id: u.id,
         email: email,
         name: name,
         role: role,
-        subscription_status: "active",
+        subscription_status: meta.subscription_status || "active",
         workspace_name: company,
         created_at: u.created_at || now.toISOString()
       };
     });
 
-    tenants = rawUsers.map((u: any) => ({
-      id: u.id,
-      email: u.email || "",
-      subscription_status: "active",
-      trial_ends_at: trialEnds,
-      created_at: u.created_at || now.toISOString()
-    }));
+    tenants = rawUsers.map((u: any) => {
+      const meta = u.user_metadata || {};
+      return {
+        id: u.id,
+        email: u.email || "",
+        subscription_status: meta.subscription_status || "active",
+        trial_ends_at: meta.trial_ends_at || trialEnds,
+        created_at: u.created_at || now.toISOString()
+      };
+    });
   } else {
     // Graceful fallback if database/auth is unreachable
     workspaces = [
@@ -283,16 +291,23 @@ export async function GET() {
     dynamic_pricing: true
   };
 
-  return NextResponse.json({
-    success: true,
-    workspaces,
-    users,
-    tenants,
-    stats,
-    sales,
-    payments,
-    health,
-    auditLogs,
-    featureFlags
-  });
+  return NextResponse.json(
+    {
+      success: true,
+      workspaces,
+      users,
+      tenants,
+      stats,
+      sales,
+      payments,
+      health,
+      auditLogs,
+      featureFlags
+    },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      },
+    }
+  );
 }
