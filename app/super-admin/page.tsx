@@ -2059,13 +2059,23 @@ function SuperAdminPageContent() {
                             </div>
 
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2 border-t border-gray-800/80">
-                                <div className="flex-1">
-                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
-                                        Paddle Webhook Destination URL (Paste in Paddle Dashboard &gt; Developer tools &gt; Notifications)
-                                    </label>
-                                    <code className="text-xs text-emerald-400 font-mono bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
-                                        https://beraxis.online/api/payments/paddle/webhook
-                                    </code>
+                                <div className="flex-1 space-y-2.5">
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                            Creem Webhook Destination URL (Paste in Creem Dashboard &gt; Developers &gt; Webhooks)
+                                        </label>
+                                        <code className="text-xs text-purple-300 font-mono bg-purple-500/10 px-2 py-1 rounded border border-purple-500/20">
+                                            https://www.beraxis.online/api/payments/creem/webhook
+                                        </code>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                            Paddle Webhook Destination URL (Paste in Paddle Dashboard &gt; Developer tools &gt; Notifications)
+                                        </label>
+                                        <code className="text-xs text-emerald-400 font-mono bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
+                                            https://beraxis.online/api/payments/paddle/webhook
+                                        </code>
+                                    </div>
                                 </div>
                                 <button
                                     type="button"
