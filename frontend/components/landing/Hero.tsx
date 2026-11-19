@@ -175,54 +175,54 @@ export default function Hero() {
                 </div>
 
                 {/* 6. Luxury Floating Glass Dock Strip (Enterprise Trust Badges) */}
-                <div className="w-full max-w-4xl p-2.5 sm:p-3 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-[#13192B]/90 via-[#0A0E1A]/90 to-[#0A0E1A]/95 border border-white/20 hover:border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_20px_50px_-10px_rgba(0,0,0,0.6),0_0_40px_rgba(168,85,247,0.12)] transition-all">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 text-left">
+                <div className="w-full max-w-6xl p-2.5 sm:p-3 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-[#13192B]/90 via-[#0A0E1A]/90 to-[#0A0E1A]/95 border border-white/20 hover:border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_20px_50px_-10px_rgba(0,0,0,0.6),0_0_40px_rgba(168,85,247,0.12)] transition-all">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 text-left">
                         {/* Feature 1: Migration */}
-                        <Link href="/migration" className="relative group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40 transition-all cursor-pointer overflow-hidden">
-                            <span className="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/25 text-purple-300 border border-purple-400/30 font-extrabold leading-none">
-                                NEW
-                            </span>
-                            <div className="p-2 sm:p-2.5 rounded-xl bg-purple-500/15 border border-purple-400/30 text-purple-400 group-hover:scale-110 transition-transform shrink-0">
+                        <Link href="/migration" className="relative group flex items-center gap-3 p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-purple-500/40 transition-all cursor-pointer">
+                            <div className="p-2.5 rounded-xl bg-purple-500/15 border border-purple-400/30 text-purple-400 group-hover:scale-110 transition-transform shrink-0">
                                 <UploadCloud size={18} />
                             </div>
-                            <div className="min-w-0 pr-8">
-                                <div className="text-xs sm:text-sm text-white font-bold truncate">
-                                    1-Click Migration
+                            <div className="min-w-0 flex-1">
+                                <div className="text-xs sm:text-[13px] text-white font-bold leading-snug flex items-center gap-1.5 flex-wrap">
+                                    <span>1-Click Migration</span>
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/25 text-purple-300 border border-purple-400/30 font-extrabold leading-none">
+                                        NEW
+                                    </span>
                                 </div>
-                                <div className="text-[10px] sm:text-[11px] text-gray-400 truncate">QuickBooks, Odoo, Excel</div>
+                                <div className="text-[11px] text-gray-400 leading-snug mt-0.5">QuickBooks, Odoo, Excel</div>
                             </div>
                         </Link>
 
                         {/* Feature 2: Leads Directory */}
-                        <Link href="/leads-pool" className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer overflow-hidden">
-                            <div className="p-2 sm:p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-400 group-hover:scale-110 transition-transform shrink-0">
+                        <Link href="/leads-pool" className="group flex items-center gap-3 p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer">
+                            <div className="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-400 group-hover:scale-110 transition-transform shrink-0">
                                 <Globe size={18} />
                             </div>
-                            <div className="min-w-0">
-                                <div className="text-xs sm:text-sm text-white font-bold truncate">B2B Leads Directory</div>
-                                <div className="text-[10px] sm:text-[11px] text-cyan-300 truncate font-semibold">48,000+ Contacts</div>
+                            <div className="min-w-0 flex-1">
+                                <div className="text-xs sm:text-[13px] text-white font-bold leading-snug">B2B Leads Directory</div>
+                                <div className="text-[11px] text-cyan-300 leading-snug mt-0.5 font-semibold">48,000+ Contacts</div>
                             </div>
                         </Link>
 
                         {/* Feature 3: Built-in Office Suite */}
-                        <Link href="/features/office-suite" className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer overflow-hidden">
-                            <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-400 group-hover:scale-110 transition-transform shrink-0">
+                        <Link href="/features/office-suite" className="group flex items-center gap-3 p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer">
+                            <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-400 group-hover:scale-110 transition-transform shrink-0">
                                 <Layers size={18} />
                             </div>
-                            <div className="min-w-0">
-                                <div className="text-xs sm:text-sm text-white font-bold truncate">Full Office Suite</div>
-                                <div className="text-[10px] sm:text-[11px] text-gray-400 truncate">Sheets, Slides, Docs &amp; Meet</div>
+                            <div className="min-w-0 flex-1">
+                                <div className="text-xs sm:text-[13px] text-white font-bold leading-snug">Full Office Suite</div>
+                                <div className="text-[11px] text-gray-400 leading-snug mt-0.5">Sheets, Slides, Docs &amp; Meet</div>
                             </div>
                         </Link>
 
                         {/* Feature 4: Enterprise Security */}
-                        <Link href="/security" className="group flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-pink-500/40 transition-all cursor-pointer overflow-hidden">
-                            <div className="p-2 sm:p-2.5 rounded-xl bg-pink-500/15 border border-pink-400/30 text-pink-400 group-hover:scale-110 transition-transform shrink-0">
+                        <Link href="/security" className="group flex items-center gap-3 p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 hover:border-pink-500/40 transition-all cursor-pointer">
+                            <div className="p-2.5 rounded-xl bg-pink-500/15 border border-pink-400/30 text-pink-400 group-hover:scale-110 transition-transform shrink-0">
                                 <ShieldCheck size={18} />
                             </div>
-                            <div className="min-w-0">
-                                <div className="text-xs sm:text-sm text-white font-bold truncate">Enterprise Security</div>
-                                <div className="text-[10px] sm:text-[11px] text-gray-400 truncate">256-Bit SSL &amp; Cloud RLS</div>
+                            <div className="min-w-0 flex-1">
+                                <div className="text-xs sm:text-[13px] text-white font-bold leading-snug">Enterprise Security</div>
+                                <div className="text-[11px] text-gray-400 leading-snug mt-0.5">256-Bit SSL &amp; Cloud RLS</div>
                             </div>
                         </Link>
                     </div>
