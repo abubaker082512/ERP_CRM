@@ -306,17 +306,89 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
       } catch {}
     };
 
+    const CLOUD_SYNC_PREFIXES = [
+      "accounting_invoices",
+      "accounting_bills",
+      "accounting_entries",
+      "accounting_coa",
+      "hr_employees",
+      "helpdesk_tickets",
+      "mrp_orders",
+      "projects_list",
+    ];
+
+    const hydrateCloudState = async () => {
+      const info = getLoggedInUserInfo();
+      if (!info.email || info.userKey === "guest") return;
+      try {
+        const res = await fetch(`/api/workspace/state?email=${encodeURIComponent(info.email)}&t=${Date.now()}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const cloud = data?.state;
+        if (!cloud || typeof cloud !== "object") return;
+        let hydrated = false;
+        for (const [k, v] of Object.entries(cloud)) {
+          if (typeof v === "string" && !localStorage.getItem(k)) {
+            localStorage.setItem(k, v);
+            hydrated = true;
+          }
+        }
+        if (hydrated) loadUserScopedContext();
+      } catch {}
+    };
+
+    let lastSnapshot = "";
+    const pushCloudState = async () => {
+      const info = getLoggedInUserInfo();
+      if (!info.email || info.userKey === "guest") return;
+      try {
+        const payload: Record<string, string> = {};
+        const branchesKey = `beraxis_branches_${info.userKey}`;
+        const branchesVal = localStorage.getItem(branchesKey);
+        if (branchesVal) payload[branchesKey] = branchesVal;
+
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k) continue;
+          if (CLOUD_SYNC_PREFIXES.some((p) => k.includes(p))) {
+            const val = localStorage.getItem(k);
+            if (val) payload[k] = val;
+          }
+        }
+        const snap = JSON.stringify(payload);
+        if (!snap || snap === "{}" || snap === lastSnapshot || snap.length > 180000) return;
+        lastSnapshot = snap;
+        await fetch("/api/workspace/state", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: info.email, state: payload }),
+        });
+      } catch {}
+    };
+
     loadUserScopedContext();
     syncLivePlan();
+    hydrateCloudState();
+
+    const cloudInterval = setInterval(pushCloudState, 20000);
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") pushCloudState();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
     const handleAuthOrStorageChange = () => {
       loadUserScopedContext();
       syncLivePlan();
+      hydrateCloudState();
     };
 
     window.addEventListener("beraxis_auth_changed", handleAuthOrStorageChange);
     window.addEventListener("storage", handleAuthOrStorageChange);
     return () => {
+      clearInterval(cloudInterval);
+      document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("beraxis_auth_changed", handleAuthOrStorageChange);
       window.removeEventListener("storage", handleAuthOrStorageChange);
     };

@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
             recurring: {
               interval: interval
             }
-          }
+          } as any
         }
       ],
       default_payment_method: paymentMethod.id,
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
+    const invoice = subscription.latest_invoice as any;
     const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
 
     // Check if 3DS authentication is required by issuing bank
@@ -210,7 +210,6 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("[Stripe Charge Card Error]:", error);
 
-    // Provide clean, human-readable card error messages
     let userMsg = error.message || "Failed to process card payment with Stripe.";
     if (error.code === "card_declined") {
       userMsg = `Your card was declined by the bank. Reason: ${error.decline_code || "Transaction not allowed"}. Please try another card.`;

@@ -30,10 +30,19 @@ function LoginForm() {
         setError("");
         setLoading(true);
         try {
-            const resp = await fetchAPI('/auth/login', {
+            let resp = await fetchAPI('/auth/login', {
                 method: 'POST',
                 body: JSON.stringify({ email, password })
-            });
+            }).catch(() => null);
+
+            // Instant Supabase Auth fallback if Render backend is asleep (502/503/network error)
+            if (!resp || resp.status >= 500) {
+                resp = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+            }
 
             let data;
             try {

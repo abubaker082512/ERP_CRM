@@ -154,7 +154,7 @@ export default function DataExportCenter() {
       activeBranch: {
         id: activeBranch?.id,
         name: activeBranch?.name,
-        industry: activeBranch?.industry
+        industry: activeBranch?.industryId
       },
       summary: {
         totalInvoices: invoices.length,

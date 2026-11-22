@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
             recurring: {
               interval: interval
             }
-          }
+          } as any
         }
       ],
       default_payment_method: paymentMethod.id,
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
+    const invoice = subscription.latest_invoice as any;
     const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
 
     // Check if 3DS authentication is required by issuing bank

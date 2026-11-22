@@ -199,7 +199,7 @@ function SuperAdminPageContent() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<
-        "overview" | "pricing" | "promocodes" | "payments" | "billing" | "users" | "sales" | "flags" | "broadcast" | "audit" | "diagnostics" | "experiments"
+        "overview" | "pricing" | "promocodes" | "payments" | "billing" | "users" | "sales" | "flags" | "broadcast" | "audit" | "diagnostics" | "experiments" | "outbound"
     >("overview");
 
     // Dynamic SaaS Plan Pricing state
@@ -1306,7 +1306,7 @@ function SuperAdminPageContent() {
                             <Download size={15} /> Export CSV
                         </button>
                         <button
-                            onClick={fetchAllData}
+                            onClick={() => fetchAllData()}
                             className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-lg shadow-purple-600/30 transition-all cursor-pointer"
                         >
                             <RefreshCw size={15} className={loading ? "animate-spin" : ""} /> Sync Matrix
@@ -1362,9 +1362,9 @@ function SuperAdminPageContent() {
                     <StatCard label="Active Promos"   value={safePromocodes.filter(p => p?.status === 'active').length}                      icon={<Tag size={18}/>}         color="text-pink-400"   bg="bg-pink-500/10" />
                     <StatCard label="Paid Subs"       value={stats?.paid_subscribers ?? paidPayments.length}                           icon={<CheckCircle size={18}/>} color="text-emerald-400" bg="bg-emerald-500/10" />
                     <StatCard label="DirectPay Card"  value={`$${Number(stats?.cc_revenue ?? monthlySaaSRevenue ?? 0).toLocaleString()}`}         icon={<CreditCard size={18}/>}  color="text-cyan-400"    bg="bg-cyan-500/10" />
-                    <StatCard label="Monthly MRR"     value={`$${Number(stats?.total_saas_revenue ?? stats?.mrr ?? monthlySaaSRevenue ?? 0).toLocaleString()}`}  icon={<TrendingUp size={18}/>}  color="text-amber-400"  bg="bg-amber-500/10" />
-                    <StatCard label="ERP Volume"      value={`$${Number(stats?.platform_revenue ?? stats?.total_revenue ?? 0).toLocaleString(undefined,{minimumFractionDigits:0})}`} icon={<DollarSign size={18}/>} color="text-green-400" bg="bg-green-500/10" title="Total gross sales invoiced and transacted by all tenant businesses inside their ERP modules" />
-                    <StatCard label="API Latency"     value={`${health?.services?.api_server?.latency_ms ?? health?.latency_ms ?? 18}ms`}                    icon={<Activity size={18}/>}    color="text-indigo-400" bg="bg-indigo-500/10" />
+                    <StatCard label="Monthly MRR"     value={`$${Number(stats?.total_saas_revenue ?? (stats as any)?.mrr ?? monthlySaaSRevenue ?? 0).toLocaleString()}`}  icon={<TrendingUp size={18}/>}  color="text-amber-400"  bg="bg-amber-500/10" />
+                    <StatCard label="ERP Volume"      value={`$${Number(stats?.platform_revenue ?? (stats as any)?.total_revenue ?? 0).toLocaleString(undefined,{minimumFractionDigits:0})}`} icon={<DollarSign size={18}/>} color="text-green-400" bg="bg-green-500/10" title="Total gross sales invoiced and transacted by all tenant businesses inside their ERP modules" />
+                    <StatCard label="API Latency"     value={`${health?.services?.api_server?.latency_ms ?? (health as any)?.latency_ms ?? 18}ms`}                    icon={<Activity size={18}/>}    color="text-indigo-400" bg="bg-indigo-500/10" />
                 </div>
 
                 {/* ── NAVIGATION TABS ── */}

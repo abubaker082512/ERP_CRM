@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Clock, AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
 
-const INACTIVITY_TIMEOUT_SECONDS = 60; // 1 minute
-const WARNING_THRESHOLD_SECONDS = 15; // Warning appears 15s before timeout (at 45s idle)
+const INACTIVITY_TIMEOUT_SECONDS = 1800; // 30 minutes (industry standard)
+const WARNING_THRESHOLD_SECONDS = 60; // Warning appears 60s before timeout
 
 export default function InactivitySessionTracker() {
     const router = useRouter();

@@ -30,14 +30,14 @@ export default function PricingPage() {
         }).then(instance => {
             if (instance) {
                 setPaddle(instance);
-                instance.pricePreview({
+                (instance as any).pricePreview({
                     items: [
                         { priceId: PADDLE_PRICE_MAP["standard-annual"].priceId, quantity: 1 },
                         { priceId: PADDLE_PRICE_MAP["standard-monthly"].priceId, quantity: 1 },
                         { priceId: PADDLE_PRICE_MAP["custom-annual"].priceId, quantity: 1 },
                         { priceId: PADDLE_PRICE_MAP["custom-monthly"].priceId, quantity: 1 }
                     ]
-                }).then(preview => {
+                }).then((preview: any) => {
                     if (preview?.data?.details?.lineItems) {
                         const map: Record<string, string> = {};
                         for (const item of preview.data.details.lineItems) {
@@ -45,7 +45,7 @@ export default function PricingPage() {
                         }
                         setPaddlePrices(map);
                     }
-                }).catch(err => console.warn("Paddle pricePreview:", err));
+                }).catch((err: any) => console.warn("Paddle pricePreview:", err));
             }
         }).catch(err => console.warn("Paddle init:", err));
     }, []);

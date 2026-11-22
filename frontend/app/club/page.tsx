@@ -432,9 +432,8 @@ export default function ClubAndFitnessPage() {
   return (
     <div className="min-h-screen bg-[#0d0f12] text-slate-100 flex flex-col font-sans">
       <StandardModuleHeader
-        title="Club & Fitness Hub"
-        subtitle={`${activeBranch?.name || "Global"} • Facility Management, Courts & Memberships`}
-        icon={Dumbbell}
+        moduleName="Club & Fitness Hub"
+        moduleIcon={<Dumbbell size={20} />}
         menuItems={MENU_ITEMS}
       />
 

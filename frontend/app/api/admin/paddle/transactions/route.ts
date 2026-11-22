@@ -30,7 +30,7 @@ export async function GET() {
           currency: t.currencyCode,
           created_at: t.createdAt,
           payment_method: t.payments?.[0]?.methodDetails?.type || "card",
-          customer_email: t.details?.totals?.email || "customer@paddle.com"
+          customer_email: (t.details?.totals as any)?.email || "customer@paddle.com"
         });
       }
     } catch (e: any) {

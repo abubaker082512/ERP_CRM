@@ -143,6 +143,11 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general");
   const [saving, setSaving] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteRole, setInviteRole] = useState("accountant");
+  const [inviting, setInviting] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<{ name: string; email: string; role: string }[]>([]);
 
   // General settings state (isolated per entity)
   const [companyName, setCompanyName] = useState("");
@@ -695,10 +700,99 @@ export default function SettingsPage() {
                   </h3>
                   <p className="text-xs text-gray-400 leading-relaxed">
                     {activeBranch?.entityType === "individual"
-                      ? "Your workspace is configured as an independent Individual Entity managed by a single user. Only one concurrent session can be active worldwide at a time."
-                      : "Your workspace is configured as an independent Company Organization. Each user account enforces a single active login session worldwide at any given time."}
+                      ? "Your workspace is configured as an independent Individual Entity managed by a single user. Upgrade to a multi-seat plan to add team members."
+                      : "Invite team members to your isolated workspace and assign role-based permissions."}
                   </p>
                 </div>
+
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!inviteEmail.trim()) return;
+                    setInviting(true);
+                    try {
+                      const res = await fetch("/api/admin/users", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          email: inviteEmail.trim(),
+                          name: inviteName.trim() || inviteEmail.split("@")[0],
+                          company_name: activeBranch?.name || "Workspace",
+                          role: inviteRole,
+                          plan: isFreePlan ? "One App Free" : "Standard Plan ($1/mo Early Bird)",
+                        }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (res.ok) {
+                        setTeamMembers((prev) => [
+                          ...prev,
+                          { name: inviteName.trim() || inviteEmail.split("@")[0], email: inviteEmail.trim(), role: inviteRole },
+                        ]);
+                        setInviteEmail("");
+                        setInviteName("");
+                        setSaveSuccessMsg(`Invited ${inviteEmail.trim()} as ${inviteRole}!`);
+                        setTimeout(() => setSaveSuccessMsg(null), 3500);
+                      } else {
+                        setSaveSuccessMsg(data.error || "Failed to invite user");
+                      }
+                    } finally {
+                      setInviting(false);
+                    }
+                  }}
+                  className="p-5 bg-[#1E293B] border border-gray-700 rounded-2xl space-y-4"
+                >
+                  <h4 className="text-sm font-bold text-white">Invite Team Member</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Full Name"
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                      className="bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
+                    />
+                    <input
+                      type="email"
+                      required
+                      placeholder="colleague@company.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      className="bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
+                    />
+                    <select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value)}
+                      className="bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
+                    >
+                      <option value="admin">Admin (Full Access)</option>
+                      <option value="accountant">Accountant</option>
+                      <option value="sales">Sales / CRM</option>
+                      <option value="staff">Staff / Viewer</option>
+                    </select>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={inviting}
+                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold disabled:opacity-50"
+                  >
+                    {inviting ? "Inviting..." : "+ Send Workspace Invite"}
+                  </button>
+                </form>
+
+                {teamMembers.length > 0 && (
+                  <div className="bg-[#1E293B] border border-gray-700 rounded-2xl divide-y divide-gray-800">
+                    {teamMembers.map((m) => (
+                      <div key={m.email} className="px-4 py-3 flex items-center justify-between text-xs">
+                        <div>
+                          <div className="font-bold text-white">{m.name}</div>
+                          <div className="text-gray-400">{m.email}</div>
+                        </div>
+                        <span className="px-2.5 py-1 rounded-full bg-purple-500/15 text-purple-300 font-semibold uppercase">
+                          {m.role}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
