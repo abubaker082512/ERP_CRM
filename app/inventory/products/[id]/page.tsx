@@ -74,7 +74,7 @@ export default function ProductAuditPage() {
     const handleGenerateBarcode = async () => {
         setGeneratingBarcode(true);
         try {
-            const res = await fetchAPI(`/barcode/generate/${params.id}`, { method: "POST" });
+            const res = await fetchAPI(`/barcode/generate/${id}`, { method: "POST" });
             if (res.ok) {
                 const data = await res.json();
                 setProduct(prev => prev ? { ...prev, sku: data.barcode } : null);

@@ -30,6 +30,7 @@ export type StandardModuleHeaderProps = {
     onSearch?: (val: string) => void;
     onNewClick?: () => void;
     newButtonText?: string;
+    newButtonLabel?: string;
     actionButton?: React.ReactNode;
     planBadge?: string;
 };
@@ -44,16 +45,18 @@ export default function StandardModuleHeader({
     onSearch,
     onNewClick,
     newButtonText = "New",
+    newButtonLabel,
     actionButton
 }: StandardModuleHeaderProps) {
+    const resolvedNewLabel = newButtonLabel || newButtonText;
     const pathname = usePathname();
     const router = useRouter();
 
     return (
-        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md">
-            <div className="flex items-center justify-between px-3 sm:px-4 py-2 gap-2 sm:gap-3">
+        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md w-full overflow-x-clip">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2 gap-2 min-w-0">
                 {/* Left Section: Beraxis Logo, Back, Apps, Website, Module Logo & Inline Nav Pills */}
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto scrollbar-none">
                     {/* Beraxis Logo & Branding */}
                     <Link
                         href="/apps"
@@ -109,7 +112,7 @@ export default function StandardModuleHeader({
                             onClick={onNewClick}
                             className="bg-purple-600 hover:bg-purple-700 text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-md shadow-purple-900/30 transition-all active:scale-95 cursor-pointer ml-1 shrink-0"
                         >
-                            <Plus size={14} /> {newButtonText}
+                            <Plus size={14} /> {resolvedNewLabel}
                         </button>
                     )}
 
@@ -140,7 +143,7 @@ export default function StandardModuleHeader({
                 </div>
 
                 {/* Center: Universal Search */}
-                <div className="flex-1 max-w-md mx-2 hidden md:block">
+                <div className="w-48 xl:w-64 mx-2 hidden xl:block shrink-0">
                     <UniversalModuleSearch
                         moduleName={moduleName}
                         placeholder={searchPlaceholder || `Search ${moduleName}...`}

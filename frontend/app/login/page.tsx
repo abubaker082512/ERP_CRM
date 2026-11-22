@@ -81,9 +81,9 @@ function LoginForm() {
 
             <div className="w-full max-w-md relative z-10">
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center mb-4">
+                    <a href="/" className="inline-flex items-center justify-center mb-4 hover:opacity-90 transition-opacity" title="Back to BERAXIS Home">
                         <img src="/logo-full.png" alt="Beraxis Logo" className="h-12 w-auto object-contain" />
-                    </div>
+                    </a>
                     <h1 className="text-3xl font-extrabold text-white tracking-tight">Welcome back</h1>
                     <p className="text-gray-400 mt-2 text-sm">Sign in to your autonomous ERP workspace</p>
                 </div>
@@ -129,7 +129,15 @@ function LoginForm() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1.5">Password</label>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-sm font-medium text-gray-300">Password</label>
+                                <a
+                                    href="/contact?subject=Password%20Reset%20Request"
+                                    className="text-xs text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                                >
+                                    Forgot password?
+                                </a>
+                            </div>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}

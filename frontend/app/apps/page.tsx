@@ -246,6 +246,15 @@ export default function AppsDashboardPage() {
         setIsSelectingIndustry(true);
     };
 
+    const handleReconfigureWorkspace = () => {
+        const ind = getIndustryById((activeBranch?.industryId as GlobalIndustryId) || "professional_services");
+        setSelectedIndId(ind.id);
+        setSelectedSubSector(activeBranch?.subSector || ind.subSectors[0]);
+        setSelectedOpMode(activeBranch?.operationMode || ind.operationModes[0]?.id || "default");
+        setCompanyName(activeBranch?.name || "");
+        setIsSelectingIndustry(true);
+    };
+
     const handleConfirmLaunch = (e: React.FormEvent) => {
         e.preventDefault();
         const ind = getIndustryById(selectedIndId);
@@ -357,7 +366,7 @@ export default function AppsDashboardPage() {
                     </span>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-2.5 min-w-0">
                     {hasSelectedIndustry && activeBranch && (
                         <>
                             <UniversalBranchSwitcher />
@@ -734,12 +743,12 @@ export default function AppsDashboardPage() {
                     </div>
                 ) : (
                     /* ─── WORKSPACE APP GRID ─── */
-                    <div className="py-6 sm:py-12 animate-in fade-in duration-200 space-y-8">
+                    <div className="py-6 sm:py-12 pb-24 animate-in fade-in duration-200 space-y-8">
                         {/* Gamified Onboarding Launchpad Checklist */}
                         <div className="max-w-4xl mx-auto">
                             <OnboardingChecklist
                                 hasSelectedIndustry={hasSelectedIndustry}
-                                onOpenIndustryPicker={handleOpenIndustrySelection}
+                                onOpenIndustryPicker={handleReconfigureWorkspace}
                             />
                         </div>
                         {isFreePlan && (

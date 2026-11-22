@@ -26,9 +26,9 @@ export default function AccountingHeader({ onNewClick, searchTerm = '', onSearch
     ];
 
     return (
-        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md">
-            <div className="flex items-center justify-between px-3 sm:px-4 py-2 gap-2 sm:gap-3">
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md w-full overflow-x-clip">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2 gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                     {/* Beraxis Logo & Branding */}
                     <Link
                         href="/apps"
@@ -105,7 +105,7 @@ export default function AccountingHeader({ onNewClick, searchTerm = '', onSearch
                 </div>
 
                 {/* Universal Search Bar */}
-                <div className="flex-1 max-w-md mx-2 hidden md:block">
+                <div className="w-56 xl:w-72 mx-2 hidden xl:block shrink-0">
                     <UniversalModuleSearch
                         placeholder="Search invoices, bills, journal entries, accounts..."
                         value={searchTerm}

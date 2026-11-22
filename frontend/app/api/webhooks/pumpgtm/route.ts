@@ -28,13 +28,14 @@ export async function POST(req: NextRequest) {
         const webhookUrl = process.env.PUMPGTM_WEBHOOK_URL || PUMPGTM_DEFAULT_WEBHOOK_URL;
 
         if (!apiKey) {
-            console.warn("[PumpGTM] Warning: PUMPGTM_API_KEY environment variable is not set.");
+            console.warn("[PumpGTM] Warning: PUMPGTM_API_KEY environment variable is not set; skipping webhook dispatch.");
             return NextResponse.json(
                 {
-                    error: "PUMPGTM_API_KEY is not configured on the server. Please add PUMPGTM_API_KEY to your environment variables.",
-                    configured: false
+                    skipped: true,
+                    configured: false,
+                    message: "PUMPGTM_API_KEY is not configured; webhook skipped."
                 },
-                { status: 401 }
+                { status: 200 }
             );
         }
 

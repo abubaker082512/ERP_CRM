@@ -63,7 +63,6 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
         pathname.startsWith('/industries') ||
         pathname.startsWith('/shop') ||
         pathname.startsWith('/meet') ||
-        pathname.startsWith('/team') ||
         pathname.startsWith('/lead-pool') ||
         pathname.startsWith('/leads-pool') ||
         pathname.startsWith('/login') ||
@@ -83,9 +82,7 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
     const isAlwaysAllowed =
         pathname.startsWith('/settings') ||
         pathname.startsWith('/billing') ||
-        pathname.startsWith('/super-admin') ||
-        pathname.startsWith('/crm/leads-pool') ||
-        pathname.startsWith('/crm/lead-bank');
+        pathname.startsWith('/super-admin');
 
     if (!hasSelectedIndustry && ! pathname.startsWith('/super-admin')) {
         return (
@@ -122,7 +119,7 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
                     <h2 className="text-xl font-black text-white">Module Locked on Free Plan</h2>
                     <p className="text-xs text-gray-300 leading-relaxed">
                         Your <strong className="text-amber-300">One App Free Plan</strong> includes <strong className="text-white">1 Selected Major App ({freeSelectedApp.replace('/', '').toUpperCase()}) + Settings</strong>.
-                        To access additional ERP modules or the Global Leads Pool, upgrade to Standard ($18/mo) or Premium ($25/mo).
+                        To access additional ERP modules or the Global Leads Pool, upgrade to Standard ($1/mo Early Bird, billed $12/yr) or Custom ($37.40/mo).
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 pt-2">
                         <Link

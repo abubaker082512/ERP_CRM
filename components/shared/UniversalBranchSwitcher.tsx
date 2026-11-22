@@ -90,7 +90,7 @@ export default function UniversalBranchSwitcher() {
             <span className={activeIndustry.accentColor}>●</span>
             <span>{activeIndustry.name.split(" ")[0]}</span>
             <span>•</span>
-            <span className="text-gray-500">{activeBranch.operationMode}</span>
+            <span className="text-gray-500">{(activeBranch.operationMode || "Standard").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}</span>
           </div>
         </div>
         <ChevronDown size={14} className={`text-gray-400 group-hover:text-white transition-transform ${isOpen ? "rotate-180" : ""}`} />
@@ -154,7 +154,7 @@ export default function UniversalBranchSwitcher() {
                   </div>
 
                   <span className="text-[9px] px-2 py-0.5 rounded-full bg-gray-950 text-gray-400 border border-gray-800 shrink-0">
-                    {branch.operationMode}
+                    {(branch.operationMode || "Standard").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                   </span>
                 </div>
               );

@@ -257,7 +257,7 @@ export default function PricingPage() {
                                 <span className="text-xs bg-white/5 text-gray-400 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-white/10">Forever Free</span>
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-2">One App Free</h3>
-                            <p className="text-gray-400 text-sm mb-8 leading-relaxed">Perfect to start. Use any single app (e.g. Discuss or CRM) with unlimited users.</p>
+                            <p className="text-gray-400 text-sm mb-8 leading-relaxed">Perfect to start. Use any single major app + Settings in your own isolated workspace.</p>
                             
                             <div className="flex items-baseline gap-1 mb-8 border-b border-white/5 pb-8">
                                 <span className="text-5xl font-extrabold text-white">$0</span>
@@ -267,11 +267,11 @@ export default function PricingPage() {
                             <ul className="space-y-4 text-sm text-gray-300">
                                 <li className="flex items-center gap-3">
                                     <Check className="text-purple-400" size={16} />
-                                    <span>Choose **any 1** full ERP/CRM module</span>
+                                    <span>Choose <strong>any 1</strong> full ERP/CRM module</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <Check className="text-purple-400" size={16} />
-                                    <span>Unlimited Users</span>
+                                    <span>1 User Included (Free Forever)</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <Check className="text-purple-400" size={16} />
@@ -388,7 +388,7 @@ export default function PricingPage() {
                             data-creem-theme="dark"
                             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95 text-center cursor-pointer"
                         >
-                            <Lock size={16} /> Pay Now ({isAnnual ? "$12/yr" : "$5/mo"}) <ArrowRight size={16} />
+                            <Lock size={16} /> Pay Now ({isAnnual ? `$${12 * usersCount}/yr` : `$${5 * usersCount}/mo`}) <ArrowRight size={16} />
                         </a>
                     </div>
 

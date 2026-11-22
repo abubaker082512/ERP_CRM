@@ -73,9 +73,10 @@ export type LeadRecord = {
     source?: string;
     is_live_verified?: boolean;
     verification_badge?: string;
+    is_unlocked?: boolean;
 };
 
-import { REAL_VERIFIED_LEADS, filterRealLeads } from "@/lib/realLeadsDirectory";
+import { REAL_VERIFIED_LEADS, filterRealLeads, maskLeadContact } from "@/lib/realLeadsDirectory";
 
 const TOTAL_GLOBAL_LEADS_COUNT = REAL_VERIFIED_LEADS.length;
 
@@ -345,19 +346,19 @@ export default function LeadsPoolPage() {
 
         // 3. Verified Real Directory Fallback (Zero Mock/Procedural Data)
         const filtered = filterRealLeads(searchQuery, selectedCountry, selectedIndustry);
-        const mapped = filtered.map(lead => {
+        const mapped = filtered.leads.map((lead: any) => {
             const isUnlocked = userPlan === "premium" || unlockedLeadIds.includes(lead.id);
             return maskLeadContact(lead, isUnlocked);
         });
         setLeads(mapped.slice((currentPage - 1) * pageSize, currentPage * pageSize) as any);
-        setTotal(filtered.length);
+        setTotal(filtered.total);
         setLoading(false);
     };
 
     const generateProceduralBatch = () => {
         const filtered = filterRealLeads(searchQuery, selectedCountry, selectedIndustry);
-        setLeads(filtered as any);
-        setTotal(filtered.length);
+        setLeads(filtered.leads as any);
+        setTotal(filtered.total);
     };
 
     const handleSearchSubmit = (e: React.FormEvent) => {

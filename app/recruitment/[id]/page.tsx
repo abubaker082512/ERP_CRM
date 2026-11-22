@@ -52,7 +52,7 @@ export default function JobApplicantsPage() {
     const res = await fetchAPI("/recruitment/applicants", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...newApplicant, job_id: params.id, stage_id: "new" }),
+      body: JSON.stringify({ ...newApplicant, job_id: id, stage_id: "new" }),
     });
     if (res.ok) {
       const data = await res.json();

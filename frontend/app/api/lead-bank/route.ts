@@ -104,14 +104,14 @@ export async function GET(req: NextRequest) {
 
         // 2. Verified Enterprise Directory Fallback
         const filtered = filterRealLeads(query, country, industry, city);
-        const paged = filtered.slice(skip, skip + limit);
-        const mapped = paged.map(lead => {
+        const paged = filtered.leads.slice(skip, skip + limit);
+        const mapped = paged.map((lead: any) => {
             const isUnlocked = userPlan === "premium" || unlockedIds.has(lead.id);
             return maskLeadContact(lead, isUnlocked);
         });
 
         return NextResponse.json({
-            total: filtered.length,
+            total: filtered.total,
             leads: mapped,
             source: "verified_enterprise_directory",
             plan: userPlan,

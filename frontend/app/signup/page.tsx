@@ -133,7 +133,11 @@ function SignupForm() {
                 </div>
             </div>
 
-            <div className="bg-[#0F172A]/90 backdrop-blur-xl rounded-3xl border border-purple-500/30 p-8 shadow-2xl shadow-purple-950/40">
+            <div className="bg-[#0F172A]/90 backdrop-blur-xl rounded-3xl border border-purple-500/30 p-6 sm:p-7 shadow-2xl shadow-purple-950/40">
+                <div className="flex items-center justify-between mb-4">
+                    <a href="/" className="text-xs text-gray-400 hover:text-white transition-colors">← Back to Home</a>
+                    <span className="text-[11px] text-purple-300 font-semibold">Free Forever Tier</span>
+                </div>
                 {error && (
                     <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg mb-5">
                         <AlertCircle size={18} className="text-red-400 shrink-0" />
@@ -291,7 +295,12 @@ function SignupForm() {
                     &mdash; Jason R., Verified Workspace Owner
                 </div>
             </div>
-            <p className="text-center text-xs text-gray-600 mt-6 relative z-10">By signing up you agree to our Terms of Service</p>
+            <p className="text-center text-xs text-gray-500 mt-5 relative z-10">
+                By signing up you agree to our{" "}
+                <a href="/terms" className="text-purple-400 hover:text-purple-300 underline">Terms of Service</a>{" "}
+                and{" "}
+                <a href="/privacy" className="text-purple-400 hover:text-purple-300 underline">Privacy Policy</a>.
+            </p>
         </div>
     );
 }

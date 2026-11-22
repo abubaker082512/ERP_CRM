@@ -133,18 +133,32 @@ export default function AccountingPage() {
     const lateBillsTotal = lateBills.reduce((s, b) => s + (Number(b.amount) || 0), 0);
 
     const bankEntriesTotal = entries
-        .filter(e => e.journal === "Bank")
+        .filter(e => e.journal === "Bank" && !e.auto_gl)
         .reduce((s, e) => s + (Number(e.amount) || 0), 0);
     const cashEntriesTotal = entries
-        .filter(e => e.journal === "Cash")
+        .filter(e => e.journal === "Cash" && !e.auto_gl)
         .reduce((s, e) => s + (Number(e.amount) || 0), 0);
 
     const bankBalance = paidInvoicesTotal - paidBillsTotal + bankEntriesTotal;
     const cashBalance = cashEntriesTotal;
     const totalCashAndBank = bankBalance + cashBalance;
 
-    const totalRevenue = invoices.reduce((s, i) => s + (Number(i.amount) || 0), 0) + entries.filter(e => Number(e.amount) > 0).reduce((s, e) => s + Number(e.amount), 0);
-    const totalExpenses = bills.reduce((s, b) => s + (Number(b.amount) || 0), 0) + entries.filter(e => Number(e.amount) < 0).reduce((s, e) => s + Math.abs(Number(e.amount)), 0);
+    // Exclude equity/capital/MISC journals and auto-GL entries from Operating Revenue & Profit
+    const operatingInvoicesTotal = invoices
+        .filter(i => i.status !== "void")
+        .reduce((s, i) => s + (Number(i.amount) || 0), 0);
+    const operatingBillsTotal = bills
+        .filter(b => b.status !== "void")
+        .reduce((s, b) => s + (Number(b.amount) || 0), 0);
+    const operatingIncomeEntries = entries
+        .filter(e => !e.auto_gl && e.category === "income" && Number(e.amount) > 0)
+        .reduce((s, e) => s + Number(e.amount), 0);
+    const operatingExpenseEntries = entries
+        .filter(e => !e.auto_gl && e.category === "expense" && Number(e.amount) < 0)
+        .reduce((s, e) => s + Math.abs(Number(e.amount)), 0);
+
+    const totalRevenue = operatingInvoicesTotal + operatingIncomeEntries;
+    const totalExpenses = operatingBillsTotal + operatingExpenseEntries;
     const netProfit = totalRevenue - totalExpenses;
 
     return (

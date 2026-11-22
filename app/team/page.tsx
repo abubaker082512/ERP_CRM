@@ -297,7 +297,7 @@ export default function TeamManagementPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      <AppHeader />
+      <AppHeader title="Team & Role Management" />
 
       {/* Toast Notification */}
       {toastMsg && (
@@ -419,8 +419,8 @@ export default function TeamManagementPage() {
               When an employee departs, offboarding them immediately frees their paid seat back to your pool for another team member.
             </p>
             <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-800 text-slate-400">
-              <span>Next billing renewal:</span>
-              <span className="text-slate-200 font-medium">Nov 24, 2026 (Paddle)</span>
+              <span>Billing gateway:</span>
+              <span className="text-slate-200 font-medium">Creem / Paddle (Active)</span>
             </div>
           </div>
 
@@ -541,7 +541,7 @@ export default function TeamManagementPage() {
                                 <div className="font-semibold text-white flex items-center gap-1.5">
                                   {m.name}
                                   {isOwner && (
-                                    <Crown className="w-3.5 h-3.5 text-amber-400 inline" title="Workspace Owner" />
+                                    <span title="Workspace Owner"><Crown className="w-3.5 h-3.5 text-amber-400 inline" /></span>
                                   )}
                                 </div>
                                 <div className="text-[11px] text-slate-400 font-mono">{m.email}</div>
@@ -644,43 +644,54 @@ export default function TeamManagementPage() {
               <span className="text-xs text-slate-500">Root Node: CEO</span>
             </div>
 
-            {/* Tree Visualization */}
+            {/* Tree Visualization (Driven by live workspace members) */}
             <div className="space-y-4">
-              {/* Level 1: CEO / Owner */}
-              <div className="p-4 rounded-xl bg-purple-950/40 border border-purple-800/40 max-w-md mx-auto text-center shadow-lg">
-                <Crown className="w-5 h-5 text-amber-400 mx-auto mb-1" />
-                <div className="font-bold text-white text-sm">Abubaker Admin</div>
-                <div className="text-xs text-purple-300">Chief Executive Officer (CEO) • Owner</div>
-                <div className="text-[10px] text-slate-400 mt-1">Cross-Entity Authority (All 3 Companies)</div>
-              </div>
+              {(() => {
+                const owner = members.find(m => m.role === "Owner") || members[0];
+                const managers = members.filter(m => m.id !== owner?.id && (m.role === "Admin" || m.role === "Manager"));
+                const staff = members.filter(m => m.id !== owner?.id && m.role !== "Admin" && m.role !== "Manager");
+                return (
+                  <>
+                    {owner && (
+                      <div className="p-4 rounded-xl bg-purple-950/40 border border-purple-800/40 max-w-md mx-auto text-center shadow-lg">
+                        <Crown className="w-5 h-5 text-amber-400 mx-auto mb-1" />
+                        <div className="font-bold text-white text-sm">{owner.name}</div>
+                        <div className="text-xs text-purple-300">{owner.role} • {owner.department || "Executive"}</div>
+                        <div className="text-[10px] text-slate-400 mt-1">Authority across {quota.companies.length} {quota.companies.length === 1 ? "Company" : "Companies"}</div>
+                      </div>
+                    )}
 
-              {/* Connecting line */}
-              <div className="w-0.5 h-6 bg-slate-700 mx-auto" />
+                    {managers.length > 0 && (
+                      <>
+                        <div className="w-0.5 h-6 bg-slate-700 mx-auto" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                          {managers.map(mgr => (
+                            <div key={mgr.id} className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center shadow-md">
+                              <div className="font-semibold text-white text-xs">{mgr.name}</div>
+                              <div className="text-[11px] text-emerald-400">{mgr.role} ({mgr.department || "Management"})</div>
+                              <div className="text-[10px] text-slate-400 mt-1">Reports to: {owner?.name || "Workspace Owner"}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
 
-              {/* Level 2: Directors / Managers */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center shadow-md">
-                  <div className="font-semibold text-white text-xs">Elena Rostova</div>
-                  <div className="text-[11px] text-emerald-400">Chief Financial Officer (Admin)</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Reports to: Abubaker Admin</div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center shadow-md">
-                  <div className="font-semibold text-white text-xs">Alex Vance</div>
-                  <div className="text-[11px] text-blue-400">Director of Operations (Manager)</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Reports to: Abubaker Admin</div>
-                </div>
-              </div>
-
-              {/* Connecting line */}
-              <div className="w-0.5 h-6 bg-slate-700 mx-auto" />
-
-              {/* Level 3: Specialists */}
-              <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center max-w-sm mx-auto shadow-md">
-                <div className="font-semibold text-white text-xs">Rachel Adams</div>
-                <div className="text-[11px] text-indigo-400">Senior Cloud Engineer (Specialist)</div>
-                <div className="text-[10px] text-slate-400 mt-1">Reports to: Alex Vance</div>
-              </div>
+                    {staff.length > 0 && (
+                      <>
+                        <div className="w-0.5 h-6 bg-slate-700 mx-auto" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                          {staff.map(st => (
+                            <div key={st.id} className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center shadow-md">
+                              <div className="font-semibold text-white text-xs">{st.name}</div>
+                              <div className="text-[11px] text-slate-300">{st.role} • {st.department || "Operations"}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         )}

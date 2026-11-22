@@ -50,7 +50,7 @@ export default function PurchaseOrderDetailPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetchAPI(`/purchase/${params.id}`, {
+      const res = await fetchAPI(`/purchase/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: form.name, amount_total: parseFloat(form.amount_total) || 0 }),
@@ -63,7 +63,7 @@ export default function PurchaseOrderDetailPage() {
   const handleConfirm = async () => {
     setConfirming(true);
     try {
-      const res = await fetchAPI(`/purchase/${params.id}/confirm`, { method: "POST" });
+      const res = await fetchAPI(`/purchase/${id}/confirm`, { method: "POST" });
       if (res.ok) {
         const d = await res.json();
         setOrder(d);
@@ -74,7 +74,7 @@ export default function PurchaseOrderDetailPage() {
 
   const handleDelete = async () => {
     if (!confirm("Delete this purchase order?")) return;
-    await fetchAPI(`/purchase/${params.id}`, { method: "DELETE" });
+    await fetchAPI(`/purchase/${id}`, { method: "DELETE" });
     router.push("/purchase");
   };
 

@@ -130,7 +130,7 @@ const WORLD_LOCALE_DATA = [
   { country: "Uzbekistan", code: "UZ", currency: "UZS", currencyName: "Uzbekistani Som", timezone: "Asia/Tashkent" },
   { country: "Venezuela", code: "VE", currency: "VES", currencyName: "Venezuelan Bolívar", timezone: "America/Caracas" },
   { country: "Vietnam", code: "VN", currency: "VND", currencyName: "Vietnamese Dong", timezone: "Asia/Ho_Chi_Minh" },
-  { country: "Yemen", code: "YE", currency: "YER", timezone: "Yemeni Rial", timezone: "Asia/Aden" },
+  { country: "Yemen", code: "YE", currency: "YER", currencyName: "Yemeni Rial", timezone: "Asia/Aden" },
   { country: "Zimbabwe", code: "ZW", currency: "ZWL", currencyName: "Zimbabwean Dollar", timezone: "Africa/Harare" }
 ];
 
@@ -142,6 +142,7 @@ export default function SettingsPage() {
   const { activeBranch, getEntityStorageKey, updateBranch, planTier, isFreePlan, freePlanModule } = useBranchContext();
   const [activeTab, setActiveTab] = useState("general");
   const [saving, setSaving] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
 
   // General settings state (isolated per entity)
   const [companyName, setCompanyName] = useState("");
@@ -249,7 +250,8 @@ export default function SettingsPage() {
         updateBranch(activeBranch.id, { name: companyName.trim(), currency });
       }
       setSaving(false);
-      alert("Settings saved for your entity!");
+      setSaveSuccessMsg("Settings saved for your entity!");
+      setTimeout(() => setSaveSuccessMsg(null), 3500);
     }, 500);
   };
 
@@ -342,14 +344,21 @@ export default function SettingsPage() {
                 </h1>
                 <p className="text-sm text-gray-400 mt-1">Manage your platform configurations and preferences.</p>
               </div>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-lg shadow-purple-600/20 active:scale-95"
-              >
-                <Save size={16} /> {saving ? "Saving..." : "Save Changes"}
-              </button>
+              {!["billing", "backup", "users"].includes(activeTab) && (
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-lg shadow-purple-600/20 active:scale-95"
+                >
+                  <Save size={16} /> {saving ? "Saving..." : "Save Changes"}
+                </button>
+              )}
             </div>
+            {saveSuccessMsg && (
+              <div className="mb-6 flex items-center gap-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 px-4 py-3 text-sm font-semibold text-emerald-300">
+                <CheckCircle2 size={16} /> {saveSuccessMsg}
+              </div>
+            )}
 
             {/* General Tab */}
             {activeTab === "general" && (

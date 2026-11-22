@@ -1,15 +1,17 @@
 "use client";
 import { fetchAPI } from "@/lib/api";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Edit2, Save, X, Mail, Phone, Briefcase,
   Building2, Clock, DollarSign, User, Trash2
 } from "lucide-react";
 
-export default function EmployeeDetailPage({ params }: { params: { id: string } }) {
+export default function EmployeeDetailPage() {
   const router = useRouter();
+  const rawParams = useParams();
+  const id = rawParams?.id as string;
   const [emp, setEmp] = useState<any>(null);
   const [departments, setDepartments] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<any>(null);
@@ -20,14 +22,14 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  useEffect(() => { loadAll(); }, [params.id]);
+  useEffect(() => { if (id) loadAll(); }, [id]);
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
   const loadAll = async () => {
     try {
       const [empRes, deptRes] = await Promise.all([
-        fetchAPI(`/hr/employees/${params.id}`),
+        fetchAPI(`/hr/employees/${id}`),
         fetchAPI(`/hr/departments`),
       ]);
       if (empRes.ok) {
@@ -38,8 +40,8 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
 
       // Load attendance summary & payslips in background
       const [attRes, payRes] = await Promise.all([
-        fetchAPI(`/attendance/summary?employee_id=${params.id}`),
-        fetchAPI(`/payroll/payslips?employee_id=${params.id}`),
+        fetchAPI(`/attendance/summary?employee_id=${id}`),
+        fetchAPI(`/payroll/payslips?employee_id=${id}`),
       ]);
       if (attRes.ok) setAttendance(await attRes.json());
       if (payRes.ok) setPayslips(await payRes.json());
@@ -50,7 +52,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetchAPI(`/hr/employees/${params.id}`, {
+      const res = await fetchAPI(`/hr/employees/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -66,7 +68,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
 
   const handleDelete = async () => {
     if (!confirm("Delete this employee?")) return;
-    await fetchAPI(`/hr/employees/${params.id}`, { method: "DELETE" });
+    await fetchAPI(`/hr/employees/${id}`, { method: "DELETE" });
     router.push("/employees");
   };
 

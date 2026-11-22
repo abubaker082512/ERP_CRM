@@ -47,7 +47,7 @@ export default function TicketDetailPage() {
   };
 
   const handleStageChange = async (stage: string) => {
-    const res = await fetchAPI(`/helpdesk/tickets/${params.id}`, {
+    const res = await fetchAPI(`/helpdesk/tickets/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stage_id: stage }),
@@ -62,7 +62,7 @@ export default function TicketDetailPage() {
       const res = await fetchAPI("/helpdesk/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticket_id: params.id, body: newMsg, author_name: "Support Agent" }),
+        body: JSON.stringify({ ticket_id: id, body: newMsg, author_name: "Support Agent" }),
       });
       if (res.ok) {
         const msg = await res.json();
@@ -75,7 +75,7 @@ export default function TicketDetailPage() {
 
   const handleDelete = async () => {
     if (!confirm("Delete this ticket?")) return;
-    await fetchAPI(`/helpdesk/tickets/${params.id}`, { method: "DELETE" });
+    await fetchAPI(`/helpdesk/tickets/${id}`, { method: "DELETE" });
     router.push("/helpdesk");
   };
 

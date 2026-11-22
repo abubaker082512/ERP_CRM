@@ -40,8 +40,8 @@ export default function EmployeeDetailPage() {
 
       // Load attendance summary & payslips in background
       const [attRes, payRes] = await Promise.all([
-        fetchAPI(`/attendance/summary?employee_id=${params.id}`),
-        fetchAPI(`/payroll/payslips?employee_id=${params.id}`),
+        fetchAPI(`/attendance/summary?employee_id=${id}`),
+        fetchAPI(`/payroll/payslips?employee_id=${id}`),
       ]);
       if (attRes.ok) setAttendance(await attRes.json());
       if (payRes.ok) setPayslips(await payRes.json());
@@ -52,7 +52,7 @@ export default function EmployeeDetailPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetchAPI(`/hr/employees/${params.id}`, {
+      const res = await fetchAPI(`/hr/employees/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -68,7 +68,7 @@ export default function EmployeeDetailPage() {
 
   const handleDelete = async () => {
     if (!confirm("Delete this employee?")) return;
-    await fetchAPI(`/hr/employees/${params.id}`, { method: "DELETE" });
+    await fetchAPI(`/hr/employees/${id}`, { method: "DELETE" });
     router.push("/employees");
   };
 

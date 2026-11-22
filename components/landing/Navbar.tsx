@@ -98,7 +98,9 @@ export default function Navbar() {
                             onMouseLeave={handleMouseLeave}
                         >
                             <button
-                                onClick={() => setActiveDropdown(activeDropdown === "products" ? null : "products")}
+                                type="button"
+                                aria-expanded={activeDropdown === "products"}
+                                onClick={() => setActiveDropdown("products")}
                                 className={`flex items-center gap-1 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
                                     activeDropdown === "products" ? "text-white bg-white/10" : "text-gray-300 hover:text-white hover:bg-white/5"
                                 }`}
@@ -227,7 +229,9 @@ export default function Navbar() {
                             onMouseLeave={handleMouseLeave}
                         >
                             <button
-                                onClick={() => setActiveDropdown(activeDropdown === "resources" ? null : "resources")}
+                                type="button"
+                                aria-expanded={activeDropdown === "resources"}
+                                onClick={() => setActiveDropdown("resources")}
                                 className={`flex items-center gap-1 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
                                     activeDropdown === "resources" ? "text-white bg-white/10" : "text-gray-300 hover:text-white hover:bg-white/5"
                                 }`}

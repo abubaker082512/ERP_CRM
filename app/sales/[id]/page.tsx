@@ -51,7 +51,7 @@ export default function SalesOrderDetailPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetchAPI(`/sales/${params.id}`, {
+      const res = await fetchAPI(`/sales/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: form.name, amount_total: parseFloat(form.amount_total) || 0 }),
@@ -64,7 +64,7 @@ export default function SalesOrderDetailPage() {
   const handleConfirm = async () => {
     setConfirming(true);
     try {
-      const res = await fetchAPI(`/sales/${params.id}/confirm`, { method: "POST" });
+      const res = await fetchAPI(`/sales/${id}/confirm`, { method: "POST" });
       if (res.ok) {
         const d = await res.json();
         setOrder(d);
@@ -75,7 +75,7 @@ export default function SalesOrderDetailPage() {
 
   const handleDelete = async () => {
     if (!confirm("Delete this sales order?")) return;
-    await fetchAPI(`/sales/${params.id}`, { method: "DELETE" });
+    await fetchAPI(`/sales/${id}`, { method: "DELETE" });
     router.push("/sales");
   };
 

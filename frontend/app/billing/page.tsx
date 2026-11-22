@@ -107,7 +107,7 @@ const PLANS: Plan[] = [
             "1,500 Verified Lead Credits / user / mo (25.8M+ Pool)",
             "Buy extra lead packs in Lead Pool ($10 / 1,000)",
             "All 28 ERP/CRM modules unlocked",
-            "Antigravity AI Brain & Voice Pilot",
+            "BERAXIS AI Brain & Voice Pilot",
             "Priority 24/7 support & live backups",
         ],
         cryptoPlanKey: "standard",
@@ -659,8 +659,8 @@ function BillingPageContent() {
 
             {/* Back to dashboard */}
             <div className="absolute top-6 right-7 z-10">
-                <Link href="/" className="text-xs text-gray-500 hover:text-white transition-colors border border-white/10 px-3 py-1.5 rounded-lg hover:border-white/20">
-                    ← Back to Dashboard
+                <Link href="/apps" className="text-xs text-gray-500 hover:text-white transition-colors border border-white/10 px-3 py-1.5 rounded-lg hover:border-white/20">
+                    ← Back to Workspace
                 </Link>
             </div>
 
