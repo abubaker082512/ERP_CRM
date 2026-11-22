@@ -453,7 +453,7 @@ export default function PricingPage() {
                             data-creem-theme="dark"
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 flex items-center justify-center gap-2 hover:border-pink-500/30 cursor-pointer"
                         >
-                            <Lock size={16} /> Pay Now ({isAnnual ? "$448.80/yr" : "$46.80/mo"}) <ArrowRight size={16} />
+                            <Lock size={16} /> Pay Now ({isAnnual ? `$${(448.80 * usersCount).toFixed(2)}/yr` : `$${(46.80 * usersCount).toFixed(2)}/mo`}) <ArrowRight size={16} />
                         </a>
                     </div>
                 </div>

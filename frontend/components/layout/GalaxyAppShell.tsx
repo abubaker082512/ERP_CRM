@@ -237,7 +237,6 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         cleanPath.startsWith('/about') || 
         cleanPath.startsWith('/ai') || 
         cleanPath.startsWith('/contact') || 
-        cleanPath.startsWith('/team') || 
         cleanPath.startsWith('/leads-pool') || 
         cleanPath.startsWith('/lead-pool') || 
         cleanPath.startsWith('/pitch-deck') || 

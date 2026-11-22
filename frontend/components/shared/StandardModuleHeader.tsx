@@ -119,9 +119,9 @@ export default function StandardModuleHeader({
                     {/* Custom Action Button */}
                     {actionButton && <div className="shrink-0">{actionButton}</div>}
 
-                    {/* Navigation Pills */}
+                    {/* Navigation Pills (inline on ultra-wide 2xl+, clean sub-bar below on <=1535px) */}
                     {menuItems && menuItems.length > 0 && (
-                        <nav className="hidden lg:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-none">
+                        <nav className="hidden 2xl:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-none">
                             {menuItems.map((item) => {
                                 const isActive = pathname === item.href || (item.href !== "/" && item.href !== "/apps" && pathname.startsWith(item.href));
                                 return (
@@ -193,7 +193,7 @@ export default function StandardModuleHeader({
 
             {/* Mobile / Tablet Horizontal Navigation Scrollbar for smaller viewports */}
             {menuItems && menuItems.length > 0 && (
-                <div className="lg:hidden flex items-center px-3 py-1.5 gap-1.5 text-xs overflow-x-auto bg-[#1E293B]/90 border-t border-gray-700/50 scrollbar-none">
+                <div className="2xl:hidden flex items-center px-3 py-1.5 gap-1.5 text-xs overflow-x-auto bg-[#1E293B]/90 border-t border-gray-700/50 scrollbar-none">
                     {menuItems.map((item) => {
                         const isActive = pathname === item.href || (item.href !== "/" && item.href !== "/apps" && pathname.startsWith(item.href));
                         return (
