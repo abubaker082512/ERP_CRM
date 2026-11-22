@@ -4,7 +4,9 @@ import { fetchAPI } from '@/lib/api';
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
 import { useState } from "react";
-import { ShoppingCart, FileText, DollarSign, Calendar } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ShoppingCart, Plus } from "lucide-react";
 
 const MENU_ITEMS = [
     { name: "RFQs", href: "/purchase" },
@@ -25,6 +27,7 @@ type RFQ = {
 const mockRFQs: RFQ[] = [];
 
 export default function PurchasePage() {
+    const router = useRouter();
     const [rfqs] = useState<RFQ[]>(mockRFQs);
     const [currentView, setCurrentView] = useState<ViewType>("list");
 
@@ -35,10 +38,12 @@ export default function PurchasePage() {
                 moduleIcon={<ShoppingCart size={20} />}
                 menuItems={MENU_ITEMS}
                 searchPlaceholder="Search RFQs..."
+                onNewClick={() => router.push("/purchase/rfq/new")}
+                newButtonLabel="New RFQ"
             />
 
             <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                     <div className="flex items-center gap-4">
                         <div>
                             <h2 className="text-2xl font-semibold text-gray-200">Requests for Quotation</h2>
@@ -50,6 +55,12 @@ export default function PurchasePage() {
                             onViewChange={setCurrentView}
                         />
                     </div>
+                    <Link
+                        href="/purchase/rfq/new"
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5"
+                    >
+                        <Plus size={16} /> New RFQ
+                    </Link>
                 </div>
 
                 {currentView === "list" && (

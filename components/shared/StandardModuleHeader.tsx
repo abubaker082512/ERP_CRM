@@ -53,10 +53,10 @@ export default function StandardModuleHeader({
     const router = useRouter();
 
     return (
-        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md w-full overflow-x-clip">
-            <div className="flex items-center justify-between px-3 sm:px-4 py-2 gap-2 min-w-0">
+        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md w-full max-w-full overflow-x-clip">
+            <div className="flex flex-wrap items-center justify-between px-3 sm:px-4 py-2 gap-2 min-w-0">
                 {/* Left Section: Beraxis Logo, Back, Apps, Website, Module Logo & Inline Nav Pills */}
-                <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
                     {/* Beraxis Logo & Branding */}
                     <Link
                         href="/apps"

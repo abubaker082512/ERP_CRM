@@ -3,8 +3,9 @@ import { fetchAPI } from '@/lib/api';
 
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
-import { useState } from "react";
-import { Users, Briefcase, MapPin, Mail, Phone } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Users, Briefcase, MapPin, Mail, Phone, Plus, X } from "lucide-react";
+import { useBranchContext } from "@/lib/branchContext";
 
 const MENU_ITEMS = [
     { name: "Employees", href: "/employees" },
@@ -29,8 +30,39 @@ type Employee = {
 const mockEmployees: Employee[] = [];
 
 export default function EmployeesPage() {
-    const [employees] = useState<Employee[]>(mockEmployees);
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
     const [currentView, setCurrentView] = useState<ViewType>("kanban");
+    const [showNewModal, setShowNewModal] = useState(false);
+    const [empForm, setEmpForm] = useState({ name: "", role: "", department: "Operations", email: "", phone: "", location: "HQ", manager: "Workspace Owner" });
+
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem(getEntityStorageKey("hr_employees"));
+            if (saved) setEmployees(JSON.parse(saved));
+        } catch {}
+    }, [activeBranch, getEntityStorageKey]);
+
+    const handleCreateEmployee = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!empForm.name.trim()) return;
+        const newEmp: Employee = {
+            id: `EMP-${String(employees.length + 1).padStart(3, "0")}`,
+            name: empForm.name.trim(),
+            role: empForm.role.trim() || "Staff Member",
+            department: empForm.department || "Operations",
+            email: empForm.email.trim() || "staff@company.com",
+            phone: empForm.phone.trim() || "-",
+            location: empForm.location.trim() || "HQ",
+            status: "active",
+            manager: empForm.manager.trim() || "Workspace Owner",
+        };
+        const next = [newEmp, ...employees];
+        setEmployees(next);
+        try { localStorage.setItem(getEntityStorageKey("hr_employees"), JSON.stringify(next)); } catch {}
+        setEmpForm({ name: "", role: "", department: "Operations", email: "", phone: "", location: "HQ", manager: "Workspace Owner" });
+        setShowNewModal(false);
+    };
 
     return (
         <div className="flex flex-col h-screen bg-[#0F172A]">
@@ -39,10 +71,12 @@ export default function EmployeesPage() {
                 moduleIcon={<Users size={20} />}
                 menuItems={MENU_ITEMS}
                 searchPlaceholder="Search employees..."
+                onNewClick={() => setShowNewModal(true)}
+                newButtonLabel="New Employee"
             />
 
             <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                     <div className="flex items-center gap-4">
                         <div>
                             <h2 className="text-2xl font-semibold text-gray-200">Employees</h2>
@@ -54,6 +88,12 @@ export default function EmployeesPage() {
                             onViewChange={setCurrentView}
                         />
                     </div>
+                    <button
+                        onClick={() => setShowNewModal(true)}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 cursor-pointer"
+                    >
+                        <Plus size={16} /> New Employee
+                    </button>
                 </div>
 
                 {currentView === "list" && (
@@ -146,6 +186,47 @@ export default function EmployeesPage() {
                     </div>
                 )}
             </div>
+
+            {showNewModal && (
+                <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-[#1E293B] border border-gray-700 rounded-2xl max-w-md w-full p-6 text-white shadow-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold">Add New Employee</h3>
+                            <button onClick={() => setShowNewModal(false)} className="text-gray-400 hover:text-white"><X size={18} /></button>
+                        </div>
+                        <form onSubmit={handleCreateEmployee} className="space-y-3 text-sm">
+                            <div>
+                                <label className="block text-gray-300 mb-1">Full Name *</label>
+                                <input type="text" required value={empForm.name} onChange={e => setEmpForm({ ...empForm, name: e.target.value })} placeholder="e.g. Sarah Jenkins" className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 mb-1">Job Position</label>
+                                    <input type="text" value={empForm.role} onChange={e => setEmpForm({ ...empForm, role: e.target.value })} placeholder="Accountant" className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 mb-1">Department</label>
+                                    <input type="text" value={empForm.department} onChange={e => setEmpForm({ ...empForm, department: e.target.value })} className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 mb-1">Email</label>
+                                    <input type="email" value={empForm.email} onChange={e => setEmpForm({ ...empForm, email: e.target.value })} placeholder="sarah@company.com" className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 mb-1">Phone</label>
+                                    <input type="text" value={empForm.phone} onChange={e => setEmpForm({ ...empForm, phone: e.target.value })} placeholder="+1 555-0199" className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button type="button" onClick={() => setShowNewModal(false)} className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300">Cancel</button>
+                                <button type="submit" className="px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold">Save Employee</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

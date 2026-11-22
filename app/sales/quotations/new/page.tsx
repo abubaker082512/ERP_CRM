@@ -30,6 +30,7 @@ export default function NewQuotationPage() {
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedContact, setSelectedContact] = useState('');
+    const [customCustomer, setCustomCustomer] = useState('');
     const [lines, setLines] = useState<OrderLine[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -93,8 +94,10 @@ export default function NewQuotationPage() {
     };
 
     const handleSave = async () => {
-        if (!selectedContact) {
-            alert("Please select a customer");
+        const resolvedCustomerName =
+            contacts.find(c => c.id === selectedContact)?.name || customCustomer.trim();
+        if (!resolvedCustomerName) {
+            alert("Please select or enter a customer name");
             return;
         }
 
@@ -105,8 +108,8 @@ export default function NewQuotationPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: "New", // Backend or DB should generate sequence ideally, or we generate here
-                    customer_name: contacts.find(c => c.id === selectedContact)?.name,
-                    contact_id: selectedContact,
+                    customer_name: resolvedCustomerName,
+                    contact_id: selectedContact || undefined,
                     amount_total: calculateTotal(),
                     lines: lines
                 })
@@ -164,6 +167,15 @@ export default function NewQuotationPage() {
                                     <option key={c.id} value={c.id} className="bg-[#1E293B] text-white">{c.name}</option>
                                 ))}
                             </select>
+                            {!selectedContact && (
+                                <input
+                                    type="text"
+                                    value={customCustomer}
+                                    onChange={(e) => setCustomCustomer(e.target.value)}
+                                    placeholder="Or enter new customer name..."
+                                    className="w-full mt-2 bg-[#0F172A] border border-gray-700 rounded px-3 py-1.5 text-sm text-white focus:border-purple-500 outline-none"
+                                />
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-400 mb-1">Expiration</label>

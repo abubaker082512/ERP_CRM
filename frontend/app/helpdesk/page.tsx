@@ -3,8 +3,9 @@ import { fetchAPI } from '@/lib/api';
 
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
-import { useState } from "react";
-import { LifeBuoy, Users, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { LifeBuoy, Users, Clock, AlertCircle, CheckCircle, Plus, X } from "lucide-react";
+import { useBranchContext } from "@/lib/branchContext";
 
 const MENU_ITEMS = [
     { name: "Tickets", href: "/helpdesk" },
@@ -28,8 +29,38 @@ type Ticket = {
 const mockTickets: Ticket[] = [];
 
 export default function HelpdeskPage() {
-    const [tickets] = useState<Ticket[]>(mockTickets);
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const [tickets, setTickets] = useState<Ticket[]>(mockTickets);
     const [currentView, setCurrentView] = useState<ViewType>("kanban");
+    const [showNewModal, setShowNewModal] = useState(false);
+    const [ticketForm, setTicketForm] = useState({ subject: "", customer: "", team: "Support Tier 1", priority: "medium", assigned_to: "Support Agent" });
+
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem(getEntityStorageKey("helpdesk_tickets"));
+            if (saved) setTickets(JSON.parse(saved));
+        } catch {}
+    }, [activeBranch, getEntityStorageKey]);
+
+    const handleCreateTicket = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!ticketForm.subject.trim()) return;
+        const newTicket: Ticket = {
+            id: `TKT-${String(tickets.length + 1).padStart(3, "0")}`,
+            subject: ticketForm.subject.trim(),
+            customer: ticketForm.customer.trim() || "Walk-in Client",
+            team: ticketForm.team,
+            priority: ticketForm.priority,
+            status: "new",
+            created: new Date().toISOString(),
+            assigned_to: ticketForm.assigned_to,
+        };
+        const next = [newTicket, ...tickets];
+        setTickets(next);
+        try { localStorage.setItem(getEntityStorageKey("helpdesk_tickets"), JSON.stringify(next)); } catch {}
+        setTicketForm({ subject: "", customer: "", team: "Support Tier 1", priority: "medium", assigned_to: "Support Agent" });
+        setShowNewModal(false);
+    };
 
     return (
         <div className="flex flex-col h-screen bg-[#0F172A]">
@@ -38,10 +69,12 @@ export default function HelpdeskPage() {
                 moduleIcon={<LifeBuoy size={20} />}
                 menuItems={MENU_ITEMS}
                 searchPlaceholder="Search tickets..."
+                onNewClick={() => setShowNewModal(true)}
+                newButtonLabel="New Ticket"
             />
 
             <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                     <div className="flex items-center gap-4">
                         <div>
                             <h2 className="text-2xl font-semibold text-gray-200">Helpdesk Tickets</h2>
@@ -53,6 +86,12 @@ export default function HelpdeskPage() {
                             onViewChange={setCurrentView}
                         />
                     </div>
+                    <button
+                        onClick={() => setShowNewModal(true)}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 cursor-pointer"
+                    >
+                        <Plus size={16} /> New Ticket
+                    </button>
                 </div>
 
                 {currentView === "list" && (
@@ -132,6 +171,45 @@ export default function HelpdeskPage() {
                     </div>
                 )}
             </div>
+
+            {showNewModal && (
+                <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-[#1E293B] border border-gray-700 rounded-2xl max-w-md w-full p-6 text-white shadow-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold">Create Support Ticket</h3>
+                            <button onClick={() => setShowNewModal(false)} className="text-gray-400 hover:text-white"><X size={18} /></button>
+                        </div>
+                        <form onSubmit={handleCreateTicket} className="space-y-3 text-sm">
+                            <div>
+                                <label className="block text-gray-300 mb-1">Subject *</label>
+                                <input type="text" required value={ticketForm.subject} onChange={e => setTicketForm({ ...ticketForm, subject: e.target.value })} placeholder="e.g. Invoice PDF export issue" className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                            </div>
+                            <div>
+                                <label className="block text-gray-300 mb-1">Customer</label>
+                                <input type="text" value={ticketForm.customer} onChange={e => setTicketForm({ ...ticketForm, customer: e.target.value })} placeholder="Acme Client" className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 mb-1">Priority</label>
+                                    <select value={ticketForm.priority} onChange={e => setTicketForm({ ...ticketForm, priority: e.target.value })} className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white">
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 mb-1">Support Team</label>
+                                    <input type="text" value={ticketForm.team} onChange={e => setTicketForm({ ...ticketForm, team: e.target.value })} className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button type="button" onClick={() => setShowNewModal(false)} className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300">Cancel</button>
+                                <button type="submit" className="px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold">Create Ticket</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

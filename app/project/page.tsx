@@ -2,8 +2,9 @@
 
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
-import { useState } from "react";
-import { FolderKanban, CheckSquare, Clock, TrendingUp, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { FolderKanban, CheckSquare, Clock, TrendingUp, Users, Plus, X } from "lucide-react";
+import { useBranchContext } from "@/lib/branchContext";
 
 const MENU_ITEMS = [
     { name: "Projects", href: "/project" },
@@ -27,8 +28,38 @@ type Project = {
 const mockProjects: Project[] = [];
 
 export default function ProjectPage() {
-    const [projects] = useState<Project[]>(mockProjects);
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const [projects, setProjects] = useState<Project[]>(mockProjects);
     const [currentView, setCurrentView] = useState<ViewType>("kanban");
+    const [showNewModal, setShowNewModal] = useState(false);
+    const [projForm, setProjForm] = useState({ name: "", manager: "Workspace Owner", customer: "Internal", deadline: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0] });
+
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem(getEntityStorageKey("projects_list"));
+            if (saved) setProjects(JSON.parse(saved));
+        } catch {}
+    }, [activeBranch, getEntityStorageKey]);
+
+    const handleCreateProject = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!projForm.name.trim()) return;
+        const newProj: Project = {
+            id: `PRJ-${String(projects.length + 1).padStart(3, "0")}`,
+            name: projForm.name.trim(),
+            manager: projForm.manager.trim() || "Workspace Owner",
+            customer: projForm.customer.trim() || "Internal",
+            status: "in_progress",
+            tasks: 1,
+            progress: 10,
+            deadline: projForm.deadline,
+        };
+        const next = [newProj, ...projects];
+        setProjects(next);
+        try { localStorage.setItem(getEntityStorageKey("projects_list"), JSON.stringify(next)); } catch {}
+        setProjForm({ name: "", manager: "Workspace Owner", customer: "Internal", deadline: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0] });
+        setShowNewModal(false);
+    };
 
     return (
         <div className="flex flex-col h-screen bg-[#0F172A]">
@@ -37,10 +68,12 @@ export default function ProjectPage() {
                 moduleIcon={<FolderKanban size={20} />}
                 menuItems={MENU_ITEMS}
                 searchPlaceholder="Search projects..."
+                onNewClick={() => setShowNewModal(true)}
+                newButtonLabel="New Project"
             />
 
             <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                     <div className="flex items-center gap-4">
                         <div>
                             <h2 className="text-2xl font-semibold text-gray-200">Projects</h2>
@@ -52,6 +85,12 @@ export default function ProjectPage() {
                             onViewChange={setCurrentView}
                         />
                     </div>
+                    <button
+                        onClick={() => setShowNewModal(true)}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 cursor-pointer"
+                    >
+                        <Plus size={16} /> New Project
+                    </button>
                 </div>
 
                 {currentView === "list" && (
@@ -145,6 +184,37 @@ export default function ProjectPage() {
                     </div>
                 )}
             </div>
+
+            {showNewModal && (
+                <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-[#1E293B] border border-gray-700 rounded-2xl max-w-md w-full p-6 text-white shadow-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold">Create New Project</h3>
+                            <button onClick={() => setShowNewModal(false)} className="text-gray-400 hover:text-white"><X size={18} /></button>
+                        </div>
+                        <form onSubmit={handleCreateProject} className="space-y-3 text-sm">
+                            <div>
+                                <label className="block text-gray-300 mb-1">Project Name *</label>
+                                <input type="text" required value={projForm.name} onChange={e => setProjForm({ ...projForm, name: e.target.value })} placeholder="e.g. ERP Rollout Phase 1" className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 mb-1">Customer</label>
+                                    <input type="text" value={projForm.customer} onChange={e => setProjForm({ ...projForm, customer: e.target.value })} className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 mb-1">Deadline</label>
+                                    <input type="date" value={projForm.deadline} onChange={e => setProjForm({ ...projForm, deadline: e.target.value })} className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button type="button" onClick={() => setShowNewModal(false)} className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300">Cancel</button>
+                                <button type="submit" className="px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold">Create Project</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

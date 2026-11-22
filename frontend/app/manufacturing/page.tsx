@@ -3,8 +3,9 @@ import { fetchAPI } from '@/lib/api';
 
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import ViewSwitcher, { ViewType } from "@/components/shared/ViewSwitcher";
-import { useState } from "react";
-import { Wrench, Settings, Package, Clock, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Wrench, Settings, Package, Clock, AlertTriangle, Plus, X } from "lucide-react";
+import { useBranchContext } from "@/lib/branchContext";
 
 const MENU_ITEMS = [
     { name: "Manufacturing Orders", href: "/manufacturing" },
@@ -26,8 +27,36 @@ type ManufacturingOrder = {
 const mockOrders: ManufacturingOrder[] = [];
 
 export default function ManufacturingPage() {
-    const [orders] = useState<ManufacturingOrder[]>(mockOrders);
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const [orders, setOrders] = useState<ManufacturingOrder[]>(mockOrders);
     const [currentView, setCurrentView] = useState<ViewType>("list");
+    const [showNewModal, setShowNewModal] = useState(false);
+    const [moForm, setMoForm] = useState({ product: "", quantity: "10", deadline: new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0], source: "SO-001" });
+
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem(getEntityStorageKey("mrp_orders"));
+            if (saved) setOrders(JSON.parse(saved));
+        } catch {}
+    }, [activeBranch, getEntityStorageKey]);
+
+    const handleCreateMO = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!moForm.product.trim()) return;
+        const newMO: ManufacturingOrder = {
+            id: `MO-${String(orders.length + 1).padStart(3, "0")}`,
+            product: moForm.product.trim(),
+            quantity: Number(moForm.quantity) || 1,
+            status: "confirmed",
+            deadline: moForm.deadline,
+            source: moForm.source.trim() || "Manual",
+        };
+        const next = [newMO, ...orders];
+        setOrders(next);
+        try { localStorage.setItem(getEntityStorageKey("mrp_orders"), JSON.stringify(next)); } catch {}
+        setMoForm({ product: "", quantity: "10", deadline: new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0], source: "SO-001" });
+        setShowNewModal(false);
+    };
 
     return (
         <div className="flex flex-col h-screen bg-[#0F172A]">
@@ -36,10 +65,12 @@ export default function ManufacturingPage() {
                 moduleIcon={<Wrench size={20} />}
                 menuItems={MENU_ITEMS}
                 searchPlaceholder="Search orders..."
+                onNewClick={() => setShowNewModal(true)}
+                newButtonLabel="New MO"
             />
 
             <div className="flex-1 overflow-auto p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                     <div className="flex items-center gap-4">
                         <div>
                             <h2 className="text-2xl font-semibold text-gray-200">Manufacturing Orders</h2>
@@ -51,6 +82,12 @@ export default function ManufacturingPage() {
                             onViewChange={setCurrentView}
                         />
                     </div>
+                    <button
+                        onClick={() => setShowNewModal(true)}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 cursor-pointer"
+                    >
+                        <Plus size={16} /> New MO
+                    </button>
                 </div>
 
                 {currentView === "list" && (
@@ -118,6 +155,37 @@ export default function ManufacturingPage() {
                     </div>
                 )}
             </div>
+
+            {showNewModal && (
+                <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-[#1E293B] border border-gray-700 rounded-2xl max-w-md w-full p-6 text-white shadow-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold">New Manufacturing Order</h3>
+                            <button onClick={() => setShowNewModal(false)} className="text-gray-400 hover:text-white"><X size={18} /></button>
+                        </div>
+                        <form onSubmit={handleCreateMO} className="space-y-3 text-sm">
+                            <div>
+                                <label className="block text-gray-300 mb-1">Product to Manufacture *</label>
+                                <input type="text" required value={moForm.product} onChange={e => setMoForm({ ...moForm, product: e.target.value })} placeholder="e.g. Custom Server Rack" className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 mb-1">Quantity</label>
+                                    <input type="number" min="1" value={moForm.quantity} onChange={e => setMoForm({ ...moForm, quantity: e.target.value })} className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 mb-1">Deadline</label>
+                                    <input type="date" value={moForm.deadline} onChange={e => setMoForm({ ...moForm, deadline: e.target.value })} className="w-full bg-[#0F172A] border border-gray-700 rounded-lg px-3 py-2 text-white" />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button type="button" onClick={() => setShowNewModal(false)} className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300">Cancel</button>
+                                <button type="submit" className="px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold">Create MO</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

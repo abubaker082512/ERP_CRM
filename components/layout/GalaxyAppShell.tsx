@@ -27,6 +27,32 @@ const navItems = [
     { name: 'SaaS Admin', icon: ShieldCheck, href: '/super-admin' },
 ];
 
+function SidebarPlanInfo() {
+    const { userPlan } = useBranchContext();
+    const label =
+        userPlan === "premium" ? "ENTERPRISE" :
+        userPlan === "standard" ? "STANDARD PLAN" :
+        userPlan === "leadspool" ? "LEADS POOL" : "ONE APP FREE";
+    const title =
+        userPlan === "premium" ? "Beraxis Custom Enterprise" :
+        userPlan === "standard" ? "Beraxis Standard ($1/mo)" :
+        userPlan === "leadspool" ? "Leads Pool Solo" : "One App Free Plan";
+    const sub =
+        userPlan === "premium" ? "Multi-Company + All 28+ Apps" :
+        userPlan === "standard" ? "All 28+ Apps + 1,500 Leads/mo" :
+        userPlan === "leadspool" ? "Verified B2B Leads Pool" : "1 Major App + Settings";
+    return (
+        <>
+            <div className="flex items-center gap-2 mb-2">
+                <ShieldCheck size={14} className="text-purple-400" />
+                <span suppressHydrationWarning className="text-[10px] font-bold uppercase tracking-widest text-purple-400">{label}</span>
+            </div>
+            <p suppressHydrationWarning className="text-xs text-gray-300 font-medium">{title}</p>
+            <p suppressHydrationWarning className="text-[10px] text-gray-500 mt-1">{sub}</p>
+        </>
+    );
+}
+
 function WorkspaceModuleGuard({ pathname, children }: { pathname: string; children: React.ReactNode }) {
     const { hasSelectedIndustry, isFreePlan, freeSelectedApp, isModuleEnabled } = useBranchContext();
 
@@ -371,12 +397,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                         <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-40 transition-opacity">
                             <Sparkles size={24} className="text-purple-400" />
                         </div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <ShieldCheck size={14} className="text-purple-400" />
-                            <span suppressHydrationWarning className="text-[10px] font-bold uppercase tracking-widest text-purple-400">{planLabel}</span>
-                        </div>
-                        <p suppressHydrationWarning className="text-xs text-gray-300 font-medium">{planTitle}</p>
-                        <p suppressHydrationWarning className="text-[10px] text-gray-500 mt-1">{planSubtitle}</p>
+                        <SidebarPlanInfo />
                         <button
                             onClick={() => {
                                 try {
@@ -403,11 +424,11 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
             </aside>
 
             {/* Main Content */}
-            <main className={`flex-1 flex flex-col transition-all duration-500 ease-in-out ${
+            <main className={`flex-1 min-w-0 flex flex-col transition-all duration-500 ease-in-out ${
                 isSidebarOpen ? 'ml-64' : 'ml-0'
             }`}>
                 <div 
-                    className="flex-1 overflow-y-auto overflow-x-hidden bg-[#020205] relative custom-scrollbar"
+                    className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#020205] relative custom-scrollbar"
                     style={{ 
                         willChange: 'scroll-position',
                         WebkitOverflowScrolling: 'touch',

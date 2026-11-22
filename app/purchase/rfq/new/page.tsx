@@ -31,6 +31,7 @@ export default function NewRFQPage() {
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedVendor, setSelectedVendor] = useState('');
+    const [customVendor, setCustomVendor] = useState('');
     const [lines, setLines] = useState<OrderLine[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -94,8 +95,10 @@ export default function NewRFQPage() {
     };
 
     const handleSave = async () => {
-        if (!selectedVendor) {
-            alert("Please select a vendor");
+        const resolvedVendor =
+            contacts.find(c => c.id === selectedVendor)?.name || customVendor.trim();
+        if (!resolvedVendor) {
+            alert("Please select or enter a vendor name");
             return;
         }
 
@@ -106,7 +109,8 @@ export default function NewRFQPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: "New", // Backend or DB should generate sequence
-                    partner_id: selectedVendor,
+                    partner_id: selectedVendor || undefined,
+                    vendor_name: resolvedVendor,
                     amount_total: calculateTotal(),
                     lines: lines
                 })
@@ -164,6 +168,15 @@ export default function NewRFQPage() {
                                     <option key={c.id} value={c.id} className="bg-[#1E293B] text-white">{c.name}</option>
                                 ))}
                             </select>
+                            {!selectedVendor && (
+                                <input
+                                    type="text"
+                                    value={customVendor}
+                                    onChange={(e) => setCustomVendor(e.target.value)}
+                                    placeholder="Or enter new vendor name..."
+                                    className="w-full mt-2 bg-[#0F172A] border border-gray-700 rounded px-3 py-1.5 text-sm text-white focus:border-purple-500 outline-none"
+                                />
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-400 mb-1">Order Deadline</label>
