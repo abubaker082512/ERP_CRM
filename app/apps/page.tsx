@@ -343,20 +343,20 @@ export default function AppsDashboardPage() {
     return (
         <div className="min-h-screen bg-transparent text-white flex flex-col selection:bg-purple-500 selection:text-white relative overflow-hidden">
             {/* Top Navigation Bar */}
-            <header className="border-b border-white/10 bg-[#090d16]/90 backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <Link href="/apps" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+            <header className="border-b border-white/10 bg-[#090d16]/90 backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 shrink-0">
+                    <Link href="/apps" className="flex items-center gap-2 hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
                         <img src="/logo2.png" alt="Beraxis Logo" className="h-7 w-auto" />
-                        <span className="font-extrabold text-base tracking-tight text-white">BERAXIS WORKSPACE</span>
+                        <span className="font-extrabold text-sm sm:text-base tracking-tight text-white whitespace-nowrap">BERAXIS WORKSPACE</span>
                     </Link>
                     {activeBranch && (
-                        <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                        <span className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-500/10 text-purple-300 border border-purple-500/20 whitespace-nowrap">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                             {activeIndustry.name}
                         </span>
                     )}
                     <span
-                        className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                        className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border whitespace-nowrap ${
                             isFreePlan
                                 ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
                                 : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"

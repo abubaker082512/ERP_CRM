@@ -226,7 +226,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
       } else if (info.subscriptionStatus === "leadspool" || savedPlan === "leadspool") {
         resolvedPlan = "leadspool";
       } else if (info.subscriptionStatus === "active" || info.subscriptionStatus === "pro" || info.subscriptionStatus === "standard") {
-        resolvedPlan = savedPlan === "premium" ? "premium" : (savedPlan === "leadspool" ? "leadspool" : "standard");
+        resolvedPlan = savedPlan === "premium" ? "premium" : "standard";
       } else if (savedPlan && ["free", "leadspool", "standard", "premium"].includes(savedPlan)) {
         resolvedPlan = savedPlan;
       } else {
@@ -286,10 +286,32 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const syncLivePlan = async () => {
+      const info = getLoggedInUserInfo();
+      if (!info.email || info.isSuperAdmin) return;
+      try {
+        const res = await fetch(`/api/auth/plan?email=${encodeURIComponent(info.email)}&t=${Date.now()}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const tier = data?.resolved_tier as UserPlanType | undefined;
+          if (tier && ["free", "leadspool", "standard", "premium"].includes(tier)) {
+            setUserPlanState(tier);
+            try {
+              localStorage.setItem(`beraxis_plan_${info.userKey}`, tier);
+            } catch {}
+          }
+        }
+      } catch {}
+    };
+
     loadUserScopedContext();
+    syncLivePlan();
 
     const handleAuthOrStorageChange = () => {
       loadUserScopedContext();
+      syncLivePlan();
     };
 
     window.addEventListener("beraxis_auth_changed", handleAuthOrStorageChange);
