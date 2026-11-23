@@ -400,28 +400,18 @@ export default function AppsDashboardPage() {
                 : "bg-transparent text-white"
         }`}>
             {/* Top Navigation Bar */}
-            <header className={`border-b backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 transition-colors ${
+            <header className={`border-b backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-6 py-2 flex flex-wrap xl:flex-nowrap items-center justify-between gap-2 transition-colors ${
                 isLight
                     ? "border-slate-200/90 bg-white/95 text-slate-900 shadow-sm"
                     : "border-white/10 bg-[#090d16]/90 text-white"
             }`}>
-                <div className="flex items-center gap-2.5 shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                     <Link href="/apps" className="flex items-center gap-2 hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
                         <img src="/logo2.png" alt="Beraxis Logo" className="h-7 w-auto" />
-                        <span className={`font-extrabold text-sm sm:text-base tracking-tight whitespace-nowrap ${isLight ? "text-slate-900" : "text-white"}`}>BERAXIS WORKSPACE</span>
+                        <span className={`font-extrabold text-sm tracking-tight whitespace-nowrap ${isLight ? "text-slate-900" : "text-white"}`}>BERAXIS WORKSPACE</span>
                     </Link>
-                    {activeBranch && (
-                        <span className={`hidden xl:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border whitespace-nowrap ${
-                            isLight
-                                ? "bg-purple-50 text-purple-700 border-purple-200"
-                                : "bg-purple-500/10 text-purple-300 border-purple-500/20"
-                        }`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            {activeIndustry.name}
-                        </span>
-                    )}
                     <span
-                        className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border whitespace-nowrap ${
+                        className={`hidden 2xl:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border whitespace-nowrap ${
                             isFreePlan
                                 ? isLight
                                     ? "bg-amber-50 text-amber-700 border-amber-200"
@@ -431,11 +421,11 @@ export default function AppsDashboardPage() {
                                     : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
                         }`}
                     >
-                        {isFreePlan ? "FREE PLAN (1 APP + SETTINGS)" : `${userPlan.toUpperCase()} PLAN`}
+                        {isFreePlan ? "FREE PLAN" : `${userPlan.toUpperCase()} PLAN`}
                     </span>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-2.5 min-w-0">
+                <div className="flex flex-wrap xl:flex-nowrap items-center justify-end gap-1.5 sm:gap-2 min-w-0">
                     {hasSelectedIndustry && activeBranch && (
                         <>
                             <UniversalBranchSwitcher />

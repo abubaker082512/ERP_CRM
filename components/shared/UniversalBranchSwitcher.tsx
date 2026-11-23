@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useBranchContext } from "@/lib/branchContext";
+import { useTheme } from "@/lib/themeContext";
 import BranchSetupWizardModal from "@/components/settings/BranchSetupWizardModal";
 import {
   Building2,
@@ -22,6 +23,7 @@ export default function UniversalBranchSwitcher() {
     activeIndustry,
     setActiveBranchId
   } = useBranchContext();
+  const { isLight } = useTheme();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -76,7 +78,11 @@ export default function UniversalBranchSwitcher() {
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#0f1422] hover:bg-[#161c2e] border border-gray-700/80 hover:border-purple-500/50 text-xs font-semibold text-gray-200 transition-all shadow-md group shrink-0"
+        className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all shadow-sm group shrink-0 cursor-pointer ${
+          isLight
+            ? "bg-white hover:bg-slate-50 border-slate-200 hover:border-purple-400 text-slate-900"
+            : "bg-[#0f1422] hover:bg-[#161c2e] border-gray-700/80 hover:border-purple-500/50 text-gray-200"
+        }`}
         title="Switch Business Entity / Branch"
       >
         <div className={`w-5 h-5 rounded-md ${activeIndustry.themeColor} flex items-center justify-center text-white text-[10px] font-extrabold shadow-sm shrink-0`}>
