@@ -966,6 +966,9 @@ export default function AppsDashboardPage() {
                                 <Link href="/employees" className={`px-3 py-1.5 rounded-full border text-[11px] font-bold transition-colors ${isLight ? "bg-white hover:bg-emerald-50 border-slate-200 text-emerald-700" : "bg-white/5 hover:bg-emerald-500/20 border-white/10 text-emerald-200"}`}>
                                     + Employee
                                 </Link>
+                                <Link href="/approvals" className={`px-3 py-1.5 rounded-full border text-[11px] font-bold transition-colors ${isLight ? "bg-white hover:bg-amber-50 border-slate-200 text-amber-700" : "bg-white/5 hover:bg-amber-500/20 border-white/10 text-amber-200"}`}>
+                                    Approvals
+                                </Link>
                             </div>
                         </div>
 

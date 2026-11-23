@@ -49,9 +49,94 @@ import {
   DEFAULT_ROLE_PERMISSIONS,
   DEFAULT_CUSTOM_ROLES
 } from "@/lib/teamStorage";
+import { useBranchContext } from "@/lib/branchContext";
+import {
+  buildOrgTree,
+  generate50UserHierarchySample,
+  getDefaultDataScopeForRole,
+  OrgTreeNode,
+  parseBulkUsersCsv,
+  wouldCreateCycle,
+} from "@/lib/hierarchyUtils";
+import { UploadCloud, ChevronDown } from "lucide-react";
+
+function OrgTreeBranch({
+  node,
+  expandedIds,
+  onToggle,
+}: {
+  node: OrgTreeNode;
+  expandedIds: Record<string, boolean>;
+  onToggle: (id: string) => void;
+}) {
+  const hasChildren = node.children.length > 0;
+  const isExpanded = expandedIds[node.member.id] ?? node.depth < 2;
+  const scope = node.member.dataScope || getDefaultDataScopeForRole(node.member.role);
+
+  return (
+    <div className={node.depth > 0 ? "ml-5 sm:ml-8 pl-4 border-l border-slate-700/80 space-y-2.5" : "space-y-2.5"}>
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 hover:border-purple-500/40 transition-colors">
+        <div className="flex items-center gap-3 min-w-0">
+          {hasChildren ? (
+            <button
+              type="button"
+              onClick={() => onToggle(node.member.id)}
+              className="w-6 h-6 rounded-lg bg-slate-800 hover:bg-purple-600/30 text-slate-300 flex items-center justify-center shrink-0 cursor-pointer"
+              title={isExpanded ? "Collapse team" : "Expand team"}
+            >
+              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
+          ) : (
+            <span className="w-6 h-6 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-[10px] text-slate-500 shrink-0">
+              •
+            </span>
+          )}
+          <div className={`w-8 h-8 rounded-full ${node.member.avatarBg || "bg-indigo-600"} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+            {node.member.name.slice(0, 2).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-white flex items-center gap-1.5 truncate">
+              {node.member.name}
+              {node.member.role === "Owner" && <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+            </div>
+            <div className="text-[11px] text-slate-400 truncate">
+              {node.member.role} · {node.member.department} · <span className="font-mono">{node.member.email}</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-[10px] font-bold">
+          <span className={`px-2 py-0.5 rounded-full border uppercase ${
+            scope === "company"
+              ? "bg-purple-500/15 text-purple-300 border-purple-500/30"
+              : scope === "team"
+              ? "bg-cyan-500/15 text-cyan-300 border-cyan-500/30"
+              : "bg-slate-800 text-slate-300 border-slate-700"
+          }`}>
+            Scope: {scope}
+          </span>
+          {hasChildren && (
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              {node.directCount} direct · {node.totalSubordinates} total reports
+            </span>
+          )}
+        </div>
+      </div>
+
+      {hasChildren && isExpanded && (
+        <div className="space-y-2.5 pt-1">
+          {node.children.map((child) => (
+            <OrgTreeBranch key={child.member.id} node={child} expandedIds={expandedIds} onToggle={onToggle} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function TeamManagementPage() {
-  const [quota, setQuota] = useState<MultiCompanyQuota>(INITIAL_QUOTA);
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const activeCompanyId = activeBranch?.id || "CMP-001";
+  const [quota, setQuota] = useState<MultiCompanyQuota>({ ...INITIAL_QUOTA, totalSeats: 60 });
   const [members, setMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
   const [contractors, setContractors] = useState<FreelancerContractor[]>(INITIAL_CONTRACTORS);
   const [invitations, setInvitations] = useState<TeamInvitation[]>(INITIAL_INVITATIONS);
@@ -59,9 +144,17 @@ export default function TeamManagementPage() {
   const [activeTab, setActiveTab] = useState<"members" | "orgchart" | "companies" | "matrix" | "contractors">("members");
   const [search, setSearch] = useState("");
   const [companyFilter, setCompanyFilter] = useState<string>("all");
+  const [pageSize, setPageSize] = useState<number>(25);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [expandedOrgIds, setExpandedOrgIds] = useState<Record<string, boolean>>({});
   
   // Modals
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [bulkCsvText, setBulkCsvText] = useState(
+    "Name,Email,Role,Department,ReportsToEmail\nVP Sales,vp.sales@company.com,Admin,Sales & CRM,ceo@company.com\nSales Manager,sales.mgr@company.com,Manager,Sales & CRM,vp.sales@company.com\nSales Rep 1,rep1@company.com,Specialist,Sales & CRM,sales.mgr@company.com"
+  );
+  const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
   const [isCustomRoleOpen, setIsCustomRoleOpen] = useState(false);
   const [isBuySeatsOpen, setIsBuySeatsOpen] = useState(false);
   const [isNewCompanyOpen, setIsNewCompanyOpen] = useState(false);
@@ -81,6 +174,30 @@ export default function TeamManagementPage() {
       }
     } catch {}
   }, []);
+
+  // Load persisted company hierarchy members from API + localStorage
+  useEffect(() => {
+    const storageKey = getEntityStorageKey("team_members");
+    try {
+      const cached = localStorage.getItem(storageKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) setMembers(parsed);
+      }
+    } catch {}
+
+    fetch(`/api/team/members?company_id=${encodeURIComponent(activeCompanyId)}&limit=200`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.allMembers) && data.allMembers.length > 0) {
+          setMembers(data.allMembers);
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(data.allMembers));
+          } catch {}
+        }
+      })
+      .catch(() => {});
+  }, [activeCompanyId, getEntityStorageKey]);
 
   // Invite Form State
   const [invName, setInvName] = useState("");
@@ -184,7 +301,16 @@ export default function TeamManagementPage() {
       title: `${invRole} (${invDept})`,
     };
 
-    setMembers([newMember, ...members]);
+    const updatedMembers = [newMember, ...members];
+    setMembers(updatedMembers);
+    try {
+      localStorage.setItem(getEntityStorageKey("team_members"), JSON.stringify(updatedMembers));
+    } catch {}
+    fetch("/api/team/members", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companyId: activeCompanyId, ...newMember }),
+    }).catch(() => {});
     setIsInviteOpen(false);
     setInvName("");
     setInvEmail("");
@@ -356,6 +482,13 @@ export default function TeamManagementPage() {
             >
               <CreditCard className="w-4 h-4 text-indigo-400" />
               Buy More Seats
+            </button>
+            <button
+              onClick={() => setIsBulkImportOpen(true)}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <UploadCloud className="w-4 h-4 text-emerald-400" />
+              Bulk Import (50+)
             </button>
             <button
               onClick={() => setIsCustomRoleOpen(true)}
@@ -552,7 +685,7 @@ export default function TeamManagementPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
-                    {filteredMembers.map((m) => {
+                    {filteredMembers.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((m) => {
                       const supervisor = members.find((sup) => sup.id === m.reportsToId);
                       const isOwner = m.role === "Owner";
 
@@ -591,14 +724,39 @@ export default function TeamManagementPage() {
                           </td>
 
                           <td className="py-3.5 px-4">
-                            {supervisor ? (
-                              <div className="flex items-center space-x-1.5 text-slate-300">
-                                <GitBranch className="w-3 h-3 text-slate-500 shrink-0" />
-                                <span className="font-medium text-[11px]">{supervisor.name}</span>
-                              </div>
-                            ) : (
-                              <span className="text-[10px] text-slate-500 italic">Top Level (None)</span>
-                            )}
+                            <select
+                              value={m.reportsToId || ""}
+                              onChange={async (e) => {
+                                const nextSup = e.target.value || null;
+                                if (wouldCreateCycle(m.id, nextSup, members)) {
+                                  showToast("Invalid Superior", "Cannot assign a subordinate as their own superior (circular reporting loop).");
+                                  return;
+                                }
+                                const nextMembers = members.map((x) =>
+                                  x.id === m.id ? { ...x, reportsToId: nextSup } : x
+                                );
+                                setMembers(nextMembers);
+                                try {
+                                  localStorage.setItem(getEntityStorageKey("team_members"), JSON.stringify(nextMembers));
+                                } catch {}
+                                fetch("/api/team/members", {
+                                  method: "PATCH",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ companyId: activeCompanyId, id: m.id, reportsToId: nextSup }),
+                                }).catch(() => {});
+                                showToast("Reporting Line Updated", `${m.name} now reports to ${members.find((s) => s.id === nextSup)?.name || "Top Level"}.`);
+                              }}
+                              className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 max-w-[160px] cursor-pointer"
+                            >
+                              <option value="">Top Level (None)</option>
+                              {members
+                                .filter((cand) => cand.id !== m.id && cand.status !== "deactivated")
+                                .map((cand) => (
+                                  <option key={cand.id} value={cand.id}>
+                                    {cand.name} ({cand.role})
+                                  </option>
+                                ))}
+                            </select>
                           </td>
 
                           <td className="py-3.5 px-4">
@@ -650,74 +808,98 @@ export default function TeamManagementPage() {
                   </tbody>
                 </table>
               </div>
+              {filteredMembers.length > 0 && (
+                <div className="px-4 py-3 border-t border-slate-800 bg-slate-950/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+                  <div>
+                    Showing <strong className="text-white">{Math.min(filteredMembers.length, (currentPage - 1) * pageSize + 1)}–{Math.min(filteredMembers.length, currentPage * pageSize)}</strong> of <strong className="text-white">{filteredMembers.length}</strong> members
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={pageSize}
+                      onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white cursor-pointer"
+                    >
+                      <option value={25}>25 / page</option>
+                      <option value={50}>50 / page</option>
+                      <option value={200}>All (200)</option>
+                    </select>
+                    <button
+                      type="button"
+                      disabled={currentPage <= 1}
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-40 cursor-pointer"
+                    >
+                      Prev
+                    </button>
+                    <span className="text-xs font-mono text-white">Page {currentPage} / {Math.max(1, Math.ceil(filteredMembers.length / pageSize))}</span>
+                    <button
+                      type="button"
+                      disabled={currentPage >= Math.ceil(filteredMembers.length / pageSize)}
+                      onClick={() => setCurrentPage((p) => p + 1)}
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-40 cursor-pointer"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* TAB 2: INTERACTIVE ORG CHART HIERARCHY */}
+        {/* TAB 2: INTERACTIVE RECURSIVE ORG CHART HIERARCHY (50+ Users) */}
         {activeTab === "orgchart" && (
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
               <div>
                 <h3 className="text-base font-semibold text-white flex items-center gap-2">
                   <Network className="w-4 h-4 text-indigo-400" />
-                  Corporate Reporting Tree & Hierarchy
+                  Recursive Corporate Reporting Tree ({members.filter((m) => m.status !== "deactivated").length} Active Staff)
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Hierarchical structure dictating managerial approvals, team report routing, and record access boundaries.
+                  Multi-level reporting tree dictating subordinate-to-superior approvals, team visibility (`own` / `team` / `company`), and KPI rollups.
                 </p>
               </div>
-              <span className="text-xs text-slate-500">Root Node: CEO</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allMap: Record<string, boolean> = {};
+                    members.forEach((m) => { allMap[m.id] = true; });
+                    setExpandedOrgIds(allMap);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 cursor-pointer"
+                >
+                  Expand All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allMap: Record<string, boolean> = {};
+                    members.forEach((m) => { allMap[m.id] = false; });
+                    setExpandedOrgIds(allMap);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 cursor-pointer"
+                >
+                  Collapse All
+                </button>
+              </div>
             </div>
 
-            {/* Tree Visualization (Driven by live workspace members) */}
-            <div className="space-y-4">
-              {(() => {
-                const owner = members.find(m => m.role === "Owner") || members[0];
-                const managers = members.filter(m => m.id !== owner?.id && (m.role === "Admin" || m.role === "Manager"));
-                const staff = members.filter(m => m.id !== owner?.id && m.role !== "Admin" && m.role !== "Manager");
-                return (
-                  <>
-                    {owner && (
-                      <div className="p-4 rounded-xl bg-purple-950/40 border border-purple-800/40 max-w-md mx-auto text-center shadow-lg">
-                        <Crown className="w-5 h-5 text-amber-400 mx-auto mb-1" />
-                        <div className="font-bold text-white text-sm">{owner.name}</div>
-                        <div className="text-xs text-purple-300">{owner.role} • {owner.department || "Executive"}</div>
-                        <div className="text-[10px] text-slate-400 mt-1">Authority across {quota.companies.length} {quota.companies.length === 1 ? "Company" : "Companies"}</div>
-                      </div>
-                    )}
-
-                    {managers.length > 0 && (
-                      <>
-                        <div className="w-0.5 h-6 bg-slate-700 mx-auto" />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                          {managers.map(mgr => (
-                            <div key={mgr.id} className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center shadow-md">
-                              <div className="font-semibold text-white text-xs">{mgr.name}</div>
-                              <div className="text-[11px] text-emerald-400">{mgr.role} ({mgr.department || "Management"})</div>
-                              <div className="text-[10px] text-slate-400 mt-1">Reports to: {owner?.name || "Workspace Owner"}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-
-                    {staff.length > 0 && (
-                      <>
-                        <div className="w-0.5 h-6 bg-slate-700 mx-auto" />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                          {staff.map(st => (
-                            <div key={st.id} className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-center shadow-md">
-                              <div className="font-semibold text-white text-xs">{st.name}</div>
-                              <div className="text-[11px] text-slate-300">{st.role} • {st.department || "Operations"}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </>
-                );
-              })()}
+            <div className="space-y-3">
+              {buildOrgTree(members).map((rootNode) => (
+                <OrgTreeBranch
+                  key={rootNode.member.id}
+                  node={rootNode}
+                  expandedIds={expandedOrgIds}
+                  onToggle={(id) =>
+                    setExpandedOrgIds((prev) => ({
+                      ...prev,
+                      [id]: !(prev[id] ?? true),
+                    }))
+                  }
+                />
+              ))}
             </div>
           </div>
         )}
@@ -835,6 +1017,111 @@ export default function TeamManagementPage() {
         )}
 
       </main>
+
+      {/* MODAL: BULK CSV IMPORT (50+ USERS) */}
+      {isBulkImportOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <UploadCloud className="w-5 h-5 text-emerald-400" />
+                  Bulk Import 50+ Users &amp; Reporting Hierarchy (CSV)
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Paste CSV rows (`Name,Email,Role,Department,ReportsToEmail`) or seed a realistic 50-user 4-level company hierarchy.
+                </p>
+              </div>
+              <button onClick={() => setIsBulkImportOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <textarea
+              rows={7}
+              value={bulkCsvText}
+              onChange={(e) => setBulkCsvText(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-white focus:border-emerald-500 outline-none"
+            />
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                disabled={isBulkSubmitting}
+                onClick={async () => {
+                  setIsBulkSubmitting(true);
+                  const demo50 = generate50UserHierarchySample(
+                    activeCompanyId,
+                    activeBranch?.name ? `${activeBranch.name} CEO` : "Company CEO",
+                    "ceo@company.com"
+                  );
+                  setMembers(demo50);
+                  setQuota((prev) => ({ ...prev, totalSeats: Math.max(prev.totalSeats, 55) }));
+                  try {
+                    localStorage.setItem(getEntityStorageKey("team_members"), JSON.stringify(demo50));
+                  } catch {}
+                  await fetch("/api/team/members", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ companyId: activeCompanyId, bulk: demo50 }),
+                  }).catch(() => {});
+                  setIsBulkSubmitting(false);
+                  setIsBulkImportOpen(false);
+                  setActiveTab("orgchart");
+                  showToast("50-User Hierarchy Seeded!", "1 CEO → 3 VPs → 7 Managers → 39 Staff loaded into Recursive Org Tree.");
+                }}
+                className="px-3.5 py-2 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 text-xs font-bold cursor-pointer"
+              >
+                ⚡ Load 50-User Demo Org (4 Levels)
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsBulkImportOpen(false)}
+                  className="px-4 py-2 rounded-lg text-xs text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isBulkSubmitting}
+                  onClick={async () => {
+                    const parsed = parseBulkUsersCsv(bulkCsvText);
+                    if (parsed.length === 0) {
+                      showToast("No valid CSV rows found", "Format: Name,Email,Role,Department,ReportsToEmail");
+                      return;
+                    }
+                    setIsBulkSubmitting(true);
+                    try {
+                      const res = await fetch("/api/team/members", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ companyId: activeCompanyId, bulk: parsed }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (Array.isArray(data.members)) {
+                        setMembers(data.members);
+                        setQuota((prev) => ({ ...prev, totalSeats: Math.max(prev.totalSeats, data.members.length + 5) }));
+                        try {
+                          localStorage.setItem(getEntityStorageKey("team_members"), JSON.stringify(data.members));
+                        } catch {}
+                      }
+                      setIsBulkImportOpen(false);
+                      showToast("Bulk Import Complete!", `Imported ${parsed.length} users with manager reporting links.`);
+                    } finally {
+                      setIsBulkSubmitting(false);
+                    }
+                  }}
+                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer disabled:opacity-50"
+                >
+                  {isBulkSubmitting ? "Importing..." : `Import ${parseBulkUsersCsv(bulkCsvText).length} Users`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL 1: INVITE TEAM MEMBER */}
       {isCustomRoleOpen && (

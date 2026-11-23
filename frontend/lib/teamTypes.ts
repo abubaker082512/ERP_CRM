@@ -1,11 +1,13 @@
 export type BuiltInRole = "Owner" | "Admin" | "Manager" | "Specialist" | "Accountant" | "Viewer" | "Contractor";
 export type Role = BuiltInRole | (string & {});
+export type DataScope = "own" | "team" | "company";
 
 export interface CustomRoleDefinition {
   id: string;
   name: string;
   description?: string;
   color?: string;
+  dataScope?: DataScope;
   allowedModules: string[];
   isSystem?: boolean;
 }
@@ -29,6 +31,8 @@ export interface TeamMember {
   department: string;
   companyIds: string[]; // List of company IDs member has access to
   reportsToId?: string | null; // ID of the member's direct supervisor
+  managerEmail?: string; // Used during bulk CSV import to resolve reportsToId
+  dataScope?: DataScope; // 'own' | 'team' (direct+indirect reports) | 'company'
   allowedModules: string[]; // ['*'] for all, or specific module keys e.g. ['pos', 'sales']
   type: "full_time" | "freelance";
   status: "active" | "away" | "offline" | "deactivated";
