@@ -54,9 +54,9 @@ export default function StandardModuleHeader({
 
     return (
         <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md w-full max-w-full overflow-x-clip">
-            <div className="flex flex-wrap items-center justify-between px-3 sm:px-4 py-2 gap-2 min-w-0">
+            <div className="flex flex-wrap xl:flex-nowrap items-center justify-between px-3 sm:px-4 py-2 gap-2 min-w-0">
                 {/* Left Section: Beraxis Logo, Back, Apps, Website, Module Logo & Inline Nav Pills */}
-                <div className="flex flex-wrap items-center gap-2 min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink-0">
                     {/* Beraxis Logo & Branding */}
                     <Link
                         href="/apps"
@@ -143,7 +143,7 @@ export default function StandardModuleHeader({
                 </div>
 
                 {/* Center: Universal Search */}
-                <div className="w-48 xl:w-64 mx-2 hidden xl:block shrink-0">
+                <div className="flex-1 max-w-[200px] 2xl:max-w-[260px] mx-1 hidden xl:block min-w-0">
                     <UniversalModuleSearch
                         moduleName={moduleName}
                         placeholder={searchPlaceholder || `Search ${moduleName}...`}
@@ -154,7 +154,7 @@ export default function StandardModuleHeader({
                 </div>
 
                 {/* Right Action Icons, Branch Switcher & User Profile Dropdown */}
-                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                     <UniversalBranchSwitcher />
                     <Link
                         href="/ai"
