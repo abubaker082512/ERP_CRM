@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TARGET_PERSONAS, OUTBOUND_TEMPLATES, personalizeOutboundTemplate } from "@/lib/outbound-campaign-data";
+import { BERAXIS_SENDER_EMAIL, isGmailConfigured, sendBeraxisEmail } from "@/lib/gmailMailer";
 import fs from "fs";
 import path from "path";
 
@@ -138,16 +139,55 @@ export async function POST(req: NextRequest) {
     const sampleLeads = generateSampleTargetLeads(targetCountry, targetIndustry, Math.min(Number(limit) || 10, 50));
 
     // Personalize template for each lead
-    const processedLeads = sampleLeads.map(lead => {
-      const { subject, body } = personalizeOutboundTemplate(template, lead);
-      return {
-        name: lead.contact_name,
-        company: lead.company_name,
-        email: lead.email,
-        subject,
-        preview_body: body.slice(0, 180) + "..."
-      };
-    });
+    const customEmails: string[] = Array.isArray(body?.custom_emails)
+      ? body.custom_emails.map((e: any) => String(e).trim()).filter(Boolean)
+      : [];
+
+    const processedLeads =
+      customEmails.length > 0
+        ? customEmails.map((email) => ({
+            name: email.split("@")[0],
+            company: "BERAXIS User",
+            email,
+            subject: body?.custom_subject || template.subject,
+            full_body: body?.custom_body || template.body,
+            preview_body: (body?.custom_body || template.body).slice(0, 180) + "...",
+          }))
+        : sampleLeads.map((lead) => {
+            const { subject, body: renderedBody } = personalizeOutboundTemplate(template, lead);
+            return {
+              name: lead.contact_name,
+              company: lead.company_name,
+              email: lead.email,
+              subject: body?.custom_subject || subject,
+              full_body: body?.custom_body || renderedBody,
+              preview_body: (body?.custom_body || renderedBody).slice(0, 180) + "...",
+            };
+          });
+
+    let sentCount = 0;
+    let failedCount = 0;
+    if (!dry_run && isGmailConfigured()) {
+      for (const lead of processedLeads) {
+        const unsubUrl = `https://www.beraxis.online/api/admin/outbound-campaign?action=unsubscribe&email=${encodeURIComponent(lead.email)}`;
+        const html = `
+          <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#070B19;color:#F8FAFC;padding:24px;border-radius:16px;max-width:600px;margin:0 auto;border:1px solid #1E293B;">
+            <div style="font-size:16px;font-weight:800;color:#A855F7;margin-bottom:14px;">BERAXIS</div>
+            <div style="font-size:14px;line-height:1.65;color:#E2E8F0;white-space:pre-line;">${lead.full_body}</div>
+            <hr style="border:none;border-top:1px solid #1E293B;margin:20px 0;" />
+            <p style="font-size:11px;color:#64748B;">Sent by ${BERAXIS_SENDER_EMAIL} • <a href="${unsubUrl}" style="color:#94A3B8;">Unsubscribe</a></p>
+          </div>
+        `;
+        const res = await sendBeraxisEmail({
+          to: lead.email,
+          subject: lead.subject,
+          html,
+          text: `${lead.full_body}\n\nUnsubscribe: ${unsubUrl}`,
+        });
+        if (res.sent) sentCount++;
+        else failedCount++;
+      }
+    }
 
     const logEntry: CampaignLogEntry = {
       id: `camp_${Date.now()}`,
@@ -159,7 +199,12 @@ export async function POST(req: NextRequest) {
       total_leads_targeted: processedLeads.length,
       mode: dry_run ? "dry_run" : "live_dispatch",
       status: "completed",
-      sample_leads: processedLeads.slice(0, 5)
+      sample_leads: processedLeads.slice(0, 5).map(({ name, company, email, subject }) => ({
+        name,
+        company,
+        email,
+        subject,
+      }))
     };
 
     saveCampaignLog(logEntry);
@@ -167,9 +212,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       mode: dry_run ? "dry_run" : "live_dispatch",
+      sender: BERAXIS_SENDER_EMAIL,
+      gmail_configured: isGmailConfigured(),
+      sent_count: sentCount,
+      failed_count: failedCount,
       message: dry_run
         ? `Successfully generated campaign preview for ${processedLeads.length} leads in ${targetCountry} (${targetIndustry}). Zero emails dispatched in test mode.`
-        : `Dispatched campaign batch to ${processedLeads.length} verified B2B leads via delivery queue.`,
+        : isGmailConfigured()
+        ? `Dispatched ${sentCount}/${processedLeads.length} promotional emails via ${BERAXIS_SENDER_EMAIL}.`
+        : `Campaign queued (${processedLeads.length} recipients), but GMAIL_APP_PASSWORD is not configured on the server yet.`,
       campaign: logEntry,
       leads: processedLeads
     });
