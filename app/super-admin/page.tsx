@@ -2,7 +2,7 @@
 import React from "react";
 import Link from "next/link";
 import { fetchAPI } from '@/lib/api';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
     ShieldCheck, Users, Building2, TrendingUp, Search,
     RefreshCw, ExternalLink, CreditCard, Calendar,
@@ -11,7 +11,9 @@ import {
     Percent, Sparkles, X, Check, Copy, ToggleLeft, ToggleRight,
     Edit3, Activity, Server, Database, Globe, Megaphone, Lock,
     Key, Download, Cpu, HardDrive, Bell, CheckSquare, Play,
-    Sliders, LogIn, LogOut, ChevronRight, Flame, Save
+    Sliders, LogIn, LogOut, ChevronRight, Flame, Save,
+    Bold, Italic, Underline, Strikethrough, List, ListOrdered,
+    AlignLeft, AlignCenter, AlignRight, Link2, Image as ImageIcon, Eraser
 } from 'lucide-react';
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from '@/lib/pricingConfig';
 import AnimatedCounter from '@/components/shared/AnimatedCounter';
@@ -407,10 +409,50 @@ function SuperAdminPageContent() {
     const [emailBody, setEmailBody] = useState("");
     const [sendingAdminEmail, setSendingAdminEmail] = useState(false);
     const [adminEmailReport, setAdminEmailReport] = useState<{ ok: boolean; msg: string } | null>(null);
+    const emailEditorRef = useRef<HTMLDivElement>(null);
+    const emailImageInputRef = useRef<HTMLInputElement>(null);
+
+    const syncEditorBody = () => {
+        if (emailEditorRef.current) {
+            setEmailBody(emailEditorRef.current.innerHTML);
+        }
+    };
+
+    const execEmailFormat = (command: string, value?: string) => {
+        if (emailEditorRef.current) {
+            emailEditorRef.current.focus();
+            document.execCommand(command, false, value);
+            syncEditorBody();
+        }
+    };
+
+    const handleEmailImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        Array.from(files).forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const dataUrl = reader.result as string;
+                if (dataUrl && emailEditorRef.current) {
+                    emailEditorRef.current.focus();
+                    document.execCommand(
+                        "insertHTML",
+                        false,
+                        `<div style="margin:12px 0;"><img src="${dataUrl}" alt="${file.name}" style="max-width:100%;height:auto;border-radius:12px;display:block;" /></div>`
+                    );
+                    syncEditorBody();
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+        e.target.value = "";
+    };
 
     const handleSendAdminEmail = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!emailSubject.trim() || !emailBody.trim()) {
+        const htmlBody = emailEditorRef.current?.innerHTML?.trim() || emailBody.trim();
+        const plainText = emailEditorRef.current?.innerText?.trim() || emailBody.replace(/<[^>]+>/g, "").trim();
+        if (!emailSubject.trim() || (!plainText && !htmlBody.includes("<img"))) {
             showToast("Please enter both an email subject and message.");
             return;
         }
@@ -436,7 +478,8 @@ function SuperAdminPageContent() {
                             ? allUserEmails
                             : undefined,
                     subject: emailSubject.trim(),
-                    message: emailBody.trim(),
+                    message: plainText || emailSubject.trim(),
+                    htmlBody,
                 }),
             });
             const data = await res.json().catch(() => ({}));
@@ -3008,16 +3051,128 @@ function SuperAdminPageContent() {
 
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                                        Message Body *
+                                        Rich Message Body (Text, Formatting &amp; Pictures) *
                                     </label>
-                                    <textarea
-                                        required
-                                        rows={5}
-                                        value={emailBody}
-                                        onChange={(e) => setEmailBody(e.target.value)}
-                                        placeholder="Write the message to send to selected user(s) or all users..."
-                                        className="w-full bg-[#0F172A] border border-gray-700 rounded-2xl p-4 text-sm text-white focus:border-cyan-500 outline-none"
-                                    />
+                                    <div className="bg-[#0F172A] border border-gray-700 rounded-2xl overflow-hidden focus-within:border-cyan-500">
+                                        {/* Formatting Toolbar */}
+                                        <div className="flex flex-wrap items-center gap-1 px-3 py-2 bg-[#161F33] border-b border-gray-700/80">
+                                            <button type="button" onClick={() => execEmailFormat("bold")} title="Bold" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><Bold size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("italic")} title="Italic" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><Italic size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("underline")} title="Underline" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><Underline size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("strikeThrough")} title="Strikethrough" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><Strikethrough size={15} /></button>
+                                            <div className="w-px h-4 bg-gray-700 mx-1" />
+                                            <select
+                                                onChange={(e) => {
+                                                    if (e.target.value) execEmailFormat("formatBlock", e.target.value);
+                                                    e.target.value = "";
+                                                }}
+                                                defaultValue=""
+                                                className="bg-[#0F172A] border border-gray-700 rounded-lg px-2 py-1 text-[11px] text-gray-200 cursor-pointer"
+                                                title="Text Style"
+                                            >
+                                                <option value="" disabled>Heading</option>
+                                                <option value="P">Normal</option>
+                                                <option value="H1">Heading 1</option>
+                                                <option value="H2">Heading 2</option>
+                                                <option value="H3">Heading 3</option>
+                                            </select>
+                                            <select
+                                                onChange={(e) => {
+                                                    if (e.target.value) execEmailFormat("fontSize", e.target.value);
+                                                    e.target.value = "";
+                                                }}
+                                                defaultValue=""
+                                                className="bg-[#0F172A] border border-gray-700 rounded-lg px-2 py-1 text-[11px] text-gray-200 cursor-pointer"
+                                                title="Font Size"
+                                            >
+                                                <option value="" disabled>Size</option>
+                                                <option value="2">Small</option>
+                                                <option value="3">Normal</option>
+                                                <option value="5">Large</option>
+                                                <option value="6">XL</option>
+                                            </select>
+                                            <label title="Text Color" className="flex items-center gap-1 px-1.5 py-1 rounded-lg hover:bg-white/10 cursor-pointer text-[11px] text-gray-300">
+                                                A
+                                                <input type="color" defaultValue="#ffffff" onChange={(e) => execEmailFormat("foreColor", e.target.value)} className="w-4 h-4 bg-transparent border-0 cursor-pointer" />
+                                            </label>
+                                            <div className="w-px h-4 bg-gray-700 mx-1" />
+                                            <button type="button" onClick={() => execEmailFormat("justifyLeft")} title="Align Left" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><AlignLeft size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("justifyCenter")} title="Align Center" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><AlignCenter size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("justifyRight")} title="Align Right" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><AlignRight size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("insertUnorderedList")} title="Bullet List" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><List size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("insertOrderedList")} title="Numbered List" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><ListOrdered size={15} /></button>
+                                            <div className="w-px h-4 bg-gray-700 mx-1" />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const url = window.prompt("Enter link URL (https://...):");
+                                                    if (url) execEmailFormat("createLink", url);
+                                                }}
+                                                title="Insert Link"
+                                                className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer flex items-center gap-1 text-[11px]"
+                                            >
+                                                <Link2 size={15} /> Link
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => emailImageInputRef.current?.click()}
+                                                title="Upload Picture from Computer"
+                                                className="px-2 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-200 cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
+                                            >
+                                                <ImageIcon size={14} /> Add Picture
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const imgUrl = window.prompt("Enter Image URL (https://...):");
+                                                    if (imgUrl) {
+                                                        execEmailFormat(
+                                                            "insertHTML",
+                                                            `<div style="margin:12px 0;"><img src="${imgUrl}" alt="Image" style="max-width:100%;height:auto;border-radius:12px;display:block;" /></div>`
+                                                        );
+                                                    }
+                                                }}
+                                                title="Insert Picture by URL"
+                                                className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 cursor-pointer text-[11px] font-semibold"
+                                            >
+                                                + Img URL
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const label = window.prompt("Button Text (e.g. Open BERAXIS):", "Open BERAXIS");
+                                                    const href = label ? window.prompt("Button Link URL:", "https://www.beraxis.online") : null;
+                                                    if (label && href) {
+                                                        execEmailFormat(
+                                                            "insertHTML",
+                                                            `<div style="margin:16px 0;"><a href="${href}" style="display:inline-block;padding:10px 20px;background:#8B5CF6;color:#ffffff;font-weight:700;border-radius:10px;text-decoration:none;">${label}</a></div>`
+                                                        );
+                                                    }
+                                                }}
+                                                title="Insert CTA Button"
+                                                className="px-2 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-200 cursor-pointer text-[11px] font-semibold"
+                                            >
+                                                + CTA Button
+                                            </button>
+                                            <button type="button" onClick={() => execEmailFormat("removeFormat")} title="Clear Formatting" className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 cursor-pointer"><Eraser size={15} /></button>
+                                            <input
+                                                ref={emailImageInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                onChange={handleEmailImageUpload}
+                                                className="hidden"
+                                            />
+                                        </div>
+                                        {/* Rich ContentEditable Body */}
+                                        <div
+                                            ref={emailEditorRef}
+                                            contentEditable
+                                            onInput={syncEditorBody}
+                                            data-placeholder="Write your formatted message here... Use the toolbar above to bold, italicize, underline, add links, CTA buttons, or upload pictures."
+                                            className="min-h-[180px] max-h-[420px] overflow-y-auto p-4 text-sm text-white outline-none prose prose-invert max-w-none empty:before:content-[attr(data-placeholder)] empty:before:text-gray-500"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-3">

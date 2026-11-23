@@ -24,6 +24,13 @@ export interface SendEmailOptions {
   text?: string;
   replyTo?: string;
   smtpPasswordOverride?: string;
+  attachments?: Array<{
+    filename?: string;
+    content: string | Buffer;
+    encoding?: string;
+    cid?: string;
+    contentType?: string;
+  }>;
 }
 
 export async function sendBeraxisEmail(opts: SendEmailOptions): Promise<{
@@ -60,6 +67,7 @@ export async function sendBeraxisEmail(opts: SendEmailOptions): Promise<{
       subject: opts.subject,
       text: opts.text || opts.subject,
       html: opts.html,
+      attachments: opts.attachments,
     });
 
     return {

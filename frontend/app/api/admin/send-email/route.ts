@@ -53,13 +53,39 @@ export async function POST(request: NextRequest) {
       body?.mode || "specific";
     const subject = String(body?.subject || "").trim();
     const message = String(body?.message || "").trim();
+    const rawHtmlBody = String(body?.htmlBody || "").trim();
 
-    if (!subject || !message) {
+    if (!subject || (!message && !rawHtmlBody)) {
       return NextResponse.json(
         { ok: false, error: "Subject and message are required." },
         { status: 400 }
       );
     }
+
+    // Extract inline base64 images into CID attachments so Gmail/Outlook render uploaded pictures reliably
+    const inlineAttachments: Array<{
+      filename: string;
+      content: Buffer;
+      cid: string;
+      contentType: string;
+    }> = [];
+
+    let processedHtmlBody = rawHtmlBody || message.replace(/\n/g, "<br/>");
+    let imgIndex = 0;
+    processedHtmlBody = processedHtmlBody.replace(
+      /src=["']data:(image\/[a-zA-Z0-9.+-]+);base64,([^"']+)["']/gi,
+      (_match, mime: string, b64: string) => {
+        const ext = (mime.split("/")[1] || "png").replace(/[^a-z0-9]/gi, "");
+        const cid = `beraxis_img_${imgIndex++}@beraxis.online`;
+        inlineAttachments.push({
+          filename: `image_${imgIndex}.${ext}`,
+          content: Buffer.from(b64, "base64"),
+          cid,
+          contentType: mime,
+        });
+        return `src="cid:${cid}"`;
+      }
+    );
 
     if (!isGmailConfigured()) {
       return NextResponse.json(
@@ -130,10 +156,10 @@ export async function POST(request: NextRequest) {
 
     for (const t of targets) {
       const html = `
-        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#070B19;color:#F8FAFC;padding:28px;border-radius:16px;max-width:600px;margin:0 auto;border:1px solid #1E293B;">
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#070B19;color:#F8FAFC;padding:28px;border-radius:16px;max-width:640px;margin:0 auto;border:1px solid #1E293B;">
           <div style="font-size:17px;font-weight:800;letter-spacing:0.06em;color:#A855F7;margin-bottom:14px;">BERAXIS</div>
           <h2 style="margin:0 0 14px;font-size:19px;color:#FFFFFF;">${subject}</h2>
-          <div style="font-size:14px;line-height:1.7;color:#E2E8F0;white-space:pre-line;">${message}</div>
+          <div style="font-size:14px;line-height:1.7;color:#E2E8F0;">${processedHtmlBody}</div>
           <hr style="border:none;border-top:1px solid #1E293B;margin:24px 0 14px;" />
           <p style="margin:0;font-size:11px;color:#64748B;">
             Sent from BERAXIS (${BERAXIS_SENDER_EMAIL}) • <a href="https://www.beraxis.online" style="color:#38BDF8;">beraxis.online</a>
@@ -145,7 +171,8 @@ export async function POST(request: NextRequest) {
         to: t.email,
         subject,
         html,
-        text: message,
+        text: message || subject,
+        attachments: inlineAttachments.length > 0 ? inlineAttachments : undefined,
       });
 
       if (res.sent) {
