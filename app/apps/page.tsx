@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import AnimatedCounter from "@/components/shared/AnimatedCounter";
 import {
     LayoutDashboard,
     Calendar,
@@ -174,6 +175,36 @@ export default function AppsDashboardPage() {
     const [companyName, setCompanyName] = useState("");
     const [entityType, setEntityType] = useState<"individual" | "company">("individual");
     const [chosenFreeAppHref, setChosenFreeAppHref] = useState<string>("/accounting");
+    const [scopeMode, setScopeMode] = useState<"single" | "all">("single");
+    const [appCategory, setAppCategory] = useState<"all" | "finance" | "crm" | "ops" | "office">("all");
+    const [appSearch, setAppSearch] = useState("");
+    const [bentoStats, setBentoStats] = useState({ revenue: 0, netProfit: 0, invoices: 0, staffAndTickets: 0 });
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const targets = scopeMode === "all" && branches.length > 0 ? branches : activeBranch ? [activeBranch] : [];
+        let rev = 0, exp = 0, invs = 0, staff = 0;
+        for (const b of targets) {
+            const prefix = `entity_${b.id}_`;
+            try {
+                const invList = JSON.parse(localStorage.getItem(`${prefix}accounting_invoices`) || "[]");
+                if (Array.isArray(invList)) {
+                    const activeInvs = invList.filter((i: any) => i.status !== "void");
+                    invs += activeInvs.length;
+                    rev += activeInvs.reduce((s: number, i: any) => s + (Number(i.amount) || 0), 0);
+                }
+                const billList = JSON.parse(localStorage.getItem(`${prefix}accounting_bills`) || "[]");
+                if (Array.isArray(billList)) {
+                    exp += billList.filter((x: any) => x.status !== "void").reduce((s: number, x: any) => s + (Number(x.amount) || 0), 0);
+                }
+                const emps = JSON.parse(localStorage.getItem(`${prefix}hr_employees`) || "[]");
+                const tkts = JSON.parse(localStorage.getItem(`${prefix}helpdesk_tickets`) || "[]");
+                if (Array.isArray(emps)) staff += emps.length;
+                if (Array.isArray(tkts)) staff += tkts.length;
+            } catch {}
+        }
+        setBentoStats({ revenue: rev, netProfit: rev - exp, invoices: invs, staffAndTickets: staff });
+    }, [scopeMode, branches, activeBranch]);
 
     useEffect(() => {
         setMounted(true);
@@ -742,40 +773,113 @@ export default function AppsDashboardPage() {
                         </div>
                     </div>
                 ) : (
-                    /* ─── WORKSPACE APP GRID ─── */
-                    <div className="py-6 sm:py-10 pb-24 animate-in fade-in duration-200 space-y-6">
-                        {/* Futuristic Bento Hero Greeting Banner */}
-                        <div className="max-w-4xl mx-auto beraxis-hero-card p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#38BDF8]">
-                                    <Sparkles size={13} />
-                                    <span>{activeBranch?.name || "Workspace"} · {activeIndustry.name}</span>
+                    /* ─── WORKSPACE DYNAMIC BENTO COCKPIT ─── */
+                    <div className="py-4 sm:py-8 pb-24 animate-in fade-in duration-200 space-y-6 max-w-6xl mx-auto w-full">
+                        {/* Top Bento Row: Hero Telemetry + Calendar/Quick Actions */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                            <div className="lg:col-span-8 beraxis-hero-card p-5 sm:p-6 flex flex-col justify-between gap-4">
+                                <div className="flex flex-wrap items-start justify-between gap-4">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#38BDF8]">
+                                            <Sparkles size={13} />
+                                            <span>
+                                                {scopeMode === "all"
+                                                    ? `All Companies Consolidated (${branches.length || 1})`
+                                                    : `${activeBranch?.name || "Workspace"} · ${activeIndustry.name}`}
+                                            </span>
+                                        </div>
+                                        <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                                            Work&apos;s always better together — {scopeMode === "all" ? "All Companies" : activeBranch?.name || "Workspace"}
+                                        </h1>
+                                        <p className="text-xs text-gray-400">
+                                            Welcome back, {userData?.name || userData?.email?.split("@")[0] || "Founder"}. Switch company scope or launch any module below.
+                                        </p>
+                                    </div>
+
+                                    <div className="inline-flex p-1 rounded-2xl bg-[#060B19]/80 border border-white/10 text-[11px] font-bold shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => setScopeMode("single")}
+                                            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                                                scopeMode === "single" ? "beraxis-glow-pill" : "text-gray-400 hover:text-white"
+                                            }`}
+                                        >
+                                            Single Company
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setScopeMode("all")}
+                                            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                                                scopeMode === "all" ? "beraxis-glow-pill" : "text-gray-400 hover:text-white"
+                                            }`}
+                                        >
+                                            All ({branches.length || 1})
+                                        </button>
+                                    </div>
                                 </div>
-                                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                                    Welcome back, {userData?.name || userData?.email?.split("@")[0] || "Founder"}
-                                </h1>
-                                <p className="text-xs text-gray-400">
-                                    Switch companies from the top bar or launch your unified multi-company Bento Dashboard.
-                                </p>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <div className="rounded-2xl bg-[#060B19]/75 border border-white/10 p-3">
+                                        <div className="text-[10px] uppercase font-bold text-gray-400">Revenue</div>
+                                        <div className="text-lg font-black text-white mt-0.5">
+                                            <AnimatedCounter value={bentoStats.revenue} prefix="$" />
+                                        </div>
+                                    </div>
+                                    <div className="rounded-2xl bg-[#060B19]/75 border border-white/10 p-3">
+                                        <div className="text-[10px] uppercase font-bold text-gray-400">Net Profit</div>
+                                        <div className="text-lg font-black text-[#38BDF8] mt-0.5">
+                                            <AnimatedCounter value={bentoStats.netProfit} prefix="$" />
+                                        </div>
+                                    </div>
+                                    <div className="rounded-2xl bg-[#060B19]/75 border border-white/10 p-3">
+                                        <div className="text-[10px] uppercase font-bold text-gray-400">Invoices</div>
+                                        <div className="text-lg font-black text-[#FBBF24] mt-0.5">
+                                            <AnimatedCounter value={bentoStats.invoices} />
+                                        </div>
+                                    </div>
+                                    <div className="rounded-2xl bg-[#060B19]/75 border border-white/10 p-3">
+                                        <div className="text-[10px] uppercase font-bold text-gray-400">Team &amp; Tickets</div>
+                                        <div className="text-lg font-black text-[#34D399] mt-0.5">
+                                            <AnimatedCounter value={bentoStats.staffAndTickets} />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <Link
-                                href="/dashboard"
-                                className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#38BDF8] text-white text-xs font-extrabold shadow-lg shadow-purple-500/25 hover:opacity-95 transition-all whitespace-nowrap flex items-center gap-1.5"
-                            >
-                                <span>Executive Bento Dashboard</span>
-                                <ChevronRight size={14} />
-                            </Link>
+
+                            <div className="lg:col-span-4 beraxis-bento-card p-5 sm:p-6 flex flex-col justify-between gap-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Quick Launch</div>
+                                        <div className="text-base font-extrabold text-white mt-0.5">
+                                            {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                                        </div>
+                                    </div>
+                                    <Link
+                                        href="/dashboard"
+                                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#38BDF8] text-white text-[11px] font-extrabold shadow-md hover:opacity-95 transition-all"
+                                    >
+                                        Full Analytics →
+                                    </Link>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-xs font-bold">
+                                    <Link href="/accounting/customers" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                        <span>+ Invoice</span><ChevronRight size={13} className="text-[#38BDF8]" />
+                                    </Link>
+                                    <Link href="/crm" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                        <span>+ CRM Deal</span><ChevronRight size={13} className="text-[#8B5CF6]" />
+                                    </Link>
+                                    <Link href="/employees" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                        <span>+ Employee</span><ChevronRight size={13} className="text-[#34D399]" />
+                                    </Link>
+                                    <Link href="/sales/quotations/new" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                        <span>+ Quotation</span><ChevronRight size={13} className="text-[#FBBF24]" />
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Gamified Onboarding Launchpad Checklist */}
-                        <div className="max-w-4xl mx-auto">
-                            <OnboardingChecklist
-                                hasSelectedIndustry={hasSelectedIndustry}
-                                onOpenIndustryPicker={handleReconfigureWorkspace}
-                            />
-                        </div>
                         {isFreePlan && (
-                            <div className="max-w-4xl mx-auto bg-gradient-to-r from-purple-950/60 via-[#0F172A]/90 to-amber-950/40 border border-purple-500/30 rounded-2xl p-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+                            <div className="bg-gradient-to-r from-purple-950/60 via-[#0F172A]/90 to-amber-950/40 border border-purple-500/30 rounded-2xl p-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0">
                                         <Crown size={20} />
@@ -802,8 +906,48 @@ export default function AppsDashboardPage() {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-6 gap-y-10 sm:gap-x-8 sm:gap-y-12 max-w-6xl mx-auto">
-                            {displayedApps.map(app => {
+                        {/* Frosted Glass Bento App Dock */}
+                        <div className="beraxis-bento-card p-5 sm:p-7 space-y-6">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                    {[
+                                        { id: "all", label: "All Apps" },
+                                        { id: "finance", label: "Finance & Sales" },
+                                        { id: "crm", label: "CRM & Leads" },
+                                        { id: "ops", label: "Operations & HR" },
+                                        { id: "office", label: "Office Suite" },
+                                    ].map((cat) => (
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            onClick={() => setAppCategory(cat.id as any)}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                                appCategory === cat.id ? "beraxis-glow-pill" : "text-gray-400 hover:text-white hover:bg-white/5"
+                                            }`}
+                                        >
+                                            {cat.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <input
+                                    type="text"
+                                    value={appSearch}
+                                    onChange={(e) => setAppSearch(e.target.value)}
+                                    placeholder="Filter apps..."
+                                    className="bg-[#060B19]/80 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white placeholder-gray-500 outline-none focus:border-purple-500 w-48"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-5 gap-y-7">
+                            {displayedApps.filter((app) => {
+                                if (appSearch && !app.name.toLowerCase().includes(appSearch.toLowerCase())) return false;
+                                if (appCategory === "all") return true;
+                                if (appCategory === "finance") return ["/accounting", "/sales", "/purchase", "/pos"].some(p => app.href.startsWith(p));
+                                if (appCategory === "crm") return ["/crm", "/contacts", "/discuss", "/calendar"].some(p => app.href.startsWith(p));
+                                if (appCategory === "ops") return ["/inventory", "/barcode", "/manufacturing", "/employees", "/payroll", "/project", "/helpdesk"].some(p => app.href.startsWith(p));
+                                if (appCategory === "office") return ["/documents", "/spreadsheets", "/slides", "/meet", "/knowledge", "/sign", "/todo"].some(p => app.href.startsWith(p));
+                                return true;
+                            }).map(app => {
                                 const IconComponent = app.icon;
 
                                 return (
@@ -877,7 +1021,14 @@ export default function AppsDashboardPage() {
                                     {isFreePlan ? "+ Unlock Apps" : "+ Add Apps"}
                                 </span>
                             </button>
+                            </div>
                         </div>
+
+                        {/* Gamified Onboarding Launchpad Checklist */}
+                        <OnboardingChecklist
+                            hasSelectedIndustry={hasSelectedIndustry}
+                            onOpenIndustryPicker={handleReconfigureWorkspace}
+                        />
                     </div>
                 )}
             </main>
