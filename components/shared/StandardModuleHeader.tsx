@@ -9,11 +9,14 @@ import {
     Settings,
     Bot,
     MessageSquare,
-    Plus
+    Plus,
+    Sun,
+    Moon
 } from "lucide-react";
 import UniversalModuleSearch from "./UniversalModuleSearch";
 import UserProfileDropdown from "./UserProfileDropdown";
 import UniversalBranchSwitcher from "./UniversalBranchSwitcher";
+import { useTheme } from "@/lib/themeContext";
 
 export type MenuItem = {
     name: string;
@@ -51,9 +54,14 @@ export default function StandardModuleHeader({
     const resolvedNewLabel = newButtonLabel || newButtonText;
     const pathname = usePathname();
     const router = useRouter();
+    const { isLight, toggleTheme } = useTheme();
 
     return (
-        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md w-full max-w-full overflow-x-clip">
+        <header className={`border-b sticky top-0 z-50 shadow-md w-full max-w-full overflow-x-clip transition-colors ${
+            isLight
+                ? "bg-white/95 border-slate-200 text-slate-900 backdrop-blur-md"
+                : "bg-[#1E293B] border-gray-700 text-white"
+        }`}>
             <div className="flex flex-wrap xl:flex-nowrap items-center justify-between px-3 sm:px-4 py-2 gap-2 min-w-0">
                 {/* Left Section: Beraxis Logo, Back, Apps, Website, Module Logo & Inline Nav Pills */}
                 <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink-0">
@@ -156,6 +164,18 @@ export default function StandardModuleHeader({
                 {/* Right Action Icons, Branch Switcher & User Profile Dropdown */}
                 <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                     <UniversalBranchSwitcher />
+                    <button
+                        type="button"
+                        onClick={toggleTheme}
+                        title={isLight ? "Switch to Dark Cosmic Theme" : "Switch to Frosted Light Theme"}
+                        className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                            isLight
+                                ? "text-amber-600 hover:bg-amber-50"
+                                : "text-amber-300 hover:bg-white/10"
+                        }`}
+                    >
+                        {isLight ? <Moon size={16} /> : <Sun size={16} />}
+                    </button>
                     <Link
                         href="/ai"
                         title="AI Business Assistant"

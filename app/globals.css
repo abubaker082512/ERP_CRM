@@ -327,3 +327,29 @@ body {
   color: #0f172a !important;
   border-color: #cbd5e1 !important;
 }
+
+/* Global Frosted-Light Theme Support ([data-theme="light"]) */
+html[data-theme="light"],
+html[data-theme="light"] body {
+  background-color: #f6f7fb !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .beraxis-bento-card {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(203, 213, 225, 0.9) !important;
+  box-shadow: 0 12px 30px -10px rgba(15, 23, 42, 0.08) !important;
+}
+
+html[data-theme="light"] .beraxis-hero-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%) !important;
+  border-color: rgba(139, 92, 246, 0.25) !important;
+  box-shadow: 0 20px 45px -15px rgba(139, 92, 246, 0.16) !important;
+}
+
+html[data-theme="light"] .beraxis-glow-pill {
+  background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%) !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 16px -4px rgba(139, 92, 246, 0.35) !important;
+}

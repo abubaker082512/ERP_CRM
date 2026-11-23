@@ -7,6 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 import CosmicBackground from "@/components/CosmicBackground";
 import CreemScript from "@/components/CreemScript";
 import GalaxyAppShell from "@/components/layout/GalaxyAppShell";
+import { ThemeProvider } from "@/lib/themeContext";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -514,7 +515,7 @@ export default function RootLayout({
                 <div className="aurora-bg" />
                 <CosmicBackground />
                 <CreemScript />
-                <GalaxyAppShell>{children}</GalaxyAppShell>
+                <ThemeProvider><GalaxyAppShell>{children}</GalaxyAppShell></ThemeProvider>
                 <Analytics />
                 <SpeedInsights />
             </body>
