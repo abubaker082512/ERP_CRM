@@ -135,6 +135,8 @@ const WORLD_LOCALE_DATA = [
 ];
 
 import { useBranchContext } from "@/lib/branchContext";
+import { ALL_SYSTEM_MODULES, DEFAULT_CUSTOM_ROLES } from "@/lib/teamStorage";
+import { CustomRoleDefinition } from "@/lib/teamTypes";
 import Link from "next/link";
 import { ShieldCheck, Lock, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 
@@ -145,9 +147,15 @@ export default function SettingsPage() {
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
-  const [inviteRole, setInviteRole] = useState("accountant");
+  const [inviteRole, setInviteRole] = useState("Accountant");
   const [inviting, setInviting] = useState(false);
-  const [teamMembers, setTeamMembers] = useState<{ name: string; email: string; role: string }[]>([]);
+  const [teamMembers, setTeamMembers] = useState<{ name: string; email: string; role: string; allowedModules?: string[] }[]>([]);
+  const [customRoles, setCustomRoles] = useState<CustomRoleDefinition[]>(DEFAULT_CUSTOM_ROLES);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [newRoleDesc, setNewRoleDesc] = useState("");
+  const [newRoleModules, setNewRoleModules] = useState<string[]>(["pos", "sales"]);
+  const [testingEmail, setTestingEmail] = useState(false);
+  const [testEmailStatus, setTestEmailStatus] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // General settings state (isolated per entity)
   const [companyName, setCompanyName] = useState("");
@@ -182,8 +190,8 @@ export default function SettingsPage() {
   // Security & Session settings per company
   const [sessionTimeoutMins, setSessionTimeoutMins] = useState("30");
   const [enforceSingleSession, setEnforceSingleSession] = useState(true);
-  const [smtpFromName, setSmtpFromName] = useState("");
-  const [smtpFromEmail, setSmtpFromEmail] = useState("");
+  const [smtpFromName, setSmtpFromName] = useState("BERAXIS AI");
+  const [smtpFromEmail, setSmtpFromEmail] = useState("beraxisai@gmail.com");
   const [smtpPassword, setSmtpPassword] = useState("");
 
   // POS Receipt template states
@@ -195,11 +203,11 @@ export default function SettingsPage() {
   const [searchLocale, setSearchLocale] = useState("");
   const [isLocaleDropdownOpen, setIsLocaleDropdownOpen] = useState(false);
 
-  // Email settings state
-  const [smtpServer, setSmtpServer] = useState("");
-  const [smtpPort, setSmtpPort] = useState("587");
-  const [encryption, setEncryption] = useState("tls");
-  const [smtpUser, setSmtpUser] = useState("");
+  // Email settings state (Gmail defaults)
+  const [smtpServer, setSmtpServer] = useState("smtp.gmail.com");
+  const [smtpPort, setSmtpPort] = useState("465");
+  const [encryption, setEncryption] = useState("ssl");
+  const [smtpUser, setSmtpUser] = useState("beraxisai@gmail.com");
 
   // Units of Measure state
   const [uoms, setUoms] = useState<any[]>(DEFAULT_UOMS);
@@ -251,10 +259,10 @@ export default function SettingsPage() {
       setCountry(byCode ? byCode.country : savedCountry);
     }
     if (savedDateFormat) setDateFormat(savedDateFormat);
-    setSmtpServer(savedSmtp || "");
-    if (savedPort) setSmtpPort(savedPort);
-    if (savedEnc) setEncryption(savedEnc);
-    setSmtpUser(savedUser || defaultEmail);
+    setSmtpServer(savedSmtp || "smtp.gmail.com");
+    setSmtpPort(savedPort || "465");
+    setEncryption(savedEnc || "ssl");
+    setSmtpUser(savedUser || "beraxisai@gmail.com");
     setReceiptHeader(savedRecHeader || `Welcome to ${savedCompany || defaultEntityName || "Our Workspace"}`);
     if (savedRecFooter) setReceiptFooter(savedRecFooter);
     if (savedRecSize) setReceiptPaperSize(savedRecSize);
@@ -282,9 +290,23 @@ export default function SettingsPage() {
       const savedSmtpExtra = localStorage.getItem(`${keyPrefix}_smtp_extra`);
       if (savedSmtpExtra) {
         const ex = JSON.parse(savedSmtpExtra);
-        setSmtpFromName(ex.smtpFromName || "");
-        setSmtpFromEmail(ex.smtpFromEmail || "");
+        setSmtpFromName(ex.smtpFromName || "BERAXIS AI");
+        setSmtpFromEmail(ex.smtpFromEmail || "beraxisai@gmail.com");
         setSmtpPassword(ex.smtpPassword || "");
+      }
+      const savedRoles = localStorage.getItem(`${keyPrefix}_custom_roles`);
+      if (savedRoles) {
+        const parsedRoles = JSON.parse(savedRoles);
+        if (Array.isArray(parsedRoles) && parsedRoles.length > 0) setCustomRoles(parsedRoles);
+      } else {
+        setCustomRoles(DEFAULT_CUSTOM_ROLES);
+      }
+      const savedMembers = localStorage.getItem(`${keyPrefix}_team_members`);
+      if (savedMembers) {
+        const parsedMembers = JSON.parse(savedMembers);
+        if (Array.isArray(parsedMembers)) setTeamMembers(parsedMembers);
+      } else {
+        setTeamMembers([]);
       }
     } catch {}
 
@@ -1043,6 +1065,24 @@ export default function SettingsPage() {
             {/* Email Tab */}
             {activeTab === "email" && (
               <div className="space-y-6 max-w-2xl">
+                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm font-bold text-white flex items-center gap-2">
+                      <Mail size={16} className="text-emerald-400" />
+                      BERAXIS Gmail Delivery &amp; Signup Alerts
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      smtp.gmail.com · SSL 465
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    Outbound emails &amp; welcome messages are delivered via <strong className="text-white">beraxisai@gmail.com</strong>. Every Free &amp; Paid signup automatically sends an instant alert to <strong className="text-cyan-300">abubaker0825@gmail.com</strong>.
+                  </p>
+                  <p className="text-[11px] text-amber-300/90">
+                    To activate live Gmail sending, create a 16-character Google App Password for <strong>beraxisai@gmail.com</strong> and set <code className="px-1.5 py-0.5 rounded bg-black/40 text-white">GMAIL_APP_PASSWORD</code> in Vercel Environment Variables (or paste it below to test).
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">SMTP Server</label>
                   <input 
@@ -1069,13 +1109,13 @@ export default function SettingsPage() {
                       onChange={e => setEncryption(e.target.value)}
                       className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
                     >
-                      <option value="tls">TLS</option>
-                      <option value="ssl">SSL</option>
+                      <option value="ssl">SSL (Recommended for Gmail 465)</option>
+                      <option value="tls">TLS (587)</option>
                     </select>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">SMTP Username</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">SMTP Username (Gmail)</label>
                   <input 
                     type="text" 
                     value={smtpUser} 
@@ -1086,40 +1126,212 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Sender Display Name</label>
-                    <input type="text" value={smtpFromName} onChange={e => setSmtpFromName(e.target.value)} placeholder="e.g. Acme Billing" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
+                    <input type="text" value={smtpFromName} onChange={e => setSmtpFromName(e.target.value)} placeholder="BERAXIS AI" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Sender Email (From)</label>
-                    <input type="email" value={smtpFromEmail} onChange={e => setSmtpFromEmail(e.target.value)} placeholder="billing@company.com" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
+                    <input type="email" value={smtpFromEmail} onChange={e => setSmtpFromEmail(e.target.value)} placeholder="beraxisai@gmail.com" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">SMTP Password / App Token</label>
-                  <input type="password" value={smtpPassword} onChange={e => setSmtpPassword(e.target.value)} placeholder="••••••••••••" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Gmail App Password (16 chars)</label>
+                  <input type="password" value={smtpPassword} onChange={e => setSmtpPassword(e.target.value)} placeholder="xxxx xxxx xxxx xxxx" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    disabled={testingEmail}
+                    onClick={async () => {
+                      setTestingEmail(true);
+                      setTestEmailStatus(null);
+                      try {
+                        const res = await fetch("/api/notifications/test-email", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            to: "abubaker0825@gmail.com",
+                            smtpPassword: smtpPassword || undefined,
+                          }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        setTestEmailStatus({
+                          ok: Boolean(data.ok),
+                          msg: data.ok
+                            ? `Test email sent from ${data.sender} to ${data.to}!`
+                            : data.error || "Gmail App Password not configured yet.",
+                        });
+                      } catch (err: any) {
+                        setTestEmailStatus({ ok: false, msg: err?.message || "Failed to send test email" });
+                      } finally {
+                        setTestingEmail(false);
+                      }
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold disabled:opacity-50 cursor-pointer"
+                  >
+                    {testingEmail ? "Sending Test..." : "Send Test Email to abubaker0825@gmail.com"}
+                  </button>
+                  {testEmailStatus && (
+                    <span className={`text-xs font-semibold ${testEmailStatus.ok ? "text-emerald-400" : "text-amber-300"}`}>
+                      {testEmailStatus.msg}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Users & Teams Tab */}
             {activeTab === "users" && (
-              <div className="space-y-6 max-w-2xl">
-                <div className="p-5 bg-purple-900/10 border border-purple-500/20 rounded-2xl">
-                  <h3 className="text-base font-bold text-white mb-1">
-                    Entity Structure: {activeBranch?.entityType === "individual" ? "Individual Entity (Single User)" : "Company Organization"}
-                  </h3>
-                  <p className="text-xs text-gray-400 leading-relaxed">
-                    {activeBranch?.entityType === "individual"
-                      ? "Your workspace is configured as an independent Individual Entity managed by a single user. Upgrade to a multi-seat plan to add team members."
-                      : "Invite team members to your isolated workspace and assign role-based permissions."}
-                  </p>
+              <div className="space-y-6 max-w-3xl">
+                <div className="p-5 bg-purple-900/10 border border-purple-500/20 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-bold text-white mb-1">
+                      Entity Structure: {activeBranch?.entityType === "individual" ? "Individual Entity (Single User)" : "Company Organization"}
+                    </h3>
+                    <p className="text-xs text-gray-400 leading-relaxed">
+                      Create custom roles with granular module access and assign custom users to your workspace.
+                    </p>
+                  </div>
+                  <Link
+                    href="/team"
+                    className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-cyan-300 shrink-0"
+                  >
+                    Open Full Team Hub →
+                  </Link>
                 </div>
 
+                {/* Custom Roles Builder */}
+                <div className="p-5 bg-[#1E293B] border border-cyan-500/25 rounded-2xl space-y-4">
+                  <div>
+                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      <ShieldCheck size={16} className="text-cyan-400" />
+                      Custom Roles &amp; Module Permissions
+                    </h4>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Define custom roles (e.g. Warehouse Lead, Regional Director) and choose which modules they can access.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Custom Role Name (e.g. Warehouse Lead)"
+                      value={newRoleName}
+                      onChange={(e) => setNewRoleName(e.target.value)}
+                      className="bg-[#0F172A] border border-gray-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-cyan-500 outline-none"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Description (optional)"
+                      value={newRoleDesc}
+                      onChange={(e) => setNewRoleDesc(e.target.value)}
+                      className="bg-[#0F172A] border border-gray-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-cyan-500 outline-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {ALL_SYSTEM_MODULES.map((mod) => {
+                      const active = newRoleModules.includes(mod.key);
+                      return (
+                        <button
+                          key={mod.key}
+                          type="button"
+                          onClick={() =>
+                            setNewRoleModules((prev) =>
+                              prev.includes(mod.key)
+                                ? prev.filter((k) => k !== mod.key)
+                                : [...prev, mod.key]
+                            )
+                          }
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
+                            active
+                              ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200"
+                              : "bg-[#0F172A] border-gray-700 text-gray-400 hover:text-white"
+                          }`}
+                        >
+                          {active ? "✓ " : "+ "}
+                          {mod.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const trimmed = newRoleName.trim();
+                      if (!trimmed) return;
+                      if (customRoles.some((r) => r.name.toLowerCase() === trimmed.toLowerCase())) {
+                        setSaveSuccessMsg(`Role "${trimmed}" already exists.`);
+                        setTimeout(() => setSaveSuccessMsg(null), 2500);
+                        return;
+                      }
+                      const created: CustomRoleDefinition = {
+                        id: `role-${Date.now()}`,
+                        name: trimmed,
+                        description: newRoleDesc.trim() || "Custom workspace role",
+                        color: "cyan",
+                        allowedModules: newRoleModules.length > 0 ? newRoleModules : ["pos"],
+                        isSystem: false,
+                      };
+                      const nextRoles = [...customRoles, created];
+                      setCustomRoles(nextRoles);
+                      try {
+                        localStorage.setItem(`${getEntityStorageKey("settings")}_custom_roles`, JSON.stringify(nextRoles));
+                        localStorage.setItem("beraxis_custom_roles", JSON.stringify(nextRoles));
+                      } catch {}
+                      setInviteRole(created.name);
+                      setNewRoleName("");
+                      setNewRoleDesc("");
+                      setSaveSuccessMsg(`Created custom role "${created.name}"!`);
+                      setTimeout(() => setSaveSuccessMsg(null), 3000);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus size={14} /> Add Custom Role
+                  </button>
+
+                  {/* Existing Roles Pills */}
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-800">
+                    {customRoles.map((r) => (
+                      <div
+                        key={r.id}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0F172A] border border-gray-700 text-xs"
+                      >
+                        <span className="font-bold text-white">{r.name}</span>
+                        <span className="text-[10px] text-gray-400">
+                          {r.allowedModules.includes("*") ? "All Apps" : `${r.allowedModules.length} apps`}
+                        </span>
+                        {!r.isSystem && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextRoles = customRoles.filter((x) => x.id !== r.id);
+                              setCustomRoles(nextRoles);
+                              try {
+                                localStorage.setItem(`${getEntityStorageKey("settings")}_custom_roles`, JSON.stringify(nextRoles));
+                                localStorage.setItem("beraxis_custom_roles", JSON.stringify(nextRoles));
+                              } catch {}
+                            }}
+                            className="text-gray-500 hover:text-red-400 cursor-pointer"
+                            title="Delete custom role"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Invite / Assign Custom User */}
                 <form
                   onSubmit={async (e) => {
                     e.preventDefault();
                     if (!inviteEmail.trim()) return;
                     setInviting(true);
                     try {
+                      const roleDef = customRoles.find((r) => r.name === inviteRole);
                       const res = await fetch("/api/admin/users", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -1132,72 +1344,118 @@ export default function SettingsPage() {
                         }),
                       });
                       const data = await res.json().catch(() => ({}));
-                      if (res.ok) {
-                        setTeamMembers((prev) => [
-                          ...prev,
-                          { name: inviteName.trim() || inviteEmail.split("@")[0], email: inviteEmail.trim(), role: inviteRole },
-                        ]);
-                        setInviteEmail("");
-                        setInviteName("");
-                        setSaveSuccessMsg(`Invited ${inviteEmail.trim()} as ${inviteRole}!`);
-                        setTimeout(() => setSaveSuccessMsg(null), 3500);
-                      } else {
-                        setSaveSuccessMsg(data.error || "Failed to invite user");
-                      }
+                      const newMember = {
+                        name: inviteName.trim() || inviteEmail.split("@")[0],
+                        email: inviteEmail.trim(),
+                        role: inviteRole,
+                        allowedModules: roleDef?.allowedModules || ["*"],
+                      };
+                      const nextMembers = [
+                        newMember,
+                        ...teamMembers.filter((m) => m.email.toLowerCase() !== newMember.email.toLowerCase()),
+                      ];
+                      setTeamMembers(nextMembers);
+                      try {
+                        localStorage.setItem(`${getEntityStorageKey("settings")}_team_members`, JSON.stringify(nextMembers));
+                      } catch {}
+                      setInviteEmail("");
+                      setInviteName("");
+                      setSaveSuccessMsg(
+                        res.ok
+                          ? `Assigned ${newMember.email} with role "${inviteRole}"!`
+                          : data.error || `Assigned ${newMember.email} locally as "${inviteRole}".`
+                      );
+                      setTimeout(() => setSaveSuccessMsg(null), 3500);
                     } finally {
                       setInviting(false);
                     }
                   }}
                   className="p-5 bg-[#1E293B] border border-gray-700 rounded-2xl space-y-4"
                 >
-                  <h4 className="text-sm font-bold text-white">Invite Team Member</h4>
+                  <h4 className="text-sm font-bold text-white">Add / Assign Custom User</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <input
                       type="text"
                       placeholder="Full Name"
                       value={inviteName}
                       onChange={(e) => setInviteName(e.target.value)}
-                      className="bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
+                      className="bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2.5 text-xs text-white"
                     />
                     <input
                       type="email"
                       required
-                      placeholder="colleague@company.com"
+                      placeholder="user@company.com"
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
-                      className="bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
+                      className="bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2.5 text-xs text-white"
                     />
                     <select
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value)}
-                      className="bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
+                      className="bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2.5 text-xs text-white cursor-pointer"
                     >
-                      <option value="admin">Admin (Full Access)</option>
-                      <option value="accountant">Accountant</option>
-                      <option value="sales">Sales / CRM</option>
-                      <option value="staff">Staff / Viewer</option>
+                      {customRoles.map((r) => (
+                        <option key={r.id} value={r.name}>
+                          {r.name} {r.isSystem ? "" : "(Custom)"}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <button
                     type="submit"
                     disabled={inviting}
-                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold disabled:opacity-50 cursor-pointer"
                   >
-                    {inviting ? "Inviting..." : "+ Send Workspace Invite"}
+                    {inviting ? "Assigning..." : "+ Assign User & Send Invite"}
                   </button>
                 </form>
 
                 {teamMembers.length > 0 && (
                   <div className="bg-[#1E293B] border border-gray-700 rounded-2xl divide-y divide-gray-800">
                     {teamMembers.map((m) => (
-                      <div key={m.email} className="px-4 py-3 flex items-center justify-between text-xs">
+                      <div key={m.email} className="px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
                         <div>
                           <div className="font-bold text-white">{m.name}</div>
                           <div className="text-gray-400">{m.email}</div>
                         </div>
-                        <span className="px-2.5 py-1 rounded-full bg-purple-500/15 text-purple-300 font-semibold uppercase">
-                          {m.role}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={m.role}
+                            onChange={(e) => {
+                              const nextRole = e.target.value;
+                              const nextMembers = teamMembers.map((x) =>
+                                x.email === m.email ? { ...x, role: nextRole } : x
+                              );
+                              setTeamMembers(nextMembers);
+                              try {
+                                localStorage.setItem(`${getEntityStorageKey("settings")}_team_members`, JSON.stringify(nextMembers));
+                              } catch {}
+                              setSaveSuccessMsg(`Updated ${m.name}'s role to ${nextRole}`);
+                              setTimeout(() => setSaveSuccessMsg(null), 2500);
+                            }}
+                            className="bg-[#0F172A] border border-purple-500/30 rounded-lg px-2.5 py-1 text-xs text-purple-200 font-semibold cursor-pointer"
+                          >
+                            {customRoles.map((r) => (
+                              <option key={r.id} value={r.name}>
+                                {r.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextMembers = teamMembers.filter((x) => x.email !== m.email);
+                              setTeamMembers(nextMembers);
+                              try {
+                                localStorage.setItem(`${getEntityStorageKey("settings")}_team_members`, JSON.stringify(nextMembers));
+                              } catch {}
+                            }}
+                            className="p-1.5 text-gray-500 hover:text-red-400 cursor-pointer"
+                            title="Remove user"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

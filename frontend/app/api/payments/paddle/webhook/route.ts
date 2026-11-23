@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPaddleInstance } from "@/lib/paddleServer";
+import { notifyOwnerSignup } from "@/lib/gmailMailer";
 import fs from "fs";
 import path from "path";
 
@@ -58,6 +59,15 @@ export async function POST(request: NextRequest) {
         created_at: new Date().toISOString()
       };
       recordPaddleTransaction(record);
+      if (record.customer_email) {
+        await notifyOwnerSignup({
+          email: record.customer_email,
+          plan: record.plan,
+          isPaid: true,
+          amountUsd: record.amount_usd,
+          source: `paddle_${eventType}`,
+        });
+      }
     }
 
     return NextResponse.json({ received: true, event_type: eventType });

@@ -1,4 +1,14 @@
-export type Role = "Owner" | "Admin" | "Manager" | "Specialist" | "Accountant" | "Viewer" | "Contractor";
+export type BuiltInRole = "Owner" | "Admin" | "Manager" | "Specialist" | "Accountant" | "Viewer" | "Contractor";
+export type Role = BuiltInRole | (string & {});
+
+export interface CustomRoleDefinition {
+  id: string;
+  name: string;
+  description?: string;
+  color?: string;
+  allowedModules: string[];
+  isSystem?: boolean;
+}
 
 export interface CompanyEntity {
   id: string;

@@ -37,7 +37,8 @@ import {
   MultiCompanyQuota, 
   FreelancerContractor, 
   TeamInvitation, 
-  Role 
+  Role,
+  CustomRoleDefinition
 } from "@/lib/teamTypes";
 import { 
   INITIAL_QUOTA, 
@@ -45,7 +46,8 @@ import {
   INITIAL_CONTRACTORS, 
   INITIAL_INVITATIONS, 
   ALL_SYSTEM_MODULES, 
-  DEFAULT_ROLE_PERMISSIONS 
+  DEFAULT_ROLE_PERMISSIONS,
+  DEFAULT_CUSTOM_ROLES
 } from "@/lib/teamStorage";
 
 export default function TeamManagementPage() {
@@ -60,9 +62,25 @@ export default function TeamManagementPage() {
   
   // Modals
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isCustomRoleOpen, setIsCustomRoleOpen] = useState(false);
   const [isBuySeatsOpen, setIsBuySeatsOpen] = useState(false);
   const [isNewCompanyOpen, setIsNewCompanyOpen] = useState(false);
   const [selectedMemberForRevoke, setSelectedMemberForRevoke] = useState<TeamMember | null>(null);
+
+  // Custom Roles State
+  const [customRoles, setCustomRoles] = useState<CustomRoleDefinition[]>(DEFAULT_CUSTOM_ROLES);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [newRoleModules, setNewRoleModules] = useState<string[]>(["pos", "sales"]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("beraxis_custom_roles");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) setCustomRoles(parsed);
+      }
+    } catch {}
+  }, []);
 
   // Invite Form State
   const [invName, setInvName] = useState("");
@@ -105,7 +123,8 @@ export default function TeamManagementPage() {
   // Handle Role Selection change inside Invite Modal
   const handleRoleSelectionChange = (newRole: Role) => {
     setInvRole(newRole);
-    setInvModules(DEFAULT_ROLE_PERMISSIONS[newRole] || ["pos"]);
+    const customDef = customRoles.find((r) => r.name === newRole);
+    setInvModules(customDef?.allowedModules || DEFAULT_ROLE_PERMISSIONS[newRole] || ["pos"]);
   };
 
   // Toggle Module Selection inside Invite Modal
@@ -337,6 +356,13 @@ export default function TeamManagementPage() {
             >
               <CreditCard className="w-4 h-4 text-indigo-400" />
               Buy More Seats
+            </button>
+            <button
+              onClick={() => setIsCustomRoleOpen(true)}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-cyan-600/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-600/30 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Shield className="w-4 h-4 text-cyan-400" />
+              + Custom Role
             </button>
             <button
               onClick={() => setIsInviteOpen(true)}
@@ -811,6 +837,96 @@ export default function TeamManagementPage() {
       </main>
 
       {/* MODAL 1: INVITE TEAM MEMBER */}
+      {isCustomRoleOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Shield className="w-5 h-5 text-cyan-400" />
+                Create Custom Role
+              </h3>
+              <button onClick={() => setIsCustomRoleOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1.5">Role Name *</label>
+              <input
+                type="text"
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value)}
+                placeholder="e.g. Warehouse Supervisor"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1.5">Allowed Modules</label>
+              <div className="grid grid-cols-2 gap-2">
+                {ALL_SYSTEM_MODULES.map((mod) => {
+                  const active = newRoleModules.includes(mod.key);
+                  return (
+                    <button
+                      key={mod.key}
+                      type="button"
+                      onClick={() =>
+                        setNewRoleModules((prev) =>
+                          prev.includes(mod.key) ? prev.filter((k) => k !== mod.key) : [...prev, mod.key]
+                        )
+                      }
+                      className={`px-2.5 py-2 rounded-lg text-xs font-medium text-left border transition-colors cursor-pointer ${
+                        active
+                          ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200"
+                          : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {active ? "✓ " : "+ "}
+                      {mod.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setIsCustomRoleOpen(false)}
+                className="px-4 py-2 rounded-lg text-xs text-slate-400 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const trimmed = newRoleName.trim();
+                  if (!trimmed) return;
+                  const created: CustomRoleDefinition = {
+                    id: `role-${Date.now()}`,
+                    name: trimmed,
+                    description: "Custom workspace role",
+                    color: "cyan",
+                    allowedModules: newRoleModules.length > 0 ? newRoleModules : ["pos"],
+                    isSystem: false,
+                  };
+                  const nextRoles = [...customRoles, created];
+                  setCustomRoles(nextRoles);
+                  try {
+                    localStorage.setItem("beraxis_custom_roles", JSON.stringify(nextRoles));
+                  } catch {}
+                  setInvRole(created.name);
+                  setInvModules(created.allowedModules);
+                  setNewRoleName("");
+                  setIsCustomRoleOpen(false);
+                  showToast("Custom Role Created!", `${created.name} is now available to assign to users.`);
+                }}
+                className="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold cursor-pointer"
+              >
+                Save Custom Role
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isInviteOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
@@ -858,11 +974,11 @@ export default function TeamManagementPage() {
                     onChange={(e) => handleRoleSelectionChange(e.target.value as Role)}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500"
                   >
-                    <option value="Admin">Admin</option>
-                    <option value="Manager">Manager</option>
-                    <option value="Specialist">Specialist</option>
-                    <option value="Accountant">Accountant</option>
-                    <option value="Viewer">Viewer</option>
+                    {customRoles.filter((r) => r.name !== "Owner").map((r) => (
+                      <option key={r.id} value={r.name}>
+                        {r.name} {r.isSystem ? "" : "(Custom)"}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

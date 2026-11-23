@@ -4,7 +4,8 @@ import {
   TeamMember, 
   FreelancerContractor, 
   TeamInvitation, 
-  Role 
+  Role,
+  CustomRoleDefinition
 } from "./teamTypes";
 
 export const DEFAULT_COMPANIES: CompanyEntity[] = [
@@ -183,7 +184,7 @@ export const ALL_SYSTEM_MODULES: { key: string; name: string; category: string }
   { key: "settings", name: "Enterprise System Settings", category: "Governance" },
 ];
 
-export const DEFAULT_ROLE_PERMISSIONS: Record<Role, string[]> = {
+export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
   Owner: ["*"],
   Admin: ["*"],
   Manager: ["pos", "sales", "inventory", "manufacturing", "recruitment"],
@@ -192,3 +193,13 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, string[]> = {
   Viewer: ["pos"],
   Contractor: ["inventory", "manufacturing"],
 };
+
+export const DEFAULT_CUSTOM_ROLES: CustomRoleDefinition[] = [
+  { id: "role-owner", name: "Owner", description: "Full system & billing ownership", color: "purple", allowedModules: ["*"], isSystem: true },
+  { id: "role-admin", name: "Admin", description: "Full workspace administration", color: "indigo", allowedModules: ["*"], isSystem: true },
+  { id: "role-manager", name: "Manager", description: "Operations, sales & HR management", color: "blue", allowedModules: ["pos", "sales", "inventory", "manufacturing", "recruitment"], isSystem: true },
+  { id: "role-specialist", name: "Specialist", description: "Daily sales & inventory execution", color: "cyan", allowedModules: ["pos", "sales", "inventory", "manufacturing"], isSystem: true },
+  { id: "role-accountant", name: "Accountant", description: "Accounting, ledger & payroll", color: "emerald", allowedModules: ["accounting", "payroll", "sales"], isSystem: true },
+  { id: "role-viewer", name: "Viewer", description: "Read-only POS & dashboard access", color: "gray", allowedModules: ["pos"], isSystem: true },
+  { id: "role-contractor", name: "Contractor", description: "Scoped operations & MRP", color: "amber", allowedModules: ["inventory", "manufacturing"], isSystem: true },
+];

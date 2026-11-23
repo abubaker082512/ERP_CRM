@@ -64,6 +64,21 @@ function SignupForm() {
             const data = await resp.json();
             if (resp.ok) {
                 try {
+                    fetch('/api/notifications/signup', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            email,
+                            plan: 'One App Free',
+                            isPaid: false,
+                            accountType,
+                            companyName: accountType === 'company' ? companyName : undefined,
+                            source: invite_id ? 'team_invite_signup' : 'signup_page',
+                        })
+                    }).catch(e => console.warn('[Signup Email Notify Warning]', e));
+                } catch {}
+                try {
                     fetch('/api/webhooks/pumpgtm', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
