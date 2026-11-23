@@ -747,7 +747,7 @@ export default function TeamManagementPage() {
                                   fetch("/api/team/members", {
                                     method: "PATCH",
                                     headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ companyId: activeCompanyId, id: m.id, reportsToId: nextSup }),
+                                    body: JSON.stringify({ companyId: activeCompanyId, id: m.id, reportsToId: nextSup, memberSnapshot: m }),
                                   }).catch(() => {});
                                   showToast("Reporting Line Updated", `${m.name} now reports to ${members.find((s) => s.id === nextSup)?.name || "Top Level"}.`);
                                 }}

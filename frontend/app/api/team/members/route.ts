@@ -299,12 +299,23 @@ export async function PATCH(req: Request) {
   try {
     const body = await req.json();
     const companyId: string = body.companyId || body.company_id || "CMP-001";
-    const { id, role, department, companyIds, reportsToId, allowedModules, dataScope, status } = body;
+    const { id, role, department, companyIds, reportsToId, allowedModules, dataScope, status, memberSnapshot } = body;
 
-    const currentList = await loadCompanyMembers(companyId);
-    const index = currentList.findIndex((m) => m.id === id);
+    let currentList = await loadCompanyMembers(companyId);
+    let index = currentList.findIndex((m) => m.id === id);
     if (index === -1) {
-      return NextResponse.json({ success: false, error: "Member not found" }, { status: 404 });
+      if (memberSnapshot && memberSnapshot.email) {
+        const upserted: TeamMember = {
+          ...memberSnapshot,
+          id: memberSnapshot.id || id,
+          companyIds: memberSnapshot.companyIds || [companyId],
+          reportsToId: reportsToId !== undefined ? reportsToId : memberSnapshot.reportsToId ?? null,
+        };
+        currentList = [upserted, ...currentList];
+        index = 0;
+      } else {
+        return NextResponse.json({ success: false, error: "Member not found" }, { status: 404 });
+      }
     }
 
     if (reportsToId !== undefined && wouldCreateCycle(id, reportsToId, currentList)) {

@@ -48,8 +48,13 @@ export function getSubordinateIds(memberId: string, members: TeamMember[]): Set<
 
 /**
  * Returns the upward reporting chain [directManager, vp, ..., ceo] with cycle protection.
+ * By default skips deactivated superiors so approvals auto-escalate up the chain.
  */
-export function getSuperiorChain(memberId: string, members: TeamMember[]): TeamMember[] {
+export function getSuperiorChain(
+  memberId: string,
+  members: TeamMember[],
+  options: { includeDeactivated?: boolean } = {}
+): TeamMember[] {
   const chain: TeamMember[] = [];
   const seen = new Set<string>([memberId]);
   const byId = new Map(members.map((m) => [m.id, m]));
@@ -59,7 +64,9 @@ export function getSuperiorChain(memberId: string, members: TeamMember[]): TeamM
     const sup = byId.get(current.reportsToId);
     if (!sup) break;
     seen.add(sup.id);
-    chain.push(sup);
+    if (options.includeDeactivated || sup.status !== "deactivated") {
+      chain.push(sup);
+    }
     current = sup;
   }
   return chain;
@@ -158,6 +165,33 @@ export interface ParsedBulkUserRow {
 }
 
 /**
+ * RFC-4180 CSV line splitter supporting quoted fields containing commas.
+ */
+function splitCsvLine(line: string): string[] {
+  const out: string[] = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === "," && !inQuotes) {
+      out.push(cur.trim());
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  out.push(cur.trim());
+  return out;
+}
+
+/**
  * Parses CSV text (Name,Email,Role,Department,ReportsToEmail) into structured rows.
  */
 export function parseBulkUsersCsv(csvText: string): ParsedBulkUserRow[] {
@@ -168,7 +202,7 @@ export function parseBulkUsersCsv(csvText: string): ParsedBulkUserRow[] {
 
   const rows: ParsedBulkUserRow[] = [];
   for (let i = 0; i < lines.length; i++) {
-    const cols = lines[i].split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+    const cols = splitCsvLine(lines[i]);
     if (cols.length < 2) continue;
     // Skip header row
     if (i === 0 && cols[1].toLowerCase().includes("email")) continue;
