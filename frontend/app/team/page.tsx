@@ -147,6 +147,7 @@ export default function TeamManagementPage() {
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [expandedOrgIds, setExpandedOrgIds] = useState<Record<string, boolean>>({});
+  const [editingSupervisorId, setEditingSupervisorId] = useState<string | null>(null);
   
   // Modals
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -724,39 +725,56 @@ export default function TeamManagementPage() {
                           </td>
 
                           <td className="py-3.5 px-4">
-                            <select
-                              value={m.reportsToId || ""}
-                              onChange={async (e) => {
-                                const nextSup = e.target.value || null;
-                                if (wouldCreateCycle(m.id, nextSup, members)) {
-                                  showToast("Invalid Superior", "Cannot assign a subordinate as their own superior (circular reporting loop).");
-                                  return;
-                                }
-                                const nextMembers = members.map((x) =>
-                                  x.id === m.id ? { ...x, reportsToId: nextSup } : x
-                                );
-                                setMembers(nextMembers);
-                                try {
-                                  localStorage.setItem(getEntityStorageKey("team_members"), JSON.stringify(nextMembers));
-                                } catch {}
-                                fetch("/api/team/members", {
-                                  method: "PATCH",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ companyId: activeCompanyId, id: m.id, reportsToId: nextSup }),
-                                }).catch(() => {});
-                                showToast("Reporting Line Updated", `${m.name} now reports to ${members.find((s) => s.id === nextSup)?.name || "Top Level"}.`);
-                              }}
-                              className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 max-w-[160px] cursor-pointer"
-                            >
-                              <option value="">Top Level (None)</option>
-                              {members
-                                .filter((cand) => cand.id !== m.id && cand.status !== "deactivated")
-                                .map((cand) => (
-                                  <option key={cand.id} value={cand.id}>
-                                    {cand.name} ({cand.role})
-                                  </option>
-                                ))}
-                            </select>
+                            {editingSupervisorId === m.id ? (
+                              <select
+                                autoFocus
+                                value={m.reportsToId || ""}
+                                onBlur={() => setEditingSupervisorId(null)}
+                                onChange={async (e) => {
+                                  const nextSup = e.target.value || null;
+                                  setEditingSupervisorId(null);
+                                  if (wouldCreateCycle(m.id, nextSup, members)) {
+                                    showToast("Invalid Superior", "Cannot assign a subordinate as their own superior (circular reporting loop).");
+                                    return;
+                                  }
+                                  const nextMembers = members.map((x) =>
+                                    x.id === m.id ? { ...x, reportsToId: nextSup } : x
+                                  );
+                                  setMembers(nextMembers);
+                                  try {
+                                    localStorage.setItem(getEntityStorageKey("team_members"), JSON.stringify(nextMembers));
+                                  } catch {}
+                                  fetch("/api/team/members", {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ companyId: activeCompanyId, id: m.id, reportsToId: nextSup }),
+                                  }).catch(() => {});
+                                  showToast("Reporting Line Updated", `${m.name} now reports to ${members.find((s) => s.id === nextSup)?.name || "Top Level"}.`);
+                                }}
+                                className="bg-slate-950 border border-purple-500 rounded-lg px-2 py-1 text-[11px] text-slate-200 max-w-[160px] cursor-pointer"
+                              >
+                                <option value="">Top Level (None)</option>
+                                {members
+                                  .filter((cand) => cand.id !== m.id && cand.status !== "deactivated")
+                                  .map((cand) => (
+                                    <option key={cand.id} value={cand.id}>
+                                      {cand.name} ({cand.role})
+                                    </option>
+                                  ))}
+                              </select>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setEditingSupervisorId(m.id)}
+                                className="flex items-center space-x-1.5 text-slate-300 hover:text-purple-300 bg-slate-950/70 hover:bg-slate-900 border border-slate-800 hover:border-purple-500/40 rounded-lg px-2.5 py-1 transition-colors cursor-pointer"
+                                title="Click to change superior"
+                              >
+                                <GitBranch className="w-3 h-3 text-purple-400 shrink-0" />
+                                <span className="font-medium text-[11px] truncate max-w-[140px]">
+                                  {supervisor ? supervisor.name : "Top Level (None)"}
+                                </span>
+                              </button>
+                            )}
                           </td>
 
                           <td className="py-3.5 px-4">
