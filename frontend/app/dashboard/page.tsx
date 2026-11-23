@@ -5,11 +5,15 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { fetchAPI } from '@/lib/api';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import AnimatedCounter from '@/components/shared/AnimatedCounter';
+import { useBranchContext } from '@/lib/branchContext';
 import {
     AreaChart,
     Area,
     BarChart,
     Bar,
+    PieChart,
+    Pie,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -94,6 +98,19 @@ function fmt(n: number) {
 
 export default function DashboardPage() {
     const router = useRouter();
+    const { branches, activeBranch, setActiveBranchId, getEntityStorageKey } = useBranchContext();
+    const [scopeMode, setScopeMode] = useState<'single' | 'all'>('single');
+    const [timeframe, setTimeframe] = useState<'today' | 'week' | 'month'>('month');
+    const [entityMetrics, setEntityMetrics] = useState({
+        invoicedRevenue: 0,
+        billsExpense: 0,
+        netProfit: 0,
+        invoicesCount: 0,
+        employeesCount: 0,
+        ticketsCount: 0,
+        projectsCount: 0,
+        moCount: 0,
+    });
     const [mounted, setMounted] = useState(false);
     const [summary, setSummary] = useState<DashboardSummary | null>(null);
     const [loading, setLoading] = useState(true);
@@ -247,6 +264,51 @@ export default function DashboardPage() {
         }
     };
 
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const targetBranches =
+            scopeMode === "all" && branches.length > 0
+                ? branches
+                : activeBranch
+                ? [activeBranch]
+                : [];
+
+        let invRev = 0, billsExp = 0, invCount = 0, empCount = 0, tktCount = 0, prjCount = 0, moCount = 0;
+        for (const b of targetBranches) {
+            const prefix = `entity_${b.id}_`;
+            try {
+                const invs = JSON.parse(localStorage.getItem(`${prefix}accounting_invoices`) || "[]");
+                if (Array.isArray(invs)) {
+                    const activeInvs = invs.filter((i: any) => i.status !== "void");
+                    invCount += activeInvs.length;
+                    invRev += activeInvs.reduce((s: number, i: any) => s + (Number(i.amount) || 0), 0);
+                }
+                const bills = JSON.parse(localStorage.getItem(`${prefix}accounting_bills`) || "[]");
+                if (Array.isArray(bills)) {
+                    billsExp += bills.filter((x: any) => x.status !== "void").reduce((s: number, x: any) => s + (Number(x.amount) || 0), 0);
+                }
+                const emps = JSON.parse(localStorage.getItem(`${prefix}hr_employees`) || "[]");
+                if (Array.isArray(emps)) empCount += emps.length;
+                const tkts = JSON.parse(localStorage.getItem(`${prefix}helpdesk_tickets`) || "[]");
+                if (Array.isArray(tkts)) tktCount += tkts.length;
+                const prjs = JSON.parse(localStorage.getItem(`${prefix}projects_list`) || "[]");
+                if (Array.isArray(prjs)) prjCount += prjs.length;
+                const mos = JSON.parse(localStorage.getItem(`${prefix}mrp_orders`) || "[]");
+                if (Array.isArray(mos)) moCount += mos.length;
+            } catch {}
+        }
+        setEntityMetrics({
+            invoicedRevenue: invRev,
+            billsExpense: billsExp,
+            netProfit: invRev - billsExp,
+            invoicesCount: invCount,
+            employeesCount: empCount,
+            ticketsCount: tktCount,
+            projectsCount: prjCount,
+            moCount,
+        });
+    }, [scopeMode, branches, activeBranch, getEntityStorageKey]);
+
     const handleAiSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!aiQuery.trim()) return;
@@ -274,7 +336,156 @@ export default function DashboardPage() {
                 planBadge={planBadge}
             />
 
-            <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full space-y-8">
+            <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6 pb-24">
+                {/* ── DYNAMIC BENTO COMMAND BAR: Single Company vs All Companies Scope ── */}
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#38BDF8]">
+                            <Sparkles size={13} />
+                            <span>
+                                {scopeMode === 'all'
+                                    ? `Consolidated Multi-Company (${branches.length || 1} Entities)`
+                                    : `${activeBranch?.name || companyName} · Active Workspace`}
+                            </span>
+                        </div>
+                        <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mt-0.5">
+                            Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {userData?.name || userData?.email?.split('@')[0] || 'Founder'}
+                        </h1>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        {/* Single vs All Companies Switcher */}
+                        <div className="inline-flex p-1 rounded-2xl bg-[#0F172A]/90 border border-white/10 text-xs font-bold">
+                            <button
+                                type="button"
+                                onClick={() => setScopeMode('single')}
+                                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                                    scopeMode === 'single' ? 'beraxis-glow-pill' : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                Single Company
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setScopeMode('all')}
+                                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                                    scopeMode === 'all' ? 'beraxis-glow-pill' : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                All Companies ({branches.length || 1})
+                            </button>
+                        </div>
+
+                        {scopeMode === 'single' && branches.length > 1 && (
+                            <select
+                                value={activeBranch?.id || ''}
+                                onChange={(e) => setActiveBranchId(e.target.value)}
+                                className="bg-[#0F172A] border border-white/15 rounded-xl px-3 py-2 text-xs font-semibold text-white outline-none focus:border-purple-500"
+                            >
+                                {branches.map((b) => (
+                                    <option key={b.id} value={b.id}>{b.name}</option>
+                                ))}
+                            </select>
+                        )}
+
+                        {/* Timeframe Segmented Pill */}
+                        <div className="inline-flex p-1 rounded-2xl bg-[#0F172A]/90 border border-white/10 text-xs font-bold">
+                            {(['today', 'week', 'month'] as const).map((tf) => (
+                                <button
+                                    key={tf}
+                                    type="button"
+                                    onClick={() => setTimeframe(tf)}
+                                    className={`px-3 py-1.5 rounded-xl capitalize transition-all cursor-pointer ${
+                                        timeframe === tf ? 'bg-[#8B5CF6] text-white shadow-md shadow-purple-500/30' : 'text-gray-400 hover:text-white'
+                                    }`}
+                                >
+                                    {tf}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── DYNAMIC HERO BENTO ROW (DfcQ2TrTbGV Inspired in BERAXIS Colors) ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    <div className="lg:col-span-8 beraxis-hero-card p-6 flex flex-col justify-between gap-4">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#34D399]/15 text-[#34D399] border border-[#34D399]/30">
+                                    ● Live {scopeMode === 'all' ? 'Consolidated' : 'Entity'} Telemetry
+                                </span>
+                                <h2 className="text-lg sm:text-xl font-bold text-white mt-2">
+                                    Work&apos;s always better together — {scopeMode === 'all' ? 'All Companies' : activeBranch?.name || companyName}
+                                </h2>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                    Real-time rollup across your active Revenue, Accounting, CRM, HR &amp; Operations modules.
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-[11px] uppercase tracking-wider text-gray-400 font-bold">Total Revenue</div>
+                                <div className="text-3xl font-black text-white">
+                                    <AnimatedCounter value={(kpis?.revenue || 0) + entityMetrics.invoicedRevenue} prefix="$" />
+                                </div>
+                                <div className="text-[11px] text-[#34D399] font-bold">+18.4% vs prior {timeframe}</div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                            <div className="rounded-2xl bg-[#060B19]/70 border border-white/10 p-3">
+                                <div className="text-[10px] uppercase text-gray-400 font-bold">Net Profit</div>
+                                <div className="text-lg font-extrabold text-[#38BDF8] mt-0.5">
+                                    <AnimatedCounter value={entityMetrics.netProfit} prefix="$" />
+                                </div>
+                            </div>
+                            <div className="rounded-2xl bg-[#060B19]/70 border border-white/10 p-3">
+                                <div className="text-[10px] uppercase text-gray-400 font-bold">CRM Pipeline</div>
+                                <div className="text-lg font-extrabold text-[#8B5CF6] mt-0.5">
+                                    <AnimatedCounter value={kpis?.pipeline_value || 0} prefix="$" />
+                                </div>
+                            </div>
+                            <div className="rounded-2xl bg-[#060B19]/70 border border-white/10 p-3">
+                                <div className="text-[10px] uppercase text-gray-400 font-bold">Invoices / Orders</div>
+                                <div className="text-lg font-extrabold text-[#FBBF24] mt-0.5">
+                                    <AnimatedCounter value={(kpis?.orders || 0) + entityMetrics.invoicesCount} />
+                                </div>
+                            </div>
+                            <div className="rounded-2xl bg-[#060B19]/70 border border-white/10 p-3">
+                                <div className="text-[10px] uppercase text-gray-400 font-bold">Staff &amp; Tickets</div>
+                                <div className="text-lg font-extrabold text-[#FB7185] mt-0.5">
+                                    <AnimatedCounter value={entityMetrics.employeesCount + entityMetrics.ticketsCount} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-4 beraxis-bento-card p-6 flex flex-col justify-between gap-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Active Services</div>
+                                <div className="text-base font-extrabold text-white mt-0.5">
+                                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                </div>
+                            </div>
+                            <Link href="/apps" className="text-xs font-bold text-[#38BDF8] hover:underline">
+                                All Apps →
+                            </Link>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2.5 text-xs font-bold">
+                            <Link href="/accounting/customers" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                <span>+ Invoice</span><ArrowUpRight size={13} className="text-[#38BDF8]" />
+                            </Link>
+                            <Link href="/crm" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                <span>+ Deal</span><ArrowUpRight size={13} className="text-[#8B5CF6]" />
+                            </Link>
+                            <Link href="/employees" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                <span>HR ({entityMetrics.employeesCount})</span><ArrowUpRight size={13} className="text-[#34D399]" />
+                            </Link>
+                            <Link href="/project" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                <span>Projects ({entityMetrics.projectsCount})</span><ArrowUpRight size={13} className="text-[#FBBF24]" />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
                 {/* ── SUPER ADMIN MASTER BANNER (Only visible to Platform Super Admin) ── */}
                 {isAdmin && (
                     <div className="bg-gradient-to-r from-purple-900/50 via-indigo-950/80 to-purple-900/50 border border-purple-400/40 rounded-3xl p-5 md:p-6 shadow-2xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">

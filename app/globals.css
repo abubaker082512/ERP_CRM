@@ -162,3 +162,38 @@ body {
   transform: translateZ(0);
   pointer-events: none;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   BERAXIS BENTO DESIGN SYSTEM (Official Ribbon Spectrum + Obsidian/Ice)
+   ══════════════════════════════════════════════════════════════════════ */
+.beraxis-bento-card {
+  @apply relative rounded-3xl bg-[#0F172A]/85 backdrop-blur-xl border border-white/10
+         shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_16px_40px_-15px_rgba(2,2,5,0.85)]
+         transition-all duration-200;
+}
+.beraxis-bento-card:hover {
+  @apply border-purple-500/35 -translate-y-0.5
+         shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_20px_45px_-12px_rgba(139,92,246,0.28)];
+}
+
+.beraxis-hero-card {
+  @apply relative rounded-3xl bg-gradient-to-br from-[#131B33]/95 via-[#0B1022]/95 to-[#060B19]/95
+         backdrop-blur-xl border border-purple-500/30
+         shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_22px_50px_-12px_rgba(139,92,246,0.35)];
+}
+
+.beraxis-white-bento {
+  @apply relative rounded-3xl bg-white/95 backdrop-blur-xl border border-slate-200/80
+         shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_30px_-10px_rgba(15,23,42,0.08)]
+         transition-all duration-200;
+}
+.beraxis-white-bento:hover {
+  @apply border-purple-300/80 -translate-y-0.5
+         shadow-[inset_0_1px_0_rgba(255,255,255,1),0_18px_36px_-10px_rgba(139,92,246,0.16)];
+}
+
+.beraxis-glow-pill {
+  @apply bg-gradient-to-r from-[#8B5CF6]/25 via-[#38BDF8]/15 to-[#EC4899]/20
+         border border-purple-400/40 text-white
+         shadow-[0_0_20px_rgba(139,92,246,0.35)];
+}

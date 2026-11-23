@@ -743,7 +743,30 @@ export default function AppsDashboardPage() {
                     </div>
                 ) : (
                     /* ─── WORKSPACE APP GRID ─── */
-                    <div className="py-6 sm:py-12 pb-24 animate-in fade-in duration-200 space-y-8">
+                    <div className="py-6 sm:py-10 pb-24 animate-in fade-in duration-200 space-y-6">
+                        {/* Futuristic Bento Hero Greeting Banner */}
+                        <div className="max-w-4xl mx-auto beraxis-hero-card p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#38BDF8]">
+                                    <Sparkles size={13} />
+                                    <span>{activeBranch?.name || "Workspace"} · {activeIndustry.name}</span>
+                                </div>
+                                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                                    Welcome back, {userData?.name || userData?.email?.split("@")[0] || "Founder"}
+                                </h1>
+                                <p className="text-xs text-gray-400">
+                                    Switch companies from the top bar or launch your unified multi-company Bento Dashboard.
+                                </p>
+                            </div>
+                            <Link
+                                href="/dashboard"
+                                className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#38BDF8] text-white text-xs font-extrabold shadow-lg shadow-purple-500/25 hover:opacity-95 transition-all whitespace-nowrap flex items-center gap-1.5"
+                            >
+                                <span>Executive Bento Dashboard</span>
+                                <ChevronRight size={14} />
+                            </Link>
+                        </div>
+
                         {/* Gamified Onboarding Launchpad Checklist */}
                         <div className="max-w-4xl mx-auto">
                             <OnboardingChecklist

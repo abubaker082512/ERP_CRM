@@ -171,7 +171,7 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
 
 export default function GalaxyAppShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [planLabel, setPlanLabel] = useState("ONE APP FREE");
@@ -343,46 +343,56 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                 </div>
             )}
             <div className="flex flex-1 overflow-hidden">
-            {/* Sidebar */}
+            {/* Sidebar: Sleek Collapsible Translucent Icon Rail */}
             <aside 
-                className={`fixed inset-y-0 left-0 z-50 bg-[#0F172A]/80 backdrop-blur-2xl border-r border-white/5 transition-all duration-500 ease-in-out w-64 ${
-                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                className={`fixed inset-y-0 left-0 z-50 bg-[#060B19]/90 backdrop-blur-2xl border-r border-white/10 transition-all duration-300 ease-out flex flex-col ${
+                    isSidebarOpen ? 'w-60' : 'w-[76px]'
                 }`}
             >
                 {/* Sidebar Header */}
-                <div className="h-16 flex items-center px-6 border-b border-white/5 mb-4">
-                    {isSidebarOpen ? (
-                        <div className="flex items-center">
+                <div className="h-16 flex items-center justify-between px-4 border-b border-white/10 mb-3 shrink-0">
+                    <Link href="/apps" className="flex items-center overflow-hidden">
+                        {isSidebarOpen ? (
                             <img src="/logo-full.png" alt="Beraxis Logo" className="h-7 w-auto object-contain" />
-                        </div>
-                    ) : (
-                        <img src="/logo2.png" alt="Beraxis Logo" className="h-7 w-auto mx-auto object-contain" />
-                    )}
+                        ) : (
+                            <img src="/logo2.png" alt="Beraxis Logo" className="h-8 w-8 mx-auto object-contain rounded-lg" />
+                        )}
+                    </Link>
+                    <button
+                        type="button"
+                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        title={isSidebarOpen ? "Collapse Rail" : "Expand Sidebar"}
+                        className="p-1.5 rounded-lg bg-white/5 hover:bg-purple-500/20 text-gray-400 hover:text-white border border-white/10 transition-colors cursor-pointer shrink-0"
+                    >
+                        {isSidebarOpen ? <X size={14} /> : <Menu size={14} />}
+                    </button>
                 </div>
 
                 {/* Nav Items */}
-                <nav className="px-3 space-y-1">
+                <nav className="px-2.5 space-y-1.5 flex-1 overflow-y-auto scrollbar-none">
                     {navItems.filter(item => item.name !== 'SaaS Admin' || isAdmin).map((item) => {
                         const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                         return (
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className={`galaxy-nav-item group ${isActive ? 'active' : ''}`}
+                                title={item.name}
+                                className={`flex items-center ${isSidebarOpen ? 'gap-3 px-3.5' : 'justify-center px-0'} py-2.5 rounded-2xl transition-all duration-200 relative group ${
+                                    isActive
+                                        ? 'beraxis-glow-pill text-white'
+                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                }`}
                             >
                                 <item.icon 
-                                    size={20} 
-                                    className={`shrink-0 transition-colors duration-300 ${
-                                        isActive ? 'text-purple-400' : 'text-gray-500 group-hover:text-gray-300'
+                                    size={19} 
+                                    className={`shrink-0 transition-colors duration-200 ${
+                                        isActive ? 'text-[#38BDF8]' : 'text-gray-500 group-hover:text-gray-200'
                                     }`} 
                                 />
                                 {isSidebarOpen && (
-                                    <span className="font-medium text-sm tracking-wide transition-opacity duration-300">
+                                    <span className="font-semibold text-xs tracking-wide truncate">
                                         {item.name}
                                     </span>
-                                )}
-                                {isActive && isSidebarOpen && (
-                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-purple-500 to-pink-500 rounded-l-full shadow-[0_0_10px_rgba(139,92,246,0.5)]"></div>
                                 )}
                             </Link>
                         );
@@ -424,8 +434,8 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
             </aside>
 
             {/* Main Content */}
-            <main className={`flex-1 min-w-0 flex flex-col transition-all duration-500 ease-in-out ${
-                isSidebarOpen ? 'ml-64' : 'ml-0'
+            <main className={`flex-1 min-w-0 flex flex-col transition-all duration-300 ease-out ${
+                isSidebarOpen ? 'ml-60' : 'ml-[76px]'
             }`}>
                 <div 
                     className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#020205] relative custom-scrollbar"
