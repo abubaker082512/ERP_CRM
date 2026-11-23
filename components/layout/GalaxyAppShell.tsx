@@ -106,6 +106,7 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
 
     // Always allow Settings, AI, Billing, Super Admin, and Leads Pool (which renders its own Paid Plan gate)
     const isAlwaysAllowed =
+        pathname.startsWith('/dashboard') ||
         pathname.startsWith('/settings') ||
         pathname.startsWith('/billing') ||
         pathname.startsWith('/super-admin');

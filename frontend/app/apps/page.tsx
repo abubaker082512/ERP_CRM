@@ -79,6 +79,8 @@ const INDUSTRY_ICON_MAP: Record<string, any> = {
 
 // Complete Enterprise App Catalog
 const allApps = [
+    // Primary User Executive Dashboard (Always Row 1, Position 1)
+    { name: "Dashboard", icon: LayoutDashboard, color: "bg-gradient-to-br from-[#8B5CF6] to-[#EC4899]", href: "/dashboard" },
     // Core & Retail
     { name: "Point of Sale", icon: ShoppingBag, color: "bg-amber-600", href: "/pos" },
     { name: "Kitchen (KDS)", icon: UtensilsCrossed, color: "bg-red-600", href: "/pos/kds" },
@@ -130,7 +132,6 @@ const allApps = [
     { name: "To do", icon: CheckSquare, color: "bg-blue-500", href: "/todo" },
     { name: "Calendar", icon: Calendar, color: "bg-yellow-600", href: "/calendar" },
     { name: "Surveys", icon: MessageSquare, color: "bg-blue-400", href: "/surveys" },
-    { name: "Dashboards", icon: Grid3x3, color: "bg-pink-500", href: "/dashboard" },
     { name: "Migration Hub", icon: UploadCloud, color: "bg-cyan-600", href: "/migration" },
     { name: "Settings", icon: Cog, color: "bg-[#64748b]", href: "/settings" }
 ];
@@ -178,6 +179,7 @@ export default function AppsDashboardPage() {
     const [scopeMode, setScopeMode] = useState<"single" | "all">("single");
     const [appCategory, setAppCategory] = useState<"all" | "finance" | "crm" | "ops" | "office">("all");
     const [appSearch, setAppSearch] = useState("");
+    const [showLaunchpad, setShowLaunchpad] = useState(false);
     const [bentoStats, setBentoStats] = useState({ revenue: 0, netProfit: 0, invoices: 0, staffAndTickets: 0 });
 
     useEffect(() => {
@@ -342,15 +344,15 @@ export default function AppsDashboardPage() {
     // Strict App Filtering:
     // - On Free Plan: ONLY the 1 chosen major app + Settings (/settings). NEVER Leads Pool!
     // - On Paid Plan: All enabled modules for the active industry/company + Leads Pool + Settings.
-    const displayedApps = activeBranch
+    const displayedApps = (activeBranch
         ? isFreePlan
             ? allApps.filter(app => {
                   if (app.href === "/crm/leads-pool") return false;
-                  if (app.href === "/settings") return true;
+                  if (app.href === "/dashboard" || app.href === "/settings") return true;
                   const activeFreeHref =
                       freeSelectedApp ||
                       activeBranch.enabledModules.find(
-                          m => m !== "/settings" && m !== "/crm/leads-pool"
+                          m => m !== "/settings" && m !== "/crm/leads-pool" && m !== "/dashboard"
                       ) ||
                       chosenFreeAppHref;
                   return app.href === activeFreeHref;
@@ -362,7 +364,8 @@ export default function AppsDashboardPage() {
                       app.href === "/dashboard" ||
                       app.href === "/crm/leads-pool"
               )
-        : [];
+        : []
+    ).sort((a, b) => (a.href === "/dashboard" ? -1 : b.href === "/dashboard" ? 1 : 0));
 
     const chosenInd = getIndustryById(selectedIndId);
     const ChosenIcon = INDUSTRY_ICON_MAP[chosenInd.iconName] || Building2;
@@ -468,7 +471,7 @@ export default function AppsDashboardPage() {
             </header>
 
             {/* Main Canvas Area */}
-            <main className="flex-1 max-w-7xl w-full mx-auto p-6 sm:p-10 flex flex-col justify-center relative z-10">
+            <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-2 flex flex-col justify-start relative z-10">
                 {/* ─── ONBOARDING / INDUSTRY & COMPANY SELECTION GATEWAY ─── */}
                 {showOnboarding ? (
                     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200 py-4">
@@ -773,34 +776,31 @@ export default function AppsDashboardPage() {
                         </div>
                     </div>
                 ) : (
-                    /* ─── WORKSPACE DYNAMIC BENTO COCKPIT ─── */
-                    <div className="py-4 sm:py-8 pb-24 animate-in fade-in duration-200 space-y-6 max-w-6xl mx-auto w-full">
+                    /* ─── WORKSPACE DYNAMIC BENTO COCKPIT (Single-Screen Zero-Scroll) ─── */
+                    <div className="py-2 pb-16 animate-in fade-in duration-200 space-y-3.5 max-w-[1380px] mx-auto w-full">
                         {/* Top Bento Row: Hero Telemetry + Calendar/Quick Actions */}
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                            <div className="lg:col-span-8 beraxis-hero-card p-5 sm:p-6 flex flex-col justify-between gap-4">
-                                <div className="flex flex-wrap items-start justify-between gap-4">
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#38BDF8]">
-                                            <Sparkles size={13} />
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+                            <div className="lg:col-span-8 beraxis-hero-card p-3.5 sm:p-4 flex flex-col justify-between gap-2.5">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div>
+                                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#38BDF8]">
+                                            <Sparkles size={11} />
                                             <span>
                                                 {scopeMode === "all"
                                                     ? `All Companies Consolidated (${branches.length || 1})`
                                                     : `${activeBranch?.name || "Workspace"} · ${activeIndustry.name}`}
                                             </span>
                                         </div>
-                                        <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                                            Work&apos;s always better together — {scopeMode === "all" ? "All Companies" : activeBranch?.name || "Workspace"}
+                                        <h1 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
+                                            {scopeMode === "all" ? "All Companies Overview" : activeBranch?.name || "Workspace"} — Welcome back, {userData?.name || userData?.email?.split("@")[0] || "Founder"}
                                         </h1>
-                                        <p className="text-xs text-gray-400">
-                                            Welcome back, {userData?.name || userData?.email?.split("@")[0] || "Founder"}. Switch company scope or launch any module below.
-                                        </p>
                                     </div>
 
-                                    <div className="inline-flex p-1 rounded-2xl bg-[#060B19]/80 border border-white/10 text-[11px] font-bold shrink-0">
+                                    <div className="inline-flex p-0.5 rounded-xl bg-[#060B19]/80 border border-white/10 text-[10px] font-bold shrink-0">
                                         <button
                                             type="button"
                                             onClick={() => setScopeMode("single")}
-                                            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                                                 scopeMode === "single" ? "beraxis-glow-pill" : "text-gray-400 hover:text-white"
                                             }`}
                                         >
@@ -809,7 +809,7 @@ export default function AppsDashboardPage() {
                                         <button
                                             type="button"
                                             onClick={() => setScopeMode("all")}
-                                            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                                                 scopeMode === "all" ? "beraxis-glow-pill" : "text-gray-400 hover:text-white"
                                             }`}
                                         >
@@ -818,39 +818,39 @@ export default function AppsDashboardPage() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    <div className="rounded-2xl bg-[#060B19]/75 border border-white/10 p-3">
-                                        <div className="text-[10px] uppercase font-bold text-gray-400">Revenue</div>
-                                        <div className="text-lg font-black text-white mt-0.5">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                    <div className="rounded-xl bg-[#060B19]/75 border border-white/10 px-3 py-2">
+                                        <div className="text-[10px] uppercase font-bold text-gray-400">Sales / Revenue</div>
+                                        <div className="text-base font-black text-white">
                                             <AnimatedCounter value={bentoStats.revenue} prefix="$" />
                                         </div>
                                     </div>
-                                    <div className="rounded-2xl bg-[#060B19]/75 border border-white/10 p-3">
+                                    <div className="rounded-xl bg-[#060B19]/75 border border-white/10 px-3 py-2">
                                         <div className="text-[10px] uppercase font-bold text-gray-400">Net Profit</div>
-                                        <div className="text-lg font-black text-[#38BDF8] mt-0.5">
+                                        <div className="text-base font-black text-[#38BDF8]">
                                             <AnimatedCounter value={bentoStats.netProfit} prefix="$" />
                                         </div>
                                     </div>
-                                    <div className="rounded-2xl bg-[#060B19]/75 border border-white/10 p-3">
+                                    <div className="rounded-xl bg-[#060B19]/75 border border-white/10 px-3 py-2">
                                         <div className="text-[10px] uppercase font-bold text-gray-400">Invoices</div>
-                                        <div className="text-lg font-black text-[#FBBF24] mt-0.5">
+                                        <div className="text-base font-black text-[#FBBF24]">
                                             <AnimatedCounter value={bentoStats.invoices} />
                                         </div>
                                     </div>
-                                    <div className="rounded-2xl bg-[#060B19]/75 border border-white/10 p-3">
-                                        <div className="text-[10px] uppercase font-bold text-gray-400">Team &amp; Tickets</div>
-                                        <div className="text-lg font-black text-[#34D399] mt-0.5">
-                                            <AnimatedCounter value={bentoStats.staffAndTickets} />
+                                    <div className="rounded-xl bg-[#060B19]/75 border border-white/10 px-3 py-2">
+                                        <div className="text-[10px] uppercase font-bold text-gray-400">Assigned Users</div>
+                                        <div className="text-base font-black text-[#34D399]">
+                                            <AnimatedCounter value={Math.max(1, bentoStats.staffAndTickets)} />
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="lg:col-span-4 beraxis-bento-card p-5 sm:p-6 flex flex-col justify-between gap-4">
+                            <div className="lg:col-span-4 beraxis-bento-card p-3.5 sm:p-4 flex flex-col justify-between gap-2.5">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Quick Launch</div>
-                                        <div className="text-base font-extrabold text-white mt-0.5">
+                                        <div className="text-sm font-extrabold text-white">
                                             {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                                         </div>
                                     </div>
@@ -858,21 +858,21 @@ export default function AppsDashboardPage() {
                                         href="/dashboard"
                                         className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#38BDF8] text-white text-[11px] font-extrabold shadow-md hover:opacity-95 transition-all"
                                     >
-                                        Full Analytics →
+                                        User Dashboard →
                                     </Link>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-xs font-bold">
-                                    <Link href="/accounting/customers" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
-                                        <span>+ Invoice</span><ChevronRight size={13} className="text-[#38BDF8]" />
+                                <div className="grid grid-cols-2 gap-1.5 text-[11px] font-bold">
+                                    <Link href="/accounting/customers" className="px-2.5 py-2 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                        <span>+ Invoice</span><ChevronRight size={12} className="text-[#38BDF8]" />
                                     </Link>
-                                    <Link href="/crm" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
-                                        <span>+ CRM Deal</span><ChevronRight size={13} className="text-[#8B5CF6]" />
+                                    <Link href="/crm" className="px-2.5 py-2 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                        <span>+ CRM Deal</span><ChevronRight size={12} className="text-[#8B5CF6]" />
                                     </Link>
-                                    <Link href="/employees" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
-                                        <span>+ Employee</span><ChevronRight size={13} className="text-[#34D399]" />
+                                    <Link href="/employees" className="px-2.5 py-2 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                        <span>+ Employee</span><ChevronRight size={12} className="text-[#34D399]" />
                                     </Link>
-                                    <Link href="/sales/quotations/new" className="p-2.5 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
-                                        <span>+ Quotation</span><ChevronRight size={13} className="text-[#FBBF24]" />
+                                    <Link href="/sales/quotations/new" className="px-2.5 py-2 rounded-xl bg-white/5 hover:bg-[#8B5CF6]/20 border border-white/10 text-gray-200 flex items-center justify-between transition-colors">
+                                        <span>+ Quotation</span><ChevronRight size={12} className="text-[#FBBF24]" />
                                     </Link>
                                 </div>
                             </div>
@@ -906,9 +906,9 @@ export default function AppsDashboardPage() {
                             </div>
                         )}
 
-                        {/* Frosted Glass Bento App Dock */}
-                        <div className="beraxis-bento-card p-5 sm:p-7 space-y-6">
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                        {/* Frosted Glass Bento App Dock (Single-Screen 8-Col Grid) */}
+                        <div className="beraxis-bento-card p-4 sm:p-5 space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
                                 <div className="flex flex-wrap items-center gap-1.5">
                                     {[
                                         { id: "all", label: "All Apps" },
@@ -938,14 +938,14 @@ export default function AppsDashboardPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-5 gap-y-7">
+                            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-x-3 gap-y-3.5">
                             {displayedApps.filter((app) => {
                                 if (appSearch && !app.name.toLowerCase().includes(appSearch.toLowerCase())) return false;
                                 if (appCategory === "all") return true;
-                                if (appCategory === "finance") return ["/accounting", "/sales", "/purchase", "/pos"].some(p => app.href.startsWith(p));
-                                if (appCategory === "crm") return ["/crm", "/contacts", "/discuss", "/calendar"].some(p => app.href.startsWith(p));
-                                if (appCategory === "ops") return ["/inventory", "/barcode", "/manufacturing", "/employees", "/payroll", "/project", "/helpdesk"].some(p => app.href.startsWith(p));
-                                if (appCategory === "office") return ["/documents", "/spreadsheets", "/slides", "/meet", "/knowledge", "/sign", "/todo"].some(p => app.href.startsWith(p));
+                                if (appCategory === "finance") return ["/dashboard", "/accounting", "/sales", "/purchase", "/pos"].some(p => app.href.startsWith(p));
+                                if (appCategory === "crm") return ["/dashboard", "/crm", "/contacts", "/discuss", "/calendar"].some(p => app.href.startsWith(p));
+                                if (appCategory === "ops") return ["/dashboard", "/inventory", "/barcode", "/manufacturing", "/employees", "/payroll", "/project", "/helpdesk"].some(p => app.href.startsWith(p));
+                                if (appCategory === "office") return ["/dashboard", "/documents", "/spreadsheets", "/slides", "/meet", "/knowledge", "/sign", "/todo"].some(p => app.href.startsWith(p));
                                 return true;
                             }).map(app => {
                                 const IconComponent = app.icon;
@@ -954,17 +954,17 @@ export default function AppsDashboardPage() {
                                     <Link
                                         key={app.name}
                                         href={app.href}
-                                        className="group flex flex-col items-center gap-3.5 focus:outline-none cursor-pointer"
+                                        className="group flex flex-col items-center gap-1.5 focus:outline-none cursor-pointer"
                                     >
-                                        {/* Vibrant Squircle Icon */}
+                                        {/* Compact Vibrant Squircle Icon */}
                                         <div
-                                            className={`w-20 h-20 sm:w-22 sm:h-22 rounded-3xl ${app.color} flex items-center justify-center text-white shadow-xl shadow-black/40 group-hover:scale-110 transition-transform duration-200 ease-out`}
+                                            className={`w-14 h-14 rounded-2xl ${app.color} flex items-center justify-center text-white shadow-lg shadow-black/40 group-hover:scale-105 transition-transform duration-200 ease-out`}
                                         >
-                                            <IconComponent className="w-10 h-10 text-white" strokeWidth={1.8} />
+                                            <IconComponent className="w-7 h-7 text-white" strokeWidth={1.8} />
                                         </div>
 
                                         {/* Clean Label Beneath Icon */}
-                                        <span className="text-xs sm:text-sm font-medium text-gray-300 group-hover:text-white transition-colors text-center tracking-tight">
+                                        <span className="text-[11px] font-medium text-gray-300 group-hover:text-white transition-colors text-center tracking-tight leading-tight">
                                             {app.name}
                                         </span>
                                     </Link>
@@ -982,16 +982,16 @@ export default function AppsDashboardPage() {
                                             reason: "The 25.8M+ Verified B2B Leads Pool & Live Business Scraper is exclusively available on Paid Plans (Standard or Custom Enterprise). Upgrade your subscription to unlock instant lead extraction."
                                         })
                                     }
-                                    className="group flex flex-col items-center gap-3.5 focus:outline-none cursor-pointer relative"
+                                    className="group flex flex-col items-center gap-1.5 focus:outline-none cursor-pointer relative"
                                     title="Leads Pool is available only on Paid Plans"
                                 >
-                                    <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-3xl bg-gray-900/80 border-2 border-amber-500/40 flex items-center justify-center text-amber-400 shadow-xl shadow-black/40 group-hover:scale-105 transition-transform duration-200 ease-out relative">
-                                        <Globe className="w-9 h-9 opacity-40" strokeWidth={1.8} />
-                                        <div className="absolute -top-2 -right-2 bg-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-md">
-                                            <Lock size={10} /> PAID
+                                    <div className="w-14 h-14 rounded-2xl bg-gray-900/80 border-2 border-amber-500/40 flex items-center justify-center text-amber-400 shadow-lg shadow-black/40 group-hover:scale-105 transition-transform duration-200 ease-out relative">
+                                        <Globe className="w-6 h-6 opacity-40" strokeWidth={1.8} />
+                                        <div className="absolute -top-1.5 -right-1.5 bg-amber-500 text-black text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-md">
+                                            <Lock size={8} /> PAID
                                         </div>
                                     </div>
-                                    <span className="text-xs sm:text-sm font-medium text-amber-300/80 group-hover:text-amber-300 transition-colors text-center tracking-tight">
+                                    <span className="text-[11px] font-medium text-amber-300/80 group-hover:text-amber-300 transition-colors text-center tracking-tight leading-tight">
                                         Leads Pool 🔒
                                     </span>
                                 </button>
@@ -1011,24 +1011,40 @@ export default function AppsDashboardPage() {
                                         setIsManageAppsModalOpen(true);
                                     }
                                 }}
-                                className="group flex flex-col items-center gap-3.5 focus:outline-none cursor-pointer"
+                                className="group flex flex-col items-center gap-1.5 focus:outline-none cursor-pointer"
                                 title={isFreePlan ? "Upgrade to unlock more apps" : "Add or remove modules from active company"}
                             >
-                                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-3xl bg-gradient-to-br from-purple-900/30 via-[#141b2c] to-indigo-950/30 border-2 border-dashed border-purple-500/50 hover:border-purple-400 flex items-center justify-center text-purple-300 hover:text-white shadow-xl shadow-black/40 group-hover:scale-110 transition-transform duration-200 ease-out">
-                                    <Plus className="w-9 h-9" strokeWidth={2} />
+                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-900/30 via-[#141b2c] to-indigo-950/30 border-2 border-dashed border-purple-500/50 hover:border-purple-400 flex items-center justify-center text-purple-300 hover:text-white shadow-lg shadow-black/40 group-hover:scale-105 transition-transform duration-200 ease-out">
+                                    <Plus className="w-6 h-6" strokeWidth={2} />
                                 </div>
-                                <span className="text-xs sm:text-sm font-semibold text-purple-400 group-hover:text-purple-300 transition-colors text-center tracking-tight">
+                                <span className="text-[11px] font-semibold text-purple-400 group-hover:text-purple-300 transition-colors text-center tracking-tight leading-tight">
                                     {isFreePlan ? "+ Unlock Apps" : "+ Add Apps"}
                                 </span>
                             </button>
                             </div>
                         </div>
 
-                        {/* Gamified Onboarding Launchpad Checklist */}
-                        <OnboardingChecklist
-                            hasSelectedIndustry={hasSelectedIndustry}
-                            onOpenIndustryPicker={handleReconfigureWorkspace}
-                        />
+                        {/* Compact Collapsible Quickstart Launchpad Bar */}
+                        <div className="beraxis-bento-card px-4 py-2.5 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 text-xs font-bold text-gray-300">
+                                <Sparkles size={14} className="text-[#8B5CF6]" />
+                                <span>Quickstart Launchpad &amp; Blueprint Setup</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowLaunchpad(!showLaunchpad)}
+                                className="px-3 py-1 rounded-xl bg-white/5 hover:bg-purple-500/20 border border-white/10 text-[11px] font-bold text-[#38BDF8] cursor-pointer"
+                            >
+                                {showLaunchpad ? "Hide Checklist ↑" : "Expand Checklist ↓"}
+                            </button>
+                        </div>
+
+                        {showLaunchpad && (
+                            <OnboardingChecklist
+                                hasSelectedIndustry={hasSelectedIndustry}
+                                onOpenIndustryPicker={handleReconfigureWorkspace}
+                            />
+                        )}
                     </div>
                 )}
             </main>
