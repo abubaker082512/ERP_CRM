@@ -477,6 +477,12 @@ function SuperAdminPageContent() {
                             : emailMode === "bulk_all" && allUserEmails.length > 0
                             ? allUserEmails
                             : undefined,
+                    recipientDetails: users.map((u) => ({
+                        email: u.email,
+                        name: (u as any).name || (u as any).full_name || undefined,
+                        plan: u.subscription_status || undefined,
+                        company: u.workspace_name || undefined,
+                    })),
                     subject: emailSubject.trim(),
                     message: plainText || emailSubject.trim(),
                     htmlBody,
@@ -3044,9 +3050,38 @@ function SuperAdminPageContent() {
                                         required
                                         value={emailSubject}
                                         onChange={(e) => setEmailSubject(e.target.value)}
-                                        placeholder="e.g. Important BERAXIS Update or Special Offer"
+                                        placeholder="e.g. Hey {{first_name}}, welcome to BERAXIS!"
                                         className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:border-cyan-500 outline-none"
                                     />
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-slate-100 border border-slate-300 flex flex-wrap items-center gap-2">
+                                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                                        Personalize (Click to insert):
+                                    </span>
+                                    {[
+                                        { tag: "{{name}}", label: "Full Name" },
+                                        { tag: "{{first_name}}", label: "First Name" },
+                                        { tag: "{{email}}", label: "Email" },
+                                        { tag: "{{plan}}", label: "Plan" },
+                                        { tag: "{{company}}", label: "Company" },
+                                    ].map((p) => (
+                                        <button
+                                            key={p.tag}
+                                            type="button"
+                                            onClick={() => {
+                                                if (emailEditorRef.current) {
+                                                    emailEditorRef.current.focus();
+                                                    document.execCommand("insertText", false, p.tag);
+                                                    syncEditorBody();
+                                                }
+                                            }}
+                                            className="px-2.5 py-1 rounded-lg bg-white hover:bg-purple-600 hover:text-white border border-slate-300 text-xs font-mono font-bold text-purple-700 transition-colors cursor-pointer"
+                                            title={`Insert ${p.label} (${p.tag})`}
+                                        >
+                                            + {p.tag}
+                                        </button>
+                                    ))}
                                 </div>
 
                                 <div>
