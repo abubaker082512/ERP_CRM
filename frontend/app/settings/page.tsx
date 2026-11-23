@@ -190,8 +190,8 @@ export default function SettingsPage() {
   // Security & Session settings per company
   const [sessionTimeoutMins, setSessionTimeoutMins] = useState("30");
   const [enforceSingleSession, setEnforceSingleSession] = useState(true);
-  const [smtpFromName, setSmtpFromName] = useState("BERAXIS AI");
-  const [smtpFromEmail, setSmtpFromEmail] = useState("beraxisai@gmail.com");
+  const [smtpFromName, setSmtpFromName] = useState("");
+  const [smtpFromEmail, setSmtpFromEmail] = useState("");
   const [smtpPassword, setSmtpPassword] = useState("");
 
   // POS Receipt template states
@@ -203,11 +203,11 @@ export default function SettingsPage() {
   const [searchLocale, setSearchLocale] = useState("");
   const [isLocaleDropdownOpen, setIsLocaleDropdownOpen] = useState(false);
 
-  // Email settings state (Gmail defaults)
-  const [smtpServer, setSmtpServer] = useState("smtp.gmail.com");
-  const [smtpPort, setSmtpPort] = useState("465");
-  const [encryption, setEncryption] = useState("ssl");
-  const [smtpUser, setSmtpUser] = useState("beraxisai@gmail.com");
+  // Email settings state
+  const [smtpServer, setSmtpServer] = useState("");
+  const [smtpPort, setSmtpPort] = useState("587");
+  const [encryption, setEncryption] = useState("tls");
+  const [smtpUser, setSmtpUser] = useState("");
 
   // Units of Measure state
   const [uoms, setUoms] = useState<any[]>(DEFAULT_UOMS);
@@ -259,10 +259,10 @@ export default function SettingsPage() {
       setCountry(byCode ? byCode.country : savedCountry);
     }
     if (savedDateFormat) setDateFormat(savedDateFormat);
-    setSmtpServer(savedSmtp || "smtp.gmail.com");
-    setSmtpPort(savedPort || "465");
-    setEncryption(savedEnc || "ssl");
-    setSmtpUser(savedUser || "beraxisai@gmail.com");
+    setSmtpServer(savedSmtp || "");
+    if (savedPort) setSmtpPort(savedPort);
+    if (savedEnc) setEncryption(savedEnc);
+    setSmtpUser(savedUser || defaultEmail);
     setReceiptHeader(savedRecHeader || `Welcome to ${savedCompany || defaultEntityName || "Our Workspace"}`);
     if (savedRecFooter) setReceiptFooter(savedRecFooter);
     if (savedRecSize) setReceiptPaperSize(savedRecSize);
@@ -290,8 +290,8 @@ export default function SettingsPage() {
       const savedSmtpExtra = localStorage.getItem(`${keyPrefix}_smtp_extra`);
       if (savedSmtpExtra) {
         const ex = JSON.parse(savedSmtpExtra);
-        setSmtpFromName(ex.smtpFromName || "BERAXIS AI");
-        setSmtpFromEmail(ex.smtpFromEmail || "beraxisai@gmail.com");
+        setSmtpFromName(ex.smtpFromName || "");
+        setSmtpFromEmail(ex.smtpFromEmail || "");
         setSmtpPassword(ex.smtpPassword || "");
       }
       const savedRoles = localStorage.getItem(`${keyPrefix}_custom_roles`);
@@ -1065,30 +1065,13 @@ export default function SettingsPage() {
             {/* Email Tab */}
             {activeTab === "email" && (
               <div className="space-y-6 max-w-2xl">
-                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 space-y-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-sm font-bold text-white flex items-center gap-2">
-                      <Mail size={16} className="text-emerald-400" />
-                      BERAXIS Gmail Delivery &amp; Signup Alerts
-                    </div>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      smtp.gmail.com · SSL 465
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-300 leading-relaxed">
-                    Outbound emails &amp; welcome messages are delivered via <strong className="text-white">beraxisai@gmail.com</strong>. Every Free &amp; Paid signup automatically sends an instant alert to <strong className="text-cyan-300">abubaker0825@gmail.com</strong>.
-                  </p>
-                  <p className="text-[11px] text-amber-300/90">
-                    To activate live Gmail sending, create a 16-character Google App Password for <strong>beraxisai@gmail.com</strong> and set <code className="px-1.5 py-0.5 rounded bg-black/40 text-white">GMAIL_APP_PASSWORD</code> in Vercel Environment Variables (or paste it below to test).
-                  </p>
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">SMTP Server</label>
                   <input 
                     type="text" 
                     value={smtpServer} 
                     onChange={e => setSmtpServer(e.target.value)}
+                    placeholder="e.g. smtp.gmail.com"
                     className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" 
                   />
                 </div>
@@ -1109,13 +1092,13 @@ export default function SettingsPage() {
                       onChange={e => setEncryption(e.target.value)}
                       className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
                     >
-                      <option value="ssl">SSL (Recommended for Gmail 465)</option>
-                      <option value="tls">TLS (587)</option>
+                      <option value="tls">TLS</option>
+                      <option value="ssl">SSL</option>
                     </select>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">SMTP Username (Gmail)</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">SMTP Username</label>
                   <input 
                     type="text" 
                     value={smtpUser} 
@@ -1126,56 +1109,16 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Sender Display Name</label>
-                    <input type="text" value={smtpFromName} onChange={e => setSmtpFromName(e.target.value)} placeholder="BERAXIS AI" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
+                    <input type="text" value={smtpFromName} onChange={e => setSmtpFromName(e.target.value)} placeholder="e.g. Acme Billing" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Sender Email (From)</label>
-                    <input type="email" value={smtpFromEmail} onChange={e => setSmtpFromEmail(e.target.value)} placeholder="beraxisai@gmail.com" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
+                    <input type="email" value={smtpFromEmail} onChange={e => setSmtpFromEmail(e.target.value)} placeholder="billing@company.com" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Gmail App Password (16 chars)</label>
-                  <input type="password" value={smtpPassword} onChange={e => setSmtpPassword(e.target.value)} placeholder="xxxx xxxx xxxx xxxx" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <button
-                    type="button"
-                    disabled={testingEmail}
-                    onClick={async () => {
-                      setTestingEmail(true);
-                      setTestEmailStatus(null);
-                      try {
-                        const res = await fetch("/api/notifications/test-email", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            to: "abubaker0825@gmail.com",
-                            smtpPassword: smtpPassword || undefined,
-                          }),
-                        });
-                        const data = await res.json().catch(() => ({}));
-                        setTestEmailStatus({
-                          ok: Boolean(data.ok),
-                          msg: data.ok
-                            ? `Test email sent from ${data.sender} to ${data.to}!`
-                            : data.error || "Gmail App Password not configured yet.",
-                        });
-                      } catch (err: any) {
-                        setTestEmailStatus({ ok: false, msg: err?.message || "Failed to send test email" });
-                      } finally {
-                        setTestingEmail(false);
-                      }
-                    }}
-                    className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold disabled:opacity-50 cursor-pointer"
-                  >
-                    {testingEmail ? "Sending Test..." : "Send Test Email to abubaker0825@gmail.com"}
-                  </button>
-                  {testEmailStatus && (
-                    <span className={`text-xs font-semibold ${testEmailStatus.ok ? "text-emerald-400" : "text-amber-300"}`}>
-                      {testEmailStatus.msg}
-                    </span>
-                  )}
+                  <label className="block text-sm font-medium text-gray-300 mb-2">SMTP Password / App Token</label>
+                  <input type="password" value={smtpPassword} onChange={e => setSmtpPassword(e.target.value)} placeholder="••••••••••••" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
                 </div>
               </div>
             )}

@@ -2807,7 +2807,44 @@ function SuperAdminPageContent() {
 
                 {/* ── TAB 8: GLOBAL BROADCAST ANNOUNCEMENTS ── */}
                 {activeTab === "broadcast" && (
-                    <div className="bg-[#111827] rounded-3xl border border-gray-800 p-6 shadow-2xl space-y-6">
+                    <div className="space-y-6">
+                        <div className="bg-[#111827] rounded-3xl border border-emerald-500/25 p-6 shadow-2xl space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                        BERAXIS System Gmail Mailer (Super Admin Only)
+                                    </h3>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                        All Free &amp; Paid signup notifications are sent from <strong className="text-white">beraxisai@gmail.com</strong> to <strong className="text-cyan-300">abubaker0825@gmail.com</strong>, and outbound promotional campaigns dispatch from <strong className="text-white">beraxisai@gmail.com</strong>.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        try {
+                                            const res = await fetch("/api/notifications/test-email", {
+                                                method: "POST",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({ to: "abubaker0825@gmail.com" }),
+                                            });
+                                            const data = await res.json().catch(() => ({}));
+                                            showToast(
+                                                data.ok
+                                                    ? `Test email delivered from ${data.sender} to ${data.to}!`
+                                                    : data.error || "Gmail test failed"
+                                            );
+                                        } catch (err: any) {
+                                            showToast(err?.message || "Failed to send test email");
+                                        }
+                                    }}
+                                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer shrink-0"
+                                >
+                                    Send Test Email to abubaker0825@gmail.com
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="bg-[#111827] rounded-3xl border border-gray-800 p-6 shadow-2xl space-y-6">
                         <div className="border-b border-gray-800 pb-4">
                             <h2 className="text-xl font-bold flex items-center gap-2">
                                 <Megaphone className="text-purple-400" size={22} /> Platform-Wide Announcement Banner
@@ -2863,6 +2900,7 @@ function SuperAdminPageContent() {
                                 </button>
                             </div>
                         </form>
+                    </div>
                     </div>
                 )}
 
