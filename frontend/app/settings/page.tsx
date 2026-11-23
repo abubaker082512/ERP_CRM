@@ -403,6 +403,12 @@ export default function SettingsPage() {
   };
 
   const handlePromoteMultiLocale = (item: MultiLocale) => {
+    const keyPrefix = getEntityStorageKey("settings");
+    try {
+      localStorage.setItem(`${keyPrefix}_country`, item.country);
+      localStorage.setItem(`${keyPrefix}_currency`, item.currency);
+      localStorage.setItem(`${keyPrefix}_timezone`, item.timezone);
+    } catch {}
     setCountry(item.country);
     setCurrency(item.currency);
     setTimezone(item.timezone);
