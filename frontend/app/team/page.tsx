@@ -197,7 +197,7 @@ export default function TeamManagementPage() {
         }
       })
       .catch(() => {});
-  }, [activeCompanyId, getEntityStorageKey]);
+  }, [activeCompanyId]);
 
   // Invite Form State
   const [invName, setInvName] = useState("");

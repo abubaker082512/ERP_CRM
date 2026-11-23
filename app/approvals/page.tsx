@@ -77,7 +77,7 @@ export default function ApprovalsInboxPage() {
         if (Array.isArray(d?.approvals)) setApprovals(d.approvals);
       })
       .catch(() => {});
-  }, [companyId, getEntityStorageKey]);
+  }, [companyId]);
 
   const activeMember = members.find((m) => m.id === activeMemberId) || members[0];
   const superiorChain = activeMember ? getSuperiorChain(activeMember.id, members) : [];
