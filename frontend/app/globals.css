@@ -212,18 +212,36 @@ body {
 
 .superadmin-light-panels .bg-\[\#0F172A\],
 .superadmin-light-panels .bg-\[\#0B0F19\],
+.superadmin-light-panels .bg-\[\#0B0F19\]\/60,
 .superadmin-light-panels .bg-\[\#0B0F19\]\/80,
 .superadmin-light-panels .bg-\[\#0B101E\],
+.superadmin-light-panels .bg-\[\#070B16\],
 .superadmin-light-panels .bg-\[\#161F33\],
 .superadmin-light-panels .bg-\[\#1E293B\],
 .superadmin-light-panels .bg-gray-950,
 .superadmin-light-panels .bg-gray-900,
 .superadmin-light-panels .bg-gray-800,
 .superadmin-light-panels .bg-gray-800\/50,
+.superadmin-light-panels .bg-slate-900,
+.superadmin-light-panels .bg-slate-800,
+.superadmin-light-panels .bg-slate-800\/80,
 .superadmin-light-panels .bg-black\/40 {
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
   border-color: #cbd5e1 !important;
+}
+
+.superadmin-light-panels .bg-amber-950\/40 {
+  background-color: #fef3c7 !important;
+  border-color: #f59e0b !important;
+}
+.superadmin-light-panels .bg-purple-950\/40 {
+  background-color: #f3e8ff !important;
+  border-color: #a855f7 !important;
+}
+.superadmin-light-panels .bg-emerald-950\/40 {
+  background-color: #d1fae5 !important;
+  border-color: #10b981 !important;
 }
 
 .superadmin-light-panels .bg-white\/5,
@@ -262,7 +280,9 @@ body {
 
 .superadmin-light-panels .text-gray-300,
 .superadmin-light-panels .text-gray-400,
-.superadmin-light-panels .text-gray-500 {
+.superadmin-light-panels .text-gray-500,
+.superadmin-light-panels .text-slate-300,
+.superadmin-light-panels .text-slate-400 {
   color: #334155 !important;
 }
 
