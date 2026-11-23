@@ -441,25 +441,25 @@ export default function AppsDashboardPage() {
                                         setIsManageAppsModalOpen(true);
                                     }
                                 }}
-                                className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
+                                className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 border rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-sm active:scale-95 cursor-pointer ${
                                     isLight
                                         ? "bg-white hover:bg-purple-50 border-purple-200 text-purple-700"
                                         : "bg-[#141b2c] hover:bg-[#1c243a] border-purple-500/40 text-purple-300 hover:text-white"
                                 }`}
                                 title="Install or manage apps for active company"
                             >
-                                <Settings size={13} className="text-purple-500" />
-                                <span>{isFreePlan ? "Unlock More Apps" : "+ Manage Apps"}</span>
+                                <Settings size={13} className="text-purple-500 shrink-0" />
+                                <span>{isFreePlan ? "Unlock Apps" : "Manage Apps"}</span>
                             </button>
                             <button
                                 onClick={handleOpenIndustrySelection}
-                                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95 cursor-pointer"
+                                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold whitespace-nowrap shadow-lg shadow-purple-600/30 transition-all active:scale-95 cursor-pointer"
                             >
-                                <Plus size={14} /> + Add New Company
+                                <Plus size={13} className="shrink-0" /> Add Company
                             </button>
                             <Link
                                 href="/migration"
-                                className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 ${
+                                className={`hidden 2xl:flex items-center gap-1.5 px-2.5 py-1.5 border rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-sm active:scale-95 ${
                                     isLight
                                         ? "bg-cyan-50 hover:bg-cyan-100 border-cyan-200 text-cyan-800"
                                         : "bg-cyan-950/40 hover:bg-cyan-900/50 border-cyan-500/40 text-cyan-300 hover:text-white"
@@ -491,7 +491,7 @@ export default function AppsDashboardPage() {
                         type="button"
                         onClick={() => window.dispatchEvent(new CustomEvent("open-voice-pilot"))}
                         title="Launch Voice Operations (Alt+V)"
-                        className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-xl border text-xs font-bold cursor-pointer ${
+                        className={`flex items-center gap-1.5 transition-all px-2.5 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap cursor-pointer ${
                             isLight
                                 ? "bg-pink-50 hover:bg-pink-100 border-pink-200 text-pink-700"
                                 : "text-pink-200 hover:text-white border-pink-500/30 bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/35 hover:to-pink-600/35"
@@ -504,7 +504,7 @@ export default function AppsDashboardPage() {
                     <Link
                         href="/billing"
                         title="Subscription & Plans"
-                        className={`hidden sm:flex items-center gap-1 transition-colors px-2.5 py-1.5 rounded-xl border text-xs font-bold ${
+                        className={`hidden sm:flex items-center gap-1 transition-colors px-2.5 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap ${
                             isLight
                                 ? "bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800"
                                 : "text-amber-300 hover:text-amber-200 border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20"

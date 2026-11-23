@@ -112,7 +112,7 @@ export default function UserProfileDropdown() {
                     }`}>
                         {fullName}
                     </span>
-                    <span className={`text-[10px] font-extrabold tracking-wider uppercase ${
+                    <span className={`text-[10px] font-extrabold tracking-wider uppercase whitespace-nowrap ${
                         isLight ? "text-purple-700" : "bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent"
                     }`}>
                         {planLabel}

@@ -89,10 +89,10 @@ export default function UniversalBranchSwitcher() {
           {activeBranch.code ? activeBranch.code.split("-")[0] : "HQ"}
         </div>
         <div className="text-left hidden sm:block max-w-[150px] md:max-w-[200px] truncate">
-          <div className="font-bold text-white truncate text-xs flex items-center gap-1">
+          <div className={`font-bold truncate text-xs flex items-center gap-1 ${isLight ? "text-slate-900" : "text-white"}`}>
             <span>{activeBranch.name}</span>
           </div>
-          <div className="text-[10px] text-gray-400 truncate flex items-center gap-1">
+          <div className={`text-[10px] truncate flex items-center gap-1 ${isLight ? "text-slate-600" : "text-gray-400"}`}>
             <span className={activeIndustry.accentColor}>●</span>
             <span>{activeIndustry.name.split(" ")[0]}</span>
             <span>•</span>
