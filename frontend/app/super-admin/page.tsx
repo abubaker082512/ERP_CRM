@@ -409,6 +409,9 @@ function SuperAdminPageContent() {
     const [emailBody, setEmailBody] = useState("");
     const [sendingAdminEmail, setSendingAdminEmail] = useState(false);
     const [adminEmailReport, setAdminEmailReport] = useState<{ ok: boolean; msg: string } | null>(null);
+    const [emailDelaySec, setEmailDelaySec] = useState<number>(3);
+    const [emailProgress, setEmailProgress] = useState<{ current: number; total: number; currentEmail: string } | null>(null);
+    const stopEmailSendingRef = useRef(false);
     const emailEditorRef = useRef<HTMLDivElement>(null);
     const emailImageInputRef = useRef<HTMLInputElement>(null);
 
@@ -458,6 +461,8 @@ function SuperAdminPageContent() {
         }
         setSendingAdminEmail(true);
         setAdminEmailReport(null);
+        setEmailProgress(null);
+        stopEmailSendingRef.current = false;
         try {
             const manualEmails = emailRecipientsText
                 .split(/[\s,;]+/)
@@ -465,45 +470,83 @@ function SuperAdminPageContent() {
                 .filter((x) => x.includes("@"));
             const combinedSpecific = Array.from(new Set([...selectedUserEmails, ...manualEmails]));
             const allUserEmails = users.map((u) => u.email).filter(Boolean);
+            const recipientDetails = users.map((u) => ({
+                email: u.email,
+                name: (u as any).name || (u as any).full_name || undefined,
+                plan: u.subscription_status || undefined,
+                company: u.workspace_name || undefined,
+            }));
 
-            const res = await fetch("/api/admin/send-email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    mode: emailMode,
-                    recipients:
-                        emailMode === "specific"
-                            ? combinedSpecific
-                            : emailMode === "bulk_all" && allUserEmails.length > 0
-                            ? allUserEmails
-                            : undefined,
-                    recipientDetails: users.map((u) => ({
-                        email: u.email,
-                        name: (u as any).name || (u as any).full_name || undefined,
-                        plan: u.subscription_status || undefined,
-                        company: u.workspace_name || undefined,
-                    })),
-                    subject: emailSubject.trim(),
-                    message: plainText || emailSubject.trim(),
-                    htmlBody,
-                }),
-            });
-            const data = await res.json().catch(() => ({}));
-            if (res.ok && data.ok) {
-                const msg = `Delivered ${data.sentCount}/${data.total} emails from ${data.sender}!`;
-                setAdminEmailReport({ ok: true, msg });
-                showToast(msg);
+            // 1. Resolve target list first so we can pace 1-by-1 cleanly without Vercel timeouts
+            let targetEmails: string[] = [];
+            if (emailMode === "specific") {
+                targetEmails = combinedSpecific;
             } else {
-                const err = data.error || "Failed to send email";
-                setAdminEmailReport({ ok: false, msg: err });
-                showToast(err);
+                const resolveRes = await fetch("/api/admin/send-email", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        mode: emailMode,
+                        resolveOnly: true,
+                        recipients: emailMode === "bulk_all" && allUserEmails.length > 0 ? allUserEmails : undefined,
+                        recipientDetails,
+                        subject: emailSubject.trim(),
+                        message: plainText || emailSubject.trim(),
+                        htmlBody,
+                    }),
+                });
+                const resolveData = await resolveRes.json().catch(() => ({}));
+                if (!resolveRes.ok || !Array.isArray(resolveData.targets)) {
+                    throw new Error(resolveData.error || "Failed to resolve recipient list");
+                }
+                targetEmails = resolveData.targets.map((t: any) => t.email).filter(Boolean);
             }
+
+            if (targetEmails.length === 0) {
+                throw new Error("No valid recipient email addresses found.");
+            }
+
+            // 2. Send 1 by 1 with configured rate delay (default 3 seconds)
+            let sentCount = 0;
+            let failedCount = 0;
+            for (let i = 0; i < targetEmails.length; i++) {
+                if (stopEmailSendingRef.current) break;
+                const recipient = targetEmails[i];
+                setEmailProgress({ current: i + 1, total: targetEmails.length, currentEmail: recipient });
+
+                const res = await fetch("/api/admin/send-email", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        mode: "specific",
+                        recipients: [recipient],
+                        recipientDetails,
+                        subject: emailSubject.trim(),
+                        message: plainText || emailSubject.trim(),
+                        htmlBody,
+                        delayMs: 0,
+                    }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.ok) sentCount++;
+                else failedCount++;
+
+                if (i < targetEmails.length - 1 && emailDelaySec > 0 && !stopEmailSendingRef.current) {
+                    await new Promise((r) => setTimeout(r, emailDelaySec * 1000));
+                }
+            }
+
+            const stoppedNote = stopEmailSendingRef.current ? " (Stopped early)" : "";
+            const msg = `Delivered ${sentCount}/${targetEmails.length} emails 1-by-1 from beraxisai@gmail.com${failedCount ? ` (${failedCount} failed)` : ""}${stoppedNote}!`;
+            setAdminEmailReport({ ok: sentCount > 0, msg });
+            showToast(msg);
         } catch (err: any) {
             const msg = err?.message || "Network error sending email";
             setAdminEmailReport({ ok: false, msg });
             showToast(msg);
         } finally {
             setSendingAdminEmail(false);
+            setEmailProgress(null);
         }
     };
 
@@ -3211,19 +3254,49 @@ function SuperAdminPageContent() {
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-xs font-bold text-slate-600">Send Pace:</label>
+                                        <select
+                                            value={emailDelaySec}
+                                            onChange={(e) => setEmailDelaySec(Number(e.target.value))}
+                                            disabled={sendingAdminEmail}
+                                            className="rounded-xl px-3 py-2 text-xs font-semibold border border-slate-300 bg-white text-slate-900 cursor-pointer"
+                                        >
+                                            <option value={3}>3 sec / email (Recommended)</option>
+                                            <option value={5}>5 sec / email (Extra Safe)</option>
+                                            <option value={1}>1 sec / email</option>
+                                            <option value={0}>No delay</option>
+                                        </select>
+                                    </div>
                                     <button
                                         type="submit"
                                         disabled={sendingAdminEmail}
                                         className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg disabled:opacity-50 cursor-pointer"
                                     >
-                                        {sendingAdminEmail
-                                            ? "Sending Emails..."
+                                        {sendingAdminEmail && emailProgress
+                                            ? `Sending ${emailProgress.current}/${emailProgress.total}...`
                                             : emailMode === "specific"
                                             ? "Send Custom Email via beraxisai@gmail.com"
-                                            : "Send Bulk Email via beraxisai@gmail.com"}
+                                            : "Send Bulk Email 1-by-1 via beraxisai@gmail.com"}
                                     </button>
+                                    {sendingAdminEmail && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                stopEmailSendingRef.current = true;
+                                            }}
+                                            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer"
+                                        >
+                                            Stop
+                                        </button>
+                                    )}
+                                    {emailProgress && (
+                                        <span className="text-xs font-semibold text-cyan-700">
+                                            Sending {emailProgress.current}/{emailProgress.total}: {emailProgress.currentEmail} ({emailDelaySec}s delay)
+                                        </span>
+                                    )}
                                     {adminEmailReport && (
-                                        <span className={`text-xs font-semibold ${adminEmailReport.ok ? "text-emerald-400" : "text-red-400"}`}>
+                                        <span className={`text-xs font-semibold ${adminEmailReport.ok ? "text-emerald-700" : "text-rose-700"}`}>
                                             {adminEmailReport.msg}
                                         </span>
                                     )}

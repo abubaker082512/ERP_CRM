@@ -5,6 +5,10 @@ import {
   sendBeraxisEmail,
 } from "@/lib/gmailMailer";
 
+export const maxDuration = 300;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL || "https://hgmdredpqwuooxbbsejw.supabase.co";
 const SUPABASE_SERVICE_ROLE_KEY =
@@ -174,9 +178,12 @@ export async function POST(request: NextRequest) {
         : [];
 
       if (passedRecipients.length > 0 && mode === "bulk_all") {
-        targets = Array.from(new Set(passedRecipients)).map(enrichTarget);
+        targets = Array.from(new Set(passedRecipients))
+          .filter((e) => e !== BERAXIS_SENDER_EMAIL.toLowerCase())
+          .map(enrichTarget);
       } else {
         const filtered = allUsers.filter((u) => {
+          if (u.email === BERAXIS_SENDER_EMAIL.toLowerCase()) return false;
           const p = u.plan.toLowerCase();
           const isPaid =
             p.includes("standard") ||
@@ -199,11 +206,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Allow frontend to resolve filtered target list first for 1-by-1 paced UI sending
+    if (body?.resolveOnly) {
+      return NextResponse.json({ ok: true, targets });
+    }
+
+    const delayMs =
+      typeof body?.delayMs === "number"
+        ? Math.max(0, Math.min(body.delayMs, 15000))
+        : 3000;
+
     let sentCount = 0;
     let failedCount = 0;
     const errors: string[] = [];
 
-    for (const t of targets) {
+    for (let i = 0; i < targets.length; i++) {
+      const t = targets[i];
+      if (i > 0 && delayMs > 0) {
+        await sleep(delayMs);
+      }
       const personalizedSubject = applyPersonalization(subject, t);
       const personalizedHtmlBody = applyPersonalization(processedHtmlBody, t);
       const personalizedText = applyPersonalization(message || subject, t);
