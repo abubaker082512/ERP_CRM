@@ -11,7 +11,14 @@ function SignupForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const invite_id = searchParams.get('invite_id');
+    const invite_email = searchParams.get('email') || "";
+    const invite_company = searchParams.get('company_name') || "";
+    const invite_role = searchParams.get('role') || "";
     const [referralCode, setReferralCode] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (invite_email) setEmail(invite_email);
+    }, [invite_email]);
 
     useEffect(() => {
         const tracked = trackReferralVisit();
@@ -117,7 +124,11 @@ function SignupForm() {
                     {invite_id ? 'Join Your Team' : 'Start Free Forever'}
                 </h1>
                 <p className="text-gray-400 mt-2">
-                    {invite_id ? 'Create your account to access the workspace' : '1 App Free Forever · No Credit Card Required · Setup in 30s'}
+                    {invite_id
+                        ? invite_company
+                            ? `Joining ${invite_company}${invite_role ? ` as ${invite_role}` : ""} · Seat Covered by Company Owner`
+                            : 'Create your account to access the workspace (Seat Covered)'
+                        : '1 App Free Forever · No Credit Card Required · Setup in 30s'}
                 </p>
             </div>
 

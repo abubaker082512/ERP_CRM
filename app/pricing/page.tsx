@@ -19,6 +19,14 @@ export default function PricingPage() {
     const [pricing, setPricing] = useState<PricingConfig>(DEFAULT_PRICING_CONFIG);
     const [paddle, setPaddle] = useState<Paddle | null>(null);
     const [paddlePrices, setPaddlePrices] = useState<Record<string, string>>({});
+    const [isCorpQuoteOpen, setIsCorpQuoteOpen] = useState(false);
+    const [corpCompany, setCorpCompany] = useState("");
+    const [corpContact, setCorpContact] = useState("");
+    const [corpEmail, setCorpEmail] = useState("");
+    const [corpPhone, setCorpPhone] = useState("");
+    const [corpNotes, setCorpNotes] = useState("");
+    const [corpSubmitting, setCorpSubmitting] = useState(false);
+    const [corpResult, setCorpResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
     // Initialize Paddle.js and fetch real-time localized PricePreview
     useEffect(() => {
@@ -205,17 +213,33 @@ export default function PricingPage() {
                             <input 
                                 type="range" 
                                 min={1} 
-                                max={100} 
+                                max={500} 
                                 value={usersCount} 
                                 onChange={(e) => setUsersCount(parseInt(e.target.value))}
                                 className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500 transition-all"
                             />
                             <div className="flex justify-between text-xs text-gray-500 mt-2 font-medium">
                                 <span>1 User</span>
-                                <span>25 Users</span>
                                 <span>50 Users</span>
-                                <span>75 Users</span>
-                                <span>100+ Users</span>
+                                <span>100 Users</span>
+                                <span>250 Users</span>
+                                <span>500+ Users</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5 mt-3">
+                                {[10, 25, 50, 100, 200, 500].map((preset) => (
+                                    <button
+                                        key={preset}
+                                        type="button"
+                                        onClick={() => setUsersCount(preset)}
+                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                                            usersCount === preset
+                                                ? "bg-purple-600 border-purple-500 text-white"
+                                                : "bg-white/5 border-white/10 text-gray-300 hover:text-white"
+                                        }`}
+                                    >
+                                        {preset} Users
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
@@ -244,6 +268,48 @@ export default function PricingPage() {
                                     🚀 Early Bird Monthly: Only $5/seat/month
                                 </span>
                             )}
+                        </div>
+                    </div>
+
+                    {/* Corporate Plan Quote Banner (Highlighted for > 10 users, always accessible) */}
+                    <div className={`mt-6 pt-6 border-t border-white/10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 rounded-2xl p-4 transition-all ${
+                        usersCount > 10
+                            ? "bg-gradient-to-r from-purple-900/35 via-cyan-950/30 to-emerald-950/30 border border-cyan-500/40"
+                            : "bg-white/[0.02] border border-white/5"
+                    }`}>
+                        <div>
+                            <div className="text-xs font-extrabold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+                                <Building2 size={14} />
+                                {usersCount > 10
+                                    ? `Corporate Volume Pricing Available for ${usersCount} Users`
+                                    : "Need 10+ / 20+ / 100–500+ Corporate Seats?"}
+                            </div>
+                            <p className="text-xs text-gray-300 mt-1">
+                                Get custom corporate pricing, dedicated onboarding, and 1-click company seat provisioning. Support: <strong className="text-white">+1 970 780 7993</strong>
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => { setCorpResult(null); setIsCorpQuoteOpen(true); }}
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 hover:opacity-95 text-white text-xs font-extrabold shadow-md cursor-pointer"
+                            >
+                                Request Corporate Quote
+                            </button>
+                            <a
+                                href={`https://wa.me/19707807993?text=${encodeURIComponent(`Hi Beraxis Team, we need a Corporate Plan quote for ${usersCount} users.`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md"
+                            >
+                                <MessageSquare size={14} /> WhatsApp Us
+                            </a>
+                            <a
+                                href="tel:+19707807993"
+                                className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-gray-200 text-xs font-bold flex items-center gap-1.5"
+                            >
+                                <PhoneCall size={13} /> +1 970 780 7993
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -686,6 +752,132 @@ export default function PricingPage() {
                     </div>
                 </div>
             </div>
+
+            {isCorpQuoteOpen && (
+                <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-[#0F172A] border border-cyan-500/30 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+                        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                            <div>
+                                <h3 className="text-lg font-extrabold text-white">Corporate Plan Custom Quote</h3>
+                                <p className="text-xs text-gray-400">For teams of 10, 20, 50, 100, 200, or 500+ users</p>
+                            </div>
+                            <button onClick={() => setIsCorpQuoteOpen(false)} className="text-gray-400 hover:text-white cursor-pointer">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <form
+                            onSubmit={async (e) => {
+                                e.preventDefault();
+                                setCorpSubmitting(true);
+                                setCorpResult(null);
+                                try {
+                                    const res = await fetch("/api/corporate-quote", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                            companyName: corpCompany,
+                                            contactName: corpContact,
+                                            email: corpEmail,
+                                            phone: corpPhone,
+                                            userCount: usersCount,
+                                            notes: corpNotes,
+                                        }),
+                                    });
+                                    const data = await res.json().catch(() => ({}));
+                                    setCorpResult({
+                                        ok: Boolean(res.ok && data.ok),
+                                        msg: data.message || data.error || "Quote submitted!",
+                                    });
+                                    if (res.ok && data.ok) {
+                                        setCorpCompany("");
+                                        setCorpContact("");
+                                        setCorpEmail("");
+                                        setCorpPhone("");
+                                        setCorpNotes("");
+                                    }
+                                } finally {
+                                    setCorpSubmitting(false);
+                                }
+                            }}
+                            className="space-y-3"
+                        >
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Company Name *"
+                                    value={corpCompany}
+                                    onChange={(e) => setCorpCompany(e.target.value)}
+                                    className="bg-[#070B16] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-cyan-500"
+                                />
+                                <input
+                                    type="number"
+                                    min={1}
+                                    required
+                                    placeholder="Number of Users *"
+                                    value={usersCount}
+                                    onChange={(e) => setUsersCount(Math.max(1, Number(e.target.value || 25)))}
+                                    className="bg-[#070B16] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-cyan-500"
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Your Full Name *"
+                                    value={corpContact}
+                                    onChange={(e) => setCorpContact(e.target.value)}
+                                    className="bg-[#070B16] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-cyan-500"
+                                />
+                                <input
+                                    type="email"
+                                    required
+                                    placeholder="Work Email *"
+                                    value={corpEmail}
+                                    onChange={(e) => setCorpEmail(e.target.value)}
+                                    className="bg-[#070B16] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-cyan-500"
+                                />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="WhatsApp / Phone Number"
+                                value={corpPhone}
+                                onChange={(e) => setCorpPhone(e.target.value)}
+                                className="w-full bg-[#070B16] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-cyan-500"
+                            />
+                            <textarea
+                                rows={2}
+                                placeholder="Optional notes (modules needed, hierarchy, multi-company...)"
+                                value={corpNotes}
+                                onChange={(e) => setCorpNotes(e.target.value)}
+                                className="w-full bg-[#070B16] border border-white/15 rounded-xl p-3 text-xs text-white outline-none focus:border-cyan-500"
+                            />
+                            {corpResult && (
+                                <div className={`p-3 rounded-xl text-xs font-semibold ${corpResult.ok ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/15 text-rose-300 border border-rose-500/30"}`}>
+                                    {corpResult.msg}
+                                </div>
+                            )}
+                            <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                                <a
+                                    href={`https://wa.me/19707807993?text=${encodeURIComponent(`Hi Beraxis, I'd like a Corporate quote for ${corpCompany || "our company"} (${usersCount} users).`)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5"
+                                >
+                                    <MessageSquare size={14} /> Chat on WhatsApp
+                                </a>
+                                <button
+                                    type="submit"
+                                    disabled={corpSubmitting}
+                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white text-xs font-extrabold cursor-pointer disabled:opacity-50"
+                                >
+                                    {corpSubmitting ? "Sending..." : "Submit Quote Request →"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <Footer />
         </main>

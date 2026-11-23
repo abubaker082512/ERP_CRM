@@ -14,6 +14,7 @@ import {
   getDefaultDataScopeForRole,
   wouldCreateCycle,
 } from "@/lib/hierarchyUtils";
+import { BERAXIS_SENDER_EMAIL, isGmailConfigured, sendBeraxisEmail } from "@/lib/gmailMailer";
 
 export const dynamic = "force-dynamic";
 
@@ -284,9 +285,37 @@ export async function POST(req: Request) {
     fallbackCompanyMembers.set(companyId, nextList);
     await upsertMembersToDb(companyId, [newMember]);
 
+    // 1-Click Invite Email: Owner is paying, team member joins free under company seat
+    let inviteEmailSent = false;
+    if (body.sendInviteEmail !== false && isGmailConfigured()) {
+      const companyName = String(body.companyName || body.company_name || "your company workspace").trim();
+      const joinUrl = `https://www.beraxis.online/signup?invite_id=${encodeURIComponent(newMember.id)}&company_id=${encodeURIComponent(companyId)}&email=${encodeURIComponent(newMember.email)}&role=${encodeURIComponent(newMember.role)}&company_name=${encodeURIComponent(companyName)}`;
+      const mailRes = await sendBeraxisEmail({
+        to: newMember.email,
+        subject: `You're invited to join ${companyName} on BERAXIS (${newMember.role})`,
+        html: `
+          <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#070B19;color:#F8FAFC;padding:28px;border-radius:16px;max-width:580px;margin:0 auto;border:1px solid #1E293B;">
+            <div style="font-size:17px;font-weight:800;color:#A855F7;margin-bottom:12px;">BERAXIS WORKSPACE INVITE</div>
+            <h2 style="margin:0 0 10px;color:#FFFFFF;">Join ${companyName}</h2>
+            <p style="font-size:14px;color:#CBD5E1;line-height:1.6;">
+              Hi ${newMember.name}, you have been assigned a <strong>${newMember.role}</strong> seat in <strong>${companyName}</strong> (${newMember.department}).
+              Your license is already covered by your company owner — no payment required.
+            </p>
+            <div style="margin:20px 0;">
+              <a href="${joinUrl}" style="display:inline-block;padding:12px 24px;background:#8B5CF6;color:#FFFFFF;font-weight:800;border-radius:12px;text-decoration:none;font-size:14px;">Accept Invite &amp; Join Team →</a>
+            </div>
+            <p style="font-size:11px;color:#64748B;">Sent via ${BERAXIS_SENDER_EMAIL} • If you already have an account with ${newMember.email}, simply log in at beraxis.online/login.</p>
+          </div>
+        `,
+        text: `Hi ${newMember.name}, you've been invited to join ${companyName} on BERAXIS as ${newMember.role} (seat covered by owner). Join here: ${joinUrl}`,
+      });
+      inviteEmailSent = mailRes.sent;
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Member ${newMember.name} (${newMember.email}) added & assigned!`,
+      inviteEmailSent,
+      message: `Member ${newMember.name} (${newMember.email}) added & assigned${inviteEmailSent ? " — invite email sent!" : "!"}`,
       member: newMember,
       activeMembersCount: nextList.filter((m) => m.status !== "deactivated").length,
     });

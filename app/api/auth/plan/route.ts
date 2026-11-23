@@ -48,13 +48,39 @@ export async function GET(request: NextRequest) {
       const found = users.find((u: any) => (u.email || "").toLowerCase() === email);
       if (found) {
         const meta = found.user_metadata || {};
-        const resolvedTier = mapPlanToTier(meta.plan, meta.subscription_status);
+        let resolvedTier = mapPlanToTier(meta.plan, meta.subscription_status);
+        let inheritedFromCompany: string | null = null;
+
+        // If user is on Free tier personally, check if they hold an ACTIVE seat in a Corporate/Paid company
+        if (resolvedTier === "free") {
+          try {
+            const memRes = await fetch(
+              `${SUPABASE_URL}/rest/v1/company_members?email=eq.${encodeURIComponent(email)}&status=eq.active&limit=1`,
+              {
+                headers: {
+                  apikey: SUPABASE_SERVICE_ROLE_KEY,
+                  Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                },
+                cache: "no-store",
+              }
+            );
+            if (memRes.ok) {
+              const memRows = await memRes.json();
+              if (Array.isArray(memRows) && memRows.length > 0) {
+                resolvedTier = "premium";
+                inheritedFromCompany = memRows[0].company_id || null;
+              }
+            }
+          } catch {}
+        }
+
         return NextResponse.json(
           {
             email,
-            plan: meta.plan || "One App Free",
+            plan: inheritedFromCompany ? "Corporate Team Seat (Owner Paid)" : (meta.plan || "One App Free"),
             subscription_status: meta.subscription_status || "free",
             resolved_tier: resolvedTier,
+            inherited_from_company: inheritedFromCompany,
           },
           { headers: { "Cache-Control": "no-store" } }
         );

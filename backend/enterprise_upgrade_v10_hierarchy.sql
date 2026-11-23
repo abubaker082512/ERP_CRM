@@ -62,3 +62,12 @@ CREATE TABLE IF NOT EXISTS public.approval_requests (
 CREATE INDEX IF NOT EXISTS idx_approval_requests_company ON public.approval_requests(company_id);
 CREATE INDEX IF NOT EXISTS idx_approval_requests_approver ON public.approval_requests(approver_id, status);
 CREATE INDEX IF NOT EXISTS idx_approval_requests_requester ON public.approval_requests(requester_id);
+
+CREATE TABLE IF NOT EXISTS public.company_quotas (
+  company_id TEXT PRIMARY KEY,
+  plan_id TEXT NOT NULL DEFAULT 'custom',
+  plan_name TEXT NOT NULL DEFAULT 'Custom Enterprise Plan',
+  total_seats INTEGER NOT NULL DEFAULT 50,
+  max_companies INTEGER NOT NULL DEFAULT 3,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

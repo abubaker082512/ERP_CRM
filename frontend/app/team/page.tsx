@@ -198,6 +198,27 @@ export default function TeamManagementPage() {
         }
       })
       .catch(() => {});
+
+    // Load persisted company seat pool quota (50, 100, 200, 500 seats)
+    const quotaKey = getEntityStorageKey("team_quota");
+    try {
+      const cachedQuota = localStorage.getItem(quotaKey);
+      if (cachedQuota) {
+        const pq = JSON.parse(cachedQuota);
+        if (pq?.totalSeats) setQuota((prev) => ({ ...prev, ...pq }));
+      }
+    } catch {}
+    fetch(`/api/team/quota?company_id=${encodeURIComponent(activeCompanyId)}`)
+      .then((r) => r.json())
+      .then((qd) => {
+        if (qd?.success && qd.quota?.totalSeats) {
+          setQuota((prev) => ({ ...prev, totalSeats: qd.quota.totalSeats, planName: qd.quota.planName || prev.planName }));
+          try {
+            localStorage.setItem(quotaKey, JSON.stringify({ totalSeats: qd.quota.totalSeats, planName: qd.quota.planName }));
+          } catch {}
+        }
+      })
+      .catch(() => {});
   }, [activeCompanyId]);
 
   // Invite Form State
@@ -310,7 +331,12 @@ export default function TeamManagementPage() {
     fetch("/api/team/members", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ companyId: activeCompanyId, ...newMember }),
+      body: JSON.stringify({
+        companyId: activeCompanyId,
+        companyName: activeBranch?.name || "BERAXIS Workspace",
+        sendInviteEmail: true,
+        ...newMember,
+      }),
     }).catch(() => {});
     setIsInviteOpen(false);
     setInvName("");
@@ -322,7 +348,7 @@ export default function TeamManagementPage() {
     );
   };
 
-  // Seat Reclamation Action (Offboarding an employee)
+  // Seat Reclamation Action (Offboarding an employee - keeps totalSeats pool intact!)
   const handleConfirmRevoke = () => {
     if (!selectedMemberForRevoke) return;
     if (selectedMemberForRevoke.role === "Owner") {
@@ -331,14 +357,29 @@ export default function TeamManagementPage() {
       return;
     }
 
-    const memberName = selectedMemberForRevoke.name;
-    // Remove member and immediately reclaim their seat back to the company pool
-    setMembers(members.filter((m) => m.id !== selectedMemberForRevoke.id));
+    const revoked = selectedMemberForRevoke;
+    const memberName = revoked.name;
+    // Remove member from active list and persist deactivation so revoked personal emails lose access immediately
+    const nextMembers = members.filter((m) => m.id !== revoked.id);
+    setMembers(nextMembers);
+    try {
+      localStorage.setItem(getEntityStorageKey("team_members"), JSON.stringify(nextMembers));
+    } catch {}
+    fetch("/api/team/members", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        companyId: activeCompanyId,
+        id: revoked.id,
+        status: "deactivated",
+        memberSnapshot: revoked,
+      }),
+    }).catch(() => {});
     setSelectedMemberForRevoke(null);
 
     showToast(
       "Seat Successfully Reclaimed!",
-      `${memberName}'s access was revoked and their credentials terminated. 1 paid seat is returned to your available pool for reassignment.`
+      `${memberName}'s access was revoked. Your ${quota.totalSeats}-seat pool stays intact with 1 additional vacant seat ready to assign.`
     );
   };
 
@@ -408,12 +449,20 @@ export default function TeamManagementPage() {
           },
         });
       } else {
-        // Fallback simulation adding seats directly to state
+        const nextTotal = quota.totalSeats + buySeatQty;
         setQuota((prev) => ({
           ...prev,
-          totalSeats: prev.totalSeats + buySeatQty,
+          totalSeats: nextTotal,
           availableSeats: prev.availableSeats + buySeatQty,
         }));
+        try {
+          localStorage.setItem(getEntityStorageKey("team_quota"), JSON.stringify({ totalSeats: nextTotal, planName: quota.planName }));
+        } catch {}
+        fetch("/api/team/quota", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ companyId: activeCompanyId, action: "add_seats", addSeats: buySeatQty }),
+        }).catch(() => {});
         showToast(
           "Seat Expansion Complete!",
           `Successfully expanded capacity by +${buySeatQty} seats!`
@@ -1418,19 +1467,19 @@ export default function TeamManagementPage() {
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
                   Quantity of Additional Seats
                 </label>
-                <div className="flex items-center space-x-3">
-                  {[1, 5, 10, 25].map((qty) => (
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                  {[5, 25, 50, 100, 200, 500].map((qty) => (
                     <button
                       key={qty}
                       type="button"
                       onClick={() => setBuySeatQty(qty)}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-all ${
+                      className={`py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
                         buySeatQty === qty
                           ? "bg-indigo-600 text-white border-indigo-500 shadow-md"
                           : "bg-slate-950 border-slate-800 text-slate-300"
                       }`}
                     >
-                      +{qty} Seats
+                      +{qty}
                     </button>
                   ))}
                 </div>
