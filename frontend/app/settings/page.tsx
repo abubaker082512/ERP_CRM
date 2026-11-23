@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import AppHeader from "@/components/layout/AppHeader";
-import { Settings, Save, Mail, Building2, Globe, Database, CreditCard, Scale, Plus, Trash2, Check, Search, ChevronDown, X, Printer } from "lucide-react";
+import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { Settings, Save, Mail, Building2, Globe, Database, CreditCard, Scale, Plus, Trash2, Check, Search, ChevronDown, X, Printer, Receipt } from "lucide-react";
 import DataExportCenter from "@/components/settings/DataExportCenter";
 
 // Default global units of measure
@@ -156,6 +156,36 @@ export default function SettingsPage() {
   const [country, setCountry] = useState("US");
   const [dateFormat, setDateFormat] = useState("YYYY-MM-DD");
 
+  // Multinational operating regions, currencies & timezones per company
+  type MultiLocale = {
+    id: string;
+    country: string;
+    currency: string;
+    exchangeRate: string;
+    timezone: string;
+    regionLabel: string;
+  };
+  const [multiLocales, setMultiLocales] = useState<MultiLocale[]>([]);
+  const [newLocaleCountry, setNewLocaleCountry] = useState("");
+  const [newLocaleCurrency, setNewLocaleCurrency] = useState("");
+  const [newLocaleRate, setNewLocaleRate] = useState("1.00");
+  const [newLocaleTz, setNewLocaleTz] = useState("");
+  const [newLocaleRegion, setNewLocaleRegion] = useState("");
+
+  // Tax & Fiscal settings per company
+  const [taxId, setTaxId] = useState("");
+  const [salesTaxRate, setSalesTaxRate] = useState("0");
+  const [purchaseTaxRate, setPurchaseTaxRate] = useState("0");
+  const [fiscalStartMonth, setFiscalStartMonth] = useState("January");
+  const [invoicePrefix, setInvoicePrefix] = useState("INV/2026/");
+
+  // Security & Session settings per company
+  const [sessionTimeoutMins, setSessionTimeoutMins] = useState("30");
+  const [enforceSingleSession, setEnforceSingleSession] = useState(true);
+  const [smtpFromName, setSmtpFromName] = useState("");
+  const [smtpFromEmail, setSmtpFromEmail] = useState("");
+  const [smtpPassword, setSmtpPassword] = useState("");
+
   // POS Receipt template states
   const [receiptHeader, setReceiptHeader] = useState("Welcome to Our Store");
   const [receiptFooter, setReceiptFooter] = useState("Thank you for your business!");
@@ -223,6 +253,32 @@ export default function SettingsPage() {
     if (savedUoms) {
       try { setUoms(JSON.parse(savedUoms)); } catch (e) {}
     }
+    try {
+      const savedMulti = localStorage.getItem(`${keyPrefix}_multinational_locales`);
+      setMultiLocales(savedMulti ? JSON.parse(savedMulti) : []);
+      const savedTax = localStorage.getItem(`${keyPrefix}_tax_fiscal`);
+      if (savedTax) {
+        const t = JSON.parse(savedTax);
+        setTaxId(t.taxId || "");
+        setSalesTaxRate(t.salesTaxRate || "0");
+        setPurchaseTaxRate(t.purchaseTaxRate || "0");
+        setFiscalStartMonth(t.fiscalStartMonth || "January");
+        setInvoicePrefix(t.invoicePrefix || "INV/2026/");
+      }
+      const savedSec = localStorage.getItem(`${keyPrefix}_security`);
+      if (savedSec) {
+        const s = JSON.parse(savedSec);
+        setSessionTimeoutMins(s.sessionTimeoutMins || "30");
+        if (typeof s.enforceSingleSession === "boolean") setEnforceSingleSession(s.enforceSingleSession);
+      }
+      const savedSmtpExtra = localStorage.getItem(`${keyPrefix}_smtp_extra`);
+      if (savedSmtpExtra) {
+        const ex = JSON.parse(savedSmtpExtra);
+        setSmtpFromName(ex.smtpFromName || "");
+        setSmtpFromEmail(ex.smtpFromEmail || "");
+        setSmtpPassword(ex.smtpPassword || "");
+      }
+    } catch {}
 
     // Close locale dropdown when clicking outside
     const handleClickOutside = (e: MouseEvent) => {
@@ -251,6 +307,19 @@ export default function SettingsPage() {
       localStorage.setItem(`${keyPrefix}_receipt_header`, receiptHeader);
       localStorage.setItem(`${keyPrefix}_receipt_footer`, receiptFooter);
       localStorage.setItem(`${keyPrefix}_receipt_size`, receiptPaperSize);
+      localStorage.setItem(`${keyPrefix}_multinational_locales`, JSON.stringify(multiLocales));
+      localStorage.setItem(
+        `${keyPrefix}_tax_fiscal`,
+        JSON.stringify({ taxId, salesTaxRate, purchaseTaxRate, fiscalStartMonth, invoicePrefix })
+      );
+      localStorage.setItem(
+        `${keyPrefix}_security`,
+        JSON.stringify({ sessionTimeoutMins, enforceSingleSession })
+      );
+      localStorage.setItem(
+        `${keyPrefix}_smtp_extra`,
+        JSON.stringify({ smtpFromName, smtpFromEmail, smtpPassword })
+      );
       if (activeBranch && companyName.trim()) {
         updateBranch(activeBranch.id, { name: companyName.trim(), currency });
       }
@@ -301,12 +370,57 @@ export default function SettingsPage() {
     localStorage.setItem(`${getEntityStorageKey("settings")}_uoms`, JSON.stringify(updated));
   };
 
+  const handleAddMultiLocale = () => {
+    if (!newLocaleCountry.trim() || !newLocaleCurrency.trim() || !newLocaleTz.trim()) return;
+    const entry: MultiLocale = {
+      id: `loc_${Date.now()}`,
+      country: newLocaleCountry.trim(),
+      currency: newLocaleCurrency.trim().toUpperCase(),
+      exchangeRate: newLocaleRate.trim() || "1.00",
+      timezone: newLocaleTz.trim(),
+      regionLabel: newLocaleRegion.trim() || "Regional Office",
+    };
+    const updated = [...multiLocales, entry];
+    setMultiLocales(updated);
+    try {
+      localStorage.setItem(`${getEntityStorageKey("settings")}_multinational_locales`, JSON.stringify(updated));
+    } catch {}
+    setNewLocaleCountry("");
+    setNewLocaleCurrency("");
+    setNewLocaleRate("1.00");
+    setNewLocaleTz("");
+    setNewLocaleRegion("");
+    setSaveSuccessMsg(`Added ${entry.country} (${entry.currency}) to ${activeBranch?.name || "this company"}!`);
+    setTimeout(() => setSaveSuccessMsg(null), 3500);
+  };
+
+  const handleRemoveMultiLocale = (id: string) => {
+    const updated = multiLocales.filter((m) => m.id !== id);
+    setMultiLocales(updated);
+    try {
+      localStorage.setItem(`${getEntityStorageKey("settings")}_multinational_locales`, JSON.stringify(updated));
+    } catch {}
+  };
+
+  const handlePromoteMultiLocale = (item: MultiLocale) => {
+    setCountry(item.country);
+    setCurrency(item.currency);
+    setTimezone(item.timezone);
+    if (activeBranch) {
+      updateBranch(activeBranch.id, { currency: item.currency });
+    }
+    setSaveSuccessMsg(`Set ${item.country} (${item.currency} · ${item.timezone}) as Primary!`);
+    setTimeout(() => setSaveSuccessMsg(null), 3500);
+  };
+
   const tabs = [
-    { id: "general", label: "General & Locale", icon: Building2 },
+    { id: "general", label: "General & Multinational", icon: Building2 },
+    { id: "tax", label: "Tax & Fiscal Rules", icon: Receipt },
     { id: "pos", label: "POS Receipts", icon: Printer },
     { id: "uom", label: "Units of Measure", icon: Scale },
-    { id: "email", label: "Email Setup", icon: Mail },
+    { id: "email", label: "Email Setup (SMTP)", icon: Mail },
     { id: "users", label: "Users & Teams", icon: Globe },
+    { id: "security", label: "Security & Sessions", icon: ShieldCheck },
     { id: "billing", label: "Billing & Plans", icon: CreditCard },
     { id: "backup", label: "Data Backup & Export", icon: Database },
   ];
@@ -318,12 +432,35 @@ export default function SettingsPage() {
   );
 
   return (
-    <div className="flex flex-col h-screen bg-[#0B101E] text-white">
-      <AppHeader title="Settings" />
+    <div className="flex flex-col min-h-screen bg-[#0B101E] text-white overflow-x-hidden">
+      <StandardModuleHeader
+        moduleName="Settings"
+        moduleIcon={<Settings size={20} />}
+        menuItems={[
+          { name: "General & Multinational", href: "/settings" },
+          { name: "Chart of Accounts", href: "/accounting/configuration" },
+          { name: "Team & RBAC", href: "/team" },
+          { name: "Billing & Plans", href: "/billing" },
+        ]}
+        searchPlaceholder="Search settings..."
+      />
 
-      <div className="flex-1 flex overflow-hidden max-w-7xl mx-auto w-full px-6 pb-6 gap-8">
-        {/* Sidebar */}
-        <div className="w-64 shrink-0 space-y-1 mt-4">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden max-w-7xl mx-auto w-full px-4 sm:px-6 pb-20 gap-6">
+        {/* Mobile Section Selector */}
+        <div className="lg:hidden mt-4">
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value)}
+            className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-white"
+          >
+            {tabs.map((t) => (
+              <option key={t.id} value={t.id}>{t.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block w-64 shrink-0 space-y-1 mt-4">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 px-2">Configuration</h2>
           {tabs.map(tab => (
             <button
@@ -428,34 +565,121 @@ export default function SettingsPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Country / Region</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Primary Country / Region</label>
                     <input 
                       type="text"
-                      readOnly
                       value={country}
-                      className="w-full bg-[#1E293B]/60 border border-gray-800 rounded-xl px-4 py-3 text-gray-400 outline-none cursor-not-allowed"
+                      onChange={e => setCountry(e.target.value)}
+                      placeholder="e.g. United States"
+                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Active Currency</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Primary Currency</label>
                     <input 
                       type="text"
-                      readOnly
                       value={currency}
-                      className="w-full bg-[#1E293B]/60 border border-gray-800 rounded-xl px-4 py-3 text-gray-400 outline-none cursor-not-allowed"
+                      onChange={e => setCurrency(e.target.value.toUpperCase())}
+                      placeholder="e.g. USD"
+                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Active Timezone</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Primary Timezone</label>
                     <input 
                       type="text"
-                      readOnly
                       value={timezone}
-                      className="w-full bg-[#1E293B]/60 border border-gray-800 rounded-xl px-4 py-3 text-gray-400 outline-none cursor-not-allowed"
+                      onChange={e => setTimezone(e.target.value)}
+                      placeholder="e.g. America/New_York"
+                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
                     />
                   </div>
+                </div>
+
+                {/* Multinational Regions, Currencies & Timezones Manager */}
+                <div className="p-5 bg-[#0F172A]/80 border border-cyan-500/30 rounded-2xl space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <Globe size={16} className="text-cyan-400" />
+                        Multinational Countries, Currencies &amp; Timezones ({activeBranch?.name || "Active Company"})
+                      </h3>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Add additional countries, operating currencies (with exchange rates), and regional timezones for this company.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+                    <input
+                      type="text"
+                      placeholder="Country (e.g. UAE)"
+                      value={newLocaleCountry}
+                      onChange={(e) => setNewLocaleCountry(e.target.value)}
+                      className="bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Currency (e.g. AED)"
+                      value={newLocaleCurrency}
+                      onChange={(e) => setNewLocaleCurrency(e.target.value)}
+                      className="bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Rate vs Base (1.00)"
+                      value={newLocaleRate}
+                      onChange={(e) => setNewLocaleRate(e.target.value)}
+                      className="bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Timezone (Asia/Dubai)"
+                      value={newLocaleTz}
+                      onChange={(e) => setNewLocaleTz(e.target.value)}
+                      className="bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddMultiLocale}
+                      className="bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl px-3 py-2 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <Plus size={14} /> Add Locale
+                    </button>
+                  </div>
+
+                  {multiLocales.length > 0 && (
+                    <div className="border border-gray-800 rounded-xl divide-y divide-gray-800 bg-[#0B101E]">
+                      {multiLocales.map((loc) => (
+                        <div key={loc.id} className="px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-white">{loc.country}</span>
+                            <span className="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 font-mono font-bold">{loc.currency} (1:{loc.exchangeRate})</span>
+                            <span className="text-gray-400 font-mono">{loc.timezone}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handlePromoteMultiLocale(loc)}
+                              className="px-2.5 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 font-semibold cursor-pointer"
+                            >
+                              Set Primary
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMultiLocale(loc.id)}
+                              className="p-1 text-gray-500 hover:text-red-400 cursor-pointer"
+                              title="Remove locale"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -478,6 +702,65 @@ export default function SettingsPage() {
                     <p className="text-xs text-gray-500 mt-2">Recommended size: 512x512px</p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Tax & Fiscal Rules Tab */}
+            {activeTab === "tax" && (
+              <div className="space-y-6 max-w-2xl">
+                <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl text-xs text-purple-200">
+                  Configure Tax Registration, VAT/GST defaults, Fiscal Year Start, and Invoice Numbering for <strong className="text-white">{activeBranch?.name || "your company"}</strong>.
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Company Tax ID / VAT / EIN</label>
+                    <input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)} placeholder="e.g. US-94-3829104" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Invoice Sequence Prefix</label>
+                    <input type="text" value={invoicePrefix} onChange={(e) => setInvoicePrefix(e.target.value)} className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Default Sales Tax (%)</label>
+                    <input type="number" step="0.1" value={salesTaxRate} onChange={(e) => setSalesTaxRate(e.target.value)} className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Default Purchase Tax (%)</label>
+                    <input type="number" step="0.1" value={purchaseTaxRate} onChange={(e) => setPurchaseTaxRate(e.target.value)} className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Fiscal Year Start</label>
+                    <select value={fiscalStartMonth} onChange={(e) => setFiscalStartMonth(e.target.value)} className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500">
+                      <option>January</option>
+                      <option>April</option>
+                      <option>July</option>
+                      <option>October</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Security & Sessions Tab */}
+            {activeTab === "security" && (
+              <div className="space-y-6 max-w-2xl">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Idle Session Timeout</label>
+                  <select value={sessionTimeoutMins} onChange={(e) => setSessionTimeoutMins(e.target.value)} className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500">
+                    <option value="15">15 Minutes (High Security)</option>
+                    <option value="30">30 Minutes (Recommended)</option>
+                    <option value="60">60 Minutes</option>
+                  </select>
+                </div>
+                <label className="flex items-center justify-between p-4 rounded-2xl bg-[#1E293B] border border-gray-700 cursor-pointer">
+                  <div>
+                    <div className="text-sm font-bold text-white">Enforce Single Active Session Worldwide</div>
+                    <div className="text-xs text-gray-400">Automatically sign out older sessions when logging in from a new device.</div>
+                  </div>
+                  <input type="checkbox" checked={enforceSingleSession} onChange={(e) => setEnforceSingleSession(e.target.checked)} className="w-4 h-4 accent-purple-500" />
+                </label>
               </div>
             )}
 
@@ -684,9 +967,19 @@ export default function SettingsPage() {
                     className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" 
                   />
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Sender Display Name</label>
+                    <input type="text" value={smtpFromName} onChange={e => setSmtpFromName(e.target.value)} placeholder="e.g. Acme Billing" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Sender Email (From)</label>
+                    <input type="email" value={smtpFromEmail} onChange={e => setSmtpFromEmail(e.target.value)} placeholder="billing@company.com" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">SMTP Password</label>
-                  <input type="password" defaultValue="********" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
+                  <label className="block text-sm font-medium text-gray-300 mb-2">SMTP Password / App Token</label>
+                  <input type="password" value={smtpPassword} onChange={e => setSmtpPassword(e.target.value)} placeholder="••••••••••••" className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none" />
                 </div>
               </div>
             )}
