@@ -29,7 +29,7 @@ type JournalEntry = {
 };
 
 export default function AccountingJournalPage() {
-    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const { activeBranch, getEntityStorageKey, currencySymbol } = useBranchContext();
     const [entries, setEntries] = useState<JournalEntry[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [showNewModal, setShowNewModal] = useState(false);
@@ -172,7 +172,7 @@ export default function AccountingJournalPage() {
                                             <div className="text-amber-300">CR: {entry.creditAccount || "3000 Equity / Offset"}</div>
                                         </td>
                                         <td className="px-4 py-3 text-gray-300 text-sm">{entry.journal}</td>
-                                        <td className="px-4 py-3 text-white font-semibold text-sm">${Math.abs(entry.amount).toLocaleString()}</td>
+                                        <td className="px-4 py-3 text-white font-semibold text-sm">{currencySymbol}{Math.abs(entry.amount).toLocaleString()}</td>
                                         <td className="px-4 py-3">
                                             <span className={`px-2 py-1 rounded text-xs font-medium uppercase ${entry.status === "posted" ? "bg-blue-500/20 text-blue-400" : "bg-gray-500/20 text-gray-400"}`}>
                                                 {entry.status}

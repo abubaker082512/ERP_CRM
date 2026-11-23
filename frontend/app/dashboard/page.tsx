@@ -89,16 +89,16 @@ const STAGE_COLORS: Record<string, string> = {
     Lost: 'bg-rose-500/20 text-rose-300 border border-rose-500/30',
 };
 
-function fmt(n: number) {
-    if (!n || isNaN(n)) return '$0';
-    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
-    return `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+function fmt(n: number, sym = '$') {
+    if (!n || isNaN(n)) return `${sym}0`;
+    if (n >= 1_000_000) return `${sym}${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `${sym}${(n / 1_000).toFixed(1)}K`;
+    return `${sym}${Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 export default function DashboardPage() {
     const router = useRouter();
-    const { branches, activeBranch, setActiveBranchId, getEntityStorageKey } = useBranchContext();
+    const { branches, activeBranch, setActiveBranchId, getEntityStorageKey, currencySymbol } = useBranchContext();
     const [scopeMode, setScopeMode] = useState<'single' | 'all'>('single');
     const [timeframe, setTimeframe] = useState<'today' | 'week' | 'month'>('month');
     const [entityMetrics, setEntityMetrics] = useState({
@@ -424,7 +424,7 @@ export default function DashboardPage() {
                             <div className="text-right">
                                 <div className="text-[11px] uppercase tracking-wider text-gray-400 font-bold">Total Revenue</div>
                                 <div className="text-3xl font-black text-white">
-                                    <AnimatedCounter value={(kpis?.revenue || 0) + entityMetrics.invoicedRevenue} prefix="$" />
+                                    <AnimatedCounter value={(kpis?.revenue || 0) + entityMetrics.invoicedRevenue} prefix={currencySymbol} />
                                 </div>
                                 <div className="text-[11px] text-[#34D399] font-bold">+18.4% vs prior {timeframe}</div>
                             </div>
@@ -434,13 +434,13 @@ export default function DashboardPage() {
                             <div className="rounded-2xl bg-[#060B19]/70 border border-white/10 p-3">
                                 <div className="text-[10px] uppercase text-gray-400 font-bold">Net Profit</div>
                                 <div className="text-lg font-extrabold text-[#38BDF8] mt-0.5">
-                                    <AnimatedCounter value={entityMetrics.netProfit} prefix="$" />
+                                    <AnimatedCounter value={entityMetrics.netProfit} prefix={currencySymbol} />
                                 </div>
                             </div>
                             <div className="rounded-2xl bg-[#060B19]/70 border border-white/10 p-3">
                                 <div className="text-[10px] uppercase text-gray-400 font-bold">CRM Pipeline</div>
                                 <div className="text-lg font-extrabold text-[#8B5CF6] mt-0.5">
-                                    <AnimatedCounter value={kpis?.pipeline_value || 0} prefix="$" />
+                                    <AnimatedCounter value={kpis?.pipeline_value || 0} prefix={currencySymbol} />
                                 </div>
                             </div>
                             <div className="rounded-2xl bg-[#060B19]/70 border border-white/10 p-3">
@@ -716,7 +716,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <KpiCard
                         label="Total Company Revenue"
-                        value={loading ? '...' : fmt(kpis?.revenue ?? 0)}
+                        value={loading ? '...' : fmt(kpis?.revenue ?? 0, currencySymbol)}
                         subtext={kpis?.revenue ? 'Confirmed sales income' : 'No confirmed sales yet'}
                         icon={<DollarSign size={20} />}
                         color="text-emerald-400"
@@ -725,7 +725,7 @@ export default function DashboardPage() {
                     />
                     <KpiCard
                         label="CRM Pipeline Value"
-                        value={loading ? '...' : fmt(kpis?.pipeline_value ?? 0)}
+                        value={loading ? '...' : fmt(kpis?.pipeline_value ?? 0, currencySymbol)}
                         subtext={kpis?.pipeline_value ? 'Active opportunity value' : 'No active deals yet'}
                         icon={<TrendingUp size={20} />}
                         color="text-cyan-400"
@@ -752,7 +752,7 @@ export default function DashboardPage() {
                     />
                     <KpiCard
                         label="Avg. Order Value"
-                        value={loading ? '...' : fmt(kpis?.avg_order ?? 0)}
+                        value={loading ? '...' : fmt(kpis?.avg_order ?? 0, currencySymbol)}
                         subtext="Per confirmed transaction"
                         icon={<Activity size={20} />}
                         color="text-pink-400"
@@ -947,7 +947,7 @@ export default function DashboardPage() {
                                                     {order.customer || 'Customer'}
                                                 </td>
                                                 <td className="py-3.5 text-right font-bold text-white">
-                                                    {fmt(order.amount || 0)}
+                                                    {fmt(order.amount || 0, currencySymbol)}
                                                 </td>
                                                 <td className="py-3.5 text-center">
                                                     <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider ${STATE_COLORS[order.state] || STATE_COLORS.draft}`}>
@@ -1012,7 +1012,7 @@ export default function DashboardPage() {
                                                     {lead.customer || 'Key Account'}
                                                 </td>
                                                 <td className="py-3.5 text-right font-bold text-emerald-400">
-                                                    {fmt(lead.revenue || 0)}
+                                                    {fmt(lead.revenue || 0, currencySymbol)}
                                                 </td>
                                                 <td className="py-3.5 text-center">
                                                     <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider ${STAGE_COLORS[lead.stage] || STAGE_COLORS.New}`}>

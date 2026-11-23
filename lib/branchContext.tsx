@@ -109,6 +109,38 @@ const SUPER_ADMIN_EMAILS = [
   "abubaker@galaxy.com"
 ];
 
+export function getCurrencySymbol(currencyStr?: string): string {
+  const raw = (currencyStr || "USD").toUpperCase().trim();
+  if (raw.includes("PKR")) return "Rs ";
+  if (raw.includes("INR")) return "₹";
+  if (raw.includes("EUR")) return "€";
+  if (raw.includes("GBP")) return "£";
+  if (raw.includes("JPY") || raw.includes("CNY")) return "¥";
+  if (raw.includes("AED")) return "AED ";
+  if (raw.includes("SAR")) return "SAR ";
+  if (raw.includes("QAR")) return "QAR ";
+  if (raw.includes("KWD")) return "KWD ";
+  if (raw.includes("BHD")) return "BHD ";
+  if (raw.includes("OMR")) return "OMR ";
+  if (raw.includes("CAD")) return "CA$";
+  if (raw.includes("AUD")) return "A$";
+  if (raw.includes("SGD")) return "S$";
+  if (raw.includes("CHF")) return "CHF ";
+  if (raw.includes("TRY")) return "₺";
+  if (raw.includes("BRL")) return "R$";
+  if (raw.includes("ZAR")) return "R ";
+  if (raw.includes("NGN")) return "₦";
+  if (raw.includes("MYR")) return "RM ";
+  if (raw.includes("IDR")) return "Rp ";
+  if (raw.includes("PHP")) return "₱";
+  if (raw.includes("THB")) return "฿";
+  if (raw.includes("KRW")) return "₩";
+  if (raw.includes("BDT")) return "৳";
+  if (raw.includes("USD") || raw === "$") return "$";
+  const code = raw.split(/\s+/).pop() || "USD";
+  return code.length <= 4 ? `${code} ` : "$";
+}
+
 export type BranchContextType = {
   branches: BusinessBranch[];
   activeBranch: BusinessBranch | null;
@@ -121,6 +153,8 @@ export type BranchContextType = {
   freePlanModule: string;
   accountType: "individual" | "company";
   currentUserKey: string;
+  currencySymbol: string;
+  formatMoney: (amount: number) => string;
   setUserPlan: (plan: UserPlanType) => void;
   setFreeSelectedApp: (appHref: string) => void;
   setActiveBranchId: (id: string) => void;
@@ -651,6 +685,12 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
     return `beraxis_${uKey}_${branchId}_${resourceType}`;
   };
 
+  const currencySymbol = getCurrencySymbol(activeBranch?.currency);
+  const formatMoney = (amount: number): string => {
+    const safe = Number.isFinite(amount) ? amount : 0;
+    return `${currencySymbol}${safe.toLocaleString()}`;
+  };
+
   return (
     <BranchContext.Provider
       value={{
@@ -665,6 +705,8 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         freePlanModule: freeSelectedApp,
         accountType,
         currentUserKey,
+        currencySymbol,
+        formatMoney,
         setUserPlan,
         setFreeSelectedApp,
         setActiveBranchId,

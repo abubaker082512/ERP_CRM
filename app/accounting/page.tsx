@@ -36,7 +36,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function AccountingPage() {
     const router = useRouter();
-    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const { activeBranch, getEntityStorageKey, currencySymbol } = useBranchContext();
 
     const [invoices, setInvoices] = useState<any[]>([]);
     const [bills, setBills] = useState<any[]>([]);
@@ -194,7 +194,7 @@ export default function AccountingPage() {
                             </div>
                             <TrendingUp size={20} className="text-green-400" />
                         </div>
-                        <div className="text-3xl font-bold text-white mb-1">${totalCashAndBank.toLocaleString()}</div>
+                        <div className="text-3xl font-bold text-white mb-1">{currencySymbol}{totalCashAndBank.toLocaleString()}</div>
                         <div className="text-sm text-gray-400">Cash & Bank Balance</div>
                         <div className="text-xs text-gray-500 mt-2">
                             {entries.length === 0 && invoices.length === 0 ? "No transactions recorded yet" : `${entries.length} ledger entries recorded`}
@@ -205,7 +205,7 @@ export default function AccountingPage() {
                         <div className="bg-green-500/20 p-3 rounded-lg w-fit mb-4">
                             <FileText size={24} className="text-green-400" />
                         </div>
-                        <div className="text-3xl font-bold text-white mb-1">${accountsReceivable.toLocaleString()}</div>
+                        <div className="text-3xl font-bold text-white mb-1">{currencySymbol}{accountsReceivable.toLocaleString()}</div>
                         <div className="text-sm text-gray-400">Accounts Receivable</div>
                         <div className="text-xs text-gray-500 mt-2">{unpaidInvoices.length} invoices pending</div>
                     </div>
@@ -214,7 +214,7 @@ export default function AccountingPage() {
                         <div className="bg-red-500/20 p-3 rounded-lg w-fit mb-4">
                             <CreditCard size={24} className="text-red-400" />
                         </div>
-                        <div className="text-3xl font-bold text-white mb-1">${accountsPayable.toLocaleString()}</div>
+                        <div className="text-3xl font-bold text-white mb-1">{currencySymbol}{accountsPayable.toLocaleString()}</div>
                         <div className="text-sm text-gray-400">Accounts Payable</div>
                         <div className="text-xs text-gray-500 mt-2">{unpaidBills.length} bills due</div>
                     </div>
@@ -223,7 +223,7 @@ export default function AccountingPage() {
                         <div className="bg-purple-500/20 p-3 rounded-lg w-fit mb-4">
                             <TrendingUp size={24} className="text-purple-400" />
                         </div>
-                        <div className="text-3xl font-bold text-white mb-1">${netProfit.toLocaleString()}</div>
+                        <div className="text-3xl font-bold text-white mb-1">{currencySymbol}{netProfit.toLocaleString()}</div>
                         <div className="text-sm text-gray-400">Net Profit (YTD)</div>
                         <div className="text-xs text-gray-500 mt-2">
                             {invoices.length === 0 && bills.length === 0 ? "Start invoicing to track profit" : "Real-time entity P&L"}
@@ -241,11 +241,11 @@ export default function AccountingPage() {
                         <div className="p-4">
                             <div className="flex justify-between items-center mb-4">
                                 <div className="text-sm text-gray-400">To Validate (Draft)</div>
-                                <div className="text-white font-medium">{draftInvoices.length} invoices (${draftInvoicesTotal.toLocaleString()})</div>
+                                <div className="text-white font-medium">{draftInvoices.length} invoices ({currencySymbol}{draftInvoicesTotal.toLocaleString()})</div>
                             </div>
                             <div className="flex justify-between items-center mb-4">
                                 <div className="text-sm text-gray-400">Unpaid</div>
-                                <div className="text-white font-medium">{unpaidInvoices.length} invoices (${accountsReceivable.toLocaleString()})</div>
+                                <div className="text-white font-medium">{unpaidInvoices.length} invoices ({currencySymbol}{accountsReceivable.toLocaleString()})</div>
                             </div>
                             <button
                                 onClick={() => router.push("/accounting/customers")}
@@ -264,11 +264,11 @@ export default function AccountingPage() {
                         <div className="p-4">
                             <div className="flex justify-between items-center mb-4">
                                 <div className="text-sm text-gray-400">To Pay</div>
-                                <div className="text-white font-medium">{unpaidBills.length} bills (${accountsPayable.toLocaleString()})</div>
+                                <div className="text-white font-medium">{unpaidBills.length} bills ({currencySymbol}{accountsPayable.toLocaleString()})</div>
                             </div>
                             <div className="flex justify-between items-center mb-4">
                                 <div className="text-sm text-gray-400">Late</div>
-                                <div className="text-red-400 font-medium">{lateBills.length} bills (${lateBillsTotal.toLocaleString()})</div>
+                                <div className="text-red-400 font-medium">{lateBills.length} bills ({currencySymbol}{lateBillsTotal.toLocaleString()})</div>
                             </div>
                             <button
                                 onClick={() => router.push("/accounting/vendors")}
@@ -287,11 +287,11 @@ export default function AccountingPage() {
                         <div className="p-4">
                             <div className="flex justify-between items-center mb-4">
                                 <div className="text-sm text-gray-400">Balance in GL</div>
-                                <div className="text-white font-medium">${bankBalance.toLocaleString()}</div>
+                                <div className="text-white font-medium">{currencySymbol}{bankBalance.toLocaleString()}</div>
                             </div>
                             <div className="flex justify-between items-center mb-4">
                                 <div className="text-sm text-gray-400">Outstanding Payments</div>
-                                <div className="text-white font-medium">${accountsPayable.toLocaleString()}</div>
+                                <div className="text-white font-medium">{currencySymbol}{accountsPayable.toLocaleString()}</div>
                             </div>
                             <div className="flex gap-2">
                                 <button
@@ -318,11 +318,11 @@ export default function AccountingPage() {
                         <div className="p-4">
                             <div className="flex justify-between items-center mb-4">
                                 <div className="text-sm text-gray-400">Balance in GL</div>
-                                <div className="text-white font-medium">${cashBalance.toLocaleString()}</div>
+                                <div className="text-white font-medium">{currencySymbol}{cashBalance.toLocaleString()}</div>
                             </div>
                             <div className="flex justify-between items-center mb-4">
                                 <div className="text-sm text-gray-400">Outstanding Receipts</div>
-                                <div className="text-white font-medium">$0</div>
+                                <div className="text-white font-medium">{currencySymbol}0</div>
                             </div>
                             <button
                                 onClick={() => setShowQuickModal("cash")}

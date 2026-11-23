@@ -238,10 +238,18 @@ export default function SettingsPage() {
     } catch {}
 
     setCompanyName(savedCompany || defaultEntityName || "My Workspace");
-    if (savedCurrency) setCurrency(savedCurrency);
-    else if (activeBranch?.currency) setCurrency(activeBranch.currency);
+    const rawCur = savedCurrency || activeBranch?.currency || "USD";
+    const normCur = rawCur.toUpperCase().includes("PKR")
+      ? "PKR"
+      : rawCur.toUpperCase().includes("USD")
+      ? "USD"
+      : rawCur.replace(/^[^A-Z]+/i, "").trim().toUpperCase() || "USD";
+    setCurrency(normCur);
     if (savedTimezone) setTimezone(savedTimezone);
-    if (savedCountry) setCountry(savedCountry);
+    if (savedCountry) {
+      const byCode = WORLD_LOCALE_DATA.find((l) => l.code.toLowerCase() === savedCountry.toLowerCase());
+      setCountry(byCode ? byCode.country : savedCountry);
+    }
     if (savedDateFormat) setDateFormat(savedDateFormat);
     setSmtpServer(savedSmtp || "");
     if (savedPort) setSmtpPort(savedPort);
@@ -329,10 +337,31 @@ export default function SettingsPage() {
     }, 500);
   };
 
+  const uniqueCurrencies = Array.from(
+    new Map(WORLD_LOCALE_DATA.map((item) => [item.currency, `${item.currency} — ${item.currencyName}`])).entries()
+  ).sort((a, b) => a[0].localeCompare(b[0]));
+
+  const uniqueTimezones = Array.from(new Set(WORLD_LOCALE_DATA.map((item) => item.timezone))).sort();
+
+  const applyPrimaryLocale = (nextCountry: string, nextCurrency: string, nextTimezone: string) => {
+    setCountry(nextCountry);
+    setCurrency(nextCurrency);
+    setTimezone(nextTimezone);
+    const keyPrefix = getEntityStorageKey("settings");
+    try {
+      localStorage.setItem(`${keyPrefix}_country`, nextCountry);
+      localStorage.setItem(`${keyPrefix}_currency`, nextCurrency);
+      localStorage.setItem(`${keyPrefix}_timezone`, nextTimezone);
+    } catch {}
+    if (activeBranch) {
+      updateBranch(activeBranch.id, { currency: nextCurrency });
+    }
+    setSaveSuccessMsg(`Primary locale updated to ${nextCountry} (${nextCurrency} · ${nextTimezone})`);
+    setTimeout(() => setSaveSuccessMsg(null), 3000);
+  };
+
   const handleSelectLocale = (item: any) => {
-    setCountry(item.country);
-    setCurrency(item.currency);
-    setTimezone(item.timezone);
+    applyPrimaryLocale(item.country, item.currency, item.timezone);
     setSearchLocale(item.country);
     setIsLocaleDropdownOpen(false);
   };
@@ -442,12 +471,7 @@ export default function SettingsPage() {
       <StandardModuleHeader
         moduleName="Settings"
         moduleIcon={<Settings size={20} />}
-        menuItems={[
-          { name: "General & Multinational", href: "/settings" },
-          { name: "Chart of Accounts", href: "/accounting/configuration" },
-          { name: "Team & RBAC", href: "/team" },
-          { name: "Billing & Plans", href: "/billing" },
-        ]}
+        menuItems={[]}
         searchPlaceholder="Search settings..."
       />
 
@@ -484,7 +508,7 @@ export default function SettingsPage() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto mt-4">
-          <div className="galaxy-card p-8 border border-gray-800">
+          <div className="beraxis-bento-card p-6 sm:p-8 border border-white/10">
             <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-800">
               <div>
                 <h1 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -510,7 +534,7 @@ export default function SettingsPage() {
 
             {/* General Tab */}
             {activeTab === "general" && (
-              <div className="space-y-6 max-w-2xl">
+              <div className="space-y-6 max-w-3xl">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
                   <input 
@@ -574,33 +598,82 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Primary Country / Region</label>
-                    <input 
-                      type="text"
+                    <select
                       value={country}
-                      onChange={e => setCountry(e.target.value)}
-                      placeholder="e.g. United States"
-                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
-                    />
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const match = WORLD_LOCALE_DATA.find((l) => l.country === val);
+                        if (match) {
+                          applyPrimaryLocale(match.country, match.currency, match.timezone);
+                        } else {
+                          setCountry(val);
+                          try {
+                            localStorage.setItem(`${getEntityStorageKey("settings")}_country`, val);
+                          } catch {}
+                        }
+                      }}
+                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-purple-500 outline-none cursor-pointer"
+                    >
+                      {!WORLD_LOCALE_DATA.some((l) => l.country === country) && country && (
+                        <option value={country}>{country}</option>
+                      )}
+                      {WORLD_LOCALE_DATA.map((l) => (
+                        <option key={l.code + l.country} value={l.country}>
+                          {l.country} ({l.code})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Primary Currency</label>
-                    <input 
-                      type="text"
+                    <select
                       value={currency}
-                      onChange={e => setCurrency(e.target.value.toUpperCase())}
-                      placeholder="e.g. USD"
-                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
-                    />
+                      onChange={(e) => {
+                        const nextCur = e.target.value;
+                        setCurrency(nextCur);
+                        try {
+                          localStorage.setItem(`${getEntityStorageKey("settings")}_currency`, nextCur);
+                        } catch {}
+                        if (activeBranch) {
+                          updateBranch(activeBranch.id, { currency: nextCur });
+                        }
+                        setSaveSuccessMsg(`Workspace currency updated to ${nextCur}`);
+                        setTimeout(() => setSaveSuccessMsg(null), 2500);
+                      }}
+                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-purple-500 outline-none cursor-pointer"
+                    >
+                      {!uniqueCurrencies.some(([code]) => code === currency) && currency && (
+                        <option value={currency}>{currency}</option>
+                      )}
+                      {uniqueCurrencies.map(([code, label]) => (
+                        <option key={code} value={code}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Primary Timezone</label>
-                    <input 
-                      type="text"
+                    <select
                       value={timezone}
-                      onChange={e => setTimezone(e.target.value)}
-                      placeholder="e.g. America/New_York"
-                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none"
-                    />
+                      onChange={(e) => {
+                        const nextTz = e.target.value;
+                        setTimezone(nextTz);
+                        try {
+                          localStorage.setItem(`${getEntityStorageKey("settings")}_timezone`, nextTz);
+                        } catch {}
+                      }}
+                      className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-purple-500 outline-none cursor-pointer"
+                    >
+                      {!uniqueTimezones.includes(timezone) && timezone && (
+                        <option value={timezone}>{timezone}</option>
+                      )}
+                      {uniqueTimezones.map((tz) => (
+                        <option key={tz} value={tz}>
+                          {tz}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -618,42 +691,79 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
-                    <input
-                      type="text"
-                      placeholder="Country (e.g. UAE)"
-                      value={newLocaleCountry}
-                      onChange={(e) => setNewLocaleCountry(e.target.value)}
-                      className="bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Currency (e.g. AED)"
-                      value={newLocaleCurrency}
-                      onChange={(e) => setNewLocaleCurrency(e.target.value)}
-                      className="bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Rate vs Base (1.00)"
-                      value={newLocaleRate}
-                      onChange={(e) => setNewLocaleRate(e.target.value)}
-                      className="bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Timezone (Asia/Dubai)"
-                      value={newLocaleTz}
-                      onChange={(e) => setNewLocaleTz(e.target.value)}
-                      className="bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddMultiLocale}
-                      className="bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl px-3 py-2 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <Plus size={14} /> Add Locale
-                    </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-400 mb-1">Country</label>
+                      <select
+                        value={newLocaleCountry}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewLocaleCountry(val);
+                          const match = WORLD_LOCALE_DATA.find((l) => l.country === val);
+                          if (match) {
+                            setNewLocaleCurrency(match.currency);
+                            setNewLocaleTz(match.timezone);
+                          }
+                        }}
+                        className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-500 outline-none cursor-pointer"
+                      >
+                        <option value="">Select country...</option>
+                        {WORLD_LOCALE_DATA.map((l) => (
+                          <option key={l.code + l.country} value={l.country}>
+                            {l.country} ({l.code})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-400 mb-1">Currency</label>
+                      <select
+                        value={newLocaleCurrency}
+                        onChange={(e) => setNewLocaleCurrency(e.target.value)}
+                        className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-500 outline-none cursor-pointer"
+                      >
+                        <option value="">Select currency...</option>
+                        {uniqueCurrencies.map(([code, label]) => (
+                          <option key={code} value={code}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-400 mb-1">Timezone</label>
+                      <select
+                        value={newLocaleTz}
+                        onChange={(e) => setNewLocaleTz(e.target.value)}
+                        className="w-full bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-500 outline-none cursor-pointer"
+                      >
+                        <option value="">Select timezone...</option>
+                        {uniqueTimezones.map((tz) => (
+                          <option key={tz} value={tz}>
+                            {tz}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-400 mb-1">Rate vs Primary</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="1.00"
+                          value={newLocaleRate}
+                          onChange={(e) => setNewLocaleRate(e.target.value)}
+                          className="w-20 bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-500 outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddMultiLocale}
+                          className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl px-3 py-2.5 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+                        >
+                          <Plus size={14} /> Add
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   {multiLocales.length > 0 && (

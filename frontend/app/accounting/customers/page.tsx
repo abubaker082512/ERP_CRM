@@ -37,7 +37,7 @@ type Invoice = {
 };
 
 export default function AccountingCustomersPage() {
-    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const { activeBranch, getEntityStorageKey, currencySymbol } = useBranchContext();
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [currentView, setCurrentView] = useState<ViewType>("list");
     const [searchTerm, setSearchTerm] = useState("");
@@ -320,7 +320,7 @@ export default function AccountingCustomersPage() {
                                         <td className="px-4 py-3 text-gray-300">{invoice.customer}</td>
                                         <td className="px-4 py-3 text-gray-400">{new Date(invoice.date).toLocaleDateString()}</td>
                                         <td className="px-4 py-3 text-gray-400">{new Date(invoice.due_date).toLocaleDateString()}</td>
-                                        <td className="px-4 py-3 text-green-400 font-semibold">${invoice.amount.toLocaleString()}</td>
+                                        <td className="px-4 py-3 text-green-400 font-semibold">{currencySymbol}{invoice.amount.toLocaleString()}</td>
                                         <td className="px-4 py-3">
                                             <span
                                                 className={`px-2 py-1 rounded text-xs font-medium uppercase ${
@@ -395,7 +395,7 @@ export default function AccountingCustomersPage() {
                                             <div key={invoice.id} className="bg-[#1E293B] border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-all">
                                                 <div className="flex justify-between mb-2">
                                                     <span className="font-medium text-white">{invoice.id}</span>
-                                                    <span className="text-green-400 font-semibold">${invoice.amount.toLocaleString()}</span>
+                                                    <span className="text-green-400 font-semibold">{currencySymbol}{invoice.amount.toLocaleString()}</span>
                                                 </div>
                                                 <div className="text-sm text-gray-400 mb-2">{invoice.customer}</div>
                                                 <div className="text-xs text-gray-500">Due: {new Date(invoice.due_date).toLocaleDateString()}</div>
@@ -557,8 +557,8 @@ export default function AccountingCustomersPage() {
                                     </select>
                                 </div>
                                 <div className="text-right space-y-0.5 text-xs">
-                                    <div className="text-gray-400">Subtotal: ${subtotal.toFixed(2)} • Tax: ${taxTotal.toFixed(2)}</div>
-                                    <div className="text-lg font-extrabold text-emerald-400">Total: ${computedTotal.toLocaleString()}</div>
+                                    <div className="text-gray-400">Subtotal: {currencySymbol}{subtotal.toFixed(2)} • Tax: {currencySymbol}{taxTotal.toFixed(2)}</div>
+                                    <div className="text-lg font-extrabold text-emerald-400">Total: {currencySymbol}{computedTotal.toLocaleString()}</div>
                                 </div>
                             </div>
 

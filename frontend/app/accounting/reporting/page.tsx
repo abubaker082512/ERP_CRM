@@ -15,7 +15,7 @@ const MENU_ITEMS = [
 ];
 
 export default function AccountingReportingPage() {
-    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const { activeBranch, getEntityStorageKey, currencySymbol } = useBranchContext();
     const [activeReport, setActiveReport] = useState<string | null>(null);
     const [invoices, setInvoices] = useState<any[]>([]);
     const [bills, setBills] = useState<any[]>([]);
@@ -63,28 +63,28 @@ export default function AccountingReportingPage() {
                     <button type="button" onClick={() => setActiveReport("pnl")} className="text-left bg-[#1E293B] rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition-colors cursor-pointer">
                         <div className="bg-green-500/20 p-3 rounded-lg w-fit mb-4"><TrendingUp size={24} className="text-green-400" /></div>
                         <h3 className="text-lg font-semibold text-white mb-2">Profit &amp; Loss</h3>
-                        <p className="text-sm text-gray-400 mb-4">Net Profit: ${netProfit.toLocaleString()}</p>
+                        <p className="text-sm text-gray-400 mb-4">Net Profit: {currencySymbol}{netProfit.toLocaleString()}</p>
                         <div className="text-sm text-blue-400 hover:text-blue-300">View Report →</div>
                     </button>
 
                     <button type="button" onClick={() => setActiveReport("cf")} className="text-left bg-[#1E293B] rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition-colors cursor-pointer">
                         <div className="bg-purple-500/20 p-3 rounded-lg w-fit mb-4"><DollarSign size={24} className="text-purple-400" /></div>
                         <h3 className="text-lg font-semibold text-white mb-2">Cash Flow Statement</h3>
-                        <p className="text-sm text-gray-400 mb-4">Net Cash Position: ${(cashPaid + equity).toLocaleString()}</p>
+                        <p className="text-sm text-gray-400 mb-4">Net Cash Position: {currencySymbol}{(cashPaid + equity).toLocaleString()}</p>
                         <div className="text-sm text-blue-400 hover:text-blue-300">View Report →</div>
                     </button>
 
                     <button type="button" onClick={() => setActiveReport("ar")} className="text-left bg-[#1E293B] rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition-colors cursor-pointer">
                         <div className="bg-yellow-500/20 p-3 rounded-lg w-fit mb-4"><PieChart size={24} className="text-yellow-400" /></div>
                         <h3 className="text-lg font-semibold text-white mb-2">Aged Receivable</h3>
-                        <p className="text-sm text-gray-400 mb-4">Outstanding AR: ${ar.toLocaleString()}</p>
+                        <p className="text-sm text-gray-400 mb-4">Outstanding AR: {currencySymbol}{ar.toLocaleString()}</p>
                         <div className="text-sm text-blue-400 hover:text-blue-300">View Report →</div>
                     </button>
 
                     <button type="button" onClick={() => setActiveReport("ap")} className="text-left bg-[#1E293B] rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition-colors cursor-pointer">
                         <div className="bg-red-500/20 p-3 rounded-lg w-fit mb-4"><PieChart size={24} className="text-red-400" /></div>
                         <h3 className="text-lg font-semibold text-white mb-2">Aged Payable</h3>
-                        <p className="text-sm text-gray-400 mb-4">Outstanding AP: ${ap.toLocaleString()}</p>
+                        <p className="text-sm text-gray-400 mb-4">Outstanding AP: {currencySymbol}{ap.toLocaleString()}</p>
                         <div className="text-sm text-blue-400 hover:text-blue-300">View Report →</div>
                     </button>
 
@@ -113,27 +113,27 @@ export default function AccountingReportingPage() {
 
                         {activeReport === "pnl" && (
                             <div className="space-y-3 text-sm">
-                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Operating Revenue (Invoiced)</span><span className="text-emerald-400 font-bold">${revenue.toLocaleString()}</span></div>
-                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Operating Expenses (Bills)</span><span className="text-red-400 font-bold">-${expenses.toLocaleString()}</span></div>
-                                <div className="flex justify-between py-2 text-base font-extrabold"><span>Net Profit (YTD)</span><span className={netProfit >= 0 ? "text-emerald-400" : "text-red-400"}>${netProfit.toLocaleString()}</span></div>
-                                <p className="text-xs text-gray-400">Note: Equity/Capital injections (${equity.toLocaleString()}) are excluded from Operating P&amp;L and reflected on the Balance Sheet.</p>
+                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Operating Revenue (Invoiced)</span><span className="text-emerald-400 font-bold">{currencySymbol}{revenue.toLocaleString()}</span></div>
+                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Operating Expenses (Bills)</span><span className="text-red-400 font-bold">-{currencySymbol}{expenses.toLocaleString()}</span></div>
+                                <div className="flex justify-between py-2 text-base font-extrabold"><span>Net Profit (YTD)</span><span className={netProfit >= 0 ? "text-emerald-400" : "text-red-400"}>{currencySymbol}{netProfit.toLocaleString()}</span></div>
+                                <p className="text-xs text-gray-400">Note: Equity/Capital injections ({currencySymbol}{equity.toLocaleString()}) are excluded from Operating P&amp;L and reflected on the Balance Sheet.</p>
                             </div>
                         )}
 
                         {activeReport === "bs" && (
                             <div className="space-y-3 text-sm">
-                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Cash &amp; Bank Assets</span><span className="font-bold">${(cashPaid + equity).toLocaleString()}</span></div>
-                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Accounts Receivable</span><span className="font-bold">${ar.toLocaleString()}</span></div>
-                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Accounts Payable (Liabilities)</span><span className="text-red-400 font-bold">${ap.toLocaleString()}</span></div>
-                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Owner Capital / Equity</span><span className="text-blue-400 font-bold">${equity.toLocaleString()}</span></div>
-                                <div className="flex justify-between py-2 font-bold"><span>Retained Earnings (Net Profit)</span><span className="text-emerald-400">${netProfit.toLocaleString()}</span></div>
+                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Cash &amp; Bank Assets</span><span className="font-bold">{currencySymbol}{(cashPaid + equity).toLocaleString()}</span></div>
+                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Accounts Receivable</span><span className="font-bold">{currencySymbol}{ar.toLocaleString()}</span></div>
+                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Accounts Payable (Liabilities)</span><span className="text-red-400 font-bold">{currencySymbol}{ap.toLocaleString()}</span></div>
+                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Owner Capital / Equity</span><span className="text-blue-400 font-bold">{currencySymbol}{equity.toLocaleString()}</span></div>
+                                <div className="flex justify-between py-2 font-bold"><span>Retained Earnings (Net Profit)</span><span className="text-emerald-400">{currencySymbol}{netProfit.toLocaleString()}</span></div>
                             </div>
                         )}
 
                         {activeReport !== "pnl" && activeReport !== "bs" && (
                             <div className="space-y-2 text-sm">
-                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Total Invoices</span><span>{invoices.length} (${revenue.toLocaleString()})</span></div>
-                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Total Vendor Bills</span><span>{bills.length} (${expenses.toLocaleString()})</span></div>
+                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Total Invoices</span><span>{invoices.length} ({currencySymbol}{revenue.toLocaleString()})</span></div>
+                                <div className="flex justify-between py-2 border-b border-gray-800"><span>Total Vendor Bills</span><span>{bills.length} ({currencySymbol}{expenses.toLocaleString()})</span></div>
                                 <div className="flex justify-between py-2"><span>Total GL Postings</span><span>{entries.length}</span></div>
                             </div>
                         )}

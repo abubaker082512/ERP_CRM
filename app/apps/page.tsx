@@ -158,7 +158,8 @@ export default function AppsDashboardPage() {
         setFreeSelectedApp,
         createBranch,
         isModuleActive,
-        refreshUserContext
+        refreshUserContext,
+        currencySymbol
     } = useBranchContext();
 
     // Industry Selection & Onboarding Mode
@@ -822,13 +823,13 @@ export default function AppsDashboardPage() {
                                     <div className="rounded-xl bg-[#060B19]/75 border border-white/10 px-3 py-2">
                                         <div className="text-[10px] uppercase font-bold text-gray-400">Sales / Revenue</div>
                                         <div className="text-base font-black text-white">
-                                            <AnimatedCounter value={bentoStats.revenue} prefix="$" />
+                                            <AnimatedCounter value={bentoStats.revenue} prefix={currencySymbol} />
                                         </div>
                                     </div>
                                     <div className="rounded-xl bg-[#060B19]/75 border border-white/10 px-3 py-2">
                                         <div className="text-[10px] uppercase font-bold text-gray-400">Net Profit</div>
                                         <div className="text-base font-black text-[#38BDF8]">
-                                            <AnimatedCounter value={bentoStats.netProfit} prefix="$" />
+                                            <AnimatedCounter value={bentoStats.netProfit} prefix={currencySymbol} />
                                         </div>
                                     </div>
                                     <div className="rounded-xl bg-[#060B19]/75 border border-white/10 px-3 py-2">
