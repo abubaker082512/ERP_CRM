@@ -202,42 +202,107 @@ body {
 .superadmin-light-panels .bg-\[\#111827\],
 .superadmin-light-panels .bg-\[\#111827\]\/40,
 .superadmin-light-panels .bg-\[\#111827\]\/80,
-.superadmin-light-panels .bg-\[\#0A0E17\] {
-  background-color: rgba(255, 255, 255, 0.96) !important;
+.superadmin-light-panels .bg-\[\#0A0E17\],
+.superadmin-light-panels .bg-\[\#0D1322\] {
+  background-color: rgba(255, 255, 255, 0.98) !important;
   color: #0f172a !important;
-  border-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
   box-shadow: 0 12px 30px -10px rgba(15, 23, 42, 0.08) !important;
 }
 
 .superadmin-light-panels .bg-\[\#0F172A\],
 .superadmin-light-panels .bg-\[\#0B0F19\],
-.superadmin-light-panels .bg-\[\#1E293B\] {
-  background-color: #f8fafc !important;
+.superadmin-light-panels .bg-\[\#0B0F19\]\/80,
+.superadmin-light-panels .bg-\[\#0B101E\],
+.superadmin-light-panels .bg-\[\#161F33\],
+.superadmin-light-panels .bg-\[\#1E293B\],
+.superadmin-light-panels .bg-gray-950,
+.superadmin-light-panels .bg-gray-900,
+.superadmin-light-panels .bg-gray-800,
+.superadmin-light-panels .bg-gray-800\/50,
+.superadmin-light-panels .bg-black\/40 {
+  background-color: #f1f5f9 !important;
   color: #0f172a !important;
-  border-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.superadmin-light-panels .bg-white\/5,
+.superadmin-light-panels .bg-white\/10 {
+  background-color: rgba(15, 23, 42, 0.05) !important;
 }
 
 .superadmin-light-panels .border-gray-800,
 .superadmin-light-panels .border-gray-800\/80,
 .superadmin-light-panels .border-gray-700,
+.superadmin-light-panels .border-gray-700\/80,
 .superadmin-light-panels .divide-gray-800\/50 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
 }
 
-.superadmin-light-panels .text-white:not([class*="bg-purple-"]):not([class*="bg-blue-"]):not([class*="bg-emerald-"]):not([class*="bg-rose-"]):not([class*="bg-red-"]):not([class*="bg-indigo-"]),
+/* Keep solid & gradient action buttons crisp white text */
+.superadmin-light-panels [class*="bg-gradient-"],
+.superadmin-light-panels [class*="bg-gradient-"] *,
+.superadmin-light-panels .bg-purple-600,
+.superadmin-light-panels .bg-purple-500,
+.superadmin-light-panels .bg-blue-600,
+.superadmin-light-panels .bg-emerald-600,
+.superadmin-light-panels .bg-cyan-600,
+.superadmin-light-panels .bg-rose-600,
+.superadmin-light-panels .bg-red-600,
+.superadmin-light-panels .bg-indigo-600,
+.superadmin-light-panels .bg-pink-600 {
+  color: #ffffff !important;
+}
+
+.superadmin-light-panels .text-white:not([class*="bg-purple-"]):not([class*="bg-blue-"]):not([class*="bg-emerald-"]):not([class*="bg-rose-"]):not([class*="bg-red-"]):not([class*="bg-indigo-"]):not([class*="bg-cyan-"]):not([class*="bg-pink-"]):not([class*="bg-gradient-"]),
 .superadmin-light-panels .text-gray-100,
 .superadmin-light-panels .text-gray-200 {
   color: #0f172a !important;
 }
 
 .superadmin-light-panels .text-gray-300,
-.superadmin-light-panels .text-gray-400 {
-  color: #475569 !important;
+.superadmin-light-panels .text-gray-400,
+.superadmin-light-panels .text-gray-500 {
+  color: #334155 !important;
+}
+
+/* Darken pastel light-mode accents for crisp contrast on white cards */
+.superadmin-light-panels .text-purple-200,
+.superadmin-light-panels .text-purple-300,
+.superadmin-light-panels .text-purple-400 {
+  color: #6d28d9 !important;
+}
+.superadmin-light-panels .text-cyan-200,
+.superadmin-light-panels .text-cyan-300,
+.superadmin-light-panels .text-cyan-400 {
+  color: #0e7490 !important;
+}
+.superadmin-light-panels .text-emerald-200,
+.superadmin-light-panels .text-emerald-300,
+.superadmin-light-panels .text-emerald-400 {
+  color: #047857 !important;
+}
+.superadmin-light-panels .text-amber-200,
+.superadmin-light-panels .text-amber-300,
+.superadmin-light-panels .text-amber-400 {
+  color: #b45309 !important;
+}
+.superadmin-light-panels .text-blue-200,
+.superadmin-light-panels .text-blue-300,
+.superadmin-light-panels .text-blue-400 {
+  color: #1d4ed8 !important;
+}
+.superadmin-light-panels .text-pink-300,
+.superadmin-light-panels .text-pink-400,
+.superadmin-light-panels .text-rose-300,
+.superadmin-light-panels .text-rose-400 {
+  color: #be123c !important;
 }
 
 .superadmin-light-panels input,
 .superadmin-light-panels select,
-.superadmin-light-panels textarea {
+.superadmin-light-panels textarea,
+.superadmin-light-panels [contenteditable="true"] {
   background-color: #ffffff !important;
   color: #0f172a !important;
   border-color: #cbd5e1 !important;

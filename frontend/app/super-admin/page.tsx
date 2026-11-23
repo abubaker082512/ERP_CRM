@@ -2976,8 +2976,8 @@ function SuperAdminPageContent() {
                                             onClick={() => setEmailMode(opt.id as any)}
                                             className={`px-3 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                                                 emailMode === opt.id
-                                                    ? "bg-cyan-600/25 border-cyan-400 text-cyan-200"
-                                                    : "bg-[#0F172A] border-gray-700 text-gray-400 hover:text-white"
+                                                    ? "bg-cyan-600 border-cyan-600 text-white shadow-sm"
+                                                    : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
                                             }`}
                                         >
                                             {opt.label}
@@ -3020,8 +3020,8 @@ function SuperAdminPageContent() {
                                                                 }
                                                                 className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
                                                                     active
-                                                                        ? "bg-purple-600/30 border-purple-400 text-purple-200"
-                                                                        : "bg-[#111827] border-gray-700 text-gray-400 hover:text-white"
+                                                                        ? "bg-purple-600 border-purple-600 text-white shadow-sm"
+                                                                        : "bg-white border-slate-300 text-slate-700 hover:bg-slate-100"
                                                                 }`}
                                                             >
                                                                 {active ? "✓ " : ""}
@@ -3056,10 +3056,10 @@ function SuperAdminPageContent() {
                                     <div className="bg-[#0F172A] border border-gray-700 rounded-2xl overflow-hidden focus-within:border-cyan-500">
                                         {/* Formatting Toolbar */}
                                         <div className="flex flex-wrap items-center gap-1 px-3 py-2 bg-[#161F33] border-b border-gray-700/80">
-                                            <button type="button" onClick={() => execEmailFormat("bold")} title="Bold" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><Bold size={15} /></button>
-                                            <button type="button" onClick={() => execEmailFormat("italic")} title="Italic" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><Italic size={15} /></button>
-                                            <button type="button" onClick={() => execEmailFormat("underline")} title="Underline" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><Underline size={15} /></button>
-                                            <button type="button" onClick={() => execEmailFormat("strikeThrough")} title="Strikethrough" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><Strikethrough size={15} /></button>
+                                                <button type="button" onClick={() => execEmailFormat("bold")} title="Bold" className="p-1.5 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-200 cursor-pointer"><Bold size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("italic")} title="Italic" className="p-1.5 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-200 cursor-pointer"><Italic size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("underline")} title="Underline" className="p-1.5 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-200 cursor-pointer"><Underline size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("strikeThrough")} title="Strikethrough" className="p-1.5 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-200 cursor-pointer"><Strikethrough size={15} /></button>
                                             <div className="w-px h-4 bg-gray-700 mx-1" />
                                             <select
                                                 onChange={(e) => {
@@ -3096,11 +3096,11 @@ function SuperAdminPageContent() {
                                                 <input type="color" defaultValue="#ffffff" onChange={(e) => execEmailFormat("foreColor", e.target.value)} className="w-4 h-4 bg-transparent border-0 cursor-pointer" />
                                             </label>
                                             <div className="w-px h-4 bg-gray-700 mx-1" />
-                                            <button type="button" onClick={() => execEmailFormat("justifyLeft")} title="Align Left" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><AlignLeft size={15} /></button>
-                                            <button type="button" onClick={() => execEmailFormat("justifyCenter")} title="Align Center" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><AlignCenter size={15} /></button>
-                                            <button type="button" onClick={() => execEmailFormat("justifyRight")} title="Align Right" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><AlignRight size={15} /></button>
-                                            <button type="button" onClick={() => execEmailFormat("insertUnorderedList")} title="Bullet List" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><List size={15} /></button>
-                                            <button type="button" onClick={() => execEmailFormat("insertOrderedList")} title="Numbered List" className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer"><ListOrdered size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("justifyLeft")} title="Align Left" className="p-1.5 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-200 cursor-pointer"><AlignLeft size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("justifyCenter")} title="Align Center" className="p-1.5 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-200 cursor-pointer"><AlignCenter size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("justifyRight")} title="Align Right" className="p-1.5 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-200 cursor-pointer"><AlignRight size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("insertUnorderedList")} title="Bullet List" className="p-1.5 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-200 cursor-pointer"><List size={15} /></button>
+                                            <button type="button" onClick={() => execEmailFormat("insertOrderedList")} title="Numbered List" className="p-1.5 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-200 cursor-pointer"><ListOrdered size={15} /></button>
                                             <div className="w-px h-4 bg-gray-700 mx-1" />
                                             <button
                                                 type="button"
