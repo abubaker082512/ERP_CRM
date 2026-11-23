@@ -1345,7 +1345,7 @@ function SuperAdminPageContent() {
                 <div className="beraxis-white-bento p-5 sm:p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                     <div>
                         <div className="flex items-center gap-2.5 flex-wrap">
-                            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+                            <h1 suppressHydrationWarning className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
                                 Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}, Super Admin
                             </h1>
                             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-widest bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 flex items-center gap-1.5">

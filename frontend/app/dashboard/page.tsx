@@ -348,7 +348,7 @@ export default function DashboardPage() {
                                     : `${activeBranch?.name || companyName} · Active Workspace`}
                             </span>
                         </div>
-                        <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mt-0.5">
+                        <h1 suppressHydrationWarning className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mt-0.5">
                             Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {userData?.name || userData?.email?.split('@')[0] || 'Founder'}
                         </h1>
                     </div>

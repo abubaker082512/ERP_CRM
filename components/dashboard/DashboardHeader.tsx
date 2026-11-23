@@ -42,10 +42,10 @@ export default function DashboardHeader({
     ];
 
     return (
-        <header className="bg-[#1E293B] border-b border-gray-700 text-white sticky top-0 z-50 shadow-md">
-            <div className="flex items-center justify-between px-3 sm:px-4 py-2 gap-2 sm:gap-3">
+        <header className="bg-[#0F172A]/95 backdrop-blur-xl border-b border-white/10 text-white sticky top-0 z-50 shadow-md w-full max-w-full overflow-x-clip">
+            <div className="flex flex-wrap items-center justify-between px-3 sm:px-4 py-2 gap-2 min-w-0">
                 {/* Left Section: Beraxis Logo, Back, Apps, Website & Module Logo */}
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
                     {/* Beraxis Logo & Branding */}
                     <Link
                         href="/apps"
@@ -109,7 +109,7 @@ export default function DashboardHeader({
                     )}
 
                     {/* Navigation Pills */}
-                    <nav className="hidden lg:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-none">
+                    <nav className="hidden 2xl:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-none">
                         {navItems.map((item) => {
                             const isActive = pathname === item.href;
                             return (
@@ -130,7 +130,7 @@ export default function DashboardHeader({
                 </div>
 
                 {/* Center: Universal Search */}
-                <div className="flex-1 max-w-md mx-2 hidden md:block">
+                <div className="w-56 xl:w-64 mx-2 hidden xl:block shrink-0">
                     <UniversalModuleSearch
                         moduleName="Analytics"
                         placeholder="Search KPIs, revenue, charts, metrics..."
