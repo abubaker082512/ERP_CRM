@@ -399,6 +399,65 @@ function SuperAdminPageContent() {
     const [isOutboundRunning, setIsOutboundRunning] = useState(false);
     const [outboundResult, setOutboundResult] = useState<any>(null);
 
+    // Super Admin Custom & Bulk Email Composer
+    const [emailMode, setEmailMode] = useState<"specific" | "bulk_all" | "bulk_free" | "bulk_paid">("specific");
+    const [emailRecipientsText, setEmailRecipientsText] = useState("");
+    const [selectedUserEmails, setSelectedUserEmails] = useState<string[]>([]);
+    const [emailSubject, setEmailSubject] = useState("");
+    const [emailBody, setEmailBody] = useState("");
+    const [sendingAdminEmail, setSendingAdminEmail] = useState(false);
+    const [adminEmailReport, setAdminEmailReport] = useState<{ ok: boolean; msg: string } | null>(null);
+
+    const handleSendAdminEmail = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!emailSubject.trim() || !emailBody.trim()) {
+            showToast("Please enter both an email subject and message.");
+            return;
+        }
+        setSendingAdminEmail(true);
+        setAdminEmailReport(null);
+        try {
+            const manualEmails = emailRecipientsText
+                .split(/[\s,;]+/)
+                .map((x) => x.trim())
+                .filter((x) => x.includes("@"));
+            const combinedSpecific = Array.from(new Set([...selectedUserEmails, ...manualEmails]));
+            const allUserEmails = users.map((u) => u.email).filter(Boolean);
+
+            const res = await fetch("/api/admin/send-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    mode: emailMode,
+                    recipients:
+                        emailMode === "specific"
+                            ? combinedSpecific
+                            : emailMode === "bulk_all" && allUserEmails.length > 0
+                            ? allUserEmails
+                            : undefined,
+                    subject: emailSubject.trim(),
+                    message: emailBody.trim(),
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.ok) {
+                const msg = `Delivered ${data.sentCount}/${data.total} emails from ${data.sender}!`;
+                setAdminEmailReport({ ok: true, msg });
+                showToast(msg);
+            } else {
+                const err = data.error || "Failed to send email";
+                setAdminEmailReport({ ok: false, msg: err });
+                showToast(err);
+            }
+        } catch (err: any) {
+            const msg = err?.message || "Network error sending email";
+            setAdminEmailReport({ ok: false, msg });
+            showToast(msg);
+        } finally {
+            setSendingAdminEmail(false);
+        }
+    };
+
     const handleRunOutbound = async (dryRun: boolean) => {
         setIsOutboundRunning(true);
         try {
@@ -2842,6 +2901,144 @@ function SuperAdminPageContent() {
                                     Send Test Email to abubaker0825@gmail.com
                                 </button>
                             </div>
+                        </div>
+
+                        {/* Custom & Bulk Email Composer (Super Admin Only) */}
+                        <div className="bg-[#111827] rounded-3xl border border-cyan-500/25 p-6 shadow-2xl space-y-5">
+                            <div className="border-b border-gray-800 pb-4 flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        Custom &amp; Bulk Email Composer
+                                    </h3>
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                        Send a custom message to specific user(s) or broadcast in bulk to all/filtered BERAXIS users via <strong className="text-white">beraxisai@gmail.com</strong>.
+                                    </p>
+                                </div>
+                                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                                    {users.length} Registered Users
+                                </span>
+                            </div>
+
+                            <form onSubmit={handleSendAdminEmail} className="space-y-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                    {[
+                                        { id: "specific", label: "Specific User(s)" },
+                                        { id: "bulk_all", label: `Bulk: All Users (${users.length})` },
+                                        { id: "bulk_free", label: "Bulk: Free Plan Only" },
+                                        { id: "bulk_paid", label: "Bulk: Paid Plan Only" },
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            onClick={() => setEmailMode(opt.id as any)}
+                                            className={`px-3 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                                                emailMode === opt.id
+                                                    ? "bg-cyan-600/25 border-cyan-400 text-cyan-200"
+                                                    : "bg-[#0F172A] border-gray-700 text-gray-400 hover:text-white"
+                                            }`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {emailMode === "specific" && (
+                                    <div className="space-y-3 p-4 rounded-2xl bg-[#0F172A] border border-gray-800">
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                                                Recipient Email(s) — Comma or newline separated
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={emailRecipientsText}
+                                                onChange={(e) => setEmailRecipientsText(e.target.value)}
+                                                placeholder="user1@company.com, user2@company.com"
+                                                className="w-full bg-[#111827] border border-gray-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-cyan-500 outline-none"
+                                            />
+                                        </div>
+                                        {users.length > 0 && (
+                                            <div>
+                                                <div className="text-[11px] font-semibold text-gray-400 mb-1.5">
+                                                    Or click registered users to select ({selectedUserEmails.length} selected):
+                                                </div>
+                                                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                                                    {users.slice(0, 40).map((u) => {
+                                                        const active = selectedUserEmails.includes(u.email);
+                                                        return (
+                                                            <button
+                                                                key={u.id}
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setSelectedUserEmails((prev) =>
+                                                                        prev.includes(u.email)
+                                                                            ? prev.filter((x) => x !== u.email)
+                                                                            : [...prev, u.email]
+                                                                    )
+                                                                }
+                                                                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
+                                                                    active
+                                                                        ? "bg-purple-600/30 border-purple-400 text-purple-200"
+                                                                        : "bg-[#111827] border-gray-700 text-gray-400 hover:text-white"
+                                                                }`}
+                                                            >
+                                                                {active ? "✓ " : ""}
+                                                                {u.email}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                                        Email Subject *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={emailSubject}
+                                        onChange={(e) => setEmailSubject(e.target.value)}
+                                        placeholder="e.g. Important BERAXIS Update or Special Offer"
+                                        className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:border-cyan-500 outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                                        Message Body *
+                                    </label>
+                                    <textarea
+                                        required
+                                        rows={5}
+                                        value={emailBody}
+                                        onChange={(e) => setEmailBody(e.target.value)}
+                                        placeholder="Write the message to send to selected user(s) or all users..."
+                                        className="w-full bg-[#0F172A] border border-gray-700 rounded-2xl p-4 text-sm text-white focus:border-cyan-500 outline-none"
+                                    />
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <button
+                                        type="submit"
+                                        disabled={sendingAdminEmail}
+                                        className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg disabled:opacity-50 cursor-pointer"
+                                    >
+                                        {sendingAdminEmail
+                                            ? "Sending Emails..."
+                                            : emailMode === "specific"
+                                            ? "Send Custom Email via beraxisai@gmail.com"
+                                            : "Send Bulk Email via beraxisai@gmail.com"}
+                                    </button>
+                                    {adminEmailReport && (
+                                        <span className={`text-xs font-semibold ${adminEmailReport.ok ? "text-emerald-400" : "text-red-400"}`}>
+                                            {adminEmailReport.msg}
+                                        </span>
+                                    )}
+                                </div>
+                            </form>
                         </div>
 
                         <div className="bg-[#111827] rounded-3xl border border-gray-800 p-6 shadow-2xl space-y-6">
