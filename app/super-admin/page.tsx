@@ -1287,29 +1287,43 @@ function SuperAdminPageContent() {
                         <ShieldCheck size={12} /> Command Center
                     </span>
                 </div>
-                <nav className="flex-1 px-3 space-y-1 overflow-y-auto text-xs font-semibold">
+                <nav className="flex-1 px-3 space-y-1 overflow-y-auto text-xs font-semibold scrollbar-none">
                     {[
-                        { id: "overview", label: "Overview & Companies" },
-                        { id: "users", label: "Users & Roles" },
-                        { id: "pricing", label: "Plan Pricing" },
-                        { id: "payments", label: "Payment Gateways" },
-                        { id: "billing", label: "Billing Control" },
-                        { id: "promocodes", label: "Promo Codes" },
+                        { id: "overview", label: "Companies", count: safeWorkspaces.length },
+                        { id: "users", label: "Users & Roles", count: safeUsers.length },
+                        { id: "pricing", label: "Plan Pricing ($1)" },
+                        { id: "payments", label: "Payment Gateways", count: (stripeStats?.total || stripeTransactions?.length || safePayments.length || 0) },
+                        { id: "billing", label: "Billing Control", count: safeTenants.length },
+                        { id: "promocodes", label: "Promo Codes", count: safePromocodes.length },
+                        { id: "sales", label: "ERP Sales", count: safeSales.length },
                         { id: "flags", label: "Feature Flags" },
-                        { id: "audit", label: "Audit Logs" },
+                        { id: "broadcast", label: "Broadcast" },
+                        { id: "audit", label: "Audit Logs", count: safeAuditLogs.length },
+                        { id: "diagnostics", label: "System Health" },
+                        { id: "experiments", label: "A/B Testing" },
+                        { id: "outbound", label: "Outbound Leads" },
                     ].map((item) => (
                         <button
                             key={item.id}
                             type="button"
-                            onClick={() => setActiveTab(item.id as any)}
-                            className={`w-full text-left px-3.5 py-2.5 rounded-2xl transition-all cursor-pointer flex items-center justify-between ${
+                            onClick={() => {
+                                setActiveTab(item.id as any);
+                                if (item.id === "experiments") fetchExperimentsData();
+                            }}
+                            className={`w-full text-left px-3.5 py-2 rounded-2xl transition-all cursor-pointer flex items-center justify-between ${
                                 activeTab === item.id
                                     ? "beraxis-glow-pill font-bold"
                                     : "text-slate-400 hover:text-white hover:bg-white/5"
                             }`}
                         >
-                            <span>{item.label}</span>
-                            {activeTab === item.id && <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />}
+                            <span className="truncate">{item.label}</span>
+                            {item.count !== undefined ? (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeTab === item.id ? "bg-white/20 text-white" : "bg-white/5 text-slate-400"}`}>
+                                    {item.count}
+                                </span>
+                            ) : activeTab === item.id ? (
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />
+                            ) : null}
                         </button>
                     ))}
                 </nav>
@@ -1488,24 +1502,35 @@ function SuperAdminPageContent() {
                     ))}
                 </div>
 
-                {/* ── INTERACTIVE OPERATIONS CONSOLE (Dark High-Contrast Tables & Controls) ── */}
-                <div className="bg-[#0B1120] text-slate-100 rounded-3xl p-4 sm:p-6 border border-slate-800 shadow-2xl space-y-6">
-                {/* ── NAVIGATION TABS ── */}
-                <div className="flex border-b border-gray-800 mb-6 overflow-x-auto whitespace-nowrap scrollbar-none gap-1 bg-[#111827]/40 p-1.5 rounded-2xl border">
-                    <TabBtn active={activeTab === "overview"}    onClick={() => setActiveTab("overview")}    label="🏢 Companies" count={safeWorkspaces.length} />
-                    <TabBtn active={activeTab === "pricing"}     onClick={() => setActiveTab("pricing")}     label="💰 Plan Pricing ($1 Early Bird)" />
-                    <TabBtn active={activeTab === "promocodes"}  onClick={() => setActiveTab("promocodes")}  label="🎟️ Promo Codes" count={safePromocodes.length} />
-                    <TabBtn active={activeTab === "payments"}    onClick={() => setActiveTab("payments")}    label="💳 Payment Gateways (Paddle Live)" count={(stripeStats?.total || stripeTransactions?.length || safePayments.length || 0)} />
-                    <TabBtn active={activeTab === "billing"}     onClick={() => setActiveTab("billing")}     label="⚖️ Billing Ctrl" count={safeTenants.length} />
-                    <TabBtn active={activeTab === "users"}       onClick={() => setActiveTab("users")}       label="👥 Users" count={safeUsers.length} />
-                    <TabBtn active={activeTab === "sales"}       onClick={() => setActiveTab("sales")}       label="🛒 ERP Sales" count={safeSales.length} />
-                    <TabBtn active={activeTab === "flags"}       onClick={() => setActiveTab("flags")}       label="⚙️ Feature Flags" />
-                    <TabBtn active={activeTab === "broadcast"}   onClick={() => setActiveTab("broadcast")}   label="📢 Broadcast" />
-                    <TabBtn active={activeTab === "audit"}       onClick={() => setActiveTab("audit")}       label="🛡️ Audit Logs" count={safeAuditLogs.length} />
-                    <TabBtn active={activeTab === "diagnostics"} onClick={() => setActiveTab("diagnostics")} label="🩺 System Health" />
-                                        <TabBtn active={activeTab === "experiments"} onClick={() => { setActiveTab("experiments"); fetchExperimentsData(); }} label="🧪 A/B Testing & Optimization" />
-                    <TabBtn active={activeTab === "outbound"}    onClick={() => setActiveTab("outbound")}    label="🚀 Outbound Campaigns (B2B Leads)" />
+                {/* ── MOBILE SECTION SWITCHER (Hidden on Desktop since Left Rail is active) ── */}
+                <div className="lg:hidden beraxis-white-bento p-3">
+                    <select
+                        value={activeTab}
+                        onChange={(e) => {
+                            const val = e.target.value as any;
+                            setActiveTab(val);
+                            if (val === "experiments") fetchExperimentsData();
+                        }}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900"
+                    >
+                        <option value="overview">Companies ({safeWorkspaces.length})</option>
+                        <option value="users">Users &amp; Roles ({safeUsers.length})</option>
+                        <option value="pricing">Plan Pricing ($1 Early Bird)</option>
+                        <option value="payments">Payment Gateways</option>
+                        <option value="billing">Billing Control ({safeTenants.length})</option>
+                        <option value="promocodes">Promo Codes ({safePromocodes.length})</option>
+                        <option value="sales">ERP Sales ({safeSales.length})</option>
+                        <option value="flags">Feature Flags</option>
+                        <option value="broadcast">Global Broadcast</option>
+                        <option value="audit">Audit Logs ({safeAuditLogs.length})</option>
+                        <option value="diagnostics">System Health</option>
+                        <option value="experiments">A/B Testing</option>
+                        <option value="outbound">Outbound Leads</option>
+                    </select>
                 </div>
+
+                {/* ── UNIFIED FROSTED-WHITE OPERATIONS CONSOLE ── */}
+                <div className="superadmin-light-panels space-y-6">
 
                 {/* ── TAB 1: WORKSPACES & TENANT DATABASES ── */}
                 {activeTab === "overview" && (

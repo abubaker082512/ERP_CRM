@@ -197,3 +197,48 @@ body {
          border border-purple-400/40 text-white
          shadow-[0_0_20px_rgba(139,92,246,0.35)];
 }
+
+/* Frosted-White Bento Theme for Super Admin Operational Panels */
+.superadmin-light-panels .bg-\[\#111827\],
+.superadmin-light-panels .bg-\[\#111827\]\/40,
+.superadmin-light-panels .bg-\[\#111827\]\/80,
+.superadmin-light-panels .bg-\[\#0A0E17\] {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 12px 30px -10px rgba(15, 23, 42, 0.08) !important;
+}
+
+.superadmin-light-panels .bg-\[\#0F172A\],
+.superadmin-light-panels .bg-\[\#0B0F19\],
+.superadmin-light-panels .bg-\[\#1E293B\] {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+.superadmin-light-panels .border-gray-800,
+.superadmin-light-panels .border-gray-800\/80,
+.superadmin-light-panels .border-gray-700,
+.superadmin-light-panels .divide-gray-800\/50 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e2e8f0 !important;
+}
+
+.superadmin-light-panels .text-white:not([class*="bg-purple-"]):not([class*="bg-blue-"]):not([class*="bg-emerald-"]):not([class*="bg-rose-"]):not([class*="bg-red-"]):not([class*="bg-indigo-"]),
+.superadmin-light-panels .text-gray-100,
+.superadmin-light-panels .text-gray-200 {
+  color: #0f172a !important;
+}
+
+.superadmin-light-panels .text-gray-300,
+.superadmin-light-panels .text-gray-400 {
+  color: #475569 !important;
+}
+
+.superadmin-light-panels input,
+.superadmin-light-panels select,
+.superadmin-light-panels textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
