@@ -137,9 +137,9 @@ export default function TeamManagementPage() {
   const { activeBranch, getEntityStorageKey } = useBranchContext();
   const activeCompanyId = activeBranch?.id || "CMP-001";
   const [quota, setQuota] = useState<MultiCompanyQuota>(INITIAL_QUOTA);
-  const [members, setMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
-  const [contractors, setContractors] = useState<FreelancerContractor[]>(INITIAL_CONTRACTORS);
-  const [invitations, setInvitations] = useState<TeamInvitation[]>(INITIAL_INVITATIONS);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [contractors, setContractors] = useState<FreelancerContractor[]>([]);
+  const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
   
   const [activeTab, setActiveTab] = useState<"members" | "orgchart" | "companies" | "matrix" | "contractors">("members");
   const [search, setSearch] = useState("");
@@ -178,22 +178,74 @@ export default function TeamManagementPage() {
 
   // Load persisted company hierarchy members from API + localStorage
   useEffect(() => {
+    let currentUserEmail = "";
+    let currentUserName = "";
+    try {
+      const rawU = localStorage.getItem("user");
+      if (rawU) {
+        const parsedU = JSON.parse(rawU);
+        currentUserEmail = parsedU?.email || "";
+        currentUserName = parsedU?.name || parsedU?.user_metadata?.full_name || parsedU?.user_metadata?.name || "";
+      }
+    } catch {}
+
+    const DUMMY_EMAILS = new Set([
+      "abubaker@galaxy.com",
+      "elena.rostova@galaxy.com",
+      "alex.vance@galaxy.com",
+      "sarah.j@galaxy.com",
+    ]);
+
+    const realOwner: TeamMember = {
+      id: "USR-001",
+      name: currentUserName || activeBranch?.name || "Workspace Owner",
+      email: currentUserEmail || "owner@company.com",
+      role: "Owner",
+      department: "Executive",
+      companyIds: [activeCompanyId],
+      reportsToId: null,
+      allowedModules: ["*"],
+      type: "full_time",
+      status: "active",
+      lastActive: "Just now",
+      joinedAt: new Date().toISOString().split("T")[0],
+      twoFactorEnabled: true,
+      avatarBg: "bg-purple-600",
+      title: "Account Owner",
+    };
+
+    const sanitizeMembers = (list: TeamMember[]): TeamMember[] => {
+      const cleaned = currentUserEmail && !DUMMY_EMAILS.has(currentUserEmail.toLowerCase())
+        ? list.filter((m) => !DUMMY_EMAILS.has((m.email || "").toLowerCase()))
+        : list;
+      return cleaned.length > 0 ? cleaned : [realOwner];
+    };
+
     const storageKey = getEntityStorageKey("team_members");
     try {
       const cached = localStorage.getItem(storageKey);
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) setMembers(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMembers(sanitizeMembers(parsed));
+        } else {
+          setMembers([realOwner]);
+        }
+      } else {
+        setMembers([realOwner]);
       }
-    } catch {}
+    } catch {
+      setMembers([realOwner]);
+    }
 
-    fetch(`/api/team/members?company_id=${encodeURIComponent(activeCompanyId)}&limit=200`)
+    fetch(`/api/team/members?company_id=${encodeURIComponent(activeCompanyId)}&limit=200${currentUserName ? `&owner_name=${encodeURIComponent(currentUserName)}` : ""}${currentUserEmail ? `&owner_email=${encodeURIComponent(currentUserEmail)}` : ""}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data?.success && Array.isArray(data.allMembers) && data.allMembers.length > 0) {
-          setMembers(data.allMembers);
+        if (data?.success && Array.isArray(data.allMembers)) {
+          const cleanList = sanitizeMembers(data.allMembers);
+          setMembers(cleanList);
           try {
-            localStorage.setItem(storageKey, JSON.stringify(data.allMembers));
+            localStorage.setItem(storageKey, JSON.stringify(cleanList));
           } catch {}
         }
       })
@@ -207,11 +259,6 @@ export default function TeamManagementPage() {
         const pq = JSON.parse(cachedQuota);
         if (pq?.totalSeats) setQuota((prev) => ({ ...prev, ...pq }));
       }
-    } catch {}
-    let currentUserEmail = "";
-    try {
-      const rawU = localStorage.getItem("user");
-      if (rawU) currentUserEmail = JSON.parse(rawU)?.email || "";
     } catch {}
     fetch(`/api/team/quota?company_id=${encodeURIComponent(activeCompanyId)}${currentUserEmail ? `&email=${encodeURIComponent(currentUserEmail)}` : ""}`, { cache: "no-store" })
       .then((r) => r.json())

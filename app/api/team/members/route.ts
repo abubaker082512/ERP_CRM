@@ -29,8 +29,8 @@ const sbHeaders = {
 
 // Scoped fallback store if Supabase SQL migration v10 hasn't been applied yet
 const fallbackCompanyMembers = new Map<string, TeamMember[]>();
-let invitationsStore: TeamInvitation[] = [...INITIAL_INVITATIONS];
-let contractorsStore: FreelancerContractor[] = [...INITIAL_CONTRACTORS];
+let invitationsStore: TeamInvitation[] = [];
+let contractorsStore: FreelancerContractor[] = [];
 
 function mapDbRowToMember(row: any): TeamMember {
   return {
@@ -99,14 +99,48 @@ async function upsertMembersToDb(companyId: string, list: TeamMember[]): Promise
   }
 }
 
-async function loadCompanyMembers(companyId: string): Promise<TeamMember[]> {
+const DUMMY_SEED_EMAILS = new Set([
+  "abubaker@galaxy.com",
+  "elena.rostova@galaxy.com",
+  "alex.vance@galaxy.com",
+  "sarah.j@galaxy.com",
+]);
+
+function buildRealOwnerMember(companyId: string, ownerName?: string, ownerEmail?: string): TeamMember {
+  return {
+    id: "USR-001",
+    name: ownerName?.trim() || "Workspace Owner",
+    email: (ownerEmail || "owner@company.com").trim().toLowerCase(),
+    role: "Owner",
+    department: "Executive",
+    companyIds: [companyId],
+    reportsToId: null,
+    allowedModules: ["*"],
+    type: "full_time",
+    status: "active",
+    lastActive: "Just now",
+    joinedAt: new Date().toISOString().split("T")[0],
+    twoFactorEnabled: true,
+    avatarBg: "bg-purple-600",
+    title: "Account Owner",
+  };
+}
+
+async function loadCompanyMembers(companyId: string, ownerName?: string, ownerEmail?: string): Promise<TeamMember[]> {
   const dbMembers = await fetchMembersFromDb(companyId);
-  if (dbMembers !== null) {
-    fallbackCompanyMembers.set(companyId, dbMembers);
-    return dbMembers;
+  if (dbMembers !== null && dbMembers.length > 0) {
+    const cleaned = ownerEmail && !DUMMY_SEED_EMAILS.has(ownerEmail.toLowerCase())
+      ? dbMembers.filter((m) => !DUMMY_SEED_EMAILS.has(m.email.toLowerCase()))
+      : dbMembers;
+    const finalDb = cleaned.length > 0 ? cleaned : [buildRealOwnerMember(companyId, ownerName, ownerEmail)];
+    fallbackCompanyMembers.set(companyId, finalDb);
+    return finalDb;
   }
   if (!fallbackCompanyMembers.has(companyId)) {
-    fallbackCompanyMembers.set(companyId, [...INITIAL_TEAM_MEMBERS]);
+    fallbackCompanyMembers.set(
+      companyId,
+      ownerEmail ? [buildRealOwnerMember(companyId, ownerName, ownerEmail)] : []
+    );
   }
   return fallbackCompanyMembers.get(companyId)!;
 }
@@ -114,12 +148,14 @@ async function loadCompanyMembers(companyId: string): Promise<TeamMember[]> {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const companyId = searchParams.get("company_id") || "CMP-001";
+  const ownerName = searchParams.get("owner_name") || undefined;
+  const ownerEmail = searchParams.get("owner_email") || undefined;
   const search = (searchParams.get("search") || "").trim().toLowerCase();
   const department = (searchParams.get("department") || "").trim().toLowerCase();
   const page = Math.max(1, Number(searchParams.get("page") || 1));
   const limit = Math.min(200, Math.max(1, Number(searchParams.get("limit") || 50)));
 
-  const all = await loadCompanyMembers(companyId);
+  const all = await loadCompanyMembers(companyId, ownerName, ownerEmail);
   const filtered = all.filter((m) => {
     if (department && department !== "all" && m.department.toLowerCase() !== department) {
       return false;

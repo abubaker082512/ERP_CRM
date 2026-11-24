@@ -2756,6 +2756,9 @@ function SuperAdminPageContent() {
                                                     {u.workspace_name
                                                         ? <span className="flex items-center gap-1.5 text-gray-300 font-medium"><Building2 size={13} className="text-purple-400"/>{u.workspace_name}</span>
                                                         : <span className="text-gray-600">—</span>}
+                                                    <span className="text-[10px] text-cyan-400 font-semibold mt-0.5 block">
+                                                        {(u as any).seats ?? 1} {((u as any).seats ?? 1) === 1 ? "Seat" : "Seats"}{(u as any).industry_name ? ` • ${(u as any).industry_name}` : ""}
+                                                    </span>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 ${STATUS_STYLES[u.subscription_status || "new"] || STATUS_STYLES.new}`}>
@@ -2779,6 +2782,7 @@ function SuperAdminPageContent() {
                                                                 } as any);
                                                                 setSelectedPlanInput((u as any).plan || "Standard Plan ($1/mo Early Bird)");
                                                                 setSelectedSeatsInput(Math.max(1, Number((u as any).seats) || 1));
+                                                                setSelectedIndustryInput((u as any).industry_id || "food_beverage");
                                                             }}
                                                             className="px-2.5 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center gap-1 cursor-pointer"
                                                             title="Update Plan & Seats"

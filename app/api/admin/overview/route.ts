@@ -70,7 +70,10 @@ export async function GET() {
         user_id: u.id,
         name: company,
         owner_email: email,
+        owner_name: name,
         member_count: memberCount,
+        industry_id: meta.industry_id || "",
+        industry_name: meta.industry_name || "",
         created_at: u.created_at || now.toISOString(),
         plan: plan
       };
@@ -90,12 +93,18 @@ export async function GET() {
 
       const isAdmin = SUPER_ADMIN_EMAILS.includes(email) || email.endsWith("@beraxis.online") || email.endsWith("@erp-crm.com");
       const role = meta.role || (isAdmin ? "super_admin" : "owner");
+      const plan = meta.plan ? meta.plan : (isAdmin ? "Admin Full Control" : "One App Free");
+      const seats = meta.seats !== undefined ? Number(meta.seats) : (isAdmin ? 8 : 1);
 
       return {
         id: u.id,
         email: email,
         name: name,
         role: role,
+        plan: plan,
+        seats: seats,
+        industry_id: meta.industry_id || "",
+        industry_name: meta.industry_name || "",
         subscription_status: meta.subscription_status || "active",
         workspace_name: company,
         created_at: u.created_at || now.toISOString()
