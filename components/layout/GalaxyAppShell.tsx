@@ -104,34 +104,14 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
         return <>{children}</>;
     }
 
-    // Always allow Settings, AI, Billing, Super Admin, and Leads Pool (which renders its own Paid Plan gate)
+    // Always allow Settings, AI, Billing, Team, Approvals, Super Admin, and Leads Pool
     const isAlwaysAllowed =
         pathname.startsWith('/dashboard') ||
         pathname.startsWith('/settings') ||
         pathname.startsWith('/billing') ||
+        pathname.startsWith('/team') ||
+        pathname.startsWith('/approvals') ||
         pathname.startsWith('/super-admin');
-
-    if (!hasSelectedIndustry && ! pathname.startsWith('/super-admin')) {
-        return (
-            <div className="min-h-[80vh] flex items-center justify-center p-6 text-white">
-                <div className="max-w-lg w-full bg-[#0F172A] border border-purple-500/40 rounded-3xl p-8 text-center shadow-2xl space-y-4">
-                    <div className="w-14 h-14 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 mx-auto">
-                        <Sparkles size={28} />
-                    </div>
-                    <h2 className="text-xl font-black text-white">Complete Your Industry & Entity Setup First</h2>
-                    <p className="text-xs text-gray-300 leading-relaxed">
-                        Every user and company under Beraxis is an independent entity with its own isolated workspace. Please select your industry sector, entity structure (Individual or Company), and free app to initialize your workspace.
-                    </p>
-                    <Link
-                        href="/apps"
-                        className="inline-flex items-center justify-center w-full py-3 px-5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all"
-                    >
-                        Configure Industry & Entity Now →
-                    </Link>
-                </div>
-            </div>
-        );
-    }
 
     if (isFreePlan && !isAlwaysAllowed && !isModuleEnabled(pathname)) {
         return (

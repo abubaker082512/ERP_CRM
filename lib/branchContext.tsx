@@ -369,7 +369,45 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
             hydrated = true;
           }
         }
-        if (hydrated) loadUserScopedContext();
+        if (hydrated) {
+          loadUserScopedContext();
+        } else if (!localStorage.getItem(`beraxis_branches_${info.userKey}`)) {
+          // Auto-provision default primary workspace for logged-in users with no saved branch yet
+          const rawUser = localStorage.getItem("user");
+          const parsedUser = rawUser ? JSON.parse(rawUser) : {};
+          const defaultCompany = parsedUser?.company_name || parsedUser?.name || "My Workspace";
+          const defaultIndustry = GLOBAL_INDUSTRIES[0];
+          const defaultBranch: BusinessBranch = {
+            id: `BRN-${info.userKey.slice(0, 4).toUpperCase()}-0001`,
+            name: defaultCompany,
+            code: "HQ-01",
+            industryId: defaultIndustry.id,
+            subSector: defaultIndustry.subSectors[0] || "General",
+            operationMode: "Standard",
+            location: "Global",
+            currency: "USD",
+            enabledModules: [
+              "/dashboard", "/crm", "/sales", "/accounting", "/inventory",
+              "/employees", "/team", "/approvals", "/settings",
+            ],
+            sharingRules: {
+              shareEmployees: true,
+              shareCustomers: true,
+              shareInventory: true,
+              shareAccounting: true,
+              shareVendors: true,
+            },
+            createdAt: new Date().toISOString(),
+            isPrimary: true,
+            ownerId: info.userKey,
+            accountType: parsedUser?.company_name ? "company" : "individual",
+            entityType: parsedUser?.company_name ? "company" : "individual",
+          };
+          localStorage.setItem(`beraxis_branches_${info.userKey}`, JSON.stringify([defaultBranch]));
+          localStorage.setItem(`beraxis_active_branch_id_${info.userKey}`, defaultBranch.id);
+          localStorage.setItem("beraxis_active_branch_id", defaultBranch.id);
+          loadUserScopedContext();
+        }
       } catch {}
     };
 
