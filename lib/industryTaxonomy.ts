@@ -542,8 +542,6 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
     themeColor: "bg-cyan-600",
     accentColor: "text-cyan-400",
     borderColor: "border-cyan-500/30",
-    gradientFrom: "from-cyan-600/20",
-    gradientTo: "to-indigo-600/20",
     subSectors: [
       "Outbound Telemarketing & Lead Gen",
       "Inbound Customer Support & Helpdesk",
@@ -555,18 +553,18 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       { id: "inbound_bpo", name: "Inbound Desk & Public Forms", description: "Capture web inquiries via public forms directly into agent queues.", badge: "🎧 Inbound" },
       { id: "hybrid_bpo", name: "Full Multi-Campaign BPO", description: "Simultaneous outbound campaigns, public intake forms, and manager approvals.", badge: "⚡ Hybrid" }
     ],
-    recommendedModules: [
-      "Call Center",
-      "Public Forms",
-      "CRM",
-      "Sheets (Excel)",
-      "Helpdesk",
-      "Contacts",
-      "Team",
-      "Approvals",
-      "Attendances",
-      "Payroll",
-      "Settings"
+    defaultModules: [
+      "/call-center",
+      "/forms",
+      "/crm",
+      "/spreadsheets",
+      "/helpdesk",
+      "/contacts",
+      "/team",
+      "/approvals",
+      "/attendances",
+      "/payroll",
+      "/crm/leads-pool"
     ],
     specializedRoutes: [
       { name: "Call Center & Lead Sheet", href: "/call-center", icon: "PhoneCall" },

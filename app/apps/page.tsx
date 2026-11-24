@@ -826,7 +826,7 @@ export default function AppsDashboardPage() {
                                                 + <strong className="text-white">Settings</strong> (100% Isolated Data)
                                             </>
                                         ) : (
-                                            <>{chosenInd.defaultModules.length} tailored industry apps + Leads Pool will be configured</>
+                                            <>{chosenInd.defaultModules?.length || 0} tailored industry apps + Leads Pool will be configured</>
                                         )}
                                     </span>
                                     <button
