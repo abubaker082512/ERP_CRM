@@ -10,15 +10,11 @@ import { Check, X, HelpCircle, Users, ArrowRight, MessageSquare, PhoneCall, Spar
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 import { CREEM_PRODUCTS, getCreemCheckoutUrl } from "@/lib/creemConfig";
 import { Heart, Lock } from "lucide-react";
-import { initializePaddle, type Paddle } from "@paddle/paddle-js";
-import { getPaddlePrice, PADDLE_PRICE_MAP } from "@/lib/paddleConfig";
 
 export default function PricingPage() {
     const [billingCycle, setBillingCycle] = useState<"annually" | "monthly">("annually");
     const [usersCount, setUsersCount] = useState<number>(5);
     const [pricing, setPricing] = useState<PricingConfig>(DEFAULT_PRICING_CONFIG);
-    const [paddle, setPaddle] = useState<Paddle | null>(null);
-    const [paddlePrices, setPaddlePrices] = useState<Record<string, string>>({});
     const [isCorpQuoteOpen, setIsCorpQuoteOpen] = useState(false);
     const [corpCompany, setCorpCompany] = useState("");
     const [corpContact, setCorpContact] = useState("");
@@ -27,36 +23,6 @@ export default function PricingPage() {
     const [corpNotes, setCorpNotes] = useState("");
     const [corpSubmitting, setCorpSubmitting] = useState(false);
     const [corpResult, setCorpResult] = useState<{ ok: boolean; msg: string } | null>(null);
-
-    // Initialize Paddle.js and fetch real-time localized PricePreview
-    useEffect(() => {
-        const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "live_6645496fe6160096b0d5e7c19fe";
-        const env = (process.env.NEXT_PUBLIC_PADDLE_ENV || "production") as "sandbox" | "production";
-        initializePaddle({
-            token: clientToken,
-            environment: env
-        }).then(instance => {
-            if (instance) {
-                setPaddle(instance);
-                (instance as any).pricePreview({
-                    items: [
-                        { priceId: PADDLE_PRICE_MAP["standard-annual"].priceId, quantity: 1 },
-                        { priceId: PADDLE_PRICE_MAP["standard-monthly"].priceId, quantity: 1 },
-                        { priceId: PADDLE_PRICE_MAP["custom-annual"].priceId, quantity: 1 },
-                        { priceId: PADDLE_PRICE_MAP["custom-monthly"].priceId, quantity: 1 }
-                    ]
-                }).then((preview: any) => {
-                    if (preview?.data?.details?.lineItems) {
-                        const map: Record<string, string> = {};
-                        for (const item of preview.data.details.lineItems) {
-                            map[item.price.id] = item.formattedTotals.total;
-                        }
-                        setPaddlePrices(map);
-                    }
-                }).catch((err: any) => console.warn("Paddle pricePreview:", err));
-            }
-        }).catch(err => console.warn("Paddle init:", err));
-    }, []);
 
     const handleCreemCheckout = (planKey: "standard" | "custom" | "leadspool") => {
         const url = getCreemCheckoutUrl(planKey, billingCycle);
@@ -73,8 +39,6 @@ export default function PricingPage() {
             }, 1000);
         }
     };
-
-    const handlePaddleCheckout = handleCreemCheckout;
 
     // Fetch dynamic pricing from Super Admin configuration
     useEffect(() => {

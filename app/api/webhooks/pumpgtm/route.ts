@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUMPGTM_DEFAULT_WEBHOOK_URL =
-    "https://app.pumpgtm.com/api/v1/plays/53018427-bbc0-43a7-bfad-d3fdd9806e90/webhook";
+const PUMPGTM_DEFAULT_WEBHOOK_URL = "";
 
 export async function POST(req: NextRequest) {
     try {

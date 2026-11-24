@@ -33,27 +33,12 @@ import IndustryShowcase from "@/components/landing/IndustryShowcase";
 import Testimonials from "@/components/landing/Testimonials";
 import { DEFAULT_PRICING_CONFIG, PricingConfig } from "@/lib/pricingConfig";
 import { CREEM_PRODUCTS, getCreemCheckoutUrl } from "@/lib/creemConfig";
-import { initializePaddle, type Paddle } from "@paddle/paddle-js";
-import { getPaddlePrice } from "@/lib/paddleConfig";
 
 export default function Home() {
     const router = useRouter();
     const [billingCycle, setBillingCycle] = useState<"annually" | "monthly">("annually");
     const [pricing, setPricing] = useState<PricingConfig>(DEFAULT_PRICING_CONFIG);
-    const [paddle, setPaddle] = useState<Paddle | null>(null);
     const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-    // Initialize Paddle.js client
-    useEffect(() => {
-        const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "live_6645496fe6160096b0d5e7c19fe";
-        const env = (process.env.NEXT_PUBLIC_PADDLE_ENV || "production") as "sandbox" | "production";
-        initializePaddle({
-            token: clientToken,
-            environment: env
-        }).then(instance => {
-            if (instance) setPaddle(instance);
-        }).catch(err => console.warn("Paddle init warning:", err));
-    }, []);
 
     useEffect(() => {
         fetch("/api/admin/pricing")
@@ -90,8 +75,6 @@ export default function Home() {
             }, 1000);
         }
     };
-
-    const handlePaddleCheckout = handleCreemCheckout;
 
     const faqs = [
         {

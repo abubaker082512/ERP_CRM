@@ -4,7 +4,6 @@ import PaymentLogos from "@/components/common/PaymentLogos";
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { 
   CreditCard, 
   CheckCircle, 
@@ -21,16 +20,47 @@ import {
   ArrowRight
 } from "lucide-react";
 import Link from "next/link";
-import { getPaddlePrice, PaddlePriceMapping } from "@/lib/paddleConfig";
-import { getCreemCheckoutUrl } from "@/lib/creemConfig";
+import { CREEM_PRODUCTS, getCreemCheckoutUrl } from "@/lib/creemConfig";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+
+interface CheckoutPlanDetails {
+  planId: string;
+  name: string;
+  billingCycle: "annual" | "monthly";
+  unitAmountUsd: number;
+}
+
+function getCreemPlanDetails(plan?: string | null, billing?: string | null): CheckoutPlanDetails {
+  const isAnnual = billing !== "monthly";
+  const p = (plan || "standard").toLowerCase();
+  if (p === "custom" || p === "premium" || p === "enterprise") {
+    return {
+      planId: "custom",
+      name: isAnnual ? CREEM_PRODUCTS.custom_yearly.name : CREEM_PRODUCTS.custom_monthly.name,
+      billingCycle: isAnnual ? "annual" : "monthly",
+      unitAmountUsd: isAnnual ? 448.8 : 46.8,
+    };
+  }
+  if (p === "leadspool" || p === "leads-pool") {
+    return {
+      planId: "leadspool",
+      name: CREEM_PRODUCTS.leads_pool.name,
+      billingCycle: "monthly",
+      unitAmountUsd: 19.0,
+    };
+  }
+  return {
+    planId: "standard",
+    name: isAnnual ? CREEM_PRODUCTS.pro_yearly.name : CREEM_PRODUCTS.pro_monthly.name,
+    billingCycle: isAnnual ? "annual" : "monthly",
+    unitAmountUsd: isAnnual ? 12.0 : 5.0,
+  };
+}
 
 function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [paddle, setPaddle] = useState<Paddle | null>(null);
-  const [paddleLoading, setPaddleLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
   const [verifiedTxId, setVerifiedTxId] = useState<string | null>(null);
@@ -38,10 +68,10 @@ function CheckoutPageContent() {
 
   const planParam = searchParams?.get("plan") || "standard";
   const billingParam = searchParams?.get("billing") || "annual";
-  const paddleStatus = searchParams?.get("paddle_status");
+  const checkoutStatus = searchParams?.get("status") || searchParams?.get("creem_status");
 
-  const [selectedPlan, setSelectedPlan] = useState<PaddlePriceMapping>(() =>
-    getPaddlePrice(planParam, billingParam)
+  const [selectedPlan, setSelectedPlan] = useState<CheckoutPlanDetails>(() =>
+    getCreemPlanDetails(planParam, billingParam)
   );
 
   const [form, setForm] = useState({
@@ -71,15 +101,14 @@ function CheckoutPageContent() {
 
   // Update selected plan if searchParams change
   useEffect(() => {
-    const p = getPaddlePrice(planParam, billingParam);
-    setSelectedPlan(p);
+    setSelectedPlan(getCreemPlanDetails(planParam, billingParam));
   }, [planParam, billingParam]);
 
-  // Check if returning from a successful Paddle checkout
+  // Check if returning from a successful Creem checkout
   useEffect(() => {
-    if (paddleStatus === "success") {
+    if (checkoutStatus === "success") {
       setSuccess(true);
-      setVerifiedTxId(`pad_${Date.now()}`);
+      setVerifiedTxId(`creem_${Date.now()}`);
       try {
         localStorage.setItem("user_plan", planParam);
         localStorage.setItem("beraxis_user_plan", planParam);
@@ -88,41 +117,9 @@ function CheckoutPageContent() {
         }
       } catch {}
     }
-  }, [paddleStatus, planParam]);
+  }, [checkoutStatus, planParam]);
 
-  // Initialize Paddle.js client
-  useEffect(() => {
-    const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "live_6645496fe6160096b0d5e7c19fe";
-    const env = (process.env.NEXT_PUBLIC_PADDLE_ENV || "production") as "sandbox" | "production";
-
-    setPaddleLoading(true);
-    initializePaddle({
-      token: clientToken,
-      environment: env,
-      eventCallback: (event) => {
-        if (event.name === "checkout.completed") {
-          setSuccess(true);
-          const txId = event.data?.transaction_id || `pad_${Date.now()}`;
-          setVerifiedTxId(txId);
-          try {
-            localStorage.setItem("user_plan", selectedPlan.planId);
-            localStorage.setItem("beraxis_user_plan", selectedPlan.planId);
-          } catch {}
-        }
-      }
-    })
-      .then((p) => {
-        if (p) setPaddle(p);
-      })
-      .catch((err) => {
-        console.warn("Paddle initialization warning:", err);
-      })
-      .finally(() => {
-        setPaddleLoading(false);
-      });
-  }, [selectedPlan.planId]);
-
-  const handleOpenPaddleCheckout = async (e: React.FormEvent) => {
+  const handleOpenCreemCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setProcessing(true);
@@ -225,7 +222,7 @@ function CheckoutPageContent() {
                 </div>
               )}
 
-              <form onSubmit={handleOpenPaddleCheckout} className="space-y-4">
+              <form onSubmit={handleOpenCreemCheckout} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs text-gray-300 font-semibold block mb-1.5">Full Name *</label>
@@ -292,10 +289,10 @@ function CheckoutPageContent() {
 
                 <button
                   type="submit"
-                  disabled={processing || paddleLoading}
+                  disabled={processing}
                   className="w-full galaxy-btn-primary !py-4 text-xs font-extrabold shadow-xl shadow-purple-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  {processing || paddleLoading ? (
+                  {processing ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
                       <span>Opening Secure Checkout...</span>

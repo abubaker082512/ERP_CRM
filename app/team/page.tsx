@@ -419,7 +419,7 @@ export default function TeamManagementPage() {
     );
   };
 
-  // Purchase Additional Seats via Paddle
+  // Purchase Additional Seats via Creem
   const handlePurchaseSeats = async () => {
     setIsCheckoutLoading(true);
     try {
@@ -437,17 +437,17 @@ export default function TeamManagementPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Failed to configure checkout");
 
-      // In production Paddle checkout:
-      if (typeof window !== "undefined" && (window as any).Paddle) {
-        (window as any).Paddle.Checkout.open({
-          items: data.items,
-          customer: data.customer,
-          settings: {
-            displayMode: "overlay",
-            theme: "dark",
-            successUrl: "https://www.beraxis.online/team?payment=success",
-          },
-        });
+      if (data.checkoutUrl && typeof window !== "undefined") {
+        const anchor = document.createElement("a");
+        anchor.href = data.checkoutUrl;
+        anchor.setAttribute("data-creem-checkout", "");
+        anchor.setAttribute("data-creem-theme", "dark");
+        anchor.style.display = "none";
+        document.body.appendChild(anchor);
+        anchor.click();
+        setTimeout(() => {
+          if (document.body.contains(anchor)) document.body.removeChild(anchor);
+        }, 1000);
       } else {
         const nextTotal = quota.totalSeats + buySeatQty;
         setQuota((prev) => ({
@@ -629,7 +629,7 @@ export default function TeamManagementPage() {
             </p>
             <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-800 text-slate-400">
               <span>Billing gateway:</span>
-              <span className="text-slate-200 font-medium">Creem / Paddle (Active)</span>
+              <span className="text-slate-200 font-medium">Creem MoR (Active)</span>
             </div>
           </div>
 
@@ -1420,7 +1420,7 @@ export default function TeamManagementPage() {
         </div>
       )}
 
-      {/* MODAL 2: BUY ADDITIONAL SEATS VIA PADDLE */}
+      {/* MODAL 2: BUY ADDITIONAL SEATS VIA CREEM */}
       {isBuySeatsOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
@@ -1511,7 +1511,7 @@ export default function TeamManagementPage() {
                 className="w-full py-3 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
               >
                 <CreditCard className="w-4 h-4" />
-                {isCheckoutLoading ? "Opening Paddle Checkout..." : `Pay & Add +${buySeatQty} Seats`}
+                {isCheckoutLoading ? "Opening Creem Checkout..." : `Pay & Add +${buySeatQty} Seats`}
               </button>
             </div>
           </div>

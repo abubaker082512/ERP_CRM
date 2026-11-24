@@ -387,7 +387,7 @@ export default function PitchDeckPage() {
                   <Globe size={18} /> Global Payment &amp; Ops Ready
                 </h3>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Headquartered in Islamabad, Pakistan with capital-efficient engineering execution. Live international billing via Creem Merchant of Record, Paddle, Stripe, DirectPay, and 30+ cryptocurrencies.
+                  Headquartered in Islamabad, Pakistan with capital-efficient engineering execution. Live international billing via Creem Merchant of Record across 135+ currencies.
                 </p>
               </div>
             </div>

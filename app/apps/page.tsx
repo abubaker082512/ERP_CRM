@@ -837,9 +837,9 @@ export default function AppsDashboardPage() {
                     </div>
                 ) : (
                     /* ─── OPTION C: SPOTLIGHT COMMAND LAUNCHER (Dark Cosmic & Frosted Light) ─── */
-                    <div className="py-3 pb-14 animate-in fade-in duration-200 space-y-4 max-w-5xl mx-auto w-full">
+                    <div className="py-3 pb-14 animate-in fade-in duration-200 space-y-4 max-w-6xl mx-auto w-full px-1 sm:px-4">
                         {/* Centered Spotlight Command Hero */}
-                        <div className="beraxis-hero-card p-5 sm:p-6 text-center space-y-4">
+                        <div className="beraxis-glass-hero p-5 sm:p-6 text-center space-y-4">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div className={`flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-widest ${isLight ? "text-purple-700" : "text-[#38BDF8]"}`}>
                                     <Sparkles size={12} />
@@ -898,10 +898,10 @@ export default function AppsDashboardPage() {
                                             router.push(`/ai?q=${encodeURIComponent(appSearch.trim())}`);
                                         }
                                     }}
-                                    className={`max-w-2xl mx-auto flex items-center gap-2 rounded-2xl border px-4 py-2.5 transition-all ${
+                                    className={`max-w-2xl mx-auto flex items-center gap-2 rounded-2xl border px-4 py-2.5 transition-all backdrop-blur-md ${
                                         isLight
-                                            ? "bg-white border-slate-300 shadow-sm focus-within:border-purple-500"
-                                            : "bg-[#060B19]/85 border-white/15 focus-within:border-purple-400"
+                                            ? "bg-white/75 border-slate-300/80 shadow-sm focus-within:bg-white/95 focus-within:border-purple-500"
+                                            : "bg-white/[0.06] border-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] focus-within:bg-white/[0.11] focus-within:border-purple-400/75"
                                     }`}
                                 >
                                     <Search size={16} className={isLight ? "text-slate-400" : "text-gray-400"} />
@@ -932,25 +932,25 @@ export default function AppsDashboardPage() {
 
                             {/* Compact Horizontal KPI Pills + Quick Actions */}
                             <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs">
-                                <div className={`px-3.5 py-1.5 rounded-full border flex items-center gap-2 ${isLight ? "bg-slate-50 border-slate-200 text-slate-600" : "bg-[#060B19]/75 border-white/10 text-gray-300"}`}>
+                                <div className={`px-3.5 py-1.5 rounded-full border backdrop-blur-sm flex items-center gap-2 ${isLight ? "bg-white/75 border-slate-200/80 text-slate-600" : "bg-white/[0.05] border-white/15 text-gray-200"}`}>
                                     <span className="text-[10px] uppercase font-bold opacity-75">Revenue</span>
                                     <strong className={`font-black ${isLight ? "text-slate-900" : "text-white"}`}>
                                         <AnimatedCounter value={bentoStats.revenue} prefix={currencySymbol} />
                                     </strong>
                                 </div>
-                                <div className={`px-3.5 py-1.5 rounded-full border flex items-center gap-2 ${isLight ? "bg-slate-50 border-slate-200 text-slate-600" : "bg-[#060B19]/75 border-white/10 text-gray-300"}`}>
+                                <div className={`px-3.5 py-1.5 rounded-full border backdrop-blur-sm flex items-center gap-2 ${isLight ? "bg-white/75 border-slate-200/80 text-slate-600" : "bg-white/[0.05] border-white/15 text-gray-200"}`}>
                                     <span className="text-[10px] uppercase font-bold opacity-75">Net Profit</span>
                                     <strong className={`font-black ${isLight ? "text-cyan-700" : "text-[#38BDF8]"}`}>
                                         <AnimatedCounter value={bentoStats.netProfit} prefix={currencySymbol} />
                                     </strong>
                                 </div>
-                                <div className={`px-3.5 py-1.5 rounded-full border flex items-center gap-2 ${isLight ? "bg-slate-50 border-slate-200 text-slate-600" : "bg-[#060B19]/75 border-white/10 text-gray-300"}`}>
+                                <div className={`px-3.5 py-1.5 rounded-full border backdrop-blur-sm flex items-center gap-2 ${isLight ? "bg-white/75 border-slate-200/80 text-slate-600" : "bg-white/[0.05] border-white/15 text-gray-200"}`}>
                                     <span className="text-[10px] uppercase font-bold opacity-75">Invoices</span>
                                     <strong className={`font-black ${isLight ? "text-amber-700" : "text-[#FBBF24]"}`}>
                                         <AnimatedCounter value={bentoStats.invoices} />
                                     </strong>
                                 </div>
-                                <div className={`px-3.5 py-1.5 rounded-full border flex items-center gap-2 ${isLight ? "bg-slate-50 border-slate-200 text-slate-600" : "bg-[#060B19]/75 border-white/10 text-gray-300"}`}>
+                                <div className={`px-3.5 py-1.5 rounded-full border backdrop-blur-sm flex items-center gap-2 ${isLight ? "bg-white/75 border-slate-200/80 text-slate-600" : "bg-white/[0.05] border-white/15 text-gray-200"}`}>
                                     <span className="text-[10px] uppercase font-bold opacity-75">Users</span>
                                     <strong className={`font-black ${isLight ? "text-emerald-700" : "text-[#34D399]"}`}>
                                         <AnimatedCounter value={Math.max(1, bentoStats.staffAndTickets)} />
@@ -1004,8 +1004,8 @@ export default function AppsDashboardPage() {
                             </div>
                         )}
 
-                        {/* Centered 8-Column App Dock */}
-                        <div className="beraxis-bento-card p-4 sm:p-5 space-y-4">
+                        {/* Centered Responsive Glass App Dock */}
+                        <div className="beraxis-glass-dock p-4 sm:p-6 space-y-5">
                             <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-3 ${isLight ? "border-slate-200" : "border-white/10"}`}>
                                 <div className="flex flex-wrap items-center gap-1.5">
                                     {[
@@ -1036,7 +1036,7 @@ export default function AppsDashboardPage() {
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-x-3 gap-y-3.5">
+                            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-x-3 gap-y-4 sm:gap-x-4 sm:gap-y-5">
                             {displayedApps.filter((app) => {
                                 if (appSearch && !app.name.toLowerCase().includes(appSearch.toLowerCase())) return false;
                                 if (appCategory === "all") return true;
@@ -1052,18 +1052,18 @@ export default function AppsDashboardPage() {
                                     <Link
                                         key={app.name}
                                         href={app.href}
-                                        className="group flex flex-col items-center gap-1.5 focus:outline-none cursor-pointer"
+                                        className="group flex flex-col items-center gap-2 focus:outline-none cursor-pointer"
                                     >
                                         <div
-                                            className={`w-14 h-14 rounded-2xl ${app.color} flex items-center justify-center text-white shadow-lg ${isLight ? "shadow-slate-900/15" : "shadow-black/40"} group-hover:scale-105 transition-transform duration-200 ease-out`}
+                                            className={`w-14 h-14 sm:w-16 sm:h-16 lg:w-[68px] lg:h-[68px] rounded-2xl ${app.color} ring-1 ring-inset ring-white/25 flex items-center justify-center text-white shadow-lg ${isLight ? "shadow-slate-900/15" : "shadow-black/50"} group-hover:scale-105 group-hover:ring-white/45 transition-all duration-200 ease-out`}
                                         >
-                                            <IconComponent className="w-7 h-7 text-white" strokeWidth={1.8} />
+                                            <IconComponent className="w-7 h-7 sm:w-8 sm:h-8 text-white" strokeWidth={1.8} />
                                         </div>
 
-                                        <span className={`text-[11px] font-semibold transition-colors text-center tracking-tight leading-tight ${
+                                        <span className={`text-[11px] sm:text-xs font-semibold transition-colors text-center tracking-tight leading-tight ${
                                             isLight
                                                 ? "text-slate-700 group-hover:text-slate-950"
-                                                : "text-gray-300 group-hover:text-white"
+                                                : "text-gray-200 group-hover:text-white"
                                         }`}>
                                             {app.name}
                                         </span>
@@ -1082,16 +1082,16 @@ export default function AppsDashboardPage() {
                                             reason: "The 25.8M+ Verified B2B Leads Pool & Live Business Scraper is exclusively available on Paid Plans (Standard or Custom Enterprise). Upgrade your subscription to unlock instant lead extraction."
                                         })
                                     }
-                                    className="group flex flex-col items-center gap-1.5 focus:outline-none cursor-pointer relative"
+                                    className="group flex flex-col items-center gap-2 focus:outline-none cursor-pointer relative"
                                     title="Leads Pool is available only on Paid Plans"
                                 >
-                                    <div className="w-14 h-14 rounded-2xl bg-gray-900/80 border-2 border-amber-500/40 flex items-center justify-center text-amber-400 shadow-lg shadow-black/40 group-hover:scale-105 transition-transform duration-200 ease-out relative">
-                                        <Globe className="w-6 h-6 opacity-40" strokeWidth={1.8} />
+                                    <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-[68px] lg:h-[68px] rounded-2xl bg-gray-900/65 backdrop-blur-md border-2 border-amber-500/40 flex items-center justify-center text-amber-400 shadow-lg shadow-black/40 group-hover:scale-105 transition-transform duration-200 ease-out relative">
+                                        <Globe className="w-6 h-6 sm:w-7 sm:h-7 opacity-40" strokeWidth={1.8} />
                                         <div className="absolute -top-1.5 -right-1.5 bg-amber-500 text-black text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-md">
                                             <Lock size={8} /> PAID
                                         </div>
                                     </div>
-                                    <span className="text-[11px] font-medium text-amber-300/80 group-hover:text-amber-300 transition-colors text-center tracking-tight leading-tight">
+                                    <span className="text-[11px] sm:text-xs font-medium text-amber-300/80 group-hover:text-amber-300 transition-colors text-center tracking-tight leading-tight">
                                         Leads Pool 🔒
                                     </span>
                                 </button>
@@ -1111,18 +1111,18 @@ export default function AppsDashboardPage() {
                                         setIsManageAppsModalOpen(true);
                                     }
                                 }}
-                                className="group flex flex-col items-center gap-1.5 focus:outline-none cursor-pointer"
+                                className="group flex flex-col items-center gap-2 focus:outline-none cursor-pointer"
                                 title={isFreePlan ? "Upgrade to unlock more apps" : "Add or remove modules from active company"}
                             >
-                                <div className={`w-14 h-14 rounded-2xl border-2 border-dashed flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-200 ease-out ${
+                                <div className={`w-14 h-14 sm:w-16 sm:h-16 lg:w-[68px] lg:h-[68px] rounded-2xl border-2 border-dashed backdrop-blur-md flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-200 ease-out ${
                                     isLight
-                                        ? "bg-purple-50 border-purple-300 hover:border-purple-500 text-purple-700 shadow-slate-900/10"
-                                        : "bg-gradient-to-br from-purple-900/30 via-[#141b2c] to-indigo-950/30 border-purple-500/50 hover:border-purple-400 text-purple-300 hover:text-white shadow-black/40"
+                                        ? "bg-purple-50/75 border-purple-300 hover:border-purple-500 text-purple-700 shadow-slate-900/10"
+                                        : "bg-white/[0.04] border-purple-400/50 hover:border-purple-300 text-purple-300 hover:text-white shadow-black/40"
                                 }`}>
-                                    <Plus className="w-6 h-6" strokeWidth={2} />
+                                    <Plus className="w-6 h-6 sm:w-7 sm:h-7" strokeWidth={2} />
                                 </div>
-                                <span className={`text-[11px] font-semibold transition-colors text-center tracking-tight leading-tight ${
-                                    isLight ? "text-purple-700 group-hover:text-purple-900" : "text-purple-400 group-hover:text-purple-300"
+                                <span className={`text-[11px] sm:text-xs font-semibold transition-colors text-center tracking-tight leading-tight ${
+                                    isLight ? "text-purple-700 group-hover:text-purple-900" : "text-purple-300 group-hover:text-purple-200"
                                 }`}>
                                     {isFreePlan ? "+ Unlock Apps" : "+ Add Apps"}
                                 </span>
@@ -1131,7 +1131,7 @@ export default function AppsDashboardPage() {
                         </div>
 
                         {/* Compact Collapsible Quickstart Launchpad Bar */}
-                        <div className="beraxis-bento-card px-4 py-2.5 flex items-center justify-between gap-3">
+                        <div className="beraxis-glass-dock px-4 py-2.5 flex items-center justify-between gap-3">
                             <div className={`flex items-center gap-2 text-xs font-bold ${isLight ? "text-slate-700" : "text-gray-300"}`}>
                                 <Sparkles size={14} className="text-[#8B5CF6]" />
                                 <span>Quickstart Launchpad &amp; Blueprint Setup</span>

@@ -117,9 +117,6 @@ export async function POST(req: NextRequest) {
       stripe_webhook_secret: body.stripe_webhook_secret !== undefined ? body.stripe_webhook_secret.trim() : current.stripe_webhook_secret,
       stripe_enabled: body.stripe_enabled !== undefined ? Boolean(body.stripe_enabled) : current.stripe_enabled,
       stripe_mode: body.stripe_mode || ((body.stripe_secret_key || current.stripe_secret_key || "").startsWith("sk_live") ? "live" : "test"),
-      directpay_client_id: body.directpay_client_id !== undefined ? body.directpay_client_id.trim() : current.directpay_client_id,
-      directpay_client_secret: body.directpay_client_secret !== undefined ? body.directpay_client_secret.trim() : current.directpay_client_secret,
-      directpay_enabled: body.directpay_enabled !== undefined ? Boolean(body.directpay_enabled) : current.directpay_enabled
     };
 
     saveGatewayConfig(updated);

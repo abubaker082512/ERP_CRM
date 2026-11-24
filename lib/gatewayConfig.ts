@@ -12,9 +12,6 @@ export interface GatewayConfig {
   stripe_webhook_secret: string;
   stripe_enabled: boolean;
   stripe_mode: "test" | "live";
-  directpay_client_id: string;
-  directpay_client_secret: string;
-  directpay_enabled: boolean;
 }
 
 function isValidStripeSecretKey(key?: string | null): boolean {
@@ -103,9 +100,6 @@ export function loadGatewayConfig(): GatewayConfig {
     stripe_webhook_secret: stripeWH,
     stripe_enabled: true,
     stripe_mode: stripeSK.includes("_live_") ? "live" : "test",
-    directpay_client_id: "",
-    directpay_client_secret: "",
-    directpay_enabled: false
   };
 
   try {
@@ -119,7 +113,6 @@ export function loadGatewayConfig(): GatewayConfig {
         stripe_secret_key: isValidStripeSecretKey(parsed.stripe_secret_key) ? parsed.stripe_secret_key : stripeSK,
         stripe_publishable_key: parsed.stripe_publishable_key || stripePK,
         stripe_webhook_secret: isValidStripeWebhookSecret(parsed.stripe_webhook_secret) ? parsed.stripe_webhook_secret : stripeWH,
-        directpay_enabled: false
       };
     }
   } catch {}

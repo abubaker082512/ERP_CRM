@@ -1481,7 +1481,7 @@ export default function SettingsPage() {
                         rel="noopener noreferrer"
                         className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-center text-xs font-bold text-white transition-colors shadow-md"
                       >
-                        {planTier === "standard" ? "Manage / Renew Plan" : "Buy Standard Plan (DirectPay Card) →"}
+                        {planTier === "standard" ? "Manage / Renew Plan" : "Buy Standard Plan (Creem) →"}
                       </a>
                     </div>
 
@@ -1501,7 +1501,7 @@ export default function SettingsPage() {
                         rel="noopener noreferrer"
                         className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-center text-xs font-bold text-white transition-colors"
                       >
-                        {planTier === "premium" ? "Manage Custom Plan" : "Buy Custom Plan (DirectPay Card) →"}
+                        {planTier === "premium" ? "Manage Custom Plan" : "Buy Custom Plan (Creem) →"}
                       </a>
                     </div>
                   </div>

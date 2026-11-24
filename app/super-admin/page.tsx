@@ -190,14 +190,14 @@ function SuperAdminPageContent() {
         ai_copilot: true,
         pos_terminal: true,
         mrp_manufacturing: true,
-        directpay_card: true,
+        creem_mor: true,
         whatsapp_bot: true,
         hr_payroll: true,
         strict_2fa: false,
         fleet_logistics: true
     });
     const [announcement, setAnnouncement] = useState({
-        message: "DirectPay Card Gateway is actively processing transactions on Beraxis.",
+        message: "Creem Merchant of Record Gateway is actively processing transactions on Beraxis.",
         banner_type: "info",
         is_active: true
     });
@@ -303,11 +303,6 @@ function SuperAdminPageContent() {
     const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
     const [isResetPasswordOpen, setIsResetPasswordOpen] = useState<GlobalUser | null>(null);
     const [isChangePlanOpen, setIsChangePlanOpen] = useState<Workspace | null>(null);
-    const [isTestDirectPayOpen, setIsTestDirectPayOpen] = useState(false);
-    const [directPayTestResult, setDirectPayTestResult] = useState<any>(null);
-    const [directPayClientId, setDirectPayClientId] = useState("pwa_ci_k1qlq54hv4gw5pr0khux");
-    const [directPayClientSecret, setDirectPayClientSecret] = useState("pwa_secret_zp5rai8z02zr3o5sebm1co6uxci58uca");
-    const [directPayEnabled, setDirectPayEnabled] = useState(true);
     const [stripeSecretKey, setStripeSecretKey] = useState("");
     const [stripePublishableKey, setStripePublishableKey] = useState("");
     const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
@@ -769,7 +764,7 @@ function SuperAdminPageContent() {
     const fetchStripeTransactions = async () => {
         setTransactionsLoading(true);
         try {
-            const res = await fetch("/api/admin/paddle/transactions");
+            const res = await fetch("/api/admin/creem/transactions");
             if (res.ok) {
                 const data = await res.json();
                 if (data.success) {
@@ -778,7 +773,7 @@ function SuperAdminPageContent() {
                 }
             }
         } catch (err) {
-            console.error("Failed to fetch Stripe transactions", err);
+            console.error("Failed to fetch Creem transactions", err);
         } finally {
             setTransactionsLoading(false);
         }
@@ -795,9 +790,6 @@ function SuperAdminPageContent() {
                     setStripeWebhookSecret(data.config.stripe_webhook_secret || "");
                     setStripeEnabled(data.config.stripe_enabled !== false);
                     setStripeMode(data.config.stripe_mode || "test");
-                    if (data.config.directpay_client_id) setDirectPayClientId(data.config.directpay_client_id);
-                    if (data.config.directpay_client_secret) setDirectPayClientSecret(data.config.directpay_client_secret);
-                    if (data.config.directpay_enabled !== undefined) setDirectPayEnabled(data.config.directpay_enabled);
                 }
             }
         } catch (err) {
@@ -816,10 +808,7 @@ function SuperAdminPageContent() {
                     stripe_publishable_key: stripePublishableKey,
                     stripe_webhook_secret: stripeWebhookSecret,
                     stripe_enabled: stripeEnabled,
-                    stripe_mode: Boolean((stripeSecretKey || "").includes("_live")) ? "live" : "test",
-                    directpay_client_id: directPayClientId,
-                    directpay_client_secret: directPayClientSecret,
-                    directpay_enabled: directPayEnabled
+                    stripe_mode: Boolean((stripeSecretKey || "").includes("_live")) ? "live" : "test"
                 })
             });
             const data = await res.json();
@@ -841,7 +830,7 @@ function SuperAdminPageContent() {
         setStripeTesting(true);
         setStripeTestResult(null);
         try {
-            const res = await fetch("/api/admin/paddle/transactions");
+            const res = await fetch("/api/admin/creem/transactions");
             const data = await res.json();
             setStripeTestResult({
                 status: res.status,
@@ -1288,38 +1277,6 @@ function SuperAdminPageContent() {
         }
     };
 
-    // ── DIRECTPAY DIAGNOSTIC TEST ─────────────────────────────────────
-    const handleTestDirectPay = async () => {
-        setIsTestDirectPayOpen(true);
-        setDirectPayTestResult(null);
-        try {
-            const res = await fetch("/api/payments/directpay/initiate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    amountInPKR: 100.00,
-                    description: "Beraxis Diagnostics Test",
-                    payer_name: "Super Admin",
-                    email: "diagnostics@beraxis.online"
-                })
-            });
-            const data = await res.json();
-            setDirectPayTestResult({
-                status: res.status,
-                ok: res.ok,
-                data: data,
-                timestamp: new Date().toISOString()
-            });
-        } catch (err: any) {
-            setDirectPayTestResult({
-                status: 500,
-                ok: false,
-                error: err.message,
-                timestamp: new Date().toISOString()
-            });
-        }
-    };
-
     // ── EXPORT CSV HELPER ─────────────────────────────────────────────
     const exportCSV = (type: "workspaces" | "users" | "promos" | "sales" | "payments") => {
         let headers: string[] = [];
@@ -1517,16 +1474,10 @@ function SuperAdminPageContent() {
                                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live 99.98%
                             </span>
                         </div>
-                        <p className="text-slate-500 text-xs mt-1">BERAXIS Command Center · Multi-Tenant Supabase Auth · Creem &amp; Paddle Gateways</p>
+                        <p className="text-slate-500 text-xs mt-1">BERAXIS Command Center · Multi-Tenant Supabase Auth · Creem MoR Gateway</p>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                        <button
-                            onClick={handleTestDirectPay}
-                            className="flex items-center gap-1.5 bg-cyan-50 hover:bg-cyan-100 px-3.5 py-2 rounded-xl text-xs font-bold text-cyan-800 border border-cyan-200 transition-all cursor-pointer"
-                        >
-                            <CreditCard size={14} /> Test DirectPay
-                        </button>
                         <button
                             onClick={() => exportCSV(activeTab === "promocodes" ? "promos" : activeTab === "users" ? "users" : activeTab === "sales" ? "sales" : activeTab === "payments" ? "payments" : "workspaces")}
                             className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 border border-slate-200 transition-all cursor-pointer"
@@ -1636,7 +1587,7 @@ function SuperAdminPageContent() {
                         { label: "Total Users", val: stats?.total_users ?? safeUsers.length, badge: "Supabase", color: "text-[#38BDF8]", bg: "bg-sky-50" },
                         { label: "Paid Subs", val: stats?.paid_subscribers ?? paidPayments.length, badge: "Active", color: "text-[#34D399]", bg: "bg-emerald-50" },
                         { label: "Monthly MRR", val: Number(stats?.total_saas_revenue ?? (stats as any)?.mrr ?? monthlySaaSRevenue ?? 0), prefix: "$", badge: "Recurring", color: "text-[#FBBF24]", bg: "bg-amber-50" },
-                        { label: "DirectPay Card", val: Number(stats?.cc_revenue ?? monthlySaaSRevenue ?? 0), prefix: "$", badge: "Creem/Paddle", color: "text-cyan-600", bg: "bg-cyan-50" },
+                        { label: "Card Revenue", val: Number(stats?.cc_revenue ?? monthlySaaSRevenue ?? 0), prefix: "$", badge: "Creem MoR", color: "text-cyan-600", bg: "bg-cyan-50" },
                         { label: "ERP Volume", val: Number(stats?.platform_revenue ?? (stats as any)?.total_revenue ?? 0), prefix: "$", badge: "Tenant Gross", color: "text-emerald-600", bg: "bg-emerald-50" },
                         { label: "Active Promos", val: safePromocodes.filter(p => p?.status === 'active').length, badge: "Campaigns", color: "text-[#FB7185]", bg: "bg-rose-50" },
                         { label: "API Latency", val: health?.services?.api_server?.latency_ms ?? (health as any)?.latency_ms ?? 18, suffix: "ms", badge: "Healthy", color: "text-indigo-600", bg: "bg-indigo-50" },
@@ -2277,7 +2228,7 @@ function SuperAdminPageContent() {
                     </div>
                 )}
 
-                {/* ── TAB 3: DIRECTPAY CARD SUBSCRIPTIONS ── */}
+                {/* ── TAB 3: CREEM MOR SUBSCRIPTIONS ── */}
                 {activeTab === "payments" && (
                     <div className="space-y-6">
                         {/* Top 3 Stat Cards: Success, Failures, Health */}
@@ -2286,7 +2237,7 @@ function SuperAdminPageContent() {
                                 <div className="flex items-center justify-between mb-1">
                                     <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Succeeded Payments</p>
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                        Live Paddle
+                                        Live Creem
                                     </span>
                                 </div>
                                 <p className="text-3xl font-black text-emerald-400">
@@ -2320,11 +2271,11 @@ function SuperAdminPageContent() {
                                     </span>
                                 </div>
                                 <p className="text-3xl font-black text-purple-400">{(stripeStats?.success_rate_percent ?? 100)}%</p>
-                                <p className="text-xs text-gray-500 mt-1">Active Paddle Production account (BERAXIS)</p>
+                                <p className="text-xs text-gray-500 mt-1">Active Creem Production account (BERAXIS)</p>
                             </div>
                         </div>
 
-                        {/* Paddle Live SaaS Merchant of Record Gateway Card */}
+                        {/* Creem Live SaaS Merchant of Record Gateway Card */}
                         <div className="bg-[#111827] rounded-3xl border border-cyan-500/30 p-6 shadow-2xl space-y-5">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-4">
                                 <div className="flex items-center gap-3">
@@ -2333,7 +2284,7 @@ function SuperAdminPageContent() {
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <h3 className="text-base font-bold text-white">Super Admin SaaS Gateway — Paddle Live (Merchant of Record &amp; Catalog)</h3>
+                                            <h3 className="text-base font-bold text-white">Super Admin SaaS Gateway — Creem Live (Merchant of Record)</h3>
                                             <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                                                 🟢 Live Production
                                             </span>
@@ -2342,18 +2293,18 @@ function SuperAdminPageContent() {
                                             </span>
                                         </div>
                                         <p className="text-xs text-gray-400 mt-0.5">
-                                            Paddle handles global SaaS compliance, multi-currency processing (USD, EUR, GBP), tax &amp; VAT calculation, Apple Pay, Google Pay, Cards, and PayPal.
+                                            Creem handles global SaaS compliance, multi-currency processing (135+ currencies), tax &amp; VAT calculation, Apple Pay, Google Pay, Cards, and PayPal.
                                         </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <a
-                                        href="https://vendors.paddle.com"
+                                        href="https://www.creem.io/dashboard"
                                         target="_blank"
                                         rel="noreferrer"
                                         className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-cyan-600/20 cursor-pointer flex items-center gap-1.5 transition-all"
                                     >
-                                        <span>Paddle Dashboard</span>
+                                        <span>Creem Dashboard</span>
                                         <ExternalLink size={13} />
                                     </a>
                                 </div>
@@ -2362,55 +2313,30 @@ function SuperAdminPageContent() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                                        Live Client-Side Token (Paddle.js Overlay)
+                                        Creem Embed Script
                                     </label>
                                     <input
                                         type="text"
                                         readOnly
-                                        value="live_6645496fe6160096b0d5e7c19fe"
+                                        value="https://www.creem.io/embed.js"
                                         className="w-full bg-[#0B0F19] border border-gray-800 rounded-xl px-4 py-2.5 text-cyan-300 font-mono text-xs outline-none"
                                     />
                                     <p className="text-[10px] text-gray-500 mt-1">
-                                        Used by <code className="text-cyan-300">@paddle/paddle-js</code> on <code className="text-gray-300">/checkout</code> for zero-redirect overlay.
+                                        Loaded globally via <code className="text-cyan-300">CreemScript</code> for 1-click checkout overlays.
                                     </p>
                                 </div>
 
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                                        Paddle Environment Mode &amp; Account
+                                        Creem Environment Mode &amp; Account
                                     </label>
                                     <div className="w-full bg-[#0B0F19]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-gray-300 text-xs flex items-center justify-between">
                                         <span className="font-mono text-emerald-400 font-bold">PRODUCTION (LIVE)</span>
                                         <span className="text-[10px] text-cyan-400 font-bold">● MERCHANT OF RECORD</span>
                                     </div>
                                     <p className="text-[10px] text-gray-500 mt-1">
-                                        All customer card orders are processed on Paddle live servers.
+                                        All customer card &amp; wallet orders are processed on Creem live servers.
                                     </p>
-                                </div>
-                            </div>
-
-                            {/* Catalog Price ID Mapping */}
-                            <div className="pt-2 border-t border-gray-800/80">
-                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                                    Paddle Live Catalog Price IDs (Active Plans)
-                                </label>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                                    <div className="bg-[#0B0F19] p-3 rounded-xl border border-gray-800">
-                                        <div className="text-[10px] text-gray-400 uppercase font-bold">Standard Annual ($12.00/yr)</div>
-                                        <code className="text-[11px] text-cyan-300 font-mono block mt-0.5 truncate">pri_01m5q810bsvet6hvxrd5dj8pcc</code>
-                                    </div>
-                                    <div className="bg-[#0B0F19] p-3 rounded-xl border border-gray-800">
-                                        <div className="text-[10px] text-gray-400 uppercase font-bold">Standard Monthly ($5.00/mo)</div>
-                                        <code className="text-[11px] text-cyan-300 font-mono block mt-0.5 truncate">pri_01m5q7wn7dava1anyfn8sfze9j</code>
-                                    </div>
-                                    <div className="bg-[#0B0F19] p-3 rounded-xl border border-gray-800">
-                                        <div className="text-[10px] text-gray-400 uppercase font-bold">Custom Annual ($448.80/yr)</div>
-                                        <code className="text-[11px] text-cyan-300 font-mono block mt-0.5 truncate">pri_01m5q89px5fjy063g75wp24qtq</code>
-                                    </div>
-                                    <div className="bg-[#0B0F19] p-3 rounded-xl border border-gray-800">
-                                        <div className="text-[10px] text-gray-400 uppercase font-bold">Custom Monthly ($46.80/mo)</div>
-                                        <code className="text-[11px] text-cyan-300 font-mono block mt-0.5 truncate">pri_01m5q87843ar79ed43rq07k5hz</code>
-                                    </div>
                                 </div>
                             </div>
 
@@ -2424,14 +2350,6 @@ function SuperAdminPageContent() {
                                             https://www.beraxis.online/api/payments/creem/webhook
                                         </code>
                                     </div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
-                                            Paddle Webhook Destination URL (Paste in Paddle Dashboard &gt; Developer tools &gt; Notifications)
-                                        </label>
-                                        <code className="text-xs text-emerald-400 font-mono bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
-                                            https://beraxis.online/api/payments/paddle/webhook
-                                        </code>
-                                    </div>
                                 </div>
                                 <button
                                     type="button"
@@ -2442,23 +2360,23 @@ function SuperAdminPageContent() {
                                     {stripeTesting ? (
                                         <>
                                             <div className="w-3.5 h-3.5 border-2 border-cyan-300 border-t-transparent rounded-full animate-spin"></div>
-                                            Testing Paddle API...
+                                            Syncing Creem Feed...
                                         </>
                                     ) : (
                                         <>
-                                            🧪 Test Paddle API Connection
+                                            🧪 Test Creem Feed Connection
                                         </>
                                     )}
                                 </button>
                             </div>
                         </div>
 
-                        {/* Real-Time Stripe Transactions Table (Success & Failures) */}
+                        {/* Real-Time Creem Transactions Table (Success & Failures) */}
                         <div className="bg-[#111827] rounded-3xl border border-gray-800 overflow-hidden shadow-2xl">
                             <div className="p-6 border-b border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <h2 className="text-lg font-black text-white">Paddle Live Transaction Feed</h2>
+                                        <h2 className="text-lg font-black text-white">Creem Live Transaction Feed</h2>
                                         <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30">
                                             Success &amp; Failures
                                         </span>
@@ -2557,7 +2475,7 @@ function SuperAdminPageContent() {
                                             <tr>
                                                 <td colSpan={7} className="px-6 py-12 text-center text-gray-400 text-xs font-mono">
                                                     <div className="inline-block w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mr-2 align-middle"></div>
-                                                    Syncing transactions live from Paddle API...
+                                                    Syncing transactions live from Creem feed...
                                                 </td>
                                             </tr>
                                         ) : (Array.isArray(stripeTransactions) ? stripeTransactions : []).filter(t => {
@@ -2638,7 +2556,7 @@ function SuperAdminPageContent() {
                                                                         </span>
                                                                     )}
                                                                     <span className="text-[10px] text-gray-500 font-mono">
-                                                                        {tx.payment_method || "Paddle"}
+                                                                        {tx.payment_method || "Creem MoR"}
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -2910,10 +2828,10 @@ function SuperAdminPageContent() {
                                     onToggle={() => handleToggleFlag("ai_copilot")} 
                                 />
                                 <FlagToggle 
-                                    label="DirectPay Card Processing Gateway" 
-                                    desc="Live DirectPay Card PWA gateway for SaaS subscription checkouts" 
-                                    enabled={Boolean(featureFlags?.directpay_card)} 
-                                    onToggle={() => handleToggleFlag("directpay_card")} 
+                                    label="Creem Merchant of Record Gateway" 
+                                    desc="Live Creem MoR gateway for SaaS subscription checkouts" 
+                                    enabled={Boolean(featureFlags?.creem_mor ?? true)} 
+                                    onToggle={() => handleToggleFlag("creem_mor")} 
                                 />
                                 <FlagToggle 
                                     label="Retail Point-of-Sale (Touch Cashier)" 
@@ -3403,7 +3321,7 @@ function SuperAdminPageContent() {
                                 <div className="space-y-3">
                                     <HealthRow label="FastAPI App Engine (Render)" status="Operational" latency="18ms" uptime="99.98%" />
                                     <HealthRow label="Supabase PostgREST & Database" status={health?.services?.supabase_database?.status || "Operational"} latency={`${health?.services?.supabase_database?.latency_ms ?? 12}ms`} uptime="99.99%" />
-                                    <HealthRow label="DirectPay Card Gateway" status="Active" latency="32ms" uptime="Card-Only PWA" />
+                                    <HealthRow label="Creem Merchant of Record" status="Active" latency="28ms" uptime="135+ Currencies" />
                                     <HealthRow label="Supabase Auth & Multi-Tenant RLS" status="Operational" latency="24ms" uptime="Active Isolation" />
                                     <HealthRow label="AI Lead Generator Engine" status="Operational" latency="45ms" uptime="Gemini 2.5 Flash" />
                                 </div>
@@ -4080,26 +3998,25 @@ function SuperAdminPageContent() {
                     <div className="bg-[#141C2E] border border-purple-500/30 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 text-white">
                         <div className="flex items-center justify-between border-b border-gray-800 pb-3">
                             <h3 className="text-base font-bold flex items-center gap-2 text-purple-300">
-                                <Globe size={18} /> Paddle Live API Connection Test
+                                <Globe size={18} /> Creem MoR Feed Connection Test
                             </h3>
                             <button onClick={() => setIsTestStripeOpen(false)}><X size={18}/></button>
                         </div>
 
                         <div className="space-y-3">
                             <div className="bg-[#0F172A] p-3.5 rounded-xl border border-gray-800 text-xs font-mono space-y-1">
-                                <p className="text-gray-400">Target Key: <span className="text-purple-300">{stripeSecretKey ? stripeSecretKey.slice(0, 12) + "..." : "Not Configured"}</span></p>
-                                <p className="text-gray-400">Endpoint: <span className="text-emerald-400 font-bold">api.paddle.com (Paddle Node SDK v2)</span></p>
-                                <p className="text-gray-400">Protocol: <span className="text-cyan-300">Paddle Live REST API (TLS 1.3)</span></p>
+                                <p className="text-gray-400">Endpoint: <span className="text-emerald-400 font-bold">/api/admin/creem/transactions</span></p>
+                                <p className="text-gray-400">Gateway: <span className="text-cyan-300">Creem Merchant of Record (MoR)</span></p>
                             </div>
 
                             {stripeTesting ? (
                                 <div className="p-8 text-center text-gray-400 text-xs flex items-center justify-center gap-2">
-                                    <RefreshCw className="animate-spin text-purple-400" size={16} /> Connecting to Paddle API &amp; verifying credentials...
+                                    <RefreshCw className="animate-spin text-purple-400" size={16} /> Syncing Creem transaction feed...
                                 </div>
                             ) : stripeTestResult ? (
                                 <div className={`p-4 rounded-xl border text-xs font-mono ${stripeTestResult.ok ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" : "bg-red-500/10 border-red-500/30 text-red-300"}`}>
                                     <div className="flex items-center justify-between mb-2">
-                                        <p className="font-bold">{stripeTestResult.ok ? "✅ PADDLE CONNECTED" : "❌ CONNECTION FAILED"}</p>
+                                        <p className="font-bold">{stripeTestResult.ok ? "✅ CREEM FEED CONNECTED" : "❌ CONNECTION FAILED"}</p>
                                         <span className="text-[10px] px-2 py-0.5 rounded bg-black/40 font-mono">HTTP {stripeTestResult.status}</span>
                                     </div>
                                     <pre className="overflow-x-auto text-[11px] p-2 bg-black/40 rounded-lg whitespace-pre-wrap">
@@ -4111,46 +4028,6 @@ function SuperAdminPageContent() {
 
                         <div className="flex justify-end pt-2">
                             <button onClick={() => setIsTestStripeOpen(false)} className="bg-gray-800 hover:bg-gray-700 text-white px-5 py-2 rounded-xl text-xs font-bold cursor-pointer">
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {isTestDirectPayOpen && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[99999] p-4 animate-in fade-in">
-                    <div className="bg-[#141C2E] border border-cyan-500/30 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 text-white">
-                        <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-                            <h3 className="text-base font-bold flex items-center gap-2 text-cyan-300">
-                                <CreditCard size={18} /> DirectPay Card Gateway Ping & Diagnostic
-                            </h3>
-                            <button onClick={() => setIsTestDirectPayOpen(false)}><X size={18}/></button>
-                        </div>
-
-                        <div className="space-y-3">
-                            <div className="bg-[#0F172A] p-3.5 rounded-xl border border-gray-800 text-xs font-mono space-y-1">
-                                <p className="text-gray-400">Client ID: <span className="text-cyan-300">pwa_ci_k1qlq54hv4gw5pr0khux</span></p>
-                                <p className="text-gray-400">Mode: <span className="text-emerald-400 font-bold">Card-Only (No JazzCash / EasyPaisa)</span></p>
-                                <p className="text-gray-400">Security: <span className="text-purple-300">HMAC-SHA256 Checksum Signature</span></p>
-                            </div>
-
-                            {directPayTestResult ? (
-                                <div className={`p-4 rounded-xl border text-xs font-mono ${directPayTestResult.ok ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" : "bg-red-500/10 border-red-500/30 text-red-300"}`}>
-                                    <p className="font-bold mb-2">HTTP {directPayTestResult.status} · {directPayTestResult.ok ? "SUCCESS" : "TEST RESULT"}</p>
-                                    <pre className="overflow-x-auto text-[11px] p-2 bg-black/40 rounded-lg whitespace-pre-wrap">
-                                        {JSON.stringify(directPayTestResult.data || directPayTestResult.error, null, 2)}
-                                    </pre>
-                                </div>
-                            ) : (
-                                <div className="p-8 text-center text-gray-400 text-xs flex items-center justify-center gap-2">
-                                    <RefreshCw className="animate-spin" size={16} /> Generating test checkout session...
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex justify-end pt-2">
-                            <button onClick={() => setIsTestDirectPayOpen(false)} className="bg-gray-800 hover:bg-gray-700 text-white px-5 py-2 rounded-xl text-xs font-bold cursor-pointer">
                                 Close
                             </button>
                         </div>

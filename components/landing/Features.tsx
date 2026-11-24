@@ -120,8 +120,8 @@ const platformComparison = [
         winner: "beraxis"
     },
     {
-        feature: "Crypto & Card Payments",
-        beraxis: "DirectPay Card + 30+ Cryptos Built-in",
+        feature: "Global Card & Wallet Payments",
+        beraxis: "Creem Merchant of Record (135+ Currencies)",
         others: "Requires Third-Party Addons & Extra Fees",
         winner: "beraxis"
     },
