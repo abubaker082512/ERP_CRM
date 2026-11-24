@@ -1,8 +1,9 @@
 "use client";
 import { fetchAPI } from '@/lib/api';
+import { useBranchContext } from '@/lib/branchContext';
 import { useState, useEffect } from 'react';
 import CRMHeader from '@/components/crm/CRMHeader';
-import { Plus, Settings, Star, Clock, Trophy, XCircle, Activity, Filter, Layers, ListFilter } from 'lucide-react';
+import { Plus, Star, Clock, Trophy, XCircle, Activity, Layers, ListFilter, ChevronRight, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import ActivityHistory from '@/components/shared/ActivityHistory';
 
@@ -27,97 +28,145 @@ const initialStages = [
 ];
 
 export default function CRMPage() {
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const companyId = activeBranch?.id || "default";
     const [leads, setLeads] = useState<Lead[]>([]);
     const [activeView, setActiveView] = useState<'pipeline' | 'leads' | 'activity'>('pipeline');
     const [tableFilter, setTableFilter] = useState<'all' | 'lead' | 'opportunity' | 'won' | 'lost'>('all');
     const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+    const [newDealStage, setNewDealStage] = useState('New');
     const [newOppName, setNewOppName] = useState('');
     const [newOppRevenue, setNewOppRevenue] = useState('');
+    const [draggedOppId, setDraggedOppId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const persistLeads = (next: Lead[]) => {
+        setLeads(next);
+        try {
+            localStorage.setItem(getEntityStorageKey("crm_leads"), JSON.stringify(next));
+        } catch {}
+    };
+
     const fetchLeads = async () => {
+        const storageKey = getEntityStorageKey("crm_leads");
+        let localList: Lead[] = [];
+        try {
+            const raw = localStorage.getItem(storageKey);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) localList = parsed;
+            }
+        } catch {}
+        if (localList.length > 0) setLeads(localList);
+
+        try {
+            const res = await fetch(`/api/crm/leads?company_id=${encodeURIComponent(companyId)}`, { cache: "no-store" });
+            if (res.ok) {
+                const data = await res.json();
+                const apiList: Lead[] = Array.isArray(data?.leads) ? data.leads : [];
+                if (apiList.length > 0) {
+                    const merged = [...localList];
+                    apiList.forEach((item) => {
+                        if (!merged.some((m) => m.id === item.id)) merged.push(item);
+                    });
+                    persistLeads(merged);
+                }
+            }
+        } catch {}
+
         try {
             const res = await fetchAPI("/leads");
             if (res.ok) {
                 const data = await res.json();
-                setLeads(Array.isArray(data) ? data : []);
+                if (Array.isArray(data) && data.length > 0) {
+                    const merged = [...localList];
+                    data.forEach((item: Lead) => {
+                        if (!merged.some((m) => m.id === item.id)) merged.push(item);
+                    });
+                    persistLeads(merged);
+                }
             }
-        } catch (error) {
-            console.error("Failed to fetch leads", error);
-        } finally {
+        } catch {} finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
         fetchLeads();
-    }, []);
+    }, [companyId]);
 
-    const handleAddOpportunity = async () => {
+    const handleAddOpportunity = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!newOppName.trim()) return;
 
-        try {
-            const res = await fetchAPI("/leads", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: newOppName,
-                    expected_revenue: parseFloat(newOppRevenue) || 0,
-                    status: 'New',
-                    type: 'opportunity'
-                })
-            });
+        const created: Lead = {
+            id: `DEAL-${Date.now()}`,
+            name: newOppName.trim(),
+            expected_revenue: parseFloat(newOppRevenue) || 0,
+            status: newDealStage || 'New',
+            type: activeView === 'leads' ? 'lead' : 'opportunity',
+            probability: newDealStage === 'Won' ? 100 : newDealStage === 'Proposition' ? 70 : newDealStage === 'Qualified' ? 40 : 20,
+            priority: 2,
+            company_name: activeBranch?.name || '',
+        };
 
-            if (res.ok) {
-                const newLead = await res.json();
-                setLeads([newLead, ...leads]);
-                setNewOppName('');
-                setNewOppRevenue('');
-                setIsNewModalOpen(false);
-            }
-        } catch (error) {
-            console.error("Failed to create opportunity", error);
-        }
+        const next = [created, ...leads];
+        persistLeads(next);
+        setNewOppName('');
+        setNewOppRevenue('');
+        setIsNewModalOpen(false);
+
+        fetch('/api/crm/leads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...created, company_id: companyId }),
+        }).catch(() => {});
+
+        fetchAPI("/leads", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(created),
+        }).catch(() => {});
     };
 
     const getStageTotal = (stageId: string) => {
         return leads
-            .filter(o => o.status?.toLowerCase() === stageId.toLowerCase() && o.type === 'opportunity')
+            .filter(o => o.status?.toLowerCase() === stageId.toLowerCase())
             .reduce((sum, o) => sum + (o.expected_revenue || 0), 0);
     };
 
-    const handleDragStart = (e: React.DragEvent, oppId: string) => {
-        e.dataTransfer.setData('opp_id', oppId);
-    };
-
-    const handleDrop = async (e: React.DragEvent, newStageId: string) => {
-        e.preventDefault();
-        const oppId = e.dataTransfer.getData('opp_id');
-        if (!oppId) return;
-
+    const moveDealStage = (oppId: string, newStageId: string) => {
         const opp = leads.find(o => o.id === oppId);
         if (!opp || opp.status === newStageId) return;
 
-        // Optimistic UI update
-        const originalStage = opp.status;
-        setLeads(prev => prev.map(o => o.id === oppId ? { ...o, status: newStageId } : o));
+        const next = leads.map(o => o.id === oppId ? { ...o, status: newStageId } : o);
+        persistLeads(next);
 
-        try {
-            const res = await fetchAPI(`/leads/${oppId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    name: opp.name, 
-                    status: newStageId, 
-                    type: opp.type 
-                })
-            });
+        fetch('/api/crm/leads', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...opp, status: newStageId, company_id: companyId }),
+        }).catch(() => {});
 
-            if (!res.ok) throw new Error("Failed to update stage");
-        } catch (error) {
-            setLeads(prev => prev.map(o => o.id === oppId ? { ...o, status: originalStage } : o));
-            alert("Failed to move opportunity.");
-        }
+        fetchAPI(`/leads/${oppId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: opp.name, status: newStageId, type: opp.type }),
+        }).catch(() => {});
+    };
+
+    const handleDragStart = (e: React.DragEvent, oppId: string) => {
+        setDraggedOppId(oppId);
+        e.dataTransfer.setData('opp_id', oppId);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDrop = (e: React.DragEvent, newStageId: string) => {
+        e.preventDefault();
+        const oppId = e.dataTransfer.getData('opp_id') || draggedOppId;
+        setDraggedOppId(null);
+        if (!oppId) return;
+        moveDealStage(oppId, newStageId);
     };
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -179,7 +228,11 @@ export default function CRMPage() {
                     </button>
                 </div>
                 <button 
-                    onClick={() => setIsNewModalOpen(true)} 
+                    onClick={() => {
+                        setActiveView('pipeline');
+                        setNewDealStage('New');
+                        setIsNewModalOpen(true);
+                    }} 
                     className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-purple-900/20 transition-all cursor-pointer"
                 >
                     <Plus size={18} /> New {activeView === 'leads' ? 'Lead' : 'Opportunity'}
@@ -211,9 +264,10 @@ export default function CRMPage() {
                                         <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
                                             <button
                                                 onClick={() => {
-                                                    if (stage.id === 'New') setIsNewModalOpen(true);
+                                                    setNewDealStage(stage.id);
+                                                    setIsNewModalOpen(true);
                                                 }}
-                                                className="text-gray-400 hover:text-white p-1"
+                                                className="text-gray-400 hover:text-white p-1 cursor-pointer"
                                                 title="Add to column"
                                             >
                                                 <Plus size={16} />
@@ -235,12 +289,13 @@ export default function CRMPage() {
                                     {/* Opportunities Container */}
                                     <div className="flex-1 overflow-y-auto space-y-3 px-1 pb-2">
                                         {/* New Opportunity Form (Inline) */}
-                                        {stage.id === 'New' && isNewModalOpen && (
-                                            <div className="bg-[#1E293B] rounded-xl border border-purple-500/50 p-4 shadow-xl animate-in fade-in slide-in-from-top-2">
+                                        {stage.id === newDealStage && isNewModalOpen && (
+                                            <form onSubmit={handleAddOpportunity} className="bg-[#1E293B] rounded-xl border border-purple-500/50 p-4 shadow-xl animate-in fade-in slide-in-from-top-2">
                                                 <div className="mb-3">
                                                     <label className="text-xs text-purple-400 font-medium mb-1 block">Organization / Lead Name <span className="text-purple-400">*</span></label>
                                                     <input
                                                         type="text"
+                                                        required
                                                         value={newOppName}
                                                         onChange={(e) => setNewOppName(e.target.value)}
                                                         placeholder="e.g. Acme Corp Enterprise Deal"
@@ -264,31 +319,36 @@ export default function CRMPage() {
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex gap-2">
                                                         <button
-                                                            onClick={handleAddOpportunity}
-                                                            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all"
+                                                            type="submit"
+                                                            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer"
                                                         >
                                                             Add
                                                         </button>
                                                         <button
+                                                            type="button"
                                                             onClick={() => setIsNewModalOpen(false)}
-                                                            className="bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded-lg text-xs font-medium uppercase"
+                                                            className="bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded-lg text-xs font-medium uppercase cursor-pointer"
                                                         >
                                                             Cancel
                                                         </button>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </form>
                                         )}
 
                                         {/* Opportunity Cards */}
-                                        {stageOpps.map((opp) => (
+                                        {stageOpps.map((opp) => {
+                                            const stageIdx = initialStages.findIndex(s => s.id.toLowerCase() === stage.id.toLowerCase());
+                                            const prevStage = stageIdx > 0 ? initialStages[stageIdx - 1].id : null;
+                                            const nextStage = stageIdx < initialStages.length - 1 ? initialStages[stageIdx + 1].id : null;
+                                            return (
                                             <div 
                                                 key={opp.id} 
                                                 draggable
                                                 onDragStart={(e) => handleDragStart(e, opp.id)}
                                                 className="block galaxy-card !p-3.5 !rounded-xl !bg-white/[0.07] hover:!bg-white/[0.12] cursor-grab active:cursor-grabbing group relative shadow-md transition-all border border-white/5 hover:border-purple-500/40"
                                             >
-                                                <Link href={`/crm/${opp.id}`} className="block">
+                                                <Link href={`/crm/${opp.id}`} draggable={false} className="block">
                                                     <div className="flex justify-between items-start mb-1.5">
                                                         <h4 className="text-sm font-semibold text-gray-100 truncate pr-2 group-hover:text-purple-400 transition-colors">
                                                             {opp.name}
@@ -303,20 +363,43 @@ export default function CRMPage() {
                                                     <div className="text-sm text-gray-200 font-bold mb-2">
                                                         ${(opp.expected_revenue || 0).toLocaleString()}
                                                     </div>
+                                                </Link>
 
-                                                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
-                                                        <div className="flex gap-0.5">
-                                                            {[1, 2, 3].map(i => (
-                                                                <Star key={i} size={12} className={i <= (opp.priority || 0) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"} />
-                                                            ))}
-                                                        </div>
+                                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
+                                                    <div className="flex gap-0.5">
+                                                        {[1, 2, 3].map(i => (
+                                                            <Star key={i} size={12} className={i <= (opp.priority || 0) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"} />
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        {prevStage && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => { e.stopPropagation(); moveDealStage(opp.id, prevStage); }}
+                                                                title={`Move back to ${prevStage}`}
+                                                                className="p-1 rounded bg-white/5 hover:bg-white/15 text-gray-300 cursor-pointer"
+                                                            >
+                                                                <ChevronLeft size={12} />
+                                                            </button>
+                                                        )}
                                                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${getStatusBadge(opp.status)}`}>
                                                             {opp.status}
                                                         </span>
+                                                        {nextStage && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => { e.stopPropagation(); moveDealStage(opp.id, nextStage); }}
+                                                                title={`Advance to ${nextStage}`}
+                                                                className="p-1 rounded bg-white/5 hover:bg-white/15 text-gray-300 cursor-pointer"
+                                                            >
+                                                                <ChevronRight size={12} />
+                                                            </button>
+                                                        )}
                                                     </div>
-                                                </Link>
+                                                </div>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
 
                                         {stageOpps.length === 0 && !isNewModalOpen && (
                                             <div className="py-8 text-center border border-dashed border-white/5 rounded-xl text-xs text-gray-500">
