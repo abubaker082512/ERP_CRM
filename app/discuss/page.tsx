@@ -1,22 +1,32 @@
 "use client";
-import { fetchAPI } from "@/lib/api";
-import { useState, useEffect, useRef, useCallback } from "react";
-import AppHeader from "@/components/layout/AppHeader";
-import {
-  Hash, MessageSquare, Send, Users, Plus, X, Smile,
-  Search, ChevronDown, Circle, MoreHorizontal, Trash2,
-  AtSign, Bell, Settings, Lock, Phone, Video, User,
-  CheckCheck, Loader2
-} from "lucide-react";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+import { useState, useEffect, useRef } from "react";
+import AppHeader from "@/components/layout/AppHeader";
+import { useBranchContext } from "@/lib/branchContext";
+import {
+  Hash,
+  MessageSquare,
+  Send,
+  Users,
+  Plus,
+  X,
+  Smile,
+  Search,
+  ChevronDown,
+  Trash2,
+  Lock,
+  UserPlus,
+  UserMinus,
+  Check,
+  Shield,
+} from "lucide-react";
 
 interface Channel {
   id: string;
   name: string;
   description?: string;
-  channel_type: "channel" | "dm";
-  members?: string[];
+  channel_type: "channel" | "group" | "dm";
+  members?: string[]; // array of member emails or IDs
 }
 
 interface Message {
@@ -25,7 +35,6 @@ interface Message {
   body: string;
   author_name: string;
   author_email?: string;
-  author_id?: string;
   created_at: string;
 }
 
@@ -33,18 +42,21 @@ interface Member {
   id: string;
   name: string;
   email: string;
+  role?: string;
   online?: boolean;
 }
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const EMOJI_QUICK = ["👍", "❤️", "😂", "🎉", "🙏", "🔥", "✅", "👀"];
 
 function avatarColor(name: string) {
   const colors = [
-    "bg-purple-600", "bg-blue-600", "bg-green-600",
-    "bg-pink-600", "bg-orange-500", "bg-teal-600",
-    "bg-red-600", "bg-indigo-600",
+    "bg-purple-600",
+    "bg-blue-600",
+    "bg-green-600",
+    "bg-pink-600",
+    "bg-orange-500",
+    "bg-teal-600",
+    "bg-indigo-600",
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -63,716 +75,622 @@ function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg"
 function formatTime(iso: string) {
   const d = new Date(iso);
   const now = new Date();
-  const isToday = d.toDateString() === now.toDateString();
-  if (isToday) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (d.toDateString() === now.toDateString()) {
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
   return d.toLocaleDateString([], { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// ─── Message Component ────────────────────────────────────────────────────────
-
-function MessageBubble({
-  msg,
-  isMe,
-  showAvatar,
-  onDelete,
-  onReact,
-}: {
-  msg: Message;
-  isMe: boolean;
-  showAvatar: boolean;
-  onDelete: (id: string) => void;
-  onReact: (msgId: string, emoji: string) => void;
-}) {
-  const [hover, setHover] = useState(false);
-  const [showEmoji, setShowEmoji] = useState(false);
-
-  return (
-    <div
-      className={`group flex gap-3 px-4 py-1 hover:bg-white/[0.02] transition-colors relative ${isMe ? "flex-row-reverse" : ""}`}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => { setHover(false); setShowEmoji(false); }}
-    >
-      {/* Avatar */}
-      <div className="w-9 shrink-0">
-        {showAvatar && <Avatar name={msg.author_name} />}
-      </div>
-
-      {/* Content */}
-      <div className={`flex flex-col max-w-[72%] ${isMe ? "items-end" : "items-start"}`}>
-        {showAvatar && (
-          <div className={`flex items-baseline gap-2 mb-1 ${isMe ? "flex-row-reverse" : ""}`}>
-            <span className="text-[13px] font-bold text-gray-200">{msg.author_name}</span>
-            <span className="text-[11px] text-gray-600">{formatTime(msg.created_at)}</span>
-          </div>
-        )}
-        <div className={`relative group/bubble`}>
-          <div className={`px-4 py-2.5 rounded-2xl text-[14px] leading-relaxed whitespace-pre-wrap break-words shadow-sm transition-all ${
-            isMe
-              ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-tr-sm"
-              : "bg-[#1E293B] text-gray-200 border border-white/5 rounded-tl-sm"
-          }`}>
-            {msg.body}
-          </div>
-          {!showAvatar && (
-            <span className={`absolute -bottom-5 text-[10px] text-gray-600 ${isMe ? "right-1" : "left-1"} opacity-0 group-hover/bubble:opacity-100 transition-opacity whitespace-nowrap`}>
-              {formatTime(msg.created_at)}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Hover Actions */}
-      {hover && (
-        <div className={`absolute top-0 ${isMe ? "left-4" : "right-4"} flex items-center gap-1 bg-[#1E293B] border border-white/10 rounded-xl px-2 py-1 shadow-lg z-10`}>
-          <button onClick={() => setShowEmoji(v => !v)}
-            className="text-gray-400 hover:text-yellow-400 p-1 rounded-lg hover:bg-white/5 transition-colors" title="React">
-            <Smile size={14} />
-          </button>
-          {isMe && (
-            <button onClick={() => onDelete(msg.id)}
-              className="text-gray-400 hover:text-red-400 p-1 rounded-lg hover:bg-white/5 transition-colors" title="Delete">
-              <Trash2 size={14} />
-            </button>
-          )}
-          {showEmoji && (
-            <div className="absolute top-8 right-0 bg-[#0F172A] border border-white/10 rounded-xl p-2 flex gap-1 shadow-xl z-20">
-              {EMOJI_QUICK.map(e => (
-                <button key={e} onClick={() => { onReact(msg.id, e); setShowEmoji(false); }}
-                  className="text-lg hover:scale-125 transition-transform p-0.5">{e}</button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Main Page ───────────────────────────────────────────────────────────────
-
 export default function DiscussPage() {
-  // State
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const companyId = activeBranch?.id || "default";
+
   const [channels, setChannels] = useState<Channel[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMsg, setNewMsg] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string }>({
+    id: "USR-001",
+    name: "Workspace User",
+    email: "user@company.com",
+  });
+
+  // Create Channel / Specific Group Modal
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newChannelName, setNewChannelName] = useState("");
   const [newChannelDesc, setNewChannelDesc] = useState("");
-  const [createLoading, setCreateLoading] = useState(false);
-  const [createError, setCreateError] = useState("");
-  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string } | null>(null);
-  const [lastMessageTime, setLastMessageTime] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [membersExpanded, setMembersExpanded] = useState(true);
+  const [newChannelType, setNewChannelType] = useState<"channel" | "group">("group");
+  const [selectedNewMembers, setSelectedNewMembers] = useState<string[]>([]);
+
+  // Manage Channel Members Modal (Add / Remove)
+  const [isManageMembersOpen, setIsManageMembersOpen] = useState(false);
+  const [quickMemberName, setQuickMemberName] = useState("");
+  const [quickMemberEmail, setQuickMemberEmail] = useState("");
+
   const [channelsExpanded, setChannelsExpanded] = useState(true);
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [groupsExpanded, setGroupsExpanded] = useState(true);
+  const [membersExpanded, setMembersExpanded] = useState(true);
+  const [hoverMsgId, setHoverMsgId] = useState<string | null>(null);
+  const [emojiMsgId, setEmojiMsgId] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // ─── Bootstrap ───────────────────────────────────────────────────────────
 
   useEffect(() => {
-    // Load current user from localStorage
+    let me = { id: "USR-001", name: "Workspace User", email: "user@company.com" };
     try {
-      const stored = localStorage.getItem("auth_data") || localStorage.getItem("user_data");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const name = parsed.name || parsed.user?.name || parsed.email?.split("@")[0] || "You";
-        setCurrentUser({ id: parsed.id || parsed.user?.id || "", email: parsed.email || parsed.user?.email || "", name });
+      const raw = localStorage.getItem("user") || localStorage.getItem("auth_data") || localStorage.getItem("user_data");
+      if (raw) {
+        const p = JSON.parse(raw);
+        const email = p.email || p.user?.email || "user@company.com";
+        const name = p.name || p.user?.name || p.user_metadata?.full_name || email.split("@")[0];
+        me = { id: p.id || p.user?.id || "USR-001", name, email };
       }
-    } catch { }
+    } catch {}
+    setCurrentUser(me);
 
-    loadChannels();
-    loadMembers();
+    // Load team members from entity-scoped team_members + API
+    const DUMMY = new Set(["abubaker@galaxy.com", "elena.rostova@galaxy.com", "alex.vance@galaxy.com", "sarah.j@galaxy.com"]);
+    let loadedMembers: Member[] = [];
+    try {
+      const rawTeam = localStorage.getItem(getEntityStorageKey("team_members"));
+      if (rawTeam) {
+        const parsed = JSON.parse(rawTeam);
+        if (Array.isArray(parsed)) {
+          loadedMembers = parsed
+            .filter((m: any) => m.email && (!DUMMY.has(m.email.toLowerCase()) || me.email.toLowerCase() === "abubaker@galaxy.com"))
+            .map((m: any) => ({ id: m.id, name: m.name, email: m.email, role: m.role, online: m.status === "active" }));
+        }
+      }
+    } catch {}
+    if (!loadedMembers.some((m) => m.email.toLowerCase() === me.email.toLowerCase())) {
+      loadedMembers.unshift({ id: me.id, name: me.name, email: me.email, role: "Owner", online: true });
+    }
+    setMembers(loadedMembers);
 
-    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
-  }, []);
+    fetch(`/api/team/members?company_id=${encodeURIComponent(companyId)}&owner_name=${encodeURIComponent(me.name)}&owner_email=${encodeURIComponent(me.email)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.success && Array.isArray(d.allMembers) && d.allMembers.length > 0) {
+          const clean = d.allMembers
+            .filter((m: any) => m.email && (!DUMMY.has(m.email.toLowerCase()) || me.email.toLowerCase() === "abubaker@galaxy.com"))
+            .map((m: any) => ({ id: m.id, name: m.name, email: m.email, role: m.role, online: m.status === "active" }));
+          if (clean.length > 0) setMembers(clean);
+        }
+      })
+      .catch(() => {});
 
-  // ─── Auto-scroll on new messages ─────────────────────────────────────────
+    // Load channels
+    const defaultChannels: Channel[] = [
+      { id: "CH-GENERAL", name: "general", description: "Company-wide announcements & operations", channel_type: "channel", members: [me.email] },
+      { id: "CH-FLOOR", name: "call-floor-ops", description: "Live call center floor & escalations", channel_type: "group", members: [me.email] },
+    ];
+    try {
+      const rawCh = localStorage.getItem(getEntityStorageKey("discuss_channels"));
+      if (rawCh) {
+        const parsed = JSON.parse(rawCh);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setChannels(parsed);
+          setActiveChannel(parsed[0]);
+          return;
+        }
+      }
+    } catch {}
+    setChannels(defaultChannels);
+    setActiveChannel(defaultChannels[0]);
+    try {
+      localStorage.setItem(getEntityStorageKey("discuss_channels"), JSON.stringify(defaultChannels));
+    } catch {}
+  }, [companyId]);
+
+  // Load messages when activeChannel changes
+  useEffect(() => {
+    if (!activeChannel) return;
+    const msgKey = getEntityStorageKey(`discuss_msgs_${activeChannel.id}`);
+    try {
+      const raw = localStorage.getItem(msgKey);
+      setMessages(raw ? JSON.parse(raw) : []);
+    } catch {
+      setMessages([]);
+    }
+  }, [activeChannel?.id, companyId]);
 
   useEffect(() => {
-    if (messages.length) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    if (messages.length > 0) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  // ─── Polling for new messages ─────────────────────────────────────────────
+  const persistChannels = (next: Channel[]) => {
+    setChannels(next);
+    try {
+      localStorage.setItem(getEntityStorageKey("discuss_channels"), JSON.stringify(next));
+    } catch {}
+  };
 
-  const startPolling = useCallback((channelId: string) => {
-    if (pollingRef.current) clearInterval(pollingRef.current);
-    pollingRef.current = setInterval(async () => {
-      const url = lastMessageTime
-        ? `/discuss/channels/${channelId}/messages?after=${encodeURIComponent(lastMessageTime)}&limit=50`
-        : `/discuss/channels/${channelId}/messages?limit=100`;
-      try {
-        const res = await fetchAPI(url);
-        if (!res.ok) return;
-        const newMsgs: Message[] = await res.json();
-        if (newMsgs.length > 0) {
-          setMessages(prev => {
-            const existingIds = new Set(prev.map(m => m.id));
-            const fresh = newMsgs.filter(m => !existingIds.has(m.id));
-            if (fresh.length === 0) return prev;
-            const latest = fresh[fresh.length - 1].created_at;
-            setLastMessageTime(latest);
-            return [...prev, ...fresh];
-          });
-        }
-      } catch { }
-    }, 3000); // Poll every 3 seconds
-  }, [lastMessageTime]);
+  const persistMessages = (channelId: string, next: Message[]) => {
+    setMessages(next);
+    try {
+      localStorage.setItem(getEntityStorageKey(`discuss_msgs_${channelId}`), JSON.stringify(next));
+    } catch {}
+  };
 
-  // ─── Channel Selection ────────────────────────────────────────────────────
+  const handleCreateChannelOrGroup = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newChannelName.trim();
+    if (!trimmed) return;
+    const memberEmails = Array.from(new Set([currentUser.email, ...selectedNewMembers]));
+    const created: Channel = {
+      id: `CH-${Date.now()}`,
+      name: trimmed.toLowerCase().replace(/\s+/g, "-"),
+      description: newChannelDesc.trim() || (newChannelType === "group" ? "Private team group" : "Team channel"),
+      channel_type: newChannelType,
+      members: memberEmails,
+    };
+    const next = [...channels, created];
+    persistChannels(next);
+    setActiveChannel(created);
+    setNewChannelName("");
+    setNewChannelDesc("");
+    setSelectedNewMembers([]);
+    setIsCreateOpen(false);
+    fetch("/api/discuss", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...created, company_id: companyId }),
+    }).catch(() => {});
+  };
 
-  useEffect(() => {
-    if (activeChannel) {
-      setMessages([]);
-      setLastMessageTime(null);
-      if (pollingRef.current) clearInterval(pollingRef.current);
-      loadMessages(activeChannel.id);
+  const handleToggleMemberInActiveChannel = (email: string) => {
+    if (!activeChannel) return;
+    const current = activeChannel.members || [];
+    const exists = current.some((e) => e.toLowerCase() === email.toLowerCase());
+    const nextMembers = exists
+      ? current.filter((e) => e.toLowerCase() !== email.toLowerCase())
+      : [...current, email];
+    const updatedChannel = { ...activeChannel, members: nextMembers };
+    setActiveChannel(updatedChannel);
+    persistChannels(channels.map((c) => (c.id === activeChannel.id ? updatedChannel : c)));
+    fetch("/api/discuss", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: activeChannel.id, members: nextMembers, company_id: companyId }),
+    }).catch(() => {});
+  };
+
+  const handleAddExternalMemberToGroup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickMemberEmail.trim() || !activeChannel) return;
+    const email = quickMemberEmail.trim().toLowerCase();
+    const name = quickMemberName.trim() || email.split("@")[0];
+    if (!members.some((m) => m.email.toLowerCase() === email)) {
+      const newMem: Member = { id: `MEM-${Date.now()}`, name, email, role: "Member", online: true };
+      setMembers((prev) => [...prev, newMem]);
     }
-  }, [activeChannel?.id]);
-
-  // Restart polling when lastMessageTime changes
-  useEffect(() => {
-    if (activeChannel) startPolling(activeChannel.id);
-  }, [activeChannel?.id, startPolling]);
-
-  // ─── API Calls ────────────────────────────────────────────────────────────
-
-  const loadChannels = async () => {
-    try {
-      const res = await fetchAPI("/discuss/channels");
-      if (res.ok) {
-        const data: Channel[] = await res.json();
-        // Only show public channels (not DMs) in the channel list
-        const publicChannels = data.filter(c => c.channel_type !== "dm");
-        setChannels(publicChannels);
-        if (publicChannels.length > 0 && !activeChannel) {
-          setActiveChannel(publicChannels[0]);
-        }
-      }
-    } catch { }
-    setLoading(false);
-  };
-
-  const loadMembers = async () => {
-    try {
-      const res = await fetchAPI("/discuss/members");
-      if (res.ok) {
-        const data: Member[] = await res.json();
-        setMembers(data);
-      }
-    } catch { }
-  };
-
-  const loadMessages = async (channelId: string) => {
-    try {
-      const res = await fetchAPI(`/discuss/channels/${channelId}/messages?limit=100`);
-      if (res.ok) {
-        const data: Message[] = await res.json();
-        setMessages(data);
-        if (data.length > 0) setLastMessageTime(data[data.length - 1].created_at);
-      }
-    } catch { }
-  };
-
-  const createChannel = async () => {
-    const trimmedName = newChannelName.trim();
-    if (!trimmedName) return;
-    setCreateLoading(true);
-    setCreateError("");
-    try {
-      const res = await fetchAPI("/discuss/channels", {
-        method: "POST",
-        body: JSON.stringify({ name: trimmedName, description: newChannelDesc.trim(), channel_type: "channel" }),
-      });
-      if (res.ok) {
-        const ch = await res.json();
-        setIsModalOpen(false);
-        setNewChannelName("");
-        setNewChannelDesc("");
-        await loadChannels();
-        setActiveChannel(ch);
-      } else {
-        let detail = "Failed to create channel";
-        try { const j = await res.json(); detail = j.detail || detail; } catch {}
-        setCreateError(detail);
-      }
-    } catch (e: any) {
-      setCreateError(`Network error: ${e.message || 'Could not reach server'}`);
-    } finally {
-      setCreateLoading(false);
+    if (!(activeChannel.members || []).some((m) => m.toLowerCase() === email)) {
+      handleToggleMemberInActiveChannel(email);
     }
+    setQuickMemberName("");
+    setQuickMemberEmail("");
   };
 
-  const sendMessage = async (e?: React.FormEvent) => {
+  const handleDeleteChannel = (channelId: string) => {
+    if (channels.length <= 1) return;
+    const next = channels.filter((c) => c.id !== channelId);
+    persistChannels(next);
+    if (activeChannel?.id === channelId) setActiveChannel(next[0]);
+    fetch(`/api/discuss?company_id=${encodeURIComponent(companyId)}&channel_id=${encodeURIComponent(channelId)}`, { method: "DELETE" }).catch(() => {});
+  };
+
+  const handleOpenDM = (m: Member) => {
+    const existing = channels.find(
+      (c) => c.channel_type === "dm" && (c.members || []).includes(m.email)
+    );
+    if (existing) {
+      setActiveChannel(existing);
+      return;
+    }
+    const dm: Channel = {
+      id: `DM-${Date.now()}`,
+      name: m.name,
+      description: `Direct message with ${m.name}`,
+      channel_type: "dm",
+      members: [currentUser.email, m.email],
+    };
+    persistChannels([...channels, dm]);
+    setActiveChannel(dm);
+  };
+
+  const sendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
     const body = newMsg.trim();
     if (!body || !activeChannel) return;
-    setSending(true);
-    setNewMsg("");
-
-    // Optimistic update
-    const tempId = `temp-${Date.now()}`;
-    const tempMsg: Message = {
-      id: tempId,
+    const msg: Message = {
+      id: `MSG-${Date.now()}`,
       channel_id: activeChannel.id,
       body,
-      author_name: currentUser?.name || "You",
-      author_email: currentUser?.email,
-      author_id: currentUser?.id,
+      author_name: currentUser.name,
+      author_email: currentUser.email,
       created_at: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, tempMsg]);
-
-    try {
-      const res = await fetchAPI("/discuss/messages", {
-        method: "POST",
-        body: JSON.stringify({
-          channel_id: activeChannel.id,
-          body,
-          author_name: currentUser?.name || "You",
-          author_email: currentUser?.email,
-        }),
-      });
-      if (res.ok) {
-        const saved: Message = await res.json();
-        // Replace temp message with real one
-        setMessages(prev => prev.map(m => m.id === tempId ? saved : m));
-        setLastMessageTime(saved.created_at);
-      } else {
-        // Remove temp on failure
-        setMessages(prev => prev.filter(m => m.id !== tempId));
-        setNewMsg(body); // restore input
-      }
-    } catch {
-      setMessages(prev => prev.filter(m => m.id !== tempId));
-      setNewMsg(body);
-    } finally {
-      setSending(false);
-      inputRef.current?.focus();
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  const deleteMessage = async (msgId: string) => {
-    setMessages(prev => prev.filter(m => m.id !== msgId));
-    await fetchAPI(`/discuss/messages/${msgId}`, { method: "DELETE" });
-  };
-
-  const reactToMessage = async (msgId: string, emoji: string) => {
-    await fetchAPI("/discuss/reactions", {
+    persistMessages(activeChannel.id, [...messages, msg]);
+    setNewMsg("");
+    fetch("/api/discuss", {
       method: "POST",
-      body: JSON.stringify({ message_id: msgId, emoji }),
-    });
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "send_message", company_id: companyId, ...msg }),
+    }).catch(() => {});
   };
 
-  const startDM = async (member: Member) => {
-    try {
-      const res = await fetchAPI("/discuss/dm", {
-        method: "POST",
-        body: JSON.stringify({ target_user_id: member.id }),
-      });
-      if (res.ok) {
-        const dmCh: Channel = await res.json();
-        // Add display name for DM
-        (dmCh as any).display_name = member.name;
-        setActiveChannel(dmCh);
-      }
-    } catch (e) {
-      // If DM endpoint not fully ready, just show a toast
-      console.error("DM error", e);
-    }
+  const deleteMessage = (id: string) => {
+    if (!activeChannel) return;
+    persistMessages(activeChannel.id, messages.filter((m) => m.id !== id));
   };
 
-  // ─── Derived ──────────────────────────────────────────────────────────────
-
-  const isMe = (msg: Message) => {
-    if (currentUser?.id && msg.author_id === currentUser.id) return true;
-    if (currentUser?.name && msg.author_name === currentUser.name) return true;
-    return false;
+  const reactMessage = (msgId: string, emoji: string) => {
+    if (!activeChannel) return;
+    persistMessages(
+      activeChannel.id,
+      messages.map((m) => (m.id === msgId ? { ...m, body: `${m.body}  ${emoji}` } : m))
+    );
+    setEmojiMsgId(null);
   };
 
-  const filteredChannels = channels.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  // Group consecutive messages by same author
-  const shouldShowAvatar = (msgs: Message[], idx: number) => {
-    if (idx === 0) return true;
-    const prev = msgs[idx - 1];
-    const curr = msgs[idx];
-    if (prev.author_id !== curr.author_id || prev.author_name !== curr.author_name) return true;
-    // More than 5 minutes apart → show avatar again
-    const timeDiff = new Date(curr.created_at).getTime() - new Date(prev.created_at).getTime();
-    return timeDiff > 5 * 60 * 1000;
-  };
-
-  const activeChannelName = activeChannel
-    ? ((activeChannel as any).display_name || activeChannel.name)
-    : "";
-
-  // ─── Render ───────────────────────────────────────────────────────────────
+  const publicChannels = channels.filter((c) => c.channel_type === "channel" && c.name.toLowerCase().includes(search.toLowerCase()));
+  const privateGroups = channels.filter((c) => c.channel_type === "group" && c.name.toLowerCase().includes(search.toLowerCase()));
+  const dmChannels = channels.filter((c) => c.channel_type === "dm");
 
   return (
-    <div className="flex flex-col h-screen bg-[#0B101E]">
-      <AppHeader title="Discuss" />
-
-      <div className="flex-1 flex overflow-hidden">
-
-        {/* ── Sidebar ──────────────────────────────────────────────────────── */}
-        <div className="w-64 bg-[#0D1117] border-r border-white/[0.06] flex flex-col shrink-0">
-
-          {/* Search */}
-          <div className="p-3 border-b border-white/[0.06]">
+    <div className="flex flex-col h-screen bg-[#0B101E] text-white">
+      <AppHeader />
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Sidebar */}
+        <aside className="w-72 bg-[#111622] border-r border-gray-800 flex flex-col shrink-0">
+          <div className="p-4 border-b border-gray-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-black tracking-wide text-white flex items-center gap-2">
+                <MessageSquare size={16} className="text-purple-400" /> Channels &amp; Groups
+              </h2>
+              <button
+                onClick={() => {
+                  setNewChannelType("group");
+                  setIsCreateOpen(true);
+                }}
+                className="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                title="Create Channel or Specific Group"
+              >
+                <Plus size={13} /> New
+              </button>
+            </div>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={13} />
+              <Search size={13} className="absolute left-3 top-2.5 text-gray-500" />
               <input
-                type="text"
-                placeholder="Search channels..."
                 value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full bg-[#161B26] border border-white/5 rounded-lg pl-8 pr-3 py-2 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-purple-500/40"
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search channels or groups..."
+                className="w-full bg-gray-950 border border-gray-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white outline-none focus:border-purple-500"
               />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-2 space-y-0.5">
-
-            {/* Channels Section */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-4">
+            {/* Public Channels */}
             <div>
               <button
-                onClick={() => setChannelsExpanded(v => !v)}
-                className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-300 transition-colors group"
+                onClick={() => setChannelsExpanded((v) => !v)}
+                className="w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-gray-400 px-1 mb-1.5 cursor-pointer"
               >
-                <span className="flex items-center gap-1.5">
-                  <ChevronDown size={12} className={`transition-transform ${channelsExpanded ? "" : "-rotate-90"}`} />
-                  Channels
-                </span>
-                <button
-                  onClick={e => { e.stopPropagation(); setIsModalOpen(true); }}
-                  className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-white p-0.5 rounded hover:bg-white/10 transition-all"
-                  title="Add channel"
-                >
-                  <Plus size={13} />
-                </button>
+                <span className="flex items-center gap-1"><ChevronDown size={12} className={channelsExpanded ? "" : "-rotate-90"} /> Public Channels</span>
+                <span onClick={(e) => { e.stopPropagation(); setNewChannelType("channel"); setIsCreateOpen(true); }} className="hover:text-white"><Plus size={13} /></span>
               </button>
-
               {channelsExpanded && (
-                <div className="space-y-0.5 pb-2">
-                  {loading ? (
-                    <div className="px-4 py-2 flex items-center gap-2 text-xs text-gray-600">
-                      <Loader2 size={12} className="animate-spin" /> Loading...
-                    </div>
-                  ) : filteredChannels.length === 0 ? (
-                    <div className="px-4 py-2 text-xs text-gray-600">No channels yet</div>
-                  ) : (
-                    filteredChannels.map(ch => (
-                      <button
-                        key={ch.id}
-                        onClick={() => setActiveChannel(ch)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg mx-1.5 text-sm transition-all ${
-                          activeChannel?.id === ch.id
-                            ? "bg-purple-600/20 text-purple-300 font-semibold"
-                            : "text-gray-500 hover:bg-white/5 hover:text-gray-200"
-                        }`}
-                      >
-                        <Hash size={14} className={activeChannel?.id === ch.id ? "text-purple-400" : "text-gray-600"} />
-                        <span className="truncate flex-1 text-left">{ch.name}</span>
-                        {(unreadCounts[ch.id] || 0) > 0 && (
-                          <span className="bg-purple-600 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shrink-0">
-                            {unreadCounts[ch.id]}
-                          </span>
-                        )}
-                      </button>
-                    ))
-                  )}
-                  <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg mx-1.5 text-xs text-gray-600 hover:text-gray-400 hover:bg-white/5 transition-all"
-                  >
-                    <Plus size={13} /> Add a channel
-                  </button>
+                <div className="space-y-1">
+                  {publicChannels.map((ch) => (
+                    <button
+                      key={ch.id}
+                      onClick={() => setActiveChannel(ch)}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                        activeChannel?.id === ch.id ? "bg-purple-600 text-white" : "text-gray-300 hover:bg-white/5"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2 truncate"><Hash size={13} /> {ch.name}</span>
+                      <span className="text-[10px] opacity-70">{(ch.members || []).length}</span>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Divider */}
-            <div className="border-t border-white/[0.05] my-1 mx-3" />
-
-            {/* Direct Messages Section */}
+            {/* Specific / Private Groups */}
             <div>
               <button
-                onClick={() => setMembersExpanded(v => !v)}
-                className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-300 transition-colors"
+                onClick={() => setGroupsExpanded((v) => !v)}
+                className="w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-cyan-400 px-1 mb-1.5 cursor-pointer"
               >
-                <span className="flex items-center gap-1.5">
-                  <ChevronDown size={12} className={`transition-transform ${membersExpanded ? "" : "-rotate-90"}`} />
-                  Direct Messages
-                </span>
+                <span className="flex items-center gap-1"><ChevronDown size={12} className={groupsExpanded ? "" : "-rotate-90"} /> Specific Groups</span>
+                <span onClick={(e) => { e.stopPropagation(); setNewChannelType("group"); setIsCreateOpen(true); }} className="hover:text-white"><Plus size={13} /></span>
               </button>
-
-              {membersExpanded && (
-                <div className="space-y-0.5 pb-2">
-                  {members.length === 0 && (
-                    <div className="px-4 py-2 text-xs text-gray-600 italic">
-                      Team members will appear here when they join your workspace.
-                    </div>
-                  )}
-                  {members.map(member => (
+              {groupsExpanded && (
+                <div className="space-y-1">
+                  {privateGroups.map((ch) => (
                     <button
-                      key={member.id}
-                      onClick={() => startDM(member)}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg mx-1.5 text-sm text-gray-400 hover:bg-white/5 hover:text-gray-200 transition-all group"
+                      key={ch.id}
+                      onClick={() => setActiveChannel(ch)}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                        activeChannel?.id === ch.id ? "bg-cyan-600 text-white" : "text-gray-300 hover:bg-white/5"
+                      }`}
                     >
-                      <div className="relative shrink-0">
-                        <Avatar name={member.name} size="sm" />
-                        <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#0D1117] ${member.online ? "bg-green-400" : "bg-gray-600"}`} />
-                      </div>
-                      <span className="truncate flex-1 text-left text-xs">{member.name}</span>
+                      <span className="flex items-center gap-2 truncate"><Lock size={12} /> {ch.name}</span>
+                      <span className="text-[10px] opacity-70">{(ch.members || []).length}</span>
                     </button>
                   ))}
+                  {privateGroups.length === 0 && (
+                    <p className="text-[11px] text-gray-500 px-2">No specific groups yet.</p>
+                  )}
+                </div>
+              )}
+            </div>
 
-                  {/* Current user at bottom (always online) */}
-                  {currentUser && (
-                    <div className="flex items-center gap-2.5 px-3 py-2 mx-1.5 text-sm text-gray-300">
-                      <div className="relative shrink-0">
-                        <Avatar name={currentUser.name} size="sm" />
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#0D1117] bg-green-400" />
+            {/* Team Members / Direct Messages */}
+            <div>
+              <button
+                onClick={() => setMembersExpanded((v) => !v)}
+                className="w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-gray-400 px-1 mb-1.5 cursor-pointer"
+              >
+                <span className="flex items-center gap-1"><ChevronDown size={12} className={membersExpanded ? "" : "-rotate-90"} /> Team Members ({members.length})</span>
+              </button>
+              {membersExpanded && (
+                <div className="space-y-1">
+                  {members.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => handleOpenDM(m)}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs text-gray-300 hover:bg-white/5 transition cursor-pointer"
+                    >
+                      <Avatar name={m.name} size="sm" />
+                      <div className="text-left min-w-0 flex-1">
+                        <div className="font-semibold truncate">{m.name}</div>
+                        <div className="text-[10px] text-gray-500 truncate">{m.role || m.email}</div>
                       </div>
-                      <span className="truncate flex-1 text-left text-xs">{currentUser.name} <span className="text-gray-600">(you)</span></span>
-                    </div>
+                    </button>
+                  ))}
+                  {dmChannels.length > 0 && (
+                    <div className="pt-1 text-[10px] text-gray-500 px-2">{dmChannels.length} active DM(s)</div>
                   )}
                 </div>
               )}
             </div>
           </div>
-        </div>
+        </aside>
 
-        {/* ── Chat Area ────────────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col bg-[#0F172A] min-w-0">
+        {/* Main Chat Area */}
+        <main className="flex-1 flex flex-col min-w-0 bg-[#0B101E]">
           {activeChannel ? (
             <>
-              {/* Chat Header */}
-              <div className="h-14 px-5 border-b border-white/[0.06] flex items-center justify-between shrink-0 bg-[#0D1117]">
-                <div className="flex items-center gap-2.5">
-                  {activeChannel.channel_type === "dm"
-                    ? <AtSign size={18} className="text-purple-400" />
-                    : <Hash size={18} className="text-purple-400" />
-                  }
-                  <h2 className="text-base font-bold text-white">{activeChannelName}</h2>
-                  {activeChannel.description && (
-                    <>
-                      <div className="w-px h-4 bg-gray-700" />
-                      <p className="text-xs text-gray-500 hidden sm:block">{activeChannel.description}</p>
-                    </>
+              <header className="px-6 py-3.5 border-b border-gray-800 bg-[#111622]/70 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    {activeChannel.channel_type === "group" ? (
+                      <Lock size={16} className="text-cyan-400" />
+                    ) : (
+                      <Hash size={16} className="text-purple-400" />
+                    )}
+                    <h1 className="text-base font-bold text-white truncate">{activeChannel.name}</h1>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-gray-300 uppercase font-bold">
+                      {activeChannel.channel_type}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 truncate mt-0.5">{activeChannel.description}</p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => setIsManageMembersOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Users size={14} /> Manage Members ({(activeChannel.members || []).length})
+                  </button>
+                  {channels.length > 1 && (
+                    <button
+                      onClick={() => handleDeleteChannel(activeChannel.id)}
+                      className="p-2 rounded-xl bg-gray-800 hover:bg-rose-900/50 text-rose-400 cursor-pointer"
+                      title="Delete channel/group"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <button className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-colors" title="Members">
-                    <Users size={16} />
-                  </button>
-                  <button className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-colors" title="Search">
-                    <Search size={16} />
-                  </button>
-                  <button className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-colors" title="Settings">
-                    <Settings size={16} />
-                  </button>
-                </div>
-              </div>
+              </header>
 
-              {/* Messages area */}
-              <div className="flex-1 overflow-y-auto py-4">
-                {/* Channel intro */}
-                {messages.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-full text-center px-8">
-                    <div className="w-16 h-16 bg-purple-600/10 border border-purple-500/20 rounded-2xl flex items-center justify-center mb-4">
-                      {activeChannel.channel_type === "dm"
-                        ? <AtSign size={28} className="text-purple-400" />
-                        : <Hash size={28} className="text-purple-400" />
-                      }
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto py-4 space-y-2">
+                {messages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center px-6">
+                    <div className="w-14 h-14 rounded-2xl bg-purple-600/15 border border-purple-500/25 flex items-center justify-center text-purple-400 mb-3">
+                      {activeChannel.channel_type === "group" ? <Lock size={24} /> : <Hash size={24} />}
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">
-                      {activeChannel.channel_type === "dm"
-                        ? `Message ${activeChannelName}`
-                        : `Welcome to #${activeChannelName}`
-                      }
-                    </h3>
-                    <p className="text-gray-500 text-sm max-w-sm">
-                      {activeChannel.description || (
-                        activeChannel.channel_type === "dm"
-                          ? "This is the start of your direct message history."
-                          : `This is the very beginning of the #${activeChannelName} channel. Say hi! 👋`
-                      )}
+                    <h3 className="text-sm font-bold text-white">Welcome to {activeChannel.name}</h3>
+                    <p className="text-xs text-gray-400 mt-1 max-w-sm">
+                      Add or remove specific team members using "Manage Members" above and start collaborating.
                     </p>
                   </div>
-                )}
-
-                {/* Messages */}
-                <div className="space-y-0.5">
-                  {messages.map((msg, idx) => {
-                    const showAv = shouldShowAvatar(messages, idx);
+                ) : (
+                  messages.map((msg) => {
+                    const isMe = (msg.author_email || "").toLowerCase() === currentUser.email.toLowerCase();
                     return (
-                      <MessageBubble
+                      <div
                         key={msg.id}
-                        msg={msg}
-                        isMe={isMe(msg)}
-                        showAvatar={showAv}
-                        onDelete={deleteMessage}
-                        onReact={reactToMessage}
-                      />
+                        className={`group flex gap-3 px-5 py-1 hover:bg-white/[0.02] relative ${isMe ? "flex-row-reverse" : ""}`}
+                        onMouseEnter={() => setHoverMsgId(msg.id)}
+                        onMouseLeave={() => { setHoverMsgId(null); setEmojiMsgId(null); }}
+                      >
+                        <Avatar name={msg.author_name} />
+                        <div className={`flex flex-col max-w-[70%] ${isMe ? "items-end" : "items-start"}`}>
+                          <div className="flex items-baseline gap-2 mb-1">
+                            <span className="text-xs font-bold text-gray-200">{msg.author_name}</span>
+                            <span className="text-[10px] text-gray-500">{formatTime(msg.created_at)}</span>
+                          </div>
+                          <div className={`px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap ${
+                            isMe ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white" : "bg-[#1E293B] text-gray-200 border border-white/5"
+                          }`}>
+                            {msg.body}
+                          </div>
+                        </div>
+                        {hoverMsgId === msg.id && (
+                          <div className={`absolute top-1 ${isMe ? "left-5" : "right-5"} flex items-center gap-1 bg-[#1E293B] border border-white/10 rounded-xl px-2 py-1 shadow-lg`}>
+                            <button onClick={() => setEmojiMsgId(emojiMsgId === msg.id ? null : msg.id)} className="text-gray-400 hover:text-yellow-400 p-1 cursor-pointer"><Smile size={14} /></button>
+                            {isMe && <button onClick={() => deleteMessage(msg.id)} className="text-gray-400 hover:text-rose-400 p-1 cursor-pointer"><Trash2 size={14} /></button>}
+                            {emojiMsgId === msg.id && (
+                              <div className="absolute top-8 right-0 bg-[#0F172A] border border-white/10 rounded-xl p-2 flex gap-1 shadow-xl z-20">
+                                {EMOJI_QUICK.map((em) => (
+                                  <button key={em} onClick={() => reactMessage(msg.id, em)} className="text-base hover:scale-125 p-0.5 cursor-pointer">{em}</button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={bottomRef} />
+              </div>
+
+              {/* Composer */}
+              <form onSubmit={sendMessage} className="p-4 border-t border-gray-800 bg-[#111622]/70">
+                <div className="flex items-center gap-2 bg-gray-950 border border-gray-800 focus-within:border-purple-500 rounded-2xl px-4 py-2">
+                  <input
+                    value={newMsg}
+                    onChange={(e) => setNewMsg(e.target.value)}
+                    placeholder={`Message ${activeChannel.name}...`}
+                    className="flex-1 bg-transparent text-sm text-white outline-none placeholder-gray-500"
+                  />
+                  <button type="submit" className="bg-purple-600 hover:bg-purple-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                    <Send size={13} /> Send
+                  </button>
+                </div>
+              </form>
+            </>
+          ) : null}
+        </main>
+      </div>
+
+      {/* CREATE CHANNEL / SPECIFIC GROUP MODAL */}
+      {isCreateOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#111622] border border-gray-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">Create Channel or Specific Group</h3>
+              <button onClick={() => setIsCreateOpen(false)} className="text-gray-400 hover:text-white cursor-pointer"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleCreateChannelOrGroup} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNewChannelType("group")}
+                  className={`py-2 rounded-xl font-bold border flex items-center justify-center gap-1.5 cursor-pointer ${
+                    newChannelType === "group" ? "bg-cyan-600/20 border-cyan-500 text-cyan-300" : "bg-gray-950 border-gray-800 text-gray-400"
+                  }`}
+                >
+                  <Lock size={13} /> Specific Group
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewChannelType("channel")}
+                  className={`py-2 rounded-xl font-bold border flex items-center justify-center gap-1.5 cursor-pointer ${
+                    newChannelType === "channel" ? "bg-purple-600/20 border-purple-500 text-purple-300" : "bg-gray-950 border-gray-800 text-gray-400"
+                  }`}
+                >
+                  <Hash size={13} /> Public Channel
+                </button>
+              </div>
+              <input
+                required
+                value={newChannelName}
+                onChange={(e) => setNewChannelName(e.target.value)}
+                placeholder="Group / Channel Name (e.g. outbound-vip-team)"
+                className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-white"
+              />
+              <input
+                value={newChannelDesc}
+                onChange={(e) => setNewChannelDesc(e.target.value)}
+                placeholder="Description / Purpose"
+                className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-white"
+              />
+              <div>
+                <div className="text-[11px] font-bold text-gray-400 mb-1.5">Add Team Members to this Group</div>
+                <div className="max-h-36 overflow-y-auto space-y-1 bg-gray-950 border border-gray-800 rounded-xl p-2">
+                  {members.map((m) => {
+                    const checked = selectedNewMembers.includes(m.email) || m.email.toLowerCase() === currentUser.email.toLowerCase();
+                    return (
+                      <label key={m.id} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setSelectedNewMembers((prev) =>
+                              prev.includes(m.email) ? prev.filter((x) => x !== m.email) : [...prev, m.email]
+                            )
+                          }
+                          className="accent-cyan-500"
+                        />
+                        <span className="text-white font-semibold">{m.name}</span>
+                        <span className="text-[10px] text-gray-500 ml-auto">{m.email}</span>
+                      </label>
                     );
                   })}
                 </div>
-                <div ref={bottomRef} className="h-4" />
               </div>
-
-              {/* Message Input */}
-              <div className="px-4 pb-4 shrink-0">
-                <div className="bg-[#1E293B] border border-white/8 rounded-2xl overflow-hidden shadow-lg focus-within:border-purple-500/40 transition-colors">
-                  {/* Toolbar row */}
-                  <div className="flex items-center gap-1 px-3 pt-2 pb-1 border-b border-white/5">
-                    <button className="text-gray-500 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors text-xs font-bold">B</button>
-                    <button className="text-gray-500 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors text-xs italic">I</button>
-                    <button className="text-gray-500 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors text-xs underline">U</button>
-                    <div className="w-px h-4 bg-gray-700 mx-1" />
-                    <button className="text-gray-500 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors">
-                      <AtSign size={13} />
-                    </button>
-                    <button className="text-gray-500 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors">
-                      <Smile size={13} />
-                    </button>
-                  </div>
-
-                  {/* Text area */}
-                  <form onSubmit={sendMessage}>
-                    <div className="flex items-end gap-2 px-3 py-2">
-                      <textarea
-                        ref={inputRef}
-                        value={newMsg}
-                        onChange={e => { setNewMsg(e.target.value); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px"; }}
-                        onKeyDown={handleKeyDown}
-                        placeholder={`Message ${activeChannel.channel_type === "dm" ? activeChannelName : `#${activeChannelName}`}... (Enter to send, Shift+Enter for new line)`}
-                        rows={1}
-                        className="flex-1 bg-transparent text-gray-200 text-sm placeholder-gray-600 outline-none resize-none min-h-[24px] max-h-[160px] leading-relaxed"
-                        style={{ height: "24px" }}
-                      />
-                      <button
-                        type="submit"
-                        disabled={!newMsg.trim() || sending}
-                        className="p-2.5 bg-gradient-to-br from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-all shadow-md hover:shadow-purple-500/25 active:scale-95 shrink-0"
-                        title="Send (Enter)"
-                      >
-                        {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                      </button>
-                    </div>
-                  </form>
-
-                  {/* Hint */}
-                  <div className="px-3 pb-2 flex items-center gap-3 text-[10px] text-gray-700">
-                    <span><kbd className="font-mono">Enter</kbd> to send</span>
-                    <span><kbd className="font-mono">Shift+Enter</kbd> new line</span>
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
-              <div className="w-20 h-20 bg-[#1E293B] rounded-2xl flex items-center justify-center mb-5 border border-white/5">
-                <MessageSquare size={36} className="opacity-30" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-400 mb-2">Welcome to Discuss</h3>
-              <p className="text-sm text-gray-600 text-center max-w-xs">
-                Select a channel to start messaging your team,<br />or create a new one.
-              </p>
-              <button onClick={() => setIsModalOpen(true)}
-                className="mt-6 flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-semibold text-sm transition-colors shadow-lg">
-                <Plus size={16} /> Create a Channel
+              <button type="submit" className="w-full bg-purple-600 hover:bg-purple-500 text-white py-2.5 rounded-xl font-bold cursor-pointer">
+                Create {newChannelType === "group" ? "Specific Group" : "Channel"}
               </button>
-            </div>
-          )}
+            </form>
+          </div>
         </div>
+      )}
 
-      </div>
-
-      {/* ── Create Channel Modal ─────────────────────────────────────────── */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1A2236] rounded-2xl p-6 w-full max-w-md border border-white/8 shadow-2xl">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h3 className="text-lg font-bold text-white">Create a Channel</h3>
-                <p className="text-gray-500 text-xs mt-0.5">Channels are where your team communicates</p>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white p-1.5 rounded-xl hover:bg-white/5 transition-colors">
-                <X size={18} />
-              </button>
+      {/* MANAGE MEMBERS (ADD / REMOVE) MODAL */}
+      {isManageMembersOpen && activeChannel && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#111622] border border-gray-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl text-xs">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Shield size={16} className="text-cyan-400" /> Manage Members: {activeChannel.name}
+              </h3>
+              <button onClick={() => setIsManageMembersOpen(false)} className="text-gray-400 hover:text-white cursor-pointer"><X size={18} /></button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Channel Name *</label>
-                <div className="relative">
-                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
-                  <input
-                    type="text"
-                    value={newChannelName}
-                    onChange={e => setNewChannelName(e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))}
-                    onKeyDown={e => { if (e.key === "Enter") createChannel(); }}
-                    className="w-full bg-[#0F172A] border border-white/10 rounded-xl pl-8 pr-4 py-3 text-white text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 outline-none transition-all"
-                    placeholder="e.g. general, announcements"
-                    autoFocus
-                  />
-                </div>
-                <p className="text-[11px] text-gray-600 mt-1">Lowercase letters, numbers, and hyphens only</p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Description (optional)</label>
-                <input
-                  type="text"
-                  value={newChannelDesc}
-                  onChange={e => setNewChannelDesc(e.target.value)}
-                  className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-purple-500 outline-none transition-all"
-                  placeholder="What is this channel about?"
-                />
-              </div>
+            <div className="space-y-1.5 max-h-56 overflow-y-auto">
+              {members.map((m) => {
+                const isIn = (activeChannel.members || []).some((e) => e.toLowerCase() === m.email.toLowerCase());
+                return (
+                  <div key={m.id} className="flex items-center justify-between bg-gray-950 border border-gray-800 rounded-xl px-3 py-2">
+                    <div className="min-w-0">
+                      <div className="font-bold text-white truncate">{m.name}</div>
+                      <div className="text-[10px] text-gray-400 truncate">{m.email}</div>
+                    </div>
+                    <button
+                      onClick={() => handleToggleMemberInActiveChannel(m.email)}
+                      className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 cursor-pointer ${
+                        isIn ? "bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30" : "bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30"
+                      }`}
+                    >
+                      {isIn ? <><UserMinus size={12} /> Remove</> : <><UserPlus size={12} /> Add</>}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Inline error — no browser alert needed */}
-            {createError && (
-              <div className="mt-3 px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400 flex items-start gap-2">
-                <span className="shrink-0 mt-0.5">⚠</span>
-                <span>{createError}</span>
+            <form onSubmit={handleAddExternalMemberToGroup} className="border-t border-gray-800 pt-3 space-y-2">
+              <div className="text-[11px] font-bold text-gray-400">Or Add Member by Name &amp; Email</div>
+              <div className="grid grid-cols-2 gap-2">
+                <input value={quickMemberName} onChange={(e) => setQuickMemberName(e.target.value)} placeholder="Name" className="bg-gray-950 border border-gray-700 rounded-lg px-2.5 py-1.5 text-white" />
+                <input required type="email" value={quickMemberEmail} onChange={(e) => setQuickMemberEmail(e.target.value)} placeholder="Email" className="bg-gray-950 border border-gray-700 rounded-lg px-2.5 py-1.5 text-white" />
               </div>
-            )}
-
-            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/5">
-              <button onClick={() => { setIsModalOpen(false); setCreateError(""); }} disabled={createLoading}
-                className="px-4 py-2.5 text-sm text-gray-400 hover:text-white font-medium transition-colors">
-                Cancel
+              <button type="submit" className="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+                <Check size={14} /> Add to {activeChannel.name}
               </button>
-              <button
-                onClick={createChannel}
-                disabled={!newChannelName.trim() || createLoading}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2"
-              >
-                {createLoading ? <><Loader2 size={15} className="animate-spin" /> Creating...</> : <><Plus size={15} /> Create Channel</>}
-              </button>
-            </div>
+            </form>
           </div>
         </div>
       )}

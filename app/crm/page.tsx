@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import CRMHeader from '@/components/crm/CRMHeader';
 import {
     Plus, Star, Clock, Trophy, XCircle, Activity, Filter, Layers, ListFilter,
-    ChevronRight, ChevronLeft, Pencil, Download, FileSpreadsheet, Trash2, Check, X
+    ChevronRight, ChevronLeft, Pencil, Download, FileSpreadsheet, Trash2, Check, X,
+    PhoneCall, PhoneOff, Headphones, ClipboardList
 } from 'lucide-react';
 import Link from 'next/link';
 import ActivityHistory from '@/components/shared/ActivityHistory';
@@ -20,7 +21,23 @@ type Lead = {
     priority: number;
     company_name?: string;
     email?: string;
+    phone?: string;
+    disposition?: string;
+    callback_at?: string;
+    assigned_agent?: string;
+    call_duration_sec?: number;
+    call_notes?: string;
 };
+
+const DISPOSITION_CODES = [
+    'Interested / Qualified',
+    'Callback Requested',
+    'Voicemail',
+    'No Answer',
+    'Wrong Number',
+    'Do Not Call (DNC)',
+    'Closed Won',
+];
 
 type StageColumn = {
     id: string;
@@ -65,6 +82,53 @@ export default function CRMPage() {
     const [newOppRevenue, setNewOppRevenue] = useState('');
     const [draggedOppId, setDraggedOppId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+
+    // Call Center CRM Dialer & Disposition State
+    const [callCenterMode, setCallCenterMode] = useState(false);
+    const [activeCallDeal, setActiveCallDeal] = useState<Lead | null>(null);
+    const [callSeconds, setCallSeconds] = useState(0);
+    const [callDisposition, setCallDisposition] = useState(DISPOSITION_CODES[0]);
+    const [callCallbackAt, setCallCallbackAt] = useState('');
+    const [callNotes, setCallNotes] = useState('');
+    const [newOppPhone, setNewOppPhone] = useState('');
+
+    useEffect(() => {
+        if (activeBranch?.industryId === 'call_center') setCallCenterMode(true);
+    }, [activeBranch?.industryId]);
+
+    useEffect(() => {
+        if (!activeCallDeal) { setCallSeconds(0); return; }
+        const t = setInterval(() => setCallSeconds((s) => s + 1), 1000);
+        return () => clearInterval(t);
+    }, [activeCallDeal?.id]);
+
+    const handleLogCallDisposition = () => {
+        if (!activeCallDeal) return;
+        let nextStage = activeCallDeal.status;
+        let nextProb = activeCallDeal.probability;
+        if (callDisposition === 'Interested / Qualified') { nextStage = stages.find(s => s.id.toLowerCase() === 'qualified')?.id || nextStage; nextProb = 55; }
+        else if (callDisposition === 'Closed Won') { nextStage = stages.find(s => s.id.toLowerCase() === 'won')?.id || nextStage; nextProb = 100; }
+        else if (callDisposition === 'Do Not Call (DNC)' || callDisposition === 'Wrong Number') { nextStage = stages.find(s => s.id.toLowerCase() === 'lost')?.id || nextStage; nextProb = 0; }
+
+        const updated: Lead = {
+            ...activeCallDeal,
+            status: nextStage,
+            probability: nextProb,
+            disposition: callDisposition,
+            callback_at: callCallbackAt || activeCallDeal.callback_at,
+            call_duration_sec: callSeconds,
+            call_notes: callNotes || activeCallDeal.call_notes,
+        };
+        persistLeads(leads.map(l => l.id === updated.id ? updated : l));
+        fetch('/api/crm/leads', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...updated, company_id: companyId }),
+        }).catch(() => {});
+        setActiveCallDeal(null);
+        setCallNotes('');
+        setCallCallbackAt('');
+    };
 
     const persistStages = (next: StageColumn[]) => {
         setStages(next);
@@ -226,12 +290,14 @@ export default function CRMPage() {
             probability: newDealStage === 'Won' ? 100 : newDealStage === 'Proposition' ? 70 : newDealStage === 'Qualified' ? 40 : 20,
             priority: 2,
             company_name: activeBranch?.name || '',
+            phone: newOppPhone.trim() || undefined,
         };
 
         const next = [created, ...leads];
         persistLeads(next);
         setNewOppName('');
         setNewOppRevenue('');
+        setNewOppPhone('');
         setIsNewModalOpen(false);
 
         fetch('/api/crm/leads', {
@@ -332,6 +398,22 @@ export default function CRMPage() {
                     >
                         <Activity size={16} /> Audit History
                     </button>
+                    <button
+                        onClick={() => setCallCenterMode(v => !v)}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer border ${
+                            callCenterMode
+                                ? 'bg-cyan-600/20 border-cyan-500/40 text-cyan-300'
+                                : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                        }`}
+                    >
+                        <Headphones size={14} /> Call Center Mode
+                    </button>
+                    <Link href="/call-center" className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-cyan-300 flex items-center gap-1.5">
+                        <PhoneCall size={13} /> Lead Sheet
+                    </Link>
+                    <Link href="/forms" className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-purple-300 flex items-center gap-1.5">
+                        <ClipboardList size={13} /> Public Forms
+                    </Link>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     {selectedDealIds.length > 0 ? (
@@ -385,6 +467,86 @@ export default function CRMPage() {
                     </button>
                 </div>
             </div>
+
+            {/* Call Center KPI Strip & Active Dialer Bar */}
+            {(callCenterMode || activeCallDeal) && (
+                <div className="px-6 py-3 bg-[#111622] border-b border-gray-800 space-y-3">
+                    {callCenterMode && (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                            <div className="bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 flex items-center justify-between">
+                                <span className="text-gray-400">Contacted Deals</span>
+                                <span className="font-bold text-cyan-400">
+                                    {leads.filter(l => l.disposition).length} / {leads.length}
+                                </span>
+                            </div>
+                            <div className="bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 flex items-center justify-between">
+                                <span className="text-gray-400">Conversion (Won)</span>
+                                <span className="font-bold text-emerald-400">
+                                    {leads.length > 0 ? Math.round((leads.filter(l => l.status?.toLowerCase() === 'won').length / leads.length) * 100) : 0}%
+                                </span>
+                            </div>
+                            <div className="bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 flex items-center justify-between">
+                                <span className="text-gray-400">Callbacks Due</span>
+                                <span className="font-bold text-amber-400">
+                                    {leads.filter(l => l.disposition === 'Callback Requested' || l.callback_at).length}
+                                </span>
+                            </div>
+                            <div className="bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 flex items-center justify-between">
+                                <span className="text-gray-400">Avg Handle Time</span>
+                                <span className="font-bold text-purple-300">
+                                    {(() => {
+                                        const timed = leads.filter(l => (l.call_duration_sec || 0) > 0);
+                                        if (timed.length === 0) return '00:00';
+                                        const avg = Math.round(timed.reduce((s, l) => s + (l.call_duration_sec || 0), 0) / timed.length);
+                                        return `${String(Math.floor(avg / 60)).padStart(2, '0')}:${String(avg % 60).padStart(2, '0')}`;
+                                    })()}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeCallDeal && (
+                        <div className="bg-cyan-950/30 border border-cyan-500/40 rounded-xl p-3 flex flex-wrap items-center gap-3 text-xs">
+                            <div className="flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                                <span className="font-bold text-white">{activeCallDeal.name}</span>
+                                <span className="font-mono text-cyan-300 bg-cyan-950 px-2 py-0.5 rounded">
+                                    {String(Math.floor(callSeconds / 60)).padStart(2, '0')}:{String(callSeconds % 60).padStart(2, '0')}
+                                </span>
+                                {activeCallDeal.phone && (
+                                    <a href={`tel:${activeCallDeal.phone}`} className="text-emerald-300 underline font-mono">{activeCallDeal.phone}</a>
+                                )}
+                            </div>
+                            <select
+                                value={callDisposition}
+                                onChange={(e) => setCallDisposition(e.target.value)}
+                                className="bg-gray-950 border border-gray-700 rounded-lg px-2.5 py-1.5 text-white"
+                            >
+                                {DISPOSITION_CODES.map(code => <option key={code} value={code}>{code}</option>)}
+                            </select>
+                            <input
+                                type="datetime-local"
+                                value={callCallbackAt}
+                                onChange={(e) => setCallCallbackAt(e.target.value)}
+                                className="bg-gray-950 border border-gray-700 rounded-lg px-2.5 py-1.5 text-white"
+                                title="Optional callback time"
+                            />
+                            <input
+                                value={callNotes}
+                                onChange={(e) => setCallNotes(e.target.value)}
+                                placeholder="Call notes / rebuttal outcome..."
+                                className="flex-1 min-w-[160px] bg-gray-950 border border-gray-700 rounded-lg px-2.5 py-1.5 text-white"
+                            />
+                            <button onClick={handleLogCallDisposition} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold cursor-pointer">
+                                Log Call &amp; Update Stage
+                            </button>
+                            <button onClick={() => setActiveCallDeal(null)} className="bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1 cursor-pointer">
+                                <PhoneOff size={13} /> End
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="flex-1 overflow-x-auto overflow-y-auto p-4">
                 {activeView === 'pipeline' && (
@@ -576,6 +738,14 @@ export default function CRMPage() {
                                                         {[1, 2, 3].map(i => (
                                                             <Star key={i} size={11} className={i <= (opp.priority || 0) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"} />
                                                         ))}
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); setActiveCallDeal(opp); setCallDisposition(opp.disposition || DISPOSITION_CODES[0]); setCallNotes(opp.call_notes || ''); }}
+                                                            title="Click-to-Call & Log Disposition"
+                                                            className="ml-1 p-1 rounded hover:bg-cyan-500/20 text-cyan-300 cursor-pointer"
+                                                        >
+                                                            <PhoneCall size={12} />
+                                                        </button>
                                                         <button
                                                             type="button"
                                                             onClick={(e) => { e.stopPropagation(); exportDeals([opp], 'xlsx', `deal_${opp.name.toLowerCase().replace(/\s+/g, '_')}`); }}
