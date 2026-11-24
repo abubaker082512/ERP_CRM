@@ -411,6 +411,9 @@ export default function CRMPage() {
                     <Link href="/call-center" className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-cyan-300 flex items-center gap-1.5">
                         <PhoneCall size={13} /> Lead Sheet
                     </Link>
+                    <Link href="/call-center?tab=campaigns" className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-emerald-300 flex items-center gap-1.5">
+                        <Headphones size={13} /> Campaigns
+                    </Link>
                     <Link href="/forms" className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-purple-300 flex items-center gap-1.5">
                         <ClipboardList size={13} /> Public Forms
                     </Link>

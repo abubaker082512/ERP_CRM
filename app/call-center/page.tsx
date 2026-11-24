@@ -188,6 +188,15 @@ export default function CallCenterPage() {
   const [toDate, setToDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const tab = new URLSearchParams(window.location.search).get("tab");
+      if (tab === "campaigns" || tab === "callbacks" || tab === "leaderboard" || tab === "access" || tab === "sheet") {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (activeBranch?.industryId === "call_center") {
       setDateMode("today");
     }
