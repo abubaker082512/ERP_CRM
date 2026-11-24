@@ -26,6 +26,10 @@ import {
   ExternalLink,
   UserCheck,
   Sparkles,
+  Megaphone,
+  Pause,
+  Trash2,
+  Play,
 } from "lucide-react";
 import { useBranchContext } from "@/lib/branchContext";
 
@@ -135,7 +139,24 @@ export default function CallCenterPage() {
   const [allowedEmails, setAllowedEmails] = useState<string[]>([]);
 
   // UI Tabs & Filters
-  const [activeTab, setActiveTab] = useState<"sheet" | "callbacks" | "leaderboard" | "access">("sheet");
+  const [activeTab, setActiveTab] = useState<"sheet" | "campaigns" | "callbacks" | "leaderboard" | "access">("sheet");
+  const [campaigns, setCampaigns] = useState<{
+    id: string;
+    name: string;
+    mode: "Progressive Dialer" | "Predictive Dialer" | "Preview Dialer" | "Inbound Queue" | "Callback Recovery";
+    dailyGoal: number;
+    status: "Active" | "Paused" | "Completed";
+    assignedAgents: string[];
+    linkedFormId?: string;
+    createdAt: string;
+  }[]>([]);
+  const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
+  const [newCampaign, setNewCampaign] = useState({
+    name: "",
+    mode: "Progressive Dialer" as "Progressive Dialer" | "Predictive Dialer" | "Preview Dialer" | "Inbound Queue" | "Callback Recovery",
+    dailyGoal: 50,
+    assignedAgents: [] as string[],
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [dispositionFilter, setDispositionFilter] = useState<string>("All");
   const [campaignFilter, setCampaignFilter] = useState<string>("All");
@@ -222,6 +243,33 @@ export default function CallCenterPage() {
       }
       const savedScript = localStorage.getItem(scriptKey);
       if (savedScript) setScriptText(savedScript);
+
+      const campKey = getEntityStorageKey("call_center_campaigns");
+      const savedCamps = localStorage.getItem(campKey);
+      if (savedCamps) {
+        setCampaigns(JSON.parse(savedCamps));
+      } else {
+        setCampaigns([
+          {
+            id: "CMPG-001",
+            name: "Outbound Campaign",
+            mode: "Progressive Dialer",
+            dailyGoal: 50,
+            status: "Active",
+            assignedAgents: [],
+            createdAt: new Date().toISOString().slice(0, 10),
+          },
+          {
+            id: "CMPG-002",
+            name: "Inbound Web Form",
+            mode: "Inbound Queue",
+            dailyGoal: 30,
+            status: "Active",
+            assignedAgents: [],
+            createdAt: new Date().toISOString().slice(0, 10),
+          },
+        ]);
+      }
     } catch {
       setLeads(SAMPLE_LEADS);
     }
@@ -247,6 +295,56 @@ export default function CallCenterPage() {
     try {
       localStorage.setItem(getEntityStorageKey("call_center_leads"), JSON.stringify(next));
     } catch {}
+  };
+
+  const persistCampaigns = (next: typeof campaigns) => {
+    setCampaigns(next);
+    try {
+      localStorage.setItem(getEntityStorageKey("call_center_campaigns"), JSON.stringify(next));
+    } catch {}
+  };
+
+  const handleCreateCampaign = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCampaign.name.trim()) return;
+    const item = {
+      id: `CMPG-${Date.now().toString().slice(-4)}`,
+      name: newCampaign.name.trim(),
+      mode: newCampaign.mode,
+      dailyGoal: Math.max(1, Number(newCampaign.dailyGoal) || 25),
+      status: "Active" as const,
+      assignedAgents: newCampaign.assignedAgents,
+      createdAt: new Date().toISOString().slice(0, 10),
+    };
+    persistCampaigns([item, ...campaigns]);
+    setNewCampaign({ name: "", mode: "Progressive Dialer", dailyGoal: 50, assignedAgents: [] });
+    setIsCampaignModalOpen(false);
+    showToast(`Launched campaign "${item.name}"!`);
+  };
+
+  const handleToggleCampaignStatus = (id: string) => {
+    persistCampaigns(
+      campaigns.map((c) =>
+        c.id === id ? { ...c, status: c.status === "Active" ? "Paused" : "Active" } : c
+      )
+    );
+  };
+
+  const handleDeleteCampaign = (id: string) => {
+    persistCampaigns(campaigns.filter((c) => c.id !== id));
+  };
+
+  const handleDialNextInCampaign = (campName: string) => {
+    const candidate =
+      leads.find((l) => l.campaign === campName && (l.disposition === "New" || l.disposition === "Callback")) ||
+      leads.find((l) => l.campaign === campName);
+    if (!candidate) {
+      showToast(`No leads found in "${campName}" yet. Import or add leads first.`);
+      return;
+    }
+    setActiveCallLead(candidate);
+    setCallSeconds(0);
+    setCallNotes(candidate.notes || "");
   };
 
   const persistAccess = (r: boolean, a: boolean, emails: string[]) => {
@@ -315,7 +413,18 @@ export default function CallCenterPage() {
     [leads]
   );
 
-  const campaigns = useMemo(() => ["All", ...Array.from(new Set(leads.map((l) => l.campaign).filter(Boolean)))], [leads]);
+  const campaignFilterOptions = useMemo(
+    () => [
+      "All",
+      ...Array.from(
+        new Set([
+          ...campaigns.map((c) => c.name),
+          ...leads.map((l) => l.campaign).filter(Boolean),
+        ])
+      ),
+    ],
+    [campaigns, leads]
+  );
 
   const leaderboard = useMemo(() => {
     const map = new Map<string, { agent: string; calls: number; qualified: number; won: number }>();
@@ -632,6 +741,7 @@ export default function CallCenterPage() {
         <div className="inline-flex p-1 rounded-2xl bg-white/5 border border-white/10 gap-1">
           {[
             { id: "sheet", label: "Lead Sheet", icon: FileSpreadsheet },
+            { id: "campaigns", label: `Campaigns (${campaigns.length})`, icon: Megaphone },
             { id: "callbacks", label: `Callbacks (${callbacksDue.length})`, icon: Clock },
             { id: "leaderboard", label: "Agent Leaderboard", icon: Trophy },
             ...(isManagerOrOwner ? [{ id: "access", label: "Restricted Access", icon: ShieldCheck }] : []),
@@ -714,7 +824,7 @@ export default function CallCenterPage() {
               onChange={(e) => setCampaignFilter(e.target.value)}
               className="px-3 py-2 rounded-xl bg-[#0B1022] border border-white/15 text-xs text-white outline-none"
             >
-              {campaigns.map((c) => (
+              {campaignFilterOptions.map((c) => (
                 <option key={c} value={c}>{c === "All" ? "All Campaigns" : c}</option>
               ))}
             </select>
@@ -816,6 +926,208 @@ export default function CallCenterPage() {
       )}
 
       {/* TAB 2: CALLBACKS */}
+      {/* TAB: CAMPAIGN MANAGEMENT */}
+      {activeTab === "campaigns" && (
+        <div className="space-y-4">
+          <div className="beraxis-glass-dock p-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-black text-white flex items-center gap-2">
+                <Megaphone size={16} className="text-cyan-400" /> Call Center Campaign Management
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Configure outbound/inbound campaigns, assign team agents, track daily lead goals, link Public Forms, and launch the live dialer.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/forms" className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-bold flex items-center gap-1.5">
+                <ClipboardList size={14} className="text-purple-300" /> Link Public Form
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsCampaignModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:opacity-95 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus size={14} /> New Campaign
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {campaigns.map((camp) => {
+              const campLeads = leads.filter((l) => l.campaign === camp.name);
+              const campCalls = campLeads.reduce((s, l) => s + (l.callsCount || 0), 0);
+              const campQualified = campLeads.filter((l) => l.disposition === "Qualified" || l.disposition === "Closed Won").length;
+              const convPct = campLeads.length > 0 ? Math.round((campQualified / campLeads.length) * 100) : 0;
+              const goalPct = Math.min(100, Math.round((campLeads.length / Math.max(1, camp.dailyGoal)) * 100));
+
+              return (
+                <div key={camp.id} className="beraxis-glass-dock p-5 space-y-4 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-mono text-cyan-300 uppercase font-bold">{camp.id} • {camp.mode}</span>
+                        <h3 className="text-base font-black text-white mt-0.5">{camp.name}</h3>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
+                        camp.status === "Active" ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
+                      }`}>
+                        {camp.status}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 bg-white/5 border border-white/10 rounded-xl p-2.5 text-center">
+                      <div>
+                        <div className="text-[10px] text-gray-400">Leads</div>
+                        <div className="text-sm font-black text-white">{campLeads.length}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-gray-400">Calls</div>
+                        <div className="text-sm font-black text-cyan-300">{campCalls}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-gray-400">Win / Qual</div>
+                        <div className="text-sm font-black text-emerald-400">{convPct}%</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] text-gray-400">
+                        <span>Daily Goal Progress</span>
+                        <span>{campLeads.length} / {camp.dailyGoal} leads</span>
+                      </div>
+                      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400" style={{ width: `${goalPct}%` }} />
+                      </div>
+                    </div>
+
+                    <div className="text-[11px] text-gray-400">
+                      <strong className="text-gray-300">Assigned Agents:</strong>{" "}
+                      {camp.assignedAgents.length > 0 ? camp.assignedAgents.join(", ") : "All Agents"}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => handleDialNextInCampaign(camp.name)}
+                      className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <PhoneCall size={12} /> Dial Next
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCampaignFilter(camp.name);
+                        setActiveTab("sheet");
+                      }}
+                      className="py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white text-[11px] font-bold cursor-pointer"
+                    >
+                      View Leads
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleCampaignStatus(camp.id)}
+                      className="p-2 rounded-xl bg-white/10 hover:bg-white/15 text-amber-300 cursor-pointer"
+                      title={camp.status === "Active" ? "Pause Campaign" : "Resume Campaign"}
+                    >
+                      {camp.status === "Active" ? <Pause size={13} /> : <Play size={13} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCampaign(camp.id)}
+                      className="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 cursor-pointer"
+                      title="Delete Campaign"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Create Campaign Modal */}
+      {isCampaignModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="beraxis-glass-hero max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-black text-white">Launch Call Center Campaign</h3>
+              <button type="button" onClick={() => setIsCampaignModalOpen(false)} className="text-gray-400 hover:text-white cursor-pointer"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleCreateCampaign} className="space-y-3 text-xs">
+              <div>
+                <label className="text-gray-300 font-bold block mb-1">Campaign Name *</label>
+                <input
+                  required
+                  value={newCampaign.name}
+                  onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
+                  placeholder="e.g. Final Expense Outbound Q4"
+                  className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/15 text-white outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-gray-300 font-bold block mb-1">Dialer Mode</label>
+                  <select
+                    value={newCampaign.mode}
+                    onChange={(e) => setNewCampaign({ ...newCampaign, mode: e.target.value as any })}
+                    className="w-full px-3 py-2 rounded-xl bg-[#0B1022] border border-white/15 text-white outline-none"
+                  >
+                    <option value="Progressive Dialer">Progressive Dialer</option>
+                    <option value="Predictive Dialer">Predictive Dialer</option>
+                    <option value="Preview Dialer">Preview Dialer</option>
+                    <option value="Inbound Queue">Inbound Queue</option>
+                    <option value="Callback Recovery">Callback Recovery</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-gray-300 font-bold block mb-1">Daily Lead Goal</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newCampaign.dailyGoal}
+                    onChange={(e) => setNewCampaign({ ...newCampaign, dailyGoal: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl bg-white/[0.06] border border-white/15 text-white outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-gray-300 font-bold block mb-1">Assign Agents (Optional)</label>
+                <div className="max-h-32 overflow-y-auto space-y-1 bg-black/30 border border-white/10 rounded-xl p-2">
+                  {teamUsers.length === 0 ? (
+                    <span className="text-[11px] text-gray-500">All workspace agents will be included.</span>
+                  ) : (
+                    teamUsers.map((u) => (
+                      <label key={u.email} className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-white/5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newCampaign.assignedAgents.includes(u.name)}
+                          onChange={() =>
+                            setNewCampaign((prev) => ({
+                              ...prev,
+                              assignedAgents: prev.assignedAgents.includes(u.name)
+                                ? prev.assignedAgents.filter((a) => a !== u.name)
+                                : [...prev.assignedAgents, u.name],
+                            }))
+                          }
+                          className="accent-cyan-500"
+                        />
+                        <span className="text-white font-semibold">{u.name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+              <button type="submit" className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 text-white font-bold cursor-pointer">
+                Create &amp; Activate Campaign
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {activeTab === "callbacks" && (
         <div className="beraxis-glass-dock p-5 space-y-3">
           <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
