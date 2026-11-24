@@ -2,9 +2,13 @@
 import { useBranchContext } from '@/lib/branchContext';
 import { useState, useEffect } from 'react';
 import CRMHeader from '@/components/crm/CRMHeader';
-import { Plus, Star, Clock, Trophy, XCircle, Activity, Layers, ListFilter, ChevronRight, ChevronLeft } from 'lucide-react';
+import {
+    Plus, Star, Clock, Trophy, XCircle, Activity, Filter, Layers, ListFilter,
+    ChevronRight, ChevronLeft, Pencil, Download, FileSpreadsheet, Trash2, Check, X
+} from 'lucide-react';
 import Link from 'next/link';
 import ActivityHistory from '@/components/shared/ActivityHistory';
+import * as XLSX from 'xlsx';
 
 type Lead = {
     id: string;
@@ -18,7 +22,14 @@ type Lead = {
     email?: string;
 };
 
-const initialStages = [
+type StageColumn = {
+    id: string;
+    name: string;
+    color: string;
+    barBg: string;
+};
+
+const initialStages: StageColumn[] = [
     { name: 'New', id: 'New', color: 'border-blue-500/50 text-blue-400', barBg: 'bg-blue-500' },
     { name: 'Qualified', id: 'Qualified', color: 'border-purple-500/50 text-purple-400', barBg: 'bg-purple-500' },
     { name: 'Proposition', id: 'Proposition', color: 'border-amber-500/50 text-amber-400', barBg: 'bg-amber-500' },
@@ -26,10 +37,26 @@ const initialStages = [
     { name: 'Lost', id: 'Lost', color: 'border-rose-500/50 text-rose-400', barBg: 'bg-rose-500' },
 ];
 
+const STAGE_COLOR_PRESETS = [
+    { label: 'Blue', color: 'border-blue-500/50 text-blue-400', barBg: 'bg-blue-500' },
+    { label: 'Purple', color: 'border-purple-500/50 text-purple-400', barBg: 'bg-purple-500' },
+    { label: 'Amber', color: 'border-amber-500/50 text-amber-400', barBg: 'bg-amber-500' },
+    { label: 'Emerald', color: 'border-emerald-500/50 text-emerald-400', barBg: 'bg-emerald-500' },
+    { label: 'Cyan', color: 'border-cyan-500/50 text-cyan-400', barBg: 'bg-cyan-500' },
+    { label: 'Rose', color: 'border-rose-500/50 text-rose-400', barBg: 'bg-rose-500' },
+];
+
 export default function CRMPage() {
     const { activeBranch, getEntityStorageKey } = useBranchContext();
     const companyId = activeBranch?.id || "default";
     const [leads, setLeads] = useState<Lead[]>([]);
+    const [stages, setStages] = useState<StageColumn[]>(initialStages);
+    const [editingStageId, setEditingStageId] = useState<string | null>(null);
+    const [editingStageName, setEditingStageName] = useState('');
+    const [isAddingStage, setIsAddingStage] = useState(false);
+    const [newStageName, setNewStageName] = useState('');
+    const [newStageColorIdx, setNewStageColorIdx] = useState(4);
+    const [selectedDealIds, setSelectedDealIds] = useState<string[]>([]);
     const [activeView, setActiveView] = useState<'pipeline' | 'leads' | 'activity'>('pipeline');
     const [tableFilter, setTableFilter] = useState<'all' | 'lead' | 'opportunity' | 'won' | 'lost'>('all');
     const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -39,6 +66,13 @@ export default function CRMPage() {
     const [draggedOppId, setDraggedOppId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const persistStages = (next: StageColumn[]) => {
+        setStages(next);
+        try {
+            localStorage.setItem(getEntityStorageKey("crm_stages"), JSON.stringify(next));
+        } catch {}
+    };
+
     const persistLeads = (next: Lead[]) => {
         setLeads(next);
         try {
@@ -46,7 +80,106 @@ export default function CRMPage() {
         } catch {}
     };
 
+    const toggleSelectDeal = (id: string) => {
+        setSelectedDealIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
+
+    const exportDeals = (rows: Lead[], format: 'xlsx' | 'csv', prefix = 'crm_deals') => {
+        if (!rows || rows.length === 0) return;
+        const formatted = rows.map(r => ({
+            ID: r.id,
+            Name: r.name,
+            Type: r.type,
+            Stage: r.status,
+            Expected_Revenue: r.expected_revenue || 0,
+            Probability_Pct: r.probability || 0,
+            Company: r.company_name || activeBranch?.name || '',
+            Email: r.email || '',
+        }));
+        const stamp = new Date().toISOString().slice(0, 10);
+        if (format === 'xlsx') {
+            const ws = XLSX.utils.json_to_sheet(formatted);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'CRM Deals');
+            XLSX.writeFile(wb, `${prefix}_${stamp}.xlsx`);
+        } else {
+            const headers = Object.keys(formatted[0]);
+            const csvLines = [
+                headers.join(','),
+                ...formatted.map(row =>
+                    headers.map(h => `"${String((row as any)[h] ?? '').replace(/"/g, '""')}"`).join(',')
+                ),
+            ].join('\n');
+            const blob = new Blob([csvLines], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${prefix}_${stamp}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    };
+
+    const handleRenameStage = (stageId: string) => {
+        const trimmed = editingStageName.trim();
+        if (!trimmed) { setEditingStageId(null); return; }
+        const oldStage = stages.find(s => s.id === stageId);
+        const nextStages = stages.map(s => s.id === stageId ? { ...s, id: trimmed, name: trimmed } : s);
+        persistStages(nextStages);
+        if (oldStage) {
+            const updatedLeads = leads.map(l =>
+                l.status?.toLowerCase() === oldStage.id.toLowerCase() ? { ...l, status: trimmed } : l
+            );
+            persistLeads(updatedLeads);
+        }
+        setEditingStageId(null);
+    };
+
+    const handleAddStage = (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmed = newStageName.trim();
+        if (!trimmed) return;
+        if (stages.some(s => s.id.toLowerCase() === trimmed.toLowerCase())) {
+            setIsAddingStage(false);
+            setNewStageName('');
+            return;
+        }
+        const preset = STAGE_COLOR_PRESETS[newStageColorIdx] || STAGE_COLOR_PRESETS[0];
+        persistStages([...stages, { id: trimmed, name: trimmed, color: preset.color, barBg: preset.barBg }]);
+        setNewStageName('');
+        setIsAddingStage(false);
+    };
+
+    const handleDeleteStage = (stageId: string) => {
+        if (stages.length <= 1) return;
+        const nextStages = stages.filter(s => s.id !== stageId);
+        persistStages(nextStages);
+        const fallbackStage = nextStages[0].id;
+        const updatedLeads = leads.map(l =>
+            l.status?.toLowerCase() === stageId.toLowerCase() ? { ...l, status: fallbackStage } : l
+        );
+        persistLeads(updatedLeads);
+    };
+
+    const handleDeleteDeal = (oppId: string) => {
+        persistLeads(leads.filter(l => l.id !== oppId));
+        setSelectedDealIds(prev => prev.filter(id => id !== oppId));
+    };
+
     const fetchLeads = async () => {
+        try {
+            const rawStages = localStorage.getItem(getEntityStorageKey("crm_stages"));
+            if (rawStages) {
+                const parsedStages = JSON.parse(rawStages);
+                if (Array.isArray(parsedStages) && parsedStages.length > 0) setStages(parsedStages);
+            } else {
+                setStages(initialStages);
+            }
+        } catch {
+            setStages(initialStages);
+        }
         const storageKey = getEntityStorageKey("crm_leads");
         let localList: Lead[] = [];
         try {
@@ -200,22 +333,63 @@ export default function CRMPage() {
                         <Activity size={16} /> Audit History
                     </button>
                 </div>
-                <button 
-                    onClick={() => {
-                        setActiveView('pipeline');
-                        setNewDealStage('New');
-                        setIsNewModalOpen(true);
-                    }} 
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-purple-900/20 transition-all cursor-pointer"
-                >
-                    <Plus size={18} /> New {activeView === 'leads' ? 'Lead' : 'Opportunity'}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                    {selectedDealIds.length > 0 ? (
+                        <>
+                            <button
+                                onClick={() => exportDeals(leads.filter(l => selectedDealIds.includes(l.id)), 'xlsx', 'crm_selected_deals')}
+                                className="bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 px-3 py-2 rounded-lg flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+                            >
+                                <FileSpreadsheet size={15} /> Export Selected ({selectedDealIds.length}) Excel
+                            </button>
+                            <button
+                                onClick={() => exportDeals(leads.filter(l => selectedDealIds.includes(l.id)), 'csv', 'crm_selected_deals')}
+                                className="bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/30 text-cyan-300 px-3 py-2 rounded-lg flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+                            >
+                                <Download size={15} /> Selected CSV
+                            </button>
+                            <button
+                                onClick={() => setSelectedDealIds([])}
+                                className="text-xs text-gray-400 hover:text-white px-2 py-2 cursor-pointer"
+                            >
+                                Clear
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => exportDeals(leads, 'xlsx', 'crm_all_deals')}
+                                disabled={leads.length === 0}
+                                className="bg-white/5 hover:bg-white/10 disabled:opacity-40 text-gray-200 border border-white/10 px-3 py-2 rounded-lg flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+                            >
+                                <FileSpreadsheet size={15} className="text-emerald-400" /> Excel
+                            </button>
+                            <button
+                                onClick={() => exportDeals(leads, 'csv', 'crm_all_deals')}
+                                disabled={leads.length === 0}
+                                className="bg-white/5 hover:bg-white/10 disabled:opacity-40 text-gray-200 border border-white/10 px-3 py-2 rounded-lg flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+                            >
+                                <Download size={15} className="text-cyan-400" /> CSV
+                            </button>
+                        </>
+                    )}
+                    <button 
+                        onClick={() => {
+                            setActiveView('pipeline');
+                            setNewDealStage(stages[0]?.id || 'New');
+                            setIsNewModalOpen(true);
+                        }} 
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold shadow-lg shadow-purple-900/20 transition-all cursor-pointer"
+                    >
+                        <Plus size={18} /> New {activeView === 'leads' ? 'Lead' : 'Opportunity'}
+                    </button>
+                </div>
             </div>
 
             <div className="flex-1 overflow-x-auto overflow-y-auto p-4">
                 {activeView === 'pipeline' && (
                     <div className="flex h-full gap-4 min-w-max pb-2">
-                        {initialStages.map((stage) => {
+                        {stages.map((stage) => {
                             const stageOpps = leads.filter(
                                 o => o.status?.toLowerCase() === stage.id.toLowerCase()
                             );
@@ -226,26 +400,75 @@ export default function CRMPage() {
                                     onDrop={(e) => handleDrop(e, stage.id)}
                                     onDragOver={handleDragOver}
                                 >
-                                    {/* Column Header */}
-                                    <div className="flex items-center justify-between mb-2 px-1">
-                                        <div className="flex items-center gap-2 font-semibold text-gray-200">
-                                            <h3>{stage.name}</h3>
-                                            <span className="text-gray-500 text-xs px-2 py-0.5 rounded-full bg-white/5">
-                                                {stageOpps.length}
-                                            </span>
-                                        </div>
-                                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
-                                            <button
-                                                onClick={() => {
-                                                    setNewDealStage(stage.id);
-                                                    setIsNewModalOpen(true);
-                                                }}
-                                                className="text-gray-400 hover:text-white p-1 cursor-pointer"
-                                                title="Add to column"
-                                            >
-                                                <Plus size={16} />
-                                            </button>
-                                        </div>
+                                    {/* Column Header (Editable) */}
+                                    <div className="flex items-center justify-between mb-2 px-1 gap-1">
+                                        {editingStageId === stage.id ? (
+                                            <div className="flex items-center gap-1 flex-1">
+                                                <input
+                                                    type="text"
+                                                    value={editingStageName}
+                                                    onChange={(e) => setEditingStageName(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleRenameStage(stage.id);
+                                                        if (e.key === 'Escape') setEditingStageId(null);
+                                                    }}
+                                                    autoFocus
+                                                    className="bg-gray-900 border border-purple-500 rounded px-2 py-0.5 text-sm text-white outline-none w-full"
+                                                />
+                                                <button onClick={() => handleRenameStage(stage.id)} className="text-emerald-400 p-1 cursor-pointer"><Check size={14} /></button>
+                                                <button onClick={() => setEditingStageId(null)} className="text-gray-400 p-1 cursor-pointer"><X size={14} /></button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div
+                                                    className="flex items-center gap-2 font-semibold text-gray-200 cursor-pointer"
+                                                    onDoubleClick={() => { setEditingStageId(stage.id); setEditingStageName(stage.name); }}
+                                                    title="Double-click to rename heading"
+                                                >
+                                                    <h3>{stage.name}</h3>
+                                                    <span className="text-gray-500 text-xs px-2 py-0.5 rounded-full bg-white/5">
+                                                        {stageOpps.length}
+                                                    </span>
+                                                </div>
+                                                <div className="opacity-70 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
+                                                    <button
+                                                        onClick={() => { setEditingStageId(stage.id); setEditingStageName(stage.name); }}
+                                                        className="text-gray-400 hover:text-purple-300 p-1 cursor-pointer"
+                                                        title="Rename stage heading"
+                                                    >
+                                                        <Pencil size={13} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setNewDealStage(stage.id);
+                                                            setIsNewModalOpen(true);
+                                                        }}
+                                                        className="text-gray-400 hover:text-white p-1 cursor-pointer"
+                                                        title="Add deal to column"
+                                                    >
+                                                        <Plus size={15} />
+                                                    </button>
+                                                    {stageOpps.length > 0 && (
+                                                        <button
+                                                            onClick={() => exportDeals(stageOpps, 'xlsx', `crm_${stage.name.toLowerCase().replace(/\s+/g, '_')}`)}
+                                                            className="text-gray-400 hover:text-emerald-400 p-1 cursor-pointer"
+                                                            title={`Export "${stage.name}" to Excel`}
+                                                        >
+                                                            <FileSpreadsheet size={13} />
+                                                        </button>
+                                                    )}
+                                                    {stages.length > 1 && (
+                                                        <button
+                                                            onClick={() => handleDeleteStage(stage.id)}
+                                                            className="text-gray-500 hover:text-rose-400 p-1 cursor-pointer"
+                                                            title="Remove column"
+                                                        >
+                                                            <Trash2 size={13} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
 
                                     {/* Progress Bar / Total */}
@@ -311,38 +534,72 @@ export default function CRMPage() {
 
                                         {/* Opportunity Cards */}
                                         {stageOpps.map((opp) => {
-                                            const stageIdx = initialStages.findIndex(s => s.id.toLowerCase() === stage.id.toLowerCase());
-                                            const prevStage = stageIdx > 0 ? initialStages[stageIdx - 1].id : null;
-                                            const nextStage = stageIdx < initialStages.length - 1 ? initialStages[stageIdx + 1].id : null;
+                                            const stageIdx = stages.findIndex(s => s.id.toLowerCase() === stage.id.toLowerCase());
+                                            const prevStage = stageIdx > 0 ? stages[stageIdx - 1].id : null;
+                                            const nextStage = stageIdx < stages.length - 1 ? stages[stageIdx + 1].id : null;
+                                            const isSelected = selectedDealIds.includes(opp.id);
                                             return (
                                             <div 
                                                 key={opp.id} 
                                                 draggable
                                                 onDragStart={(e) => handleDragStart(e, opp.id)}
-                                                className="block galaxy-card !p-3.5 !rounded-xl !bg-white/[0.07] hover:!bg-white/[0.12] cursor-grab active:cursor-grabbing group relative shadow-md transition-all border border-white/5 hover:border-purple-500/40"
+                                                className={`block galaxy-card !p-3.5 !rounded-xl cursor-grab active:cursor-grabbing group relative shadow-md transition-all border ${isSelected ? 'border-emerald-500/70 !bg-emerald-950/20' : 'border-white/5 !bg-white/[0.07] hover:!bg-white/[0.12] hover:border-purple-500/40'}`}
                                             >
-                                                <Link href={`/crm/${opp.id}`} draggable={false} className="block">
-                                                    <div className="flex justify-between items-start mb-1.5">
-                                                        <h4 className="text-sm font-semibold text-gray-100 truncate pr-2 group-hover:text-purple-400 transition-colors">
-                                                            {opp.name}
-                                                        </h4>
-                                                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${
-                                                            opp.status?.toLowerCase() === 'won' ? 'bg-emerald-400' :
-                                                            opp.status?.toLowerCase() === 'lost' ? 'bg-rose-500' :
-                                                            opp.priority > 1 ? 'bg-amber-400 animate-pulse' : 'bg-blue-400'
-                                                        }`}></div>
-                                                    </div>
-
-                                                    <div className="text-sm text-gray-200 font-bold mb-2">
-                                                        ${(opp.expected_revenue || 0).toLocaleString()}
-                                                    </div>
-                                                </Link>
+                                                <div className="flex items-start justify-between gap-2 mb-1.5">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        onChange={() => toggleSelectDeal(opp.id)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        title="Select deal for Excel/CSV export"
+                                                        className="mt-1 accent-emerald-500 cursor-pointer shrink-0"
+                                                    />
+                                                    <Link href={`/crm/${opp.id}`} draggable={false} className="block flex-1 min-w-0">
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <h4 className="text-sm font-semibold text-gray-100 truncate pr-2 group-hover:text-purple-400 transition-colors">
+                                                                {opp.name}
+                                                            </h4>
+                                                            <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${
+                                                                opp.status?.toLowerCase() === 'won' ? 'bg-emerald-400' :
+                                                                opp.status?.toLowerCase() === 'lost' ? 'bg-rose-500' :
+                                                                opp.priority > 1 ? 'bg-amber-400 animate-pulse' : 'bg-blue-400'
+                                                            }`}></div>
+                                                        </div>
+                                                        <div className="text-sm text-gray-200 font-bold">
+                                                            ${(opp.expected_revenue || 0).toLocaleString()}
+                                                        </div>
+                                                    </Link>
+                                                </div>
 
                                                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
-                                                    <div className="flex gap-0.5">
+                                                    <div className="flex items-center gap-1">
                                                         {[1, 2, 3].map(i => (
-                                                            <Star key={i} size={12} className={i <= (opp.priority || 0) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"} />
+                                                            <Star key={i} size={11} className={i <= (opp.priority || 0) ? "text-yellow-400 fill-yellow-400" : "text-gray-600"} />
                                                         ))}
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); exportDeals([opp], 'xlsx', `deal_${opp.name.toLowerCase().replace(/\s+/g, '_')}`); }}
+                                                            title="Export this deal to Excel"
+                                                            className="ml-1.5 p-1 rounded hover:bg-white/10 text-emerald-400 cursor-pointer"
+                                                        >
+                                                            <FileSpreadsheet size={12} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); exportDeals([opp], 'csv', `deal_${opp.name.toLowerCase().replace(/\s+/g, '_')}`); }}
+                                                            title="Export this deal to CSV"
+                                                            className="p-1 rounded hover:bg-white/10 text-cyan-400 cursor-pointer"
+                                                        >
+                                                            <Download size={12} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteDeal(opp.id); }}
+                                                            title="Delete deal"
+                                                            className="p-1 rounded hover:bg-rose-500/20 text-rose-400 cursor-pointer"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
                                                     </div>
                                                     <div className="flex items-center gap-1">
                                                         {prevStage && (
@@ -383,6 +640,46 @@ export default function CRMPage() {
                                 </div>
                             );
                         })}
+
+                        {/* Add New Stage / Column */}
+                        <div className="w-72 shrink-0">
+                            {isAddingStage ? (
+                                <form onSubmit={handleAddStage} className="galaxy-card !bg-[#1E293B] p-4 rounded-xl border border-purple-500/40 space-y-3">
+                                    <div className="text-xs font-bold text-purple-300 uppercase">New Stage Heading</div>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={newStageName}
+                                        onChange={(e) => setNewStageName(e.target.value)}
+                                        placeholder="e.g. Negotiation"
+                                        autoFocus
+                                        className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-lg px-3 py-2 text-sm text-white outline-none"
+                                    />
+                                    <div className="flex items-center gap-1.5">
+                                        {STAGE_COLOR_PRESETS.map((p, idx) => (
+                                            <button
+                                                key={p.label}
+                                                type="button"
+                                                onClick={() => setNewStageColorIdx(idx)}
+                                                className={`w-5 h-5 rounded-full ${p.barBg} ${newStageColorIdx === idx ? 'ring-2 ring-white' : 'opacity-60'} cursor-pointer`}
+                                                title={p.label}
+                                            />
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button type="submit" className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-1.5 rounded-lg text-xs font-bold cursor-pointer">Add Column</button>
+                                        <button type="button" onClick={() => setIsAddingStage(false)} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg text-xs cursor-pointer">Cancel</button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <button
+                                    onClick={() => setIsAddingStage(true)}
+                                    className="w-full py-4 border border-dashed border-white/15 hover:border-purple-500/50 rounded-xl text-xs font-bold text-gray-400 hover:text-purple-300 flex items-center justify-center gap-2 transition-all cursor-pointer bg-white/[0.02]"
+                                >
+                                    <Plus size={16} /> Add Stage / Column
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
 
@@ -425,6 +722,21 @@ export default function CRMPage() {
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-[#1E293B] text-[10px] uppercase tracking-widest text-gray-400 border-b border-gray-800">
                                     <tr>
+                                        <th className="px-4 py-4 w-10">
+                                            <input
+                                                type="checkbox"
+                                                checked={filteredTableLeads.length > 0 && filteredTableLeads.every(i => selectedDealIds.includes(i.id))}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedDealIds(Array.from(new Set([...selectedDealIds, ...filteredTableLeads.map(i => i.id)])));
+                                                    } else {
+                                                        const ids = new Set(filteredTableLeads.map(i => i.id));
+                                                        setSelectedDealIds(selectedDealIds.filter(id => !ids.has(id)));
+                                                    }
+                                                }}
+                                                className="accent-emerald-500 cursor-pointer"
+                                            />
+                                        </th>
                                         <th className="px-6 py-4">Name</th>
                                         <th className="px-6 py-4">Type</th>
                                         <th className="px-6 py-4">Expected Revenue</th>
@@ -436,6 +748,14 @@ export default function CRMPage() {
                                 <tbody className="divide-y divide-gray-800">
                                     {filteredTableLeads.map((item) => (
                                         <tr key={item.id} className="hover:bg-white/5 transition-colors group">
+                                            <td className="px-4 py-4">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedDealIds.includes(item.id)}
+                                                    onChange={() => toggleSelectDeal(item.id)}
+                                                    className="accent-emerald-500 cursor-pointer"
+                                                />
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <Link 
                                                     href={`/crm/${item.id}`} 
@@ -474,12 +794,26 @@ export default function CRMPage() {
                                                     <span className="text-xs font-mono text-gray-400">{item.probability || 0}%</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-right">
+                                            <td className="px-6 py-4 text-right space-x-1.5">
+                                                <button
+                                                    onClick={() => exportDeals([item], 'xlsx', `deal_${item.name.toLowerCase().replace(/\s+/g, '_')}`)}
+                                                    className="inline-flex items-center gap-1 text-[11px] bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 px-2 py-1 rounded-lg cursor-pointer"
+                                                    title="Export row to Excel"
+                                                >
+                                                    <FileSpreadsheet size={12} /> XLSX
+                                                </button>
+                                                <button
+                                                    onClick={() => exportDeals([item], 'csv', `deal_${item.name.toLowerCase().replace(/\s+/g, '_')}`)}
+                                                    className="inline-flex items-center gap-1 text-[11px] bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 px-2 py-1 rounded-lg cursor-pointer"
+                                                    title="Export row to CSV"
+                                                >
+                                                    <Download size={12} /> CSV
+                                                </button>
                                                 <Link 
                                                     href={`/crm/${item.id}`}
                                                     className="inline-block text-xs bg-white/5 hover:bg-purple-600 text-gray-300 hover:text-white px-3 py-1 rounded-lg transition-all"
                                                 >
-                                                    View Details & History →
+                                                    Details →
                                                 </Link>
                                             </td>
                                         </tr>
