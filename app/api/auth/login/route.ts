@@ -48,6 +48,9 @@ export async function POST(request: NextRequest) {
         company_name: meta.company_name || meta.workspace_name || "",
         plan: meta.plan || "One App Free",
         subscription_status: meta.subscription_status || "free",
+        seats: meta.seats !== undefined ? Number(meta.seats) : undefined,
+        industry_id: meta.industry_id || undefined,
+        industry_name: meta.industry_name || undefined,
         user_metadata: meta,
       },
     });

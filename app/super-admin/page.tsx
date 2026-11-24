@@ -1128,6 +1128,7 @@ function SuperAdminPageContent() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         companyId: isChangePlanOpen.id || "CMP-001",
+                        email: isChangePlanOpen.owner_email,
                         action: "set_seats",
                         totalSeats: nextSeats,
                         planName: selectedPlanInput

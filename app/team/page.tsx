@@ -136,7 +136,7 @@ function OrgTreeBranch({
 export default function TeamManagementPage() {
   const { activeBranch, getEntityStorageKey } = useBranchContext();
   const activeCompanyId = activeBranch?.id || "CMP-001";
-  const [quota, setQuota] = useState<MultiCompanyQuota>({ ...INITIAL_QUOTA, totalSeats: 60 });
+  const [quota, setQuota] = useState<MultiCompanyQuota>(INITIAL_QUOTA);
   const [members, setMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
   const [contractors, setContractors] = useState<FreelancerContractor[]>(INITIAL_CONTRACTORS);
   const [invitations, setInvitations] = useState<TeamInvitation[]>(INITIAL_INVITATIONS);
@@ -208,11 +208,21 @@ export default function TeamManagementPage() {
         if (pq?.totalSeats) setQuota((prev) => ({ ...prev, ...pq }));
       }
     } catch {}
-    fetch(`/api/team/quota?company_id=${encodeURIComponent(activeCompanyId)}`)
+    let currentUserEmail = "";
+    try {
+      const rawU = localStorage.getItem("user");
+      if (rawU) currentUserEmail = JSON.parse(rawU)?.email || "";
+    } catch {}
+    fetch(`/api/team/quota?company_id=${encodeURIComponent(activeCompanyId)}${currentUserEmail ? `&email=${encodeURIComponent(currentUserEmail)}` : ""}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((qd) => {
         if (qd?.success && qd.quota?.totalSeats) {
-          setQuota((prev) => ({ ...prev, totalSeats: qd.quota.totalSeats, planName: qd.quota.planName || prev.planName }));
+          setQuota((prev) => ({
+            ...prev,
+            totalSeats: qd.quota.totalSeats,
+            availableSeats: Math.max(0, qd.quota.totalSeats - prev.assignedSeats),
+            planName: qd.quota.planName || prev.planName,
+          }));
           try {
             localStorage.setItem(quotaKey, JSON.stringify({ totalSeats: qd.quota.totalSeats, planName: qd.quota.planName }));
           } catch {}
@@ -458,10 +468,15 @@ export default function TeamManagementPage() {
         try {
           localStorage.setItem(getEntityStorageKey("team_quota"), JSON.stringify({ totalSeats: nextTotal, planName: quota.planName }));
         } catch {}
+        let buyerEmail = "";
+        try {
+          const rawU = localStorage.getItem("user");
+          if (rawU) buyerEmail = JSON.parse(rawU)?.email || "";
+        } catch {}
         fetch("/api/team/quota", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ companyId: activeCompanyId, action: "add_seats", addSeats: buySeatQty }),
+          body: JSON.stringify({ companyId: activeCompanyId, email: buyerEmail || undefined, action: "add_seats", addSeats: buySeatQty }),
         }).catch(() => {});
         showToast(
           "Seat Expansion Complete!",

@@ -74,10 +74,15 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(
           {
             email,
+            user_id: found.id,
             plan: inheritedFromCompany ? "Corporate Team Seat (Owner Paid)" : (meta.plan || "One App Free"),
             subscription_status: meta.subscription_status || "free",
             resolved_tier: resolvedTier,
             inherited_from_company: inheritedFromCompany,
+            seats: meta.seats !== undefined ? Number(meta.seats) : undefined,
+            industry_id: meta.industry_id || undefined,
+            industry_name: meta.industry_name || undefined,
+            company_name: meta.company_name || meta.workspace_name || undefined,
           },
           { headers: { "Cache-Control": "no-store" } }
         );

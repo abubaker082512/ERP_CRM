@@ -338,6 +338,78 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
               localStorage.setItem(`beraxis_plan_${info.userKey}`, tier);
             } catch {}
           }
+
+          // Sync Super Admin-updated user metadata (seats, industry_id, industry_name, company_name)
+          try {
+            const rawUser = localStorage.getItem("user");
+            if (rawUser) {
+              const parsedUser = JSON.parse(rawUser);
+              let userChanged = false;
+              if (data?.plan && parsedUser.plan !== data.plan) {
+                parsedUser.plan = data.plan;
+                userChanged = true;
+              }
+              if (data?.seats !== undefined && parsedUser.seats !== Number(data.seats)) {
+                parsedUser.seats = Number(data.seats);
+                userChanged = true;
+              }
+              if (data?.industry_id && parsedUser.industry_id !== data.industry_id) {
+                parsedUser.industry_id = data.industry_id;
+                parsedUser.industry_name = data.industry_name || data.industry_id;
+                userChanged = true;
+              }
+              if (data?.company_name && parsedUser.company_name !== data.company_name) {
+                parsedUser.company_name = data.company_name;
+                userChanged = true;
+              }
+              if (userChanged) {
+                localStorage.setItem("user", JSON.stringify(parsedUser));
+              }
+            }
+          } catch {}
+
+          // Sync seat quota into localStorage so /team immediately reflects Super Admin seat updates
+          if (data?.seats !== undefined && !Number.isNaN(Number(data.seats))) {
+            try {
+              const nextSeats = Math.max(1, Number(data.seats));
+              const activeId = localStorage.getItem(`beraxis_active_branch_id_${info.userKey}`) || localStorage.getItem("beraxis_active_branch_id") || "CMP-001";
+              const qKey = `beraxis_branch_${activeId}_team_quota`;
+              localStorage.setItem(qKey, JSON.stringify({ totalSeats: nextSeats, planName: data.plan || "Custom Enterprise Plan" }));
+            } catch {}
+          }
+
+          // Sync industry change from Super Admin into the user's primary workspace
+          if (data?.industry_id) {
+            try {
+              const serverIndKey = `beraxis_server_industry_${info.userKey}`;
+              const lastServerInd = localStorage.getItem(serverIndKey);
+              const branchesKey = `beraxis_branches_${info.userKey}`;
+              const rawBranches = localStorage.getItem(branchesKey);
+              if (rawBranches) {
+                const parsedBranches: BusinessBranch[] = JSON.parse(rawBranches);
+                if (Array.isArray(parsedBranches) && parsedBranches.length > 0 && lastServerInd !== data.industry_id) {
+                  const targetInd = getIndustryById(data.industry_id);
+                  if (targetInd && targetInd.id === data.industry_id) {
+                    const updatedBranches = parsedBranches.map((b, idx) => {
+                      if (idx === 0 || b.isPrimary) {
+                        const mergedModules = Array.from(new Set([...(b.enabledModules || []), ...(targetInd.defaultModules || [])]));
+                        return {
+                          ...b,
+                          industryId: targetInd.id,
+                          subSector: targetInd.subSectors[0] || b.subSector,
+                          enabledModules: mergedModules,
+                        };
+                      }
+                      return b;
+                    });
+                    localStorage.setItem(branchesKey, JSON.stringify(updatedBranches));
+                    localStorage.setItem(serverIndKey, data.industry_id);
+                    loadUserScopedContext();
+                  }
+                }
+              }
+            } catch {}
+          }
         }
       } catch {}
     };

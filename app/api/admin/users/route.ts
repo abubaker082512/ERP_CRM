@@ -202,6 +202,28 @@ export async function PATCH(request: NextRequest) {
       ...(nextMeta.trial_ends_at ? { trial_ends_at: nextMeta.trial_ends_at } : {}),
     });
 
+    if (body.seats !== undefined || body.plan !== undefined) {
+      const seatCount = Math.max(1, Number(nextMeta.seats || 5));
+      const planLabel = nextMeta.plan || "Custom Enterprise Plan";
+      const quotaKeys = Array.from(new Set([target.id, (target.email || "").toLowerCase()].filter(Boolean)));
+      for (const cid of quotaKeys) {
+        try {
+          await fetch(`${SUPABASE_URL}/rest/v1/company_quotas`, {
+            method: "POST",
+            headers: { ...authHeaders, Prefer: "resolution=merge-duplicates" },
+            body: JSON.stringify({
+              company_id: cid,
+              plan_id: "custom",
+              plan_name: planLabel,
+              total_seats: seatCount,
+              max_companies: 10,
+              updated_at: new Date().toISOString(),
+            }),
+          });
+        } catch {}
+      }
+    }
+
     return NextResponse.json({
       success: true,
       user: updatedData?.user || updatedData,

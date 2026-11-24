@@ -15,30 +15,96 @@ const sbHeaders = {
 
 const fallbackCompanyQuotas = new Map<string, MultiCompanyQuota>();
 
-async function loadCompanyQuota(companyId: string): Promise<MultiCompanyQuota> {
+async function lookupUserByEmail(email: string): Promise<any | null> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/company_quotas?company_id=eq.${encodeURIComponent(companyId)}`,
-      { headers: sbHeaders, cache: "no-store" }
-    );
-    if (res.ok) {
-      const rows = await res.json();
-      if (Array.isArray(rows) && rows.length > 0) {
-        const r = rows[0];
-        const q: MultiCompanyQuota = {
-          ...INITIAL_QUOTA,
-          planId: r.plan_id || "custom",
-          planName: r.plan_name || "Custom Enterprise Plan",
-          totalSeats: Number(r.total_seats || 50),
-          maxCompanies: Number(r.max_companies || 3),
-        };
-        fallbackCompanyQuotas.set(companyId, q);
-        return q;
-      }
+    for (let page = 1; page <= 10; page++) {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?page=${page}&per_page=100`, {
+        headers: sbHeaders,
+        cache: "no-store",
+      });
+      if (!res.ok) break;
+      const data = await res.json();
+      const users = Array.isArray(data?.users) ? data.users : [];
+      const found = users.find((u: any) => (u.email || "").toLowerCase() === cleanEmail);
+      if (found) return found;
+      if (users.length < 100) break;
     }
   } catch {}
+  return null;
+}
+
+async function syncAuthUserSeats(email: string, seats: number, planName?: string): Promise<void> {
+  const user = await lookupUserByEmail(email);
+  if (!user?.id) return;
+  try {
+    const nextMeta = { ...(user.user_metadata || {}), seats };
+    if (planName) nextMeta.plan = planName;
+    await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
+      method: "PUT",
+      headers: sbHeaders,
+      body: JSON.stringify({ user_metadata: nextMeta }),
+    });
+  } catch {}
+}
+
+async function loadCompanyQuota(companyId: string, email?: string): Promise<MultiCompanyQuota> {
+  // 1. Check authoritative user_metadata.seats when email is provided
+  let authSeats: number | undefined;
+  let authPlan: string | undefined;
+  let authUserId: string | undefined;
+  if (email) {
+    const user = await lookupUserByEmail(email);
+    if (user) {
+      authUserId = user.id;
+      const meta = user.user_metadata || {};
+      if (meta.seats !== undefined && meta.seats !== null && !Number.isNaN(Number(meta.seats))) {
+        authSeats = Math.max(1, Number(meta.seats));
+      }
+      if (meta.plan) authPlan = String(meta.plan);
+    }
+  }
+
+  // 2. Check company_quotas by companyId, authUserId, or email (never let stale global CMP-001 override a user's explicit seats)
+  const lookupIds = Array.from(new Set([companyId, authUserId, email?.toLowerCase()].filter(Boolean) as string[]));
+  for (const cid of lookupIds) {
+    if (cid === "CMP-001" && authSeats !== undefined) continue;
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/company_quotas?company_id=eq.${encodeURIComponent(cid)}`,
+        { headers: sbHeaders, cache: "no-store" }
+      );
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length > 0) {
+          const r = rows[0];
+          const q: MultiCompanyQuota = {
+            ...INITIAL_QUOTA,
+            planId: r.plan_id || "custom",
+            planName: authPlan || r.plan_name || INITIAL_QUOTA.planName,
+            totalSeats: authSeats !== undefined ? authSeats : Number(r.total_seats || INITIAL_QUOTA.totalSeats),
+            maxCompanies: Number(r.max_companies || 3),
+          };
+          fallbackCompanyQuotas.set(companyId, q);
+          return q;
+        }
+      }
+    } catch {}
+  }
+
+  if (authSeats !== undefined) {
+    const q: MultiCompanyQuota = {
+      ...INITIAL_QUOTA,
+      planName: authPlan || INITIAL_QUOTA.planName,
+      totalSeats: authSeats,
+    };
+    fallbackCompanyQuotas.set(companyId, q);
+    return q;
+  }
+
   if (!fallbackCompanyQuotas.has(companyId)) {
-    fallbackCompanyQuotas.set(companyId, { ...INITIAL_QUOTA, totalSeats: 50 });
+    fallbackCompanyQuotas.set(companyId, { ...INITIAL_QUOTA });
   }
   return fallbackCompanyQuotas.get(companyId)!;
 }
@@ -64,16 +130,18 @@ async function saveCompanyQuota(companyId: string, q: MultiCompanyQuota): Promis
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const companyId = searchParams.get("company_id") || "CMP-001";
-  const quota = await loadCompanyQuota(companyId);
-  return NextResponse.json({ success: true, companyId, quota });
+  const email = searchParams.get("email") || undefined;
+  const quota = await loadCompanyQuota(companyId, email);
+  return NextResponse.json({ success: true, companyId, quota }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const companyId = body.companyId || body.company_id || "CMP-001";
+    const email = body.email ? String(body.email).trim().toLowerCase() : undefined;
     const { action, company, addSeats, totalSeats, planName } = body;
-    const quota = { ...(await loadCompanyQuota(companyId)) };
+    const quota = { ...(await loadCompanyQuota(companyId, email)) };
 
     if (action === "create_company") {
       if (quota.companies.length >= quota.maxCompanies) {
@@ -109,11 +177,15 @@ export async function POST(req: Request) {
     }
 
     if (action === "set_seats") {
-      const nextSeats = Math.max(1, parseInt(String(totalSeats || 50), 10));
+      const nextSeats = Math.max(1, parseInt(String(totalSeats || 5), 10));
       quota.totalSeats = nextSeats;
       quota.availableSeats = Math.max(0, nextSeats - quota.assignedSeats);
       if (planName) quota.planName = String(planName);
       await saveCompanyQuota(companyId, quota);
+      if (email) {
+        await saveCompanyQuota(email, quota);
+        await syncAuthUserSeats(email, nextSeats, planName ? String(planName) : undefined);
+      }
       return NextResponse.json({
         success: true,
         message: `Corporate seat pool set to ${nextSeats} seats!`,
@@ -126,6 +198,10 @@ export async function POST(req: Request) {
       quota.totalSeats += quantity;
       quota.availableSeats = Math.max(0, quota.totalSeats - quota.assignedSeats);
       await saveCompanyQuota(companyId, quota);
+      if (email) {
+        await saveCompanyQuota(email, quota);
+        await syncAuthUserSeats(email, quota.totalSeats);
+      }
 
       return NextResponse.json({
         success: true,
