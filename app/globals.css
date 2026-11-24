@@ -167,19 +167,63 @@ body {
    BERAXIS BENTO DESIGN SYSTEM (Official Ribbon Spectrum + Obsidian/Ice)
    ══════════════════════════════════════════════════════════════════════ */
 .beraxis-bento-card {
-  @apply relative rounded-3xl bg-[#0F172A]/85 backdrop-blur-xl border border-white/10
-         shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_16px_40px_-15px_rgba(2,2,5,0.85)]
-         transition-all duration-200;
+  @apply relative overflow-hidden rounded-3xl
+         backdrop-blur-md backdrop-saturate-150
+         border border-white/20
+         shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_20px_50px_-15px_rgba(2,2,5,0.65)]
+         transition-all duration-300;
+  background: linear-gradient(
+    135deg,
+    rgba(19, 27, 51, 0.26) 0%,
+    rgba(11, 16, 34, 0.20) 50%,
+    rgba(6, 11, 25, 0.28) 100%
+  );
+}
+.beraxis-bento-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.03) 35%,
+    rgba(139, 92, 246, 0.03) 68%,
+    transparent 100%
+  );
+  border-radius: inherit;
 }
 .beraxis-bento-card:hover {
-  @apply border-purple-500/35 -translate-y-0.5
-         shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_20px_45px_-12px_rgba(139,92,246,0.28)];
+  @apply border-purple-400/40 -translate-y-0.5
+         shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_22px_50px_-12px_rgba(139,92,246,0.32)];
 }
 
 .beraxis-hero-card {
-  @apply relative rounded-3xl bg-gradient-to-br from-[#131B33]/95 via-[#0B1022]/95 to-[#060B19]/95
-         backdrop-blur-xl border border-purple-500/30
-         shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_22px_50px_-12px_rgba(139,92,246,0.35)];
+  @apply relative overflow-hidden rounded-3xl
+         backdrop-blur-md backdrop-saturate-150
+         border border-white/20
+         shadow-[inset_0_1px_0_rgba(255,255,255,0.26),0_20px_50px_-15px_rgba(139,92,246,0.32)]
+         transition-all duration-300;
+  background: linear-gradient(
+    135deg,
+    rgba(19, 27, 51, 0.28) 0%,
+    rgba(11, 16, 34, 0.22) 50%,
+    rgba(6, 11, 25, 0.30) 100%
+  );
+}
+.beraxis-hero-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.13) 0%,
+    rgba(255, 255, 255, 0.03) 35%,
+    rgba(139, 92, 246, 0.04) 68%,
+    transparent 100%
+  );
+  border-radius: inherit;
 }
 
 .beraxis-glass-hero {
@@ -424,4 +468,75 @@ html[data-theme="light"] .beraxis-glow-pill {
   border-color: #7c3aed !important;
   color: #ffffff !important;
   box-shadow: 0 6px 16px -4px rgba(139, 92, 246, 0.35) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SITEWIDE DARK-THEME GLOSSY GLASS SYSTEM (Matches /apps Hero & Dock)
+   Scoped strictly to Dark Mode so Light Mode remains crisp & untouched.
+   ══════════════════════════════════════════════════════════════════════ */
+html:not([data-theme="light"]) .min-h-screen.bg-\[\#020205\],
+html:not([data-theme="light"]) .min-h-screen.bg-\[\#070B16\],
+html:not([data-theme="light"]) .min-h-screen.bg-\[\#0B0F19\],
+html:not([data-theme="light"]) .min-h-screen.bg-\[\#0A0E17\],
+html:not([data-theme="light"]) .min-h-screen.bg-\[\#060B19\] {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+html:not([data-theme="light"]) :not(.superadmin-light-panels):is(
+  .bg-\[\#0F172A\],
+  .bg-\[\#0F172A\]\/90,
+  .bg-\[\#0F172A\]\/80,
+  .bg-\[\#0F172A\]\/60,
+  .bg-\[\#111827\],
+  .bg-\[\#111827\]\/80,
+  .bg-\[\#111827\]\/60,
+  .bg-\[\#0B0F19\],
+  .bg-\[\#0B0F19\]\/90,
+  .bg-\[\#0B0F19\]\/80,
+  .bg-\[\#0B1022\],
+  .bg-\[\#141A28\],
+  .bg-\[\#141C2E\],
+  .bg-\[\#0A0F1D\],
+  .bg-slate-900,
+  .bg-slate-900\/90,
+  .bg-slate-900\/80,
+  .bg-gray-900,
+  .bg-gray-900\/90,
+  .bg-gray-900\/80
+):is(.rounded-xl, .rounded-2xl, .rounded-3xl):not(.fixed) {
+  background: linear-gradient(
+    135deg,
+    rgba(19, 27, 51, 0.28) 0%,
+    rgba(11, 16, 34, 0.22) 50%,
+    rgba(6, 11, 25, 0.30) 100%
+  ) !important;
+  backdrop-filter: blur(12px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 20px 50px -15px rgba(2, 2, 5, 0.65) !important;
+}
+
+/* Keep modal dialogs & floating overlays legible over page content */
+html:not([data-theme="light"]) .fixed :is(
+  .bg-\[\#0F172A\],
+  .bg-\[\#111827\],
+  .bg-\[\#141C2E\],
+  .bg-slate-900,
+  .bg-gray-900
+):is(.rounded-xl, .rounded-2xl, .rounded-3xl) {
+  background: linear-gradient(
+    135deg,
+    rgba(19, 27, 51, 0.78) 0%,
+    rgba(11, 16, 34, 0.74) 50%,
+    rgba(6, 11, 25, 0.82) 100%
+  ) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 24px 60px -12px rgba(2, 2, 5, 0.85) !important;
 }

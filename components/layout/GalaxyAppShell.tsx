@@ -329,7 +329,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
     return (
         <BranchProvider>
-            <div className="flex h-screen overflow-hidden bg-[#020205] flex-col">
+            <div className="flex h-screen overflow-hidden bg-transparent flex-col">
             {/* Backend Connection Banner */}
             {backendStatus === 'waking' && (
                 <div className="w-full bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-center gap-2 text-xs text-amber-400 shrink-0 z-[100]">
@@ -346,7 +346,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
             <div className="flex flex-1 overflow-hidden">
             {/* Sidebar: Sleek Collapsible Translucent Icon Rail */}
             <aside 
-                className={`fixed inset-y-0 left-0 z-50 bg-[#060B19]/90 backdrop-blur-2xl border-r border-white/10 transition-all duration-300 ease-out flex flex-col ${
+                className={`fixed inset-y-0 left-0 z-50 bg-[#060B19]/35 backdrop-blur-md backdrop-saturate-150 border-r border-white/15 shadow-[inset_-1px_0_0_rgba(255,255,255,0.08)] transition-all duration-300 ease-out flex flex-col ${
                     isSidebarOpen ? 'w-60' : 'w-[76px]'
                 }`}
             >
