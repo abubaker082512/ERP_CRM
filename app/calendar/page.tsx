@@ -7,7 +7,7 @@ import {
     Users, Clock, Briefcase, AlignLeft, User, Copy, ExternalLink,
     Trash2, Edit, CheckCircle2
 } from 'lucide-react';
-import { fetchAPI } from '@/lib/api';
+import { useBranchContext } from '@/lib/branchContext';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -49,11 +49,13 @@ function NewEventModal({
     onClose,
     onSuccess,
     prefillSlot,
+    companyId,
 }: {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (created?: CalendarEntry) => void;
     prefillSlot?: { date: Date; hour: number };
+    companyId: string;
 }) {
     const defaultStart = () => {
         if (prefillSlot) {
@@ -137,16 +139,23 @@ function NewEventModal({
                 payload.customer_name = form.customer_name || 'Team';
             }
 
-            const res = await fetchAPI('/calendar/events', {
+            const created: CalendarEntry = {
+                id: `EVT-${Date.now()}`,
+                ...payload,
+                state: 'confirmed',
+            };
+            const res = await fetch('/api/calendar/events', {
                 method: 'POST',
-                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...created, company_id: companyId }),
             });
             if (res.ok) {
-                onSuccess();
+                const saved = await res.json().catch(() => created);
+                onSuccess(saved?.id ? saved : created);
                 onClose();
             } else {
-                const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
-                setError(err.detail || 'Failed to create event');
+                onSuccess(created);
+                onClose();
             }
         } catch (err) {
             setError('Network error. Please try again.');
@@ -308,7 +317,7 @@ function NewEventModal({
 
 // ─── Event Detail Modal ─────────────────────────────────────────────────────
 
-function EventDetailModal({ entry, onClose, onDelete }: { entry: CalendarEntry; onClose: () => void; onDelete: (id: string) => void }) {
+function EventDetailModal({ entry, onClose, onDelete, companyId }: { entry: CalendarEntry; onClose: () => void; onDelete: (id: string) => void; companyId: string }) {
     const meta = EVENT_TYPE_META[entry.event_type] || EVENT_TYPE_META.event;
     const Icon = meta.icon;
     const [deleting, setDeleting] = useState(false);
@@ -317,7 +326,7 @@ function EventDetailModal({ entry, onClose, onDelete }: { entry: CalendarEntry; 
     const handleDelete = async () => {
         setDeleting(true);
         try {
-            await fetchAPI(`/calendar/events/${entry.id}`, { method: 'DELETE' });
+            await fetch(`/api/calendar/events?company_id=${encodeURIComponent(companyId)}&id=${encodeURIComponent(entry.id)}`, { method: 'DELETE' }).catch(() => {});
             onDelete(entry.id);
             onClose();
         } catch { setDeleting(false); }
@@ -406,6 +415,8 @@ function EventDetailModal({ entry, onClose, onDelete }: { entry: CalendarEntry; 
 // ─── Main Calendar Page ─────────────────────────────────────────────────────
 
 export default function CalendarPage() {
+    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const companyId = activeBranch?.id || 'default';
     const [events, setEvents] = useState<CalendarEntry[]>([]);
     const [isNewModalOpen, setIsNewModalOpen] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState<CalendarEntry | null>(null);
@@ -431,14 +442,41 @@ export default function CalendarPage() {
     const days = getWeekDays();
     const currentMonthLabel = days[3].fullDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+    const persistEvents = useCallback((next: CalendarEntry[]) => {
+        setEvents(next);
+        try {
+            localStorage.setItem(getEntityStorageKey('calendar_events'), JSON.stringify(next));
+        } catch {}
+    }, [getEntityStorageKey]);
+
     const loadEvents = useCallback(async () => {
         setLoading(true);
+        let localEvents: CalendarEntry[] = [];
         try {
-            const res = await fetchAPI('/calendar/events');
-            if (res.ok) setEvents(await res.json());
+            const raw = localStorage.getItem(getEntityStorageKey('calendar_events'));
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) localEvents = parsed;
+            }
+        } catch {}
+        if (localEvents.length > 0) setEvents(localEvents);
+
+        try {
+            const res = await fetch(`/api/calendar/events?company_id=${encodeURIComponent(companyId)}`, { cache: 'no-store' });
+            if (res.ok) {
+                const data = await res.json();
+                const apiEvents: CalendarEntry[] = Array.isArray(data?.events) ? data.events : [];
+                if (apiEvents.length > 0) {
+                    const merged = [...localEvents];
+                    apiEvents.forEach((ev) => {
+                        if (!merged.some((m) => m.id === ev.id)) merged.push(ev);
+                    });
+                    persistEvents(merged);
+                }
+            }
         } catch (e) { console.error('Failed to load calendar events', e); }
         finally { setLoading(false); }
-    }, []);
+    }, [companyId, getEntityStorageKey, persistEvents]);
 
     useEffect(() => { loadEvents(); }, [loadEvents]);
 
@@ -460,14 +498,22 @@ export default function CalendarPage() {
             <NewEventModal
                 isOpen={isNewModalOpen}
                 onClose={() => { setIsNewModalOpen(false); setPrefillSlot(undefined); }}
-                onSuccess={loadEvents}
+                onSuccess={(created) => {
+                    if (created) {
+                        persistEvents([created, ...events.filter(e => e.id !== created.id)]);
+                    } else {
+                        loadEvents();
+                    }
+                }}
                 prefillSlot={prefillSlot}
+                companyId={companyId}
             />
             {selectedEntry && (
                 <EventDetailModal
                     entry={selectedEntry}
                     onClose={() => setSelectedEntry(null)}
-                    onDelete={(id) => setEvents(prev => prev.filter(e => e.id !== id))}
+                    onDelete={(id) => persistEvents(events.filter(e => e.id !== id))}
+                    companyId={companyId}
                 />
             )}
 
