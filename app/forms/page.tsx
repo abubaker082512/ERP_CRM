@@ -15,7 +15,12 @@ import {
   ArrowDown,
   Shield,
   Users,
+  Eye,
+  FileSpreadsheet,
+  Download,
+  Search,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { useBranchContext } from "@/lib/branchContext";
 import {
   CALL_CENTER_CARRIERS,
@@ -29,6 +34,13 @@ export default function PublicFormsPage() {
   const companyName = activeBranch?.name || "Beraxis Workspace";
 
   const [forms, setForms] = useState<PublicFormDef[]>([]);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [activeView, setActiveView] = useState<"forms" | "submissions">("forms");
+  const [selectedFormFilter, setSelectedFormFilter] = useState<string>("all");
+  const [subSearch, setSubSearch] = useState("");
+  const [subDateMode, setSubDateMode] = useState<"today" | "all">(
+    activeBranch?.industryId === "call_center" ? "today" : "all"
+  );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
 
@@ -109,8 +121,11 @@ export default function PublicFormsPage() {
     if (localForms.length > 0) setForms(localForms);
 
     try {
-      const res = await fetch(`/api/public-forms?company_id=${encodeURIComponent(companyId)}`, { cache: "no-store" });
+      const res = await fetch(`/api/public-forms?company_id=${encodeURIComponent(companyId)}&include_leads=1`, { cache: "no-store" });
       const data = await res.json();
+      if (Array.isArray(data?.leads)) {
+        setSubmissions(data.leads);
+      }
       if (Array.isArray(data?.forms)) {
         const merged = [...data.forms];
         localForms.forEach((lf) => {
@@ -226,6 +241,58 @@ export default function PublicFormsPage() {
     setCustomCarrierInput("");
   };
 
+  const filteredSubmissions = submissions.filter((s) => {
+    if (selectedFormFilter !== "all" && s.formId !== selectedFormFilter) return false;
+    if (subDateMode === "today") {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      if ((s.createdAt || "").slice(0, 10) !== todayStr) return false;
+    }
+    if (subSearch.trim()) {
+      const q = subSearch.toLowerCase();
+      const hay = `${s.name || ""} ${s.phone || ""} ${s.email || ""} ${s.carrier || ""} ${s.assignedTo || ""} ${s.notes || ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const exportSubmissions = (rows: any[], format: "xlsx" | "csv") => {
+    if (rows.length === 0) return;
+    const flat = rows.map((r) => ({
+      Submission_ID: r.id,
+      Form: r.source || r.formId,
+      Campaign: r.campaign || "",
+      Name: r.name || "",
+      Phone: r.phone || "",
+      Email: r.email || "",
+      Carrier: r.carrier || "",
+      Assigned_Agent: r.assignedTo || "",
+      Notes: r.notes || "",
+      Submitted_At: r.createdAt || "",
+    }));
+    const stamp = new Date().toISOString().slice(0, 10);
+    if (format === "xlsx") {
+      const ws = XLSX.utils.json_to_sheet(flat);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Form Submissions");
+      XLSX.writeFile(wb, `form_submissions_${stamp}.xlsx`);
+    } else {
+      const headers = Object.keys(flat[0]);
+      const csv = [
+        headers.join(","),
+        ...flat.map((row) => headers.map((h) => `"${String((row as any)[h] ?? "").replace(/"/g, '""')}"`).join(",")),
+      ].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `form_submissions_${stamp}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-16 text-white">
       <div className="beraxis-glass-hero p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -256,7 +323,127 @@ export default function PublicFormsPage() {
         </div>
       </div>
 
-      {/* Forms Dashboard Grid */}
+      {/* View Toggle: Forms vs Submissions */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex p-1 rounded-2xl bg-white/5 border border-white/10 gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveView("forms")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all ${
+              activeView === "forms" ? "bg-purple-600 text-white shadow" : "text-gray-400 hover:text-white"
+            }`}
+          >
+            Public Forms ({forms.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView("submissions")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+              activeView === "submissions" ? "bg-emerald-600 text-white shadow" : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <Eye size={13} /> View Submissions ({submissions.length})
+          </button>
+        </div>
+        {activeView === "submissions" && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => exportSubmissions(filteredSubmissions, "xlsx")}
+              disabled={filteredSubmissions.length === 0}
+              className="px-3 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
+            >
+              <FileSpreadsheet size={13} /> Export Excel
+            </button>
+            <button
+              type="button"
+              onClick={() => exportSubmissions(filteredSubmissions, "csv")}
+              disabled={filteredSubmissions.length === 0}
+              className="px-3 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/30 text-cyan-300 text-xs font-bold flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
+            >
+              <Download size={13} /> Export CSV
+            </button>
+          </div>
+        )}
+      </div>
+
+      {activeView === "submissions" ? (
+        <div className="beraxis-glass-dock p-5 space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[200px] flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/15">
+              <Search size={14} className="text-gray-400" />
+              <input
+                value={subSearch}
+                onChange={(e) => setSubSearch(e.target.value)}
+                placeholder="Search submissions by name, phone, carrier, agent..."
+                className="flex-1 bg-transparent text-xs text-white outline-none"
+              />
+            </div>
+            <select
+              value={selectedFormFilter}
+              onChange={(e) => setSelectedFormFilter(e.target.value)}
+              className="px-3 py-2 rounded-xl bg-[#0B1022] border border-white/15 text-xs text-white"
+            >
+              <option value="all">All Forms</option>
+              {forms.map((f) => (
+                <option key={f.id} value={f.id}>{f.title}</option>
+              ))}
+            </select>
+            <select
+              value={subDateMode}
+              onChange={(e) => setSubDateMode(e.target.value as "today" | "all")}
+              className="px-3 py-2 rounded-xl bg-[#0B1022] border border-cyan-500/30 text-xs font-bold text-cyan-300"
+            >
+              <option value="today">Daily Basis (Today)</option>
+              <option value="all">All Dates</option>
+            </select>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-white/10 text-gray-400 uppercase text-[10px]">
+                  <th className="py-2.5 px-3">Submitted</th>
+                  <th className="py-2.5 px-3">Form / Campaign</th>
+                  <th className="py-2.5 px-3">Lead</th>
+                  <th className="py-2.5 px-3">Carrier</th>
+                  <th className="py-2.5 px-3">Agent</th>
+                  <th className="py-2.5 px-3">Details</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filteredSubmissions.map((s) => (
+                  <tr key={s.id} className="hover:bg-white/[0.03]">
+                    <td className="py-3 px-3 text-gray-400 whitespace-nowrap">
+                      {s.createdAt ? new Date(s.createdAt).toLocaleString() : "—"}
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="font-bold text-purple-300">{s.source || s.formId}</div>
+                      <div className="text-[10px] text-gray-400">{s.campaign}</div>
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="font-bold text-white">{s.name}</div>
+                      <div className="text-[11px] text-cyan-300 font-mono">{s.phone || "—"}</div>
+                      <div className="text-[10px] text-gray-400">{s.email || ""}</div>
+                    </td>
+                    <td className="py-3 px-3 text-emerald-300 font-semibold">{s.carrier || "—"}</td>
+                    <td className="py-3 px-3 text-gray-200">{s.assignedTo || "Unassigned"}</td>
+                    <td className="py-3 px-3 text-gray-300 max-w-xs truncate">{s.notes || "—"}</td>
+                  </tr>
+                ))}
+                {filteredSubmissions.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-10 text-center text-gray-400">
+                      No submissions found for this filter.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+      /* Forms Dashboard Grid */
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {forms.map((f) => (
           <div key={f.id} className="beraxis-glass-dock p-6 space-y-4 flex flex-col justify-between">
@@ -293,14 +480,25 @@ export default function PublicFormsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedFormFilter(f.id);
+                  setSubDateMode("all");
+                  setActiveView("submissions");
+                }}
+                className="py-2 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Eye size={13} /> Submissions
+              </button>
               <button
                 type="button"
                 onClick={() => copyLink(f.id)}
                 className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {copiedId === f.id ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                {copiedId === f.id ? "Link Copied!" : "Copy Public Link"}
+                {copiedId === f.id ? "Link Copied!" : "Copy Link"}
               </button>
               <Link
                 href={`/f/${f.id}`}
@@ -313,6 +511,7 @@ export default function PublicFormsPage() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Form Builder Modal */}
       {isBuilderOpen && (
