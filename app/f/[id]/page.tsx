@@ -18,10 +18,23 @@ export default function PublicFormRespondentPage() {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`/api/public-forms?id=${encodeURIComponent(id)}`)
+    fetch(`/api/public-forms?id=${encodeURIComponent(id)}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data?.form) setForm(data.form);
+        if (data?.form) {
+          setForm(data.form);
+        } else {
+          try {
+            const local = localStorage.getItem(`beraxis_public_form_${id}`);
+            if (local) setForm(JSON.parse(local));
+          } catch {}
+        }
+      })
+      .catch(() => {
+        try {
+          const local = localStorage.getItem(`beraxis_public_form_${id}`);
+          if (local) setForm(JSON.parse(local));
+        } catch {}
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -101,40 +114,70 @@ export default function PublicFormRespondentPage() {
             )}
 
             <div className="space-y-3">
-              {form.fields.map((fld) => (
-                <div key={fld.id}>
-                  <label className="block text-xs font-bold text-gray-200 mb-1">
-                    {fld.label} {fld.required && <span className="text-rose-400">*</span>}
-                  </label>
-                  {fld.type === "textarea" ? (
-                    <textarea
-                      rows={3}
-                      required={fld.required}
-                      placeholder={fld.placeholder || ""}
-                      value={values[fld.id] || ""}
-                      onChange={(e) => setValues({ ...values, [fld.id]: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.06] border border-white/15 text-xs text-white outline-none focus:border-purple-400"
-                    />
-                  ) : (
-                    <input
-                      type={fld.type === "select" ? "text" : fld.type}
-                      required={fld.required}
-                      placeholder={fld.placeholder || ""}
-                      value={values[fld.id] || ""}
-                      onChange={(e) => setValues({ ...values, [fld.id]: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.06] border border-white/15 text-xs text-white outline-none focus:border-purple-400"
-                    />
-                  )}
-                </div>
-              ))}
+              {form.fields.map((fld) => {
+                const isDropdown =
+                  fld.type === "select" ||
+                  fld.type === "carriers_dropdown" ||
+                  fld.type === "team_dropdown";
+
+                const dropdownOptions =
+                  fld.type === "carriers_dropdown"
+                    ? (fld.options && fld.options.length > 0 ? fld.options : form.carriers || [])
+                    : fld.type === "team_dropdown"
+                    ? (fld.options && fld.options.length > 0
+                        ? fld.options
+                        : (form.teamMembers || []).map((m) => m.name))
+                    : fld.options || [];
+
+                return (
+                  <div key={fld.id}>
+                    <label className="block text-xs font-bold text-gray-200 mb-1">
+                      {fld.label} {fld.required && <span className="text-rose-400">*</span>}
+                    </label>
+                    {fld.type === "textarea" ? (
+                      <textarea
+                        rows={3}
+                        required={fld.required}
+                        placeholder={fld.placeholder || ""}
+                        value={values[fld.id] || ""}
+                        onChange={(e) => setValues({ ...values, [fld.id]: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.06] border border-white/15 text-xs text-white outline-none focus:border-purple-400"
+                      />
+                    ) : isDropdown ? (
+                      <select
+                        required={fld.required}
+                        value={values[fld.id] || ""}
+                        onChange={(e) => setValues({ ...values, [fld.id]: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#0F172A] border border-white/15 text-xs text-white outline-none focus:border-purple-400"
+                      >
+                        <option value="">-- Select {fld.label} --</option>
+                        {dropdownOptions.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={fld.type}
+                        required={fld.required}
+                        placeholder={fld.placeholder || ""}
+                        value={values[fld.id] || ""}
+                        onChange={(e) => setValues({ ...values, [fld.id]: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.06] border border-white/15 text-xs text-white outline-none focus:border-purple-400"
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-95 text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-95 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50"
             >
-              <Send size={14} /> {submitting ? "Submitting..." : form.submitLabel}
+              <Send size={15} /> {submitting ? "Submitting..." : form.submitLabel}
             </button>
           </form>
         )}

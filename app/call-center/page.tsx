@@ -160,6 +160,17 @@ export default function CallCenterPage() {
   const [scriptText, setScriptText] = useState(DEFAULT_SCRIPT);
   const [showScriptPanel, setShowScriptPanel] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [dateMode, setDateMode] = useState<"today" | "all" | "range">(
+    activeBranch?.industryId === "call_center" ? "today" : "all"
+  );
+  const [fromDate, setFromDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [toDate, setToDate] = useState(() => new Date().toISOString().slice(0, 10));
+
+  useEffect(() => {
+    if (activeBranch?.industryId === "call_center") {
+      setDateMode("today");
+    }
+  }, [activeBranch?.industryId]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -271,9 +282,18 @@ export default function CallCenterPage() {
     allowedEmails.includes(currentUserEmail);
 
   const visibleLeads = useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
     return leads.filter((l) => {
       if (agentOnlyAssigned && !isManagerOrOwner && currentUserEmail) {
         if ((l.assignedTo || "").toLowerCase() !== currentUserEmail) return false;
+      }
+      if (dateMode === "today") {
+        const createdDay = (l.createdAt || l.lastCalledAt || todayStr).slice(0, 10);
+        if (createdDay !== todayStr) return false;
+      } else if (dateMode === "range") {
+        const createdDay = (l.createdAt || l.lastCalledAt || todayStr).slice(0, 10);
+        if (fromDate && createdDay < fromDate) return false;
+        if (toDate && createdDay > toDate) return false;
       }
       if (dispositionFilter !== "All" && l.disposition !== dispositionFilter) return false;
       if (campaignFilter !== "All" && l.campaign !== campaignFilter) return false;
@@ -288,7 +308,7 @@ export default function CallCenterPage() {
       }
       return true;
     });
-  }, [leads, agentOnlyAssigned, isManagerOrOwner, currentUserEmail, dispositionFilter, campaignFilter, searchQuery]);
+  }, [leads, agentOnlyAssigned, isManagerOrOwner, currentUserEmail, dispositionFilter, campaignFilter, searchQuery, dateMode, fromDate, toDate]);
 
   const callbacksDue = useMemo(
     () => leads.filter((l) => l.disposition === "Callback").sort((a, b) => (a.callbackAt || "").localeCompare(b.callbackAt || "")),
@@ -664,6 +684,22 @@ export default function CallCenterPage() {
                 className="flex-1 bg-transparent text-xs text-white outline-none placeholder-gray-400"
               />
             </div>
+            <select
+              value={dateMode}
+              onChange={(e) => setDateMode(e.target.value as "today" | "all" | "range")}
+              className="px-3 py-2 rounded-xl bg-[#0B1022] border border-cyan-500/30 text-xs font-bold text-cyan-300 outline-none"
+            >
+              <option value="today">Daily Basis (Today)</option>
+              <option value="all">All Dates</option>
+              <option value="range">Custom Date Range</option>
+            </select>
+            {dateMode === "range" && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="px-2.5 py-1.5 rounded-xl bg-[#0B1022] border border-white/15 text-white text-xs" />
+                <span className="text-gray-400">to</span>
+                <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="px-2.5 py-1.5 rounded-xl bg-[#0B1022] border border-white/15 text-white text-xs" />
+              </div>
+            )}
             <select
               value={dispositionFilter}
               onChange={(e) => setDispositionFilter(e.target.value)}

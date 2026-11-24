@@ -1,15 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
-import path from "path";
 
 export const dynamic = "force-dynamic";
 
-const STORE_PATH = path.join(process.cwd(), "scratch", "public_forms.json");
+const TMP_STORE_PATH = "/tmp/beraxis_public_forms.json";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+const sbHeaders = {
+  apikey: SUPABASE_SERVICE_ROLE_KEY,
+  Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+  "Content-Type": "application/json",
+};
+
+export const CALL_CENTER_CARRIERS: string[] = [
+  "Mutual of Omaha",
+  "Aetna / Accendo (CVS)",
+  "American Amicable",
+  "Prosperity Life",
+  "Royal Neighbors of America",
+  "Aflac",
+  "Transamerica",
+  "Guarantee Trust Life (GTL)",
+  "Gerber Life",
+  "Foresters Financial",
+  "Corebridge (AIG)",
+  "Sentinel Security Life",
+  "Baltimore Life",
+  "Great Western",
+  "Liberty Bankers Life",
+  "Senior Life",
+  "Occidental Life",
+  "Kemper Life",
+  "Family Benefit Life",
+  "SBLI",
+  "Cigna",
+];
 
 export interface PublicFormField {
   id: string;
   label: string;
-  type: "text" | "email" | "tel" | "textarea" | "select";
+  type: "text" | "email" | "tel" | "number" | "textarea" | "select" | "carriers_dropdown" | "team_dropdown";
   required: boolean;
   placeholder?: string;
   options?: string[];
@@ -24,6 +55,8 @@ export interface PublicFormDef {
   campaign: string;
   submitLabel: string;
   fields: PublicFormField[];
+  carriers?: string[];
+  teamMembers?: { id: string; name: string; email?: string }[];
   submissionsCount: number;
   createdAt: string;
 }
@@ -46,9 +79,10 @@ const DEFAULT_FORMS: PublicFormDef[] = [
       { id: "name", label: "Full Name", type: "text", required: true, placeholder: "e.g. Sarah Khan" },
       { id: "phone", label: "Phone / WhatsApp Number", type: "tel", required: true, placeholder: "+1 555-0199" },
       { id: "email", label: "Work Email", type: "email", required: false, placeholder: "you@company.com" },
-      { id: "company", label: "Company Name", type: "text", required: false, placeholder: "Acme Corp" },
-      { id: "notes", label: "How can we help?", type: "textarea", required: false, placeholder: "Tell us about your team size or requirements..." },
+      { id: "carrier", label: "Carrier", type: "carriers_dropdown", required: false, options: CALL_CENTER_CARRIERS },
+      { id: "notes", label: "How can we help?", type: "textarea", required: false, placeholder: "Tell us about your requirements..." },
     ],
+    carriers: CALL_CENTER_CARRIERS,
     submissionsCount: 0,
     createdAt: new Date().toISOString(),
   },
@@ -56,25 +90,77 @@ const DEFAULT_FORMS: PublicFormDef[] = [
 
 let memStore: StoreShape = { forms: [...DEFAULT_FORMS], leads: [] };
 
-function readStore(): StoreShape {
+async function getRegistryHostUser(): Promise<any | null> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
   try {
-    if (fs.existsSync(STORE_PATH)) {
-      const parsed = JSON.parse(fs.readFileSync(STORE_PATH, "utf-8"));
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=50`, {
+      headers: sbHeaders,
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const users = Array.isArray(data?.users) ? data.users : [];
+    return (
+      users.find((u: any) => (u.email || "").toLowerCase() === "admin@beraxis.online") ||
+      users.find((u: any) => (u.email || "").toLowerCase() === "abubaker0825@gmail.com") ||
+      users[0] ||
+      null
+    );
+  } catch {
+    return null;
+  }
+}
+
+async function readStore(): Promise<StoreShape> {
+  // 1. Try Supabase cloud registry first (persists across all Vercel instances)
+  try {
+    const host = await getRegistryHostUser();
+    const cloud = host?.user_metadata?.public_forms_registry;
+    if (cloud && Array.isArray(cloud.forms)) {
+      const hasDefault = cloud.forms.some((f: PublicFormDef) => f.id === "beraxis-callback");
+      const mergedForms = hasDefault ? cloud.forms : [...cloud.forms, ...DEFAULT_FORMS];
+      memStore = { forms: mergedForms, leads: Array.isArray(cloud.leads) ? cloud.leads : [] };
+      return memStore;
+    }
+  } catch {}
+
+  // 2. Try /tmp fallback
+  try {
+    if (fs.existsSync(TMP_STORE_PATH)) {
+      const parsed = JSON.parse(fs.readFileSync(TMP_STORE_PATH, "utf-8"));
       if (parsed && Array.isArray(parsed.forms)) {
         memStore = parsed;
         return parsed;
       }
     }
   } catch {}
+
   return memStore;
 }
 
-function writeStore(next: StoreShape) {
+async function writeStore(next: StoreShape): Promise<void> {
   memStore = next;
   try {
-    const dir = path.dirname(STORE_PATH);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(STORE_PATH, JSON.stringify(next, null, 2), "utf-8");
+    fs.writeFileSync(TMP_STORE_PATH, JSON.stringify(next), "utf-8");
+  } catch {}
+
+  try {
+    const host = await getRegistryHostUser();
+    if (host?.id) {
+      await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${host.id}`, {
+        method: "PUT",
+        headers: sbHeaders,
+        body: JSON.stringify({
+          user_metadata: {
+            ...(host.user_metadata || {}),
+            public_forms_registry: {
+              forms: next.forms.slice(0, 60),
+              leads: next.leads.slice(0, 200),
+            },
+          },
+        }),
+      });
+    }
   } catch {}
 }
 
@@ -84,14 +170,14 @@ export async function GET(req: NextRequest) {
   const companyId = searchParams.get("company_id");
   const includeLeads = searchParams.get("include_leads") === "1";
 
-  const store = readStore();
+  const store = await readStore();
 
   if (id) {
     const form = store.forms.find((f) => f.id === id);
     if (!form) {
       return NextResponse.json({ error: "Public form not found" }, { status: 404 });
     }
-    return NextResponse.json({ success: true, form });
+    return NextResponse.json({ success: true, form }, { headers: { "Cache-Control": "no-store" } });
   }
 
   const forms = companyId
@@ -102,81 +188,97 @@ export async function GET(req: NextRequest) {
     ? store.leads.filter((l) => !companyId || l.companyId === companyId || l.companyId === "CMP-001")
     : undefined;
 
-  return NextResponse.json({ success: true, forms, leads });
+  return NextResponse.json({ success: true, forms, leads }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const store = readStore();
+    const store = await readStore();
     const slug = (body.title || "lead-form")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")
       .slice(0, 28);
-    const id = body.id || `${slug}-${Date.now().toString().slice(-4)}`;
+    const id = body.id || `${slug || "form"}-${Date.now().toString().slice(-4)}`;
 
     const form: PublicFormDef = {
       id,
       companyId: body.companyId || "CMP-001",
-      companyName: body.companyName || "Workspace",
-      title: body.title || "Lead Intake Form",
+      companyName: body.companyName || "Beraxis Partner",
+      title: body.title || "Public Lead Form",
       description: body.description || "Fill out this form and our team will contact you shortly.",
-      campaign: body.campaign || "Public Form",
-      submitLabel: body.submitLabel || "Submit Inquiry",
+      campaign: body.campaign || "Public Web Form",
+      submitLabel: body.submitLabel || "Submit",
       fields: Array.isArray(body.fields) && body.fields.length > 0 ? body.fields : DEFAULT_FORMS[0].fields,
+      carriers: Array.isArray(body.carriers) ? body.carriers : CALL_CENTER_CARRIERS,
+      teamMembers: Array.isArray(body.teamMembers) ? body.teamMembers : [],
       submissionsCount: 0,
       createdAt: new Date().toISOString(),
     };
 
-    const nextForms = [form, ...store.forms.filter((f) => f.id !== id)];
-    writeStore({ ...store, forms: nextForms });
+    const next: StoreShape = {
+      ...store,
+      forms: [form, ...store.forms.filter((f) => f.id !== id)],
+    };
+    await writeStore(next);
+
     return NextResponse.json({ success: true, form });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Failed to save form" }, { status: 500 });
+    return NextResponse.json({ error: err?.message || "Invalid request" }, { status: 400 });
   }
 }
 
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { formId, values = {} } = body;
-    if (!formId) {
-      return NextResponse.json({ error: "formId is required" }, { status: 400 });
-    }
-    const store = readStore();
+    const { formId, values } = body;
+    const store = await readStore();
     const form = store.forms.find((f) => f.id === formId);
     if (!form) {
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
     }
 
-    const newLead = {
-      id: `FRM-${Date.now().toString().slice(-6)}`,
+    const lead = {
+      id: `FORM-${Date.now().toString().slice(-6)}`,
+      formId: form.id,
       companyId: form.companyId,
-      name: String(values.name || values.full_name || values.email || "Web Lead").trim(),
-      phone: String(values.phone || values.mobile || "N/A").trim(),
-      email: String(values.email || "").trim(),
-      company: String(values.company || "—").trim(),
-      campaign: form.campaign || form.title,
-      source: `Public Form (${form.title})`,
+      name: values?.name || values?.full_name || "Web Lead",
+      phone: values?.phone || "",
+      email: values?.email || "",
+      company: values?.company || "",
+      carrier: values?.carrier || "",
+      assignedTo: values?.team_member || values?.agent || "Unassigned",
+      campaign: form.campaign,
+      source: `Public Form: ${form.title}`,
       disposition: "New",
-      assignedTo: "Unassigned",
-      notes: Object.entries(values)
-        .filter(([k]) => !["name", "phone", "email", "company"].includes(k))
-        .map(([k, v]) => `${k}: ${v}`)
-        .join(" | "),
-      callsCount: 0,
+      notes: values?.notes || JSON.stringify(values || {}),
+      rawValues: values || {},
       createdAt: new Date().toISOString(),
     };
 
-    const nextForms = store.forms.map((f) =>
-      f.id === formId ? { ...f, submissionsCount: (f.submissionsCount || 0) + 1 } : f
-    );
-    const nextLeads = [newLead, ...store.leads].slice(0, 500);
-    writeStore({ forms: nextForms, leads: nextLeads });
+    const next: StoreShape = {
+      forms: store.forms.map((f) =>
+        f.id === formId ? { ...f, submissionsCount: (f.submissionsCount || 0) + 1 } : f
+      ),
+      leads: [lead, ...store.leads],
+    };
+    await writeStore(next);
 
-    return NextResponse.json({ success: true, lead: newLead });
+    return NextResponse.json({ success: true, lead });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Failed to submit form" }, { status: 500 });
+    return NextResponse.json({ error: err?.message || "Submission failed" }, { status: 400 });
   }
+}
+
+export async function DELETE(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+  const store = await readStore();
+  await writeStore({
+    ...store,
+    forms: store.forms.filter((f) => f.id !== id),
+  });
+  return NextResponse.json({ success: true });
 }

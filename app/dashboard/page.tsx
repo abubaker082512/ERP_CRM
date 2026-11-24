@@ -51,7 +51,13 @@ import {
     Crown,
     ExternalLink,
     Lock,
-    UploadCloud
+    UploadCloud,
+    SlidersHorizontal,
+    Eye,
+    EyeOff,
+    ArrowUp,
+    ArrowDown,
+    RotateCcw
 } from 'lucide-react';
 
 type DashboardSummary = {
@@ -96,11 +102,64 @@ function fmt(n: number, sym = '$') {
     return `${sym}${Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
+type DashboardWidgetId = 'hero_bento' | 'quick_actions' | 'kpis' | 'analytics' | 'live_feeds' | 'activity_feed';
+
+const DEFAULT_DASHBOARD_WIDGETS: { id: DashboardWidgetId; label: string }[] = [
+    { id: 'hero_bento', label: 'Hero Telemetry & Snapshot' },
+    { id: 'quick_actions', label: 'Quick Action Toolbar' },
+    { id: 'kpis', label: 'Executive KPI Cards' },
+    { id: 'analytics', label: 'Revenue & Pipeline Charts' },
+    { id: 'live_feeds', label: 'Recent Orders & CRM Deals' },
+    { id: 'activity_feed', label: 'Audit & Activity Stream' },
+];
+
 export default function DashboardPage() {
     const router = useRouter();
     const { branches, activeBranch, setActiveBranchId, getEntityStorageKey, currencySymbol } = useBranchContext();
     const [scopeMode, setScopeMode] = useState<'single' | 'all'>('single');
     const [timeframe, setTimeframe] = useState<'today' | 'week' | 'month'>('month');
+    const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+    const [widgetOrder, setWidgetOrder] = useState<DashboardWidgetId[]>(DEFAULT_DASHBOARD_WIDGETS.map(w => w.id));
+    const [widgetVisibility, setWidgetVisibility] = useState<Record<DashboardWidgetId, boolean>>({
+        hero_bento: true,
+        quick_actions: true,
+        kpis: true,
+        analytics: true,
+        live_feeds: true,
+        activity_feed: true,
+    });
+
+    useEffect(() => {
+        if (activeBranch?.industryId === 'call_center') {
+            setTimeframe('today');
+        }
+        try {
+            const saved = localStorage.getItem(getEntityStorageKey('dashboard_layout'));
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed.order) && parsed.order.length > 0) setWidgetOrder(parsed.order);
+                if (parsed.visibility) setWidgetVisibility(prev => ({ ...prev, ...parsed.visibility }));
+            }
+        } catch {}
+    }, [activeBranch?.id, activeBranch?.industryId]);
+
+    const persistDashboardLayout = (nextOrder: DashboardWidgetId[], nextVis: Record<DashboardWidgetId, boolean>) => {
+        setWidgetOrder(nextOrder);
+        setWidgetVisibility(nextVis);
+        try {
+            localStorage.setItem(getEntityStorageKey('dashboard_layout'), JSON.stringify({ order: nextOrder, visibility: nextVis }));
+        } catch {}
+    };
+
+    const moveWidget = (id: DashboardWidgetId, dir: -1 | 1) => {
+        const idx = widgetOrder.indexOf(id);
+        const target = idx + dir;
+        if (idx < 0 || target < 0 || target >= widgetOrder.length) return;
+        const copy = [...widgetOrder];
+        const [item] = copy.splice(idx, 1);
+        copy.splice(target, 0, item);
+        persistDashboardLayout(copy, widgetVisibility);
+    };
     const [entityMetrics, setEntityMetrics] = useState({
         invoicedRevenue: 0,
         billsExpense: 0,
@@ -403,11 +462,68 @@ export default function DashboardPage() {
                                 </button>
                             ))}
                         </div>
+
+                        {/* Customize Dashboard Button */}
+                        <button
+                            type="button"
+                            onClick={() => setIsCustomizeOpen(v => !v)}
+                            className={`px-3 py-1.5 rounded-2xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                                isCustomizeOpen
+                                    ? 'bg-cyan-600/20 border-cyan-500/40 text-cyan-300'
+                                    : 'bg-[#0F172A]/90 border-white/10 text-gray-300 hover:text-white'
+                            }`}
+                        >
+                            <SlidersHorizontal size={13} /> Customize
+                        </button>
                     </div>
                 </div>
 
+                {/* ── CUSTOMIZE DASHBOARD PANEL ── */}
+                {isCustomizeOpen && (
+                    <div className="bg-[#0F172A]/90 border border-cyan-500/30 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Customize Your Dashboard Widgets</span>
+                            <button
+                                type="button"
+                                onClick={() => persistDashboardLayout(DEFAULT_DASHBOARD_WIDGETS.map(w => w.id), {
+                                    hero_bento: true, quick_actions: true, kpis: true, analytics: true, live_feeds: true, activity_feed: true,
+                                })}
+                                className="text-[11px] text-gray-400 hover:text-white flex items-center gap-1 cursor-pointer"
+                            >
+                                <RotateCcw size={12} /> Reset Default
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {widgetOrder.map((wId, idx) => {
+                                const meta = DEFAULT_DASHBOARD_WIDGETS.find(w => w.id === wId);
+                                const visible = widgetVisibility[wId];
+                                return (
+                                    <div key={wId} className="flex items-center justify-between gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs">
+                                        <span className={`font-semibold truncate ${visible ? 'text-white' : 'text-gray-500 line-through'}`}>
+                                            {meta?.label || wId}
+                                        </span>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <button type="button" disabled={idx === 0} onClick={() => moveWidget(wId, -1)} className="p-1 rounded hover:bg-white/10 disabled:opacity-30 cursor-pointer"><ArrowUp size={12} /></button>
+                                            <button type="button" disabled={idx === widgetOrder.length - 1} onClick={() => moveWidget(wId, 1)} className="p-1 rounded hover:bg-white/10 disabled:opacity-30 cursor-pointer"><ArrowDown size={12} /></button>
+                                            <button
+                                                type="button"
+                                                onClick={() => persistDashboardLayout(widgetOrder, { ...widgetVisibility, [wId]: !visible })}
+                                                className={`p-1 rounded cursor-pointer ${visible ? 'text-emerald-400 hover:bg-emerald-500/15' : 'text-gray-500 hover:bg-white/10'}`}
+                                                title={visible ? 'Hide widget' : 'Show widget'}
+                                            >
+                                                {visible ? <Eye size={13} /> : <EyeOff size={13} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex flex-col gap-6">
                 {/* ── DYNAMIC HERO BENTO ROW (DfcQ2TrTbGV Inspired in BERAXIS Colors) ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <div style={{ order: widgetOrder.indexOf('hero_bento') }} className={`grid grid-cols-1 lg:grid-cols-12 gap-5 ${widgetVisibility.hero_bento ? '' : 'hidden'}`}>
                     <div className="lg:col-span-8 beraxis-hero-card p-6 flex flex-col justify-between gap-4">
                         <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
@@ -650,7 +766,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* ── Quick Action Business Toolbar ── */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                <div style={{ order: widgetOrder.indexOf('quick_actions') }} className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 ${widgetVisibility.quick_actions ? '' : 'hidden'}`}>
                     <Link
                         href="/crm"
                         className="bg-[#0F172A]/70 hover:bg-purple-900/30 border border-white/5 hover:border-purple-500/30 rounded-2xl p-3.5 flex flex-col items-center justify-center text-center gap-2 transition-all group backdrop-blur-md shadow-lg"
@@ -713,7 +829,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* ── Executive KPI Metric Cards (Real Tenant Scoped Metrics) ── */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div style={{ order: widgetOrder.indexOf('kpis') }} className={`grid grid-cols-2 md:grid-cols-4 gap-4 ${widgetVisibility.kpis ? '' : 'hidden'}`}>
                     <KpiCard
                         label="Total Company Revenue"
                         value={loading ? '...' : fmt(kpis?.revenue ?? 0, currencySymbol)}
@@ -789,7 +905,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* ── Visual Performance Analytics: Revenue Trend & Pipeline Funnel ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div style={{ order: widgetOrder.indexOf('analytics') }} className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${widgetVisibility.analytics ? '' : 'hidden'}`}>
                     {/* Revenue Over Time Area Chart */}
                     <div className="lg:col-span-2 bg-[#0F172A]/70 border border-white/5 rounded-3xl p-6 shadow-2xl backdrop-blur-xl flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-4">
@@ -907,7 +1023,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* ── Operational Live Feeds: Recent Orders & CRM Pipeline ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div style={{ order: widgetOrder.indexOf('live_feeds') }} className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${widgetVisibility.live_feeds ? '' : 'hidden'}`}>
                     {/* Recent Sales Orders Table */}
                     <div className="bg-[#0F172A]/70 border border-white/5 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
                         <div className="flex items-center justify-between mb-4">
@@ -1040,7 +1156,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* ── Live System Activity Stream ── */}
-                <div className="bg-[#0F172A]/70 border border-white/5 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
+                <div style={{ order: widgetOrder.indexOf('activity_feed') }} className={`bg-[#0F172A]/70 border border-white/5 rounded-3xl p-6 shadow-2xl backdrop-blur-xl ${widgetVisibility.activity_feed ? '' : 'hidden'}`}>
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h3 className="font-bold text-white text-base flex items-center gap-2">
@@ -1097,6 +1213,7 @@ export default function DashboardPage() {
                             <Send size={14} /> Ask AI
                         </button>
                     </form>
+                </div>
                 </div>
             </main>
         </div>
