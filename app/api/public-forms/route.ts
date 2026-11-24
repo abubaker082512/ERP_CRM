@@ -40,7 +40,19 @@ export const CALL_CENTER_CARRIERS: string[] = [
 export interface PublicFormField {
   id: string;
   label: string;
-  type: "text" | "email" | "tel" | "number" | "textarea" | "select" | "carriers_dropdown" | "team_dropdown";
+  type:
+    | "text"
+    | "email"
+    | "tel"
+    | "number"
+    | "date"
+    | "textarea"
+    | "select"
+    | "carriers_dropdown"
+    | "team_dropdown"
+    | "campaigns_dropdown"
+    | "stages_dropdown"
+    | "departments_dropdown";
   required: boolean;
   placeholder?: string;
   options?: string[];
@@ -249,7 +261,7 @@ export async function PUT(req: NextRequest) {
       company: values?.company || "",
       carrier: values?.carrier || "",
       assignedTo: values?.team_member || values?.agent || "Unassigned",
-      campaign: form.campaign,
+      campaign: values?.campaign || values?.campaigns_dropdown || form.campaign,
       source: `Public Form: ${form.title}`,
       disposition: "New",
       notes: values?.notes || JSON.stringify(values || {}),

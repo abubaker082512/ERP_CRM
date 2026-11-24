@@ -50,6 +50,9 @@ export default function PublicFormsPage() {
   const [availableCarriers, setAvailableCarriers] = useState<string[]>(CALL_CENTER_CARRIERS);
   const [selectedCarriers, setSelectedCarriers] = useState<string[]>(CALL_CENTER_CARRIERS);
   const [customCarrierInput, setCustomCarrierInput] = useState("");
+  const [campaignOptions, setCampaignOptions] = useState<string[]>(["Outbound Campaign", "Inbound Web Form", "Final Expense Quote"]);
+  const [stageOptions, setStageOptions] = useState<string[]>(["New", "Qualified", "Proposition", "Won", "Lost"]);
+  const [departmentOptions, setDepartmentOptions] = useState<string[]>(["Outbound Sales", "Inbound Support", "Quality Assurance", "Operations"]);
 
   // Form Builder State
   const [title, setTitle] = useState("");
@@ -109,6 +112,32 @@ export default function PublicFormsPage() {
         }
       })
       .catch(() => {});
+
+    // Load system Campaigns, CRM Stages, and Departments for form field dropdowns
+    try {
+      const rawCamps = localStorage.getItem(getEntityStorageKey("call_center_campaigns"));
+      if (rawCamps) {
+        const parsed = JSON.parse(rawCamps);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCampaignOptions(parsed.map((c: any) => c.name).filter(Boolean));
+        }
+      }
+      const rawStages = localStorage.getItem(getEntityStorageKey("crm_stages"));
+      if (rawStages) {
+        const parsed = JSON.parse(rawStages);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setStageOptions(parsed.map((s: any) => s.name).filter(Boolean));
+        }
+      }
+      const rawEmps = localStorage.getItem(getEntityStorageKey("employees"));
+      if (rawEmps) {
+        const parsed = JSON.parse(rawEmps);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const depts = Array.from(new Set(parsed.map((e: any) => e.department).filter(Boolean))) as string[];
+          if (depts.length > 0) setDepartmentOptions(depts);
+        }
+      }
+    } catch {}
   }, [companyId]);
 
   const loadForms = async () => {
@@ -152,6 +181,9 @@ export default function PublicFormsPage() {
       const preparedFields = fields.map((fld) => {
         if (fld.type === "carriers_dropdown") return { ...fld, options: selectedCarriers };
         if (fld.type === "team_dropdown") return { ...fld, options: selectedTeamNames };
+        if (fld.type === "campaigns_dropdown") return { ...fld, options: campaignOptions };
+        if (fld.type === "stages_dropdown") return { ...fld, options: stageOptions };
+        if (fld.type === "departments_dropdown") return { ...fld, options: departmentOptions };
         return fld;
       });
 
@@ -226,6 +258,12 @@ export default function PublicFormsPage() {
             ? selectedCarriers
             : type === "team_dropdown"
             ? selectedTeamNames
+            : type === "campaigns_dropdown"
+            ? campaignOptions
+            : type === "stages_dropdown"
+            ? stageOptions
+            : type === "departments_dropdown"
+            ? departmentOptions
             : type === "select"
             ? ["Option 1", "Option 2"]
             : undefined,
@@ -650,7 +688,7 @@ export default function PublicFormsPage() {
               {/* Moveable Form Fields */}
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <label className="text-xs font-bold text-gray-200">Form Fields (Move Up / Down to Reorder)</label>
+                  <label className="text-xs font-bold text-gray-200">Form Fields &amp; System Fields (Move ↑ / ↓ to Reorder)</label>
                   <div className="flex flex-wrap gap-1.5">
                     <button
                       type="button"
@@ -665,6 +703,48 @@ export default function PublicFormsPage() {
                       className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-purple-600/25 border border-purple-500/30 text-purple-300 cursor-pointer"
                     >
                       + Team Dropdown
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addFieldByType("campaigns_dropdown", "Campaign")}
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-600/25 border border-emerald-500/30 text-emerald-300 cursor-pointer"
+                    >
+                      + Campaigns Dropdown
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addFieldByType("stages_dropdown", "CRM Pipeline Stage")}
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-600/25 border border-amber-500/30 text-amber-300 cursor-pointer"
+                    >
+                      + CRM Stage
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addFieldByType("departments_dropdown", "Department")}
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-indigo-600/25 border border-indigo-500/30 text-indigo-300 cursor-pointer"
+                    >
+                      + Department
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addFieldByType("number", "Coverage / Deal Amount ($)")}
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-gray-200 cursor-pointer"
+                    >
+                      + Amount
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addFieldByType("date", "Callback / Target Date")}
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-gray-200 cursor-pointer"
+                    >
+                      + Date
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addFieldByType("text", "Address / Zip Code")}
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-gray-200 cursor-pointer"
+                    >
+                      + Address / Zip
                     </button>
                     <button
                       type="button"
@@ -719,10 +799,14 @@ export default function PublicFormsPage() {
                         <option value="tel">Phone</option>
                         <option value="email">Email</option>
                         <option value="number">Number</option>
+                        <option value="date">Date</option>
                         <option value="textarea">Long Text</option>
                         <option value="select">Custom Dropdown</option>
                         <option value="carriers_dropdown">Carriers Dropdown</option>
                         <option value="team_dropdown">Team Dropdown</option>
+                        <option value="campaigns_dropdown">Campaigns Dropdown</option>
+                        <option value="stages_dropdown">CRM Stage Dropdown</option>
+                        <option value="departments_dropdown">Department Dropdown</option>
                       </select>
                       <label className="col-span-2 flex items-center gap-1 text-[11px] text-gray-300 cursor-pointer">
                         <input

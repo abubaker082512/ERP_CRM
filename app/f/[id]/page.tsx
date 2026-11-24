@@ -118,7 +118,10 @@ export default function PublicFormRespondentPage() {
                 const isDropdown =
                   fld.type === "select" ||
                   fld.type === "carriers_dropdown" ||
-                  fld.type === "team_dropdown";
+                  fld.type === "team_dropdown" ||
+                  fld.type === "campaigns_dropdown" ||
+                  fld.type === "stages_dropdown" ||
+                  fld.type === "departments_dropdown";
 
                 const dropdownOptions =
                   fld.type === "carriers_dropdown"
