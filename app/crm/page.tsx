@@ -1,5 +1,4 @@
 "use client";
-import { fetchAPI } from '@/lib/api';
 import { useBranchContext } from '@/lib/branchContext';
 import { useState, useEffect } from 'react';
 import CRMHeader from '@/components/crm/CRMHeader';
@@ -72,20 +71,6 @@ export default function CRMPage() {
                     persistLeads(merged);
                 }
             }
-        } catch {}
-
-        try {
-            const res = await fetchAPI("/leads");
-            if (res.ok) {
-                const data = await res.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    const merged = [...localList];
-                    data.forEach((item: Lead) => {
-                        if (!merged.some((m) => m.id === item.id)) merged.push(item);
-                    });
-                    persistLeads(merged);
-                }
-            }
         } catch {} finally {
             setLoading(false);
         }
@@ -121,12 +106,6 @@ export default function CRMPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...created, company_id: companyId }),
         }).catch(() => {});
-
-        fetchAPI("/leads", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(created),
-        }).catch(() => {});
     };
 
     const getStageTotal = (stageId: string) => {
@@ -146,12 +125,6 @@ export default function CRMPage() {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...opp, status: newStageId, company_id: companyId }),
-        }).catch(() => {});
-
-        fetchAPI(`/leads/${oppId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: opp.name, status: newStageId, type: opp.type }),
         }).catch(() => {});
     };
 
