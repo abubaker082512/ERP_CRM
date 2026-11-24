@@ -83,11 +83,7 @@ function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen bg-[#030712] relative flex items-center justify-center p-4 overflow-hidden">
-            {/* Seamless Ambient Background */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(120,119,198,0.14),rgba(255,255,255,0))] pointer-events-none" />
-            <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25 pointer-events-none" />
-
+        <div className="min-h-screen bg-transparent relative flex items-center justify-center p-4 overflow-hidden">
             <div className="w-full max-w-md relative z-10">
                 <div className="text-center mb-8">
                     <a href="/" className="inline-flex items-center justify-center mb-4 hover:opacity-90 transition-opacity" title="Back to BERAXIS Home">
@@ -97,7 +93,7 @@ function LoginForm() {
                     <p className="text-gray-400 mt-2 text-sm">Sign in to your autonomous ERP workspace</p>
                 </div>
 
-                <div className="bg-[#0F172A]/90 backdrop-blur-xl rounded-3xl border border-purple-500/30 p-8 shadow-2xl shadow-purple-950/40">
+                <div className="beraxis-glass-hero p-8">
                     {inactivityMsg && (
                         <div className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl mb-6">
                             <Clock size={18} className="text-amber-400 shrink-0" />

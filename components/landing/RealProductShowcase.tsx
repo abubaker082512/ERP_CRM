@@ -189,7 +189,7 @@ export default function RealProductShowcase() {
                     <div className="absolute inset-x-0 bottom-0 h-20 sm:h-28 bg-gradient-to-t from-[#020205] via-[#020205]/60 to-transparent pointer-events-none"></div>
 
                     {/* Floating Info Overlay Bar */}
-                    <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-6 sm:right-auto sm:max-w-md bg-[#0F172A]/98 border border-white/15 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xl flex items-center justify-between gap-3">
+                    <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-6 sm:right-auto sm:max-w-md bg-[#0B1022]/65 backdrop-blur-md border border-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_20px_50px_-15px_rgba(2,2,5,0.75)] rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3">
                         <div className="min-w-0">
                             <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-purple-400 font-extrabold block mb-0.5">
                                 {activeScreen.tag}

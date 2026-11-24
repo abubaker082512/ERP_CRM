@@ -439,7 +439,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                 isSidebarOpen ? 'ml-60' : 'ml-[76px]'
             }`}>
                 <div 
-                    className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#020205] relative custom-scrollbar"
+                    className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-transparent relative custom-scrollbar"
                     style={{ 
                         willChange: 'scroll-position',
                         WebkitOverflowScrolling: 'touch',

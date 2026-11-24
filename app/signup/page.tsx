@@ -159,7 +159,7 @@ function SignupForm() {
                 </div>
             </div>
 
-            <div className="bg-[#0F172A]/90 backdrop-blur-xl rounded-3xl border border-purple-500/30 p-6 sm:p-7 shadow-2xl shadow-purple-950/40">
+            <div className="beraxis-glass-hero p-6 sm:p-7">
                 <div className="flex items-center justify-between mb-4">
                     <a href="/" className="text-xs text-gray-400 hover:text-white transition-colors">← Back to Home</a>
                     <span className="text-[11px] text-purple-300 font-semibold">Free Forever Tier</span>
@@ -333,12 +333,8 @@ function SignupForm() {
 
 export default function SignupPage() {
     return (
-        <div className="min-h-screen bg-[#020205] relative flex items-center justify-center p-4 overflow-hidden">
-            {/* Seamless Ambient Background */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(120,119,198,0.14),rgba(255,255,255,0))] pointer-events-none" />
-            <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25 pointer-events-none" />
-
-            <Suspense fallback={<div className="min-h-screen bg-[#020205] flex items-center justify-center text-gray-400">Loading...</div>}>
+        <div className="min-h-screen bg-transparent relative flex items-center justify-center p-4 overflow-hidden">
+            <Suspense fallback={<div className="min-h-screen bg-transparent flex items-center justify-center text-gray-400">Loading...</div>}>
                 <SignupForm />
             </Suspense>
         </div>
