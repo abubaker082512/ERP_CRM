@@ -76,6 +76,8 @@ export const MODULE_NAME_TO_HREF: Record<string, string> = {
   "To Do": "/todo",
   "To do": "/todo",
   "Team": "/team",
+  "Call Center": "/call-center",
+  "Public Forms": "/forms",
   "Dashboards": "/dashboard",
   "Website": "/website",
   "eCommerce": "/shop",
@@ -376,7 +378,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
           const rawUser = localStorage.getItem("user");
           const parsedUser = rawUser ? JSON.parse(rawUser) : {};
           const defaultCompany = parsedUser?.company_name || parsedUser?.name || "My Workspace";
-          const defaultIndustry = GLOBAL_INDUSTRIES[0];
+          const defaultIndustry = getIndustryById(parsedUser?.industry_id || GLOBAL_INDUSTRIES[0].id);
           const defaultBranch: BusinessBranch = {
             id: `BRN-${info.userKey.slice(0, 4).toUpperCase()}-0001`,
             name: defaultCompany,

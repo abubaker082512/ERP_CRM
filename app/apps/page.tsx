@@ -55,7 +55,9 @@ import {
     Sun,
     Moon,
     Search,
-    ArrowRight
+    ArrowRight,
+    PhoneCall,
+    Headphones
 } from "lucide-react";
 import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
 import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
@@ -73,6 +75,7 @@ const INDUSTRY_ICON_MAP: Record<string, any> = {
     Briefcase,
     Cog,
     Stethoscope,
+    Headphones,
     Truck,
     Building: Building2,
     Wrench,
@@ -103,6 +106,8 @@ const allApps = [
 
     // CRM & Growth
     { name: "CRM", icon: Target, color: "bg-cyan-600", href: "/crm" },
+    { name: "Call Center", icon: PhoneCall, color: "bg-sky-600", href: "/call-center" },
+    { name: "Public Forms", icon: ClipboardList, color: "bg-violet-600", href: "/forms" },
     { name: "Leads Pool", icon: Globe, color: "bg-cyan-500", href: "/crm/leads-pool", paidOnly: true },
     { name: "Contacts", icon: Users, color: "bg-purple-500", href: "/contacts" },
 
@@ -1041,7 +1046,7 @@ export default function AppsDashboardPage() {
                                 if (appSearch && !app.name.toLowerCase().includes(appSearch.toLowerCase())) return false;
                                 if (appCategory === "all") return true;
                                 if (appCategory === "finance") return ["/dashboard", "/accounting", "/sales", "/purchase", "/pos"].some(p => app.href.startsWith(p));
-                                if (appCategory === "crm") return ["/dashboard", "/crm", "/contacts", "/discuss", "/calendar"].some(p => app.href.startsWith(p));
+                                if (appCategory === "crm") return ["/dashboard", "/crm", "/call-center", "/forms", "/contacts", "/discuss", "/calendar"].some(p => app.href.startsWith(p));
                                 if (appCategory === "ops") return ["/dashboard", "/inventory", "/barcode", "/manufacturing", "/employees", "/payroll", "/project", "/helpdesk"].some(p => app.href.startsWith(p));
                                 if (appCategory === "office") return ["/dashboard", "/documents", "/spreadsheets", "/slides", "/meet", "/knowledge", "/sign", "/todo"].some(p => app.href.startsWith(p));
                                 return true;

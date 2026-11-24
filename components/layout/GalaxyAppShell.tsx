@@ -270,6 +270,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         cleanPath.startsWith('/industries') || 
         cleanPath.startsWith('/shop') || 
         cleanPath.startsWith('/meet') || 
+        cleanPath.startsWith('/f/') || 
         cleanPath.startsWith('/appointments/book') ||
         cleanPath.startsWith('/recruitment/apply');
 

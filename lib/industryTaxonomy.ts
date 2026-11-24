@@ -10,7 +10,8 @@ export type GlobalIndustryId =
   | "construction_contracting"
   | "education_academies"
   | "fitness_sports_club"
-  | "ngos";
+  | "ngos"
+  | "call_center";
 
 export type OperationMode = {
   id: string;
@@ -530,6 +531,62 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "Program Manager",
       "Fundraising & Donor Lead",
       "Field Operations Coordinator"
+    ]
+  },
+  {
+    id: "call_center",
+    name: "Call Center, BPO & Outbound Sales",
+    tagline: "Lead Sheets, Agent Dialer, Restricted Access & Public Intake Forms",
+    description: "Built for outbound telemarketing, inbound support desks, and BPO teams managing Google Sheets/Excel lead lists with strict agent permissions.",
+    iconName: "Headphones",
+    themeColor: "bg-cyan-600",
+    accentColor: "text-cyan-400",
+    borderColor: "border-cyan-500/30",
+    gradientFrom: "from-cyan-600/20",
+    gradientTo: "to-indigo-600/20",
+    subSectors: [
+      "Outbound Telemarketing & Lead Gen",
+      "Inbound Customer Support & Helpdesk",
+      "BPO & Multi-Campaign Operations",
+      "Appointment Setting & Qualification"
+    ],
+    operationModes: [
+      { id: "outbound_dialer", name: "Outbound Dialer & Lead Sheet", description: "Import Excel/Google Sheets, restrict agent visibility, and track call outcomes.", badge: "📞 Outbound" },
+      { id: "inbound_bpo", name: "Inbound Desk & Public Forms", description: "Capture web inquiries via public forms directly into agent queues.", badge: "🎧 Inbound" },
+      { id: "hybrid_bpo", name: "Full Multi-Campaign BPO", description: "Simultaneous outbound campaigns, public intake forms, and manager approvals.", badge: "⚡ Hybrid" }
+    ],
+    recommendedModules: [
+      "Call Center",
+      "Public Forms",
+      "CRM",
+      "Sheets (Excel)",
+      "Helpdesk",
+      "Contacts",
+      "Team",
+      "Approvals",
+      "Attendances",
+      "Payroll",
+      "Settings"
+    ],
+    specializedRoutes: [
+      { name: "Call Center & Lead Sheet", href: "/call-center", icon: "PhoneCall" },
+      { name: "Public Lead Forms", href: "/forms", icon: "ClipboardList" },
+      { name: "CRM Pipeline", href: "/crm", icon: "Target" },
+      { name: "Sheets (Excel)", href: "/spreadsheets", icon: "FileSpreadsheet" }
+    ],
+    defaultDepartments: [
+      "Outbound Sales & Telemarketing",
+      "Inbound Support Desk",
+      "Quality Assurance & Coaching",
+      "Lead Data & Operations",
+      "HR & Shift Scheduling"
+    ],
+    defaultRoles: [
+      "Call Center Director",
+      "Floor Supervisor / Team Lead",
+      "Senior Telemarketer / Closer",
+      "Support Agent",
+      "QA Analyst"
     ]
   }
 ];

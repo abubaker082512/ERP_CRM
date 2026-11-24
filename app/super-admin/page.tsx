@@ -2,6 +2,7 @@
 import React from "react";
 import Link from "next/link";
 import { fetchAPI } from '@/lib/api';
+import { GLOBAL_INDUSTRIES } from '@/lib/industryTaxonomy';
 import { useEffect, useState, useRef } from 'react';
 import {
     ShieldCheck, Users, Building2, TrendingUp, Search,
@@ -361,6 +362,8 @@ function SuperAdminPageContent() {
 
     const [newPasswordInput, setNewPasswordInput] = useState("");
     const [selectedPlanInput, setSelectedPlanInput] = useState("One App Free");
+    const [selectedSeatsInput, setSelectedSeatsInput] = useState<number>(1);
+    const [selectedIndustryInput, setSelectedIndustryInput] = useState<string>(GLOBAL_INDUSTRIES[0].id);
 
     const isSuperAdminEmail = (email?: string) => {
         if (!email) return false;
@@ -1102,6 +1105,7 @@ function SuperAdminPageContent() {
 
     const handleUpdatePlan = async () => {
         if (!isChangePlanOpen) return;
+        const nextSeats = Math.max(1, Number(selectedSeatsInput) || 1);
         try {
             const res = await fetch("/api/admin/users", {
                 method: "PATCH",
@@ -1111,20 +1115,33 @@ function SuperAdminPageContent() {
                     user_id: isChangePlanOpen.user_id,
                     email: isChangePlanOpen.owner_email,
                     plan: selectedPlanInput,
+                    seats: nextSeats,
+                    industry_id: selectedIndustryInput,
+                    industry_name: GLOBAL_INDUSTRIES.find(i => i.id === selectedIndustryInput)?.name || selectedIndustryInput,
                     subscription_status: "active"
                 })
             });
             const data = await res.json().catch(() => ({}));
             if (res.ok) {
-                setWorkspaces(prev => prev.map(w => w.id === isChangePlanOpen.id ? { ...w, plan: selectedPlanInput } : w));
-                showToast(`⭐ Workspace plan updated to ${selectedPlanInput}!`);
+                fetch("/api/team/quota", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        companyId: isChangePlanOpen.id || "CMP-001",
+                        action: "set_seats",
+                        totalSeats: nextSeats,
+                        planName: selectedPlanInput
+                    })
+                }).catch(() => {});
+                setWorkspaces(prev => prev.map(w => w.id === isChangePlanOpen.id ? { ...w, plan: selectedPlanInput, member_count: nextSeats } : w));
+                showToast(`⭐ Updated ${isChangePlanOpen.name}: ${selectedPlanInput} · ${nextSeats} seats!`);
                 setIsChangePlanOpen(null);
                 await fetchAllData(0, true);
             } else {
-                alert(`Error: ${data.error || "Failed to update plan"}`);
+                alert(`Error: ${data.error || "Failed to update plan & seats"}`);
             }
         } catch (err: any) {
-            alert(`Failed to update plan: ${err.message}`);
+            alert(`Failed to update plan & seats: ${err.message}`);
         }
     };
 
@@ -1681,6 +1698,7 @@ function SuperAdminPageContent() {
                                                         onClick={() => {
                                                             setIsChangePlanOpen(ws);
                                                             setSelectedPlanInput(getWorkspacePlanLabel(ws));
+                                                            setSelectedSeatsInput(Math.max(1, Number(ws.member_count) || 1));
                                                         }}
                                                         className={`${
                                                             isSuperAdminEmail(ws.owner_email)
@@ -1700,9 +1718,19 @@ function SuperAdminPageContent() {
                                                     </button>
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <span className={`${isSuperAdminEmail(ws.owner_email) ? "bg-amber-950/40 text-amber-300 border-amber-500/20" : getWorkspacePlanLabel(ws) === "One App Free" ? "bg-slate-900 text-slate-400 border-slate-800" : "bg-purple-950/40 text-purple-300 border-purple-500/20"} px-3 py-1 rounded-full text-xs font-bold border font-mono`}>
-                                                        {ws.member_count || 1} {ws.member_count === 1 ? "seat" : "seats"}
-                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setIsChangePlanOpen(ws);
+                                                            setSelectedPlanInput(getWorkspacePlanLabel(ws));
+                                                            setSelectedSeatsInput(Math.max(1, Number(ws.member_count) || 1));
+                                                        }}
+                                                        className={`${isSuperAdminEmail(ws.owner_email) ? "bg-amber-950/40 text-amber-300 border-amber-500/20" : getWorkspacePlanLabel(ws) === "One App Free" ? "bg-slate-900 text-slate-400 border-slate-800" : "bg-purple-950/40 text-purple-300 border-purple-500/20"} px-3 py-1 rounded-full text-xs font-bold border font-mono inline-flex items-center gap-1.5 hover:border-purple-400 cursor-pointer transition-all`}
+                                                        title="Click to update seats"
+                                                    >
+                                                        <span>{ws.member_count || 1} {ws.member_count === 1 ? "seat" : "seats"}</span>
+                                                        <Edit3 size={11} className="opacity-70" />
+                                                    </button>
                                                 </td>
                                                 <td className="px-6 py-4 text-xs text-gray-400 font-mono">{fmtDate(ws.created_at)}</td>
                                                 <td className="px-6 py-4 text-right">
@@ -2737,6 +2765,25 @@ function SuperAdminPageContent() {
                                                 <td className="px-6 py-4 text-xs text-gray-500 font-mono">{u.created_at ? fmtDate(u.created_at) : "N/A"}</td>
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                setIsChangePlanOpen({
+                                                                    id: u.id,
+                                                                    user_id: u.id,
+                                                                    name: u.workspace_name || u.email,
+                                                                    owner_email: u.email,
+                                                                    plan: (u as any).plan || "Standard Plan ($1/mo Early Bird)",
+                                                                    member_count: (u as any).seats || 1,
+                                                                    created_at: u.created_at
+                                                                } as any);
+                                                                setSelectedPlanInput((u as any).plan || "Standard Plan ($1/mo Early Bird)");
+                                                                setSelectedSeatsInput(Math.max(1, Number((u as any).seats) || 1));
+                                                            }}
+                                                            className="px-2.5 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                                                            title="Update Plan & Seats"
+                                                        >
+                                                            <Edit3 size={13} /> Plan &amp; Seats
+                                                        </button>
                                                         <button 
                                                             onClick={() => {
                                                                 setIsResetPasswordOpen(u);
@@ -3984,9 +4031,46 @@ function SuperAdminPageContent() {
                                 <option value="Admin Full Control">💎 Admin Full Control (Super Admin VIP)</option>
                             </select>
                         </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Allocated Team Seats</label>
+                            <input
+                                type="number"
+                                min={1}
+                                max={10000}
+                                value={selectedSeatsInput}
+                                onChange={e => setSelectedSeatsInput(Math.max(1, Number(e.target.value) || 1))}
+                                className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-4 py-2.5 text-white text-xs font-mono font-bold focus:border-purple-500 outline-none"
+                            />
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                {[5, 10, 25, 50, 100].map(add => (
+                                    <button
+                                        key={add}
+                                        type="button"
+                                        onClick={() => setSelectedSeatsInput(prev => Math.max(1, Number(prev || 1) + add))}
+                                        className="px-2.5 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/35 border border-purple-500/30 text-[11px] font-bold text-purple-200 cursor-pointer"
+                                    >
+                                        +{add}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Industry / Business Sector</label>
+                            <select
+                                value={selectedIndustryInput}
+                                onChange={e => setSelectedIndustryInput(e.target.value)}
+                                className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-4 py-2.5 text-white text-xs font-semibold focus:border-purple-500 outline-none"
+                            >
+                                {GLOBAL_INDUSTRIES.map(ind => (
+                                    <option key={ind.id} value={ind.id}>
+                                        {ind.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="flex justify-end gap-2 pt-2">
                             <button onClick={() => setIsChangePlanOpen(null)} className="px-4 py-2 text-xs text-gray-400 font-bold">Cancel</button>
-                            <button onClick={handleUpdatePlan} className="bg-purple-600 hover:bg-purple-500 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md shadow-purple-600/30">Save Tier</button>
+                            <button onClick={handleUpdatePlan} className="bg-purple-600 hover:bg-purple-500 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md shadow-purple-600/30">Save Plan, Seats &amp; Industry</button>
                         </div>
                     </div>
                 </div>

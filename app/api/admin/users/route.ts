@@ -162,6 +162,8 @@ export async function PATCH(request: NextRequest) {
       nextMeta.workspace_name = cname;
     }
     if (body.seats !== undefined) nextMeta.seats = Number(body.seats);
+    if (body.industry_id !== undefined) nextMeta.industry_id = body.industry_id;
+    if (body.industry_name !== undefined) nextMeta.industry_name = body.industry_name;
     if (body.subscription_status !== undefined) nextMeta.subscription_status = body.subscription_status;
 
     if (body.action === "activate") {
