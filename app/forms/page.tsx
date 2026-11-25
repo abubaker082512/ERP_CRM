@@ -19,9 +19,11 @@ import {
   FileSpreadsheet,
   Download,
   Search,
+  Building2,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useBranchContext } from "@/lib/branchContext";
+import UniversalBranchSwitcher from "@/components/shared/UniversalBranchSwitcher";
 import {
   CALL_CENTER_CARRIERS,
   type PublicFormDef,
@@ -29,12 +31,14 @@ import {
 } from "@/app/api/public-forms/route";
 
 export default function PublicFormsPage() {
-  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { branches, activeBranch, getEntityStorageKey } = useBranchContext();
   const companyId = activeBranch?.id || "CMP-001";
   const companyName = activeBranch?.name || "Beraxis Workspace";
 
   const [forms, setForms] = useState<PublicFormDef[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [companyScope, setCompanyScope] = useState<"all_mine" | "current">("all_mine");
+  const [ownerEmail, setOwnerEmail] = useState<string>("");
   const [activeView, setActiveView] = useState<"forms" | "submissions">("forms");
   const [selectedFormFilter, setSelectedFormFilter] = useState<string>("all");
   const [subSearch, setSubSearch] = useState("");
@@ -78,6 +82,7 @@ export default function PublicFormsPage() {
       if (rawU) {
         const u = JSON.parse(rawU);
         me = { name: u.name || u.email?.split("@")[0] || "Workspace Owner", email: u.email || "" };
+        if (u.email) setOwnerEmail(String(u.email).trim().toLowerCase());
       }
     } catch {}
 
@@ -147,22 +152,47 @@ export default function PublicFormsPage() {
       const raw = localStorage.getItem(localKey);
       if (raw) localForms = JSON.parse(raw);
     } catch {}
-    if (localForms.length > 0) setForms(localForms);
+    if (localForms.length > 0 && forms.length === 0) setForms(localForms);
+
+    let resolvedEmail = ownerEmail;
+    if (!resolvedEmail && typeof window !== "undefined") {
+      try {
+        const rawU = localStorage.getItem("user");
+        if (rawU) resolvedEmail = (JSON.parse(rawU)?.email || "").trim().toLowerCase();
+      } catch {}
+    }
+
+    const myCompanyIds =
+      companyScope === "all_mine" && branches.length > 0
+        ? Array.from(new Set([...branches.map((b) => b.id), companyId])).join(",")
+        : companyId;
 
     try {
-      const res = await fetch(`/api/public-forms?company_id=${encodeURIComponent(companyId)}&include_leads=1`, { cache: "no-store" });
+      const query =
+        companyScope === "all_mine" && branches.length > 0
+          ? `company_ids=${encodeURIComponent(myCompanyIds)}&owner_email=${encodeURIComponent(resolvedEmail)}&include_leads=1`
+          : `company_id=${encodeURIComponent(companyId)}&owner_email=${encodeURIComponent(resolvedEmail)}&include_leads=1`;
+
+      const res = await fetch(`/api/public-forms?${query}`, { cache: "no-store" });
       const data = await res.json();
       if (Array.isArray(data?.leads)) {
         setSubmissions(data.leads);
       }
       if (Array.isArray(data?.forms)) {
         const merged = [...data.forms];
-        localForms.forEach((lf) => {
-          if (!merged.some((mf) => mf.id === lf.id)) merged.push(lf);
-        });
+        if (companyScope === "current") {
+          localForms.forEach((lf) => {
+            if (lf.companyId === companyId && !merged.some((mf) => mf.id === lf.id)) {
+              merged.push(lf);
+            }
+          });
+        } else {
+          localForms.forEach((lf) => {
+            if (!merged.some((mf) => mf.id === lf.id)) merged.push(lf);
+          });
+        }
         setForms(merged);
         try {
-          localStorage.setItem(localKey, JSON.stringify(merged));
           merged.forEach((f) => localStorage.setItem(`beraxis_public_form_${f.id}`, JSON.stringify(f)));
         } catch {}
       }
@@ -171,7 +201,7 @@ export default function PublicFormsPage() {
 
   useEffect(() => {
     loadForms();
-  }, [companyId]);
+  }, [companyId, companyScope, branches.length, ownerEmail]);
 
   const handleCreateForm = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,6 +223,7 @@ export default function PublicFormsPage() {
         body: JSON.stringify({
           companyId,
           companyName,
+          ownerEmail,
           title: title.trim(),
           description: description.trim(),
           campaign: campaign.trim(),
@@ -344,7 +375,8 @@ export default function PublicFormsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <UniversalBranchSwitcher />
           <Link
             href="/call-center"
             className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-bold flex items-center gap-1.5"
@@ -361,27 +393,52 @@ export default function PublicFormsPage() {
         </div>
       </div>
 
-      {/* View Toggle: Forms vs Submissions */}
+      {/* View Toggle: Forms vs Submissions + Multi-Company Scope Filter */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex p-1 rounded-2xl bg-white/5 border border-white/10 gap-1">
-          <button
-            type="button"
-            onClick={() => setActiveView("forms")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all ${
-              activeView === "forms" ? "bg-purple-600 text-white shadow" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            Public Forms ({forms.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView("submissions")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
-              activeView === "submissions" ? "bg-emerald-600 text-white shadow" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <Eye size={13} /> View Submissions ({submissions.length})
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex p-1 rounded-2xl bg-white/5 border border-white/10 gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveView("forms")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all ${
+                activeView === "forms" ? "bg-purple-600 text-white shadow" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Public Forms ({forms.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView("submissions")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                activeView === "submissions" ? "bg-emerald-600 text-white shadow" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Eye size={13} /> View Submissions ({submissions.length})
+            </button>
+          </div>
+
+          {branches.length > 1 && (
+            <div className="inline-flex p-1 rounded-2xl bg-white/5 border border-white/10 gap-1 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setCompanyScope("all_mine")}
+                className={`px-3 py-1.5 rounded-xl cursor-pointer transition-all ${
+                  companyScope === "all_mine" ? "bg-cyan-600 text-white shadow" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                All My Companies ({branches.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompanyScope("current")}
+                className={`px-3 py-1.5 rounded-xl cursor-pointer transition-all flex items-center gap-1 ${
+                  companyScope === "current" ? "bg-cyan-600 text-white shadow" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <Building2 size={12} /> {companyName} Only
+              </button>
+            </div>
+          )}
         </div>
         {activeView === "submissions" && (
           <div className="flex items-center gap-2">
@@ -506,6 +563,11 @@ export default function PublicFormsPage() {
               <h3 className="text-lg font-black text-white">{f.title}</h3>
               <p className="text-xs text-gray-300">{f.description}</p>
               <div className="flex flex-wrap gap-1.5 pt-1">
+                {f.companyName && (
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25 flex items-center gap-1 font-semibold">
+                    <Building2 size={10} /> {f.companyName}
+                  </span>
+                )}
                 <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/20">
                   {(f.carriers || CALL_CENTER_CARRIERS).length} Carriers
                 </span>

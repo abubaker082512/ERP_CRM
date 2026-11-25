@@ -72,7 +72,6 @@ export async function PUT(request: NextRequest) {
       headers,
       body: JSON.stringify({
         user_metadata: {
-          ...currentMeta,
           workspace_state: mergedState,
           workspace_state_updated_at: new Date().toISOString(),
         },

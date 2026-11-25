@@ -420,29 +420,72 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
       "accounting_entries",
       "accounting_coa",
       "hr_employees",
+      "payroll_hr_employees",
+      "payroll_runs",
+      "payroll_leaves",
+      "payroll_variable_entries",
+      "employees",
+      "attendances",
+      "team_members",
       "helpdesk_tickets",
       "mrp_orders",
+      "mrp_boms",
+      "mrp_work_orders",
       "projects_list",
+      "crm_leads",
+      "crm_stages",
+      "crm_custom_cols",
+      "call_center_leads",
+      "call_center_campaigns",
+      "public_forms_list",
+      "pos_orders",
+      "pos_products",
+      "kds_orders",
+      "sales_orders",
+      "sales_quotations",
+      "purchase_orders",
+      "purchase_rfqs",
+      "inventory_products",
+      "inventory_warehouses",
+      "inventory_operations",
+      "contacts_list",
+      "dashboard_custom_charts",
     ];
+
+    let cloudHydrated = false;
 
     const hydrateCloudState = async () => {
       const info = getLoggedInUserInfo();
-      if (!info.email || info.userKey === "guest") return;
+      if (!info.email || info.userKey === "guest") {
+        cloudHydrated = true;
+        return;
+      }
       try {
         const res = await fetch(`/api/workspace/state?email=${encodeURIComponent(info.email)}&t=${Date.now()}`, {
           cache: "no-store",
         });
-        if (!res.ok) return;
+        if (!res.ok) {
+          cloudHydrated = true;
+          return;
+        }
         const data = await res.json();
         const cloud = data?.state;
-        if (!cloud || typeof cloud !== "object") return;
+        if (!cloud || typeof cloud !== "object") {
+          cloudHydrated = true;
+          return;
+        }
         let hydrated = false;
         for (const [k, v] of Object.entries(cloud)) {
-          if (typeof v === "string" && !localStorage.getItem(k)) {
+          if (typeof v !== "string") continue;
+          const existingLocal = localStorage.getItem(k);
+          const localIsEmptyPlaceholder = !existingLocal || existingLocal === "[]" || existingLocal === "{}";
+          const cloudHasRealData = v !== "" && v !== "[]" && v !== "{}";
+          if (!existingLocal || (localIsEmptyPlaceholder && cloudHasRealData)) {
             localStorage.setItem(k, v);
             hydrated = true;
           }
         }
+        cloudHydrated = true;
         if (hydrated) {
           loadUserScopedContext();
         } else if (!localStorage.getItem(`beraxis_branches_${info.userKey}`)) {
@@ -487,6 +530,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
 
     let lastSnapshot = "";
     const pushCloudState = async () => {
+      if (!cloudHydrated) return;
       const info = getLoggedInUserInfo();
       if (!info.email || info.userKey === "guest") return;
       try {
@@ -495,16 +539,20 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         const branchesVal = localStorage.getItem(branchesKey);
         if (branchesVal) payload[branchesKey] = branchesVal;
 
+        const activeBranchKey = `beraxis_active_branch_id_${info.userKey}`;
+        const activeBranchVal = localStorage.getItem(activeBranchKey);
+        if (activeBranchVal) payload[activeBranchKey] = activeBranchVal;
+
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
           if (!k) continue;
           if (CLOUD_SYNC_PREFIXES.some((p) => k.includes(p))) {
             const val = localStorage.getItem(k);
-            if (val) payload[k] = val;
+            if (val && val !== "[]" && val !== "{}") payload[k] = val;
           }
         }
         const snap = JSON.stringify(payload);
-        if (!snap || snap === "{}" || snap === lastSnapshot || snap.length > 180000) return;
+        if (!snap || snap === "{}" || snap === lastSnapshot || snap.length > 250000) return;
         lastSnapshot = snap;
         await fetch("/api/workspace/state", {
           method: "PUT",

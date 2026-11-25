@@ -153,7 +153,6 @@ async function writeStore(store: MeetStoreShape, roomId?: string, syncCloud = fa
           headers: sbHeaders,
           body: JSON.stringify({
             user_metadata: {
-              ...(host.user_metadata || {}),
               meet_live_rooms: compactRooms,
               meet_attendee_logs: {
                 ...existingLogs,

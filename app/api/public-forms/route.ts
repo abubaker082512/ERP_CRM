@@ -62,6 +62,7 @@ export interface PublicFormDef {
   id: string;
   companyId: string;
   companyName: string;
+  ownerEmail?: string;
   title: string;
   description: string;
   campaign: string;
@@ -164,10 +165,9 @@ async function writeStore(next: StoreShape): Promise<void> {
         headers: sbHeaders,
         body: JSON.stringify({
           user_metadata: {
-            ...(host.user_metadata || {}),
             public_forms_registry: {
-              forms: next.forms.slice(0, 60),
-              leads: next.leads.slice(0, 200),
+              forms: next.forms.slice(0, 120),
+              leads: next.leads.slice(0, 500),
             },
           },
         }),
@@ -180,6 +180,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   const companyId = searchParams.get("company_id");
+  const companyIdsParam = searchParams.get("company_ids");
+  const ownerEmail = (searchParams.get("owner_email") || "").trim().toLowerCase();
   const includeLeads = searchParams.get("include_leads") === "1";
 
   const store = await readStore();
@@ -192,12 +194,32 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, form }, { headers: { "Cache-Control": "no-store" } });
   }
 
-  const forms = companyId
-    ? store.forms.filter((f) => f.companyId === companyId || f.id === "beraxis-callback")
-    : store.forms;
+  const allowedIds = new Set<string>(
+    (companyIdsParam ? companyIdsParam.split(",") : companyId ? [companyId] : [])
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
+
+  const forms =
+    allowedIds.size > 0
+      ? store.forms.filter(
+          (f) =>
+            allowedIds.has(f.companyId) ||
+            (ownerEmail && (f.ownerEmail || "").toLowerCase() === ownerEmail) ||
+            f.id === "beraxis-callback"
+        )
+      : store.forms;
+
+  const allowedFormIds = new Set(forms.map((f) => f.id));
 
   const leads = includeLeads
-    ? store.leads.filter((l) => !companyId || l.companyId === companyId || l.companyId === "CMP-001")
+    ? store.leads.filter(
+        (l) =>
+          allowedIds.size === 0 ||
+          allowedIds.has(l.companyId) ||
+          allowedFormIds.has(l.formId) ||
+          l.companyId === "CMP-001"
+      )
     : undefined;
 
   return NextResponse.json({ success: true, forms, leads }, { headers: { "Cache-Control": "no-store" } });
@@ -218,6 +240,7 @@ export async function POST(req: NextRequest) {
       id,
       companyId: body.companyId || "CMP-001",
       companyName: body.companyName || "Beraxis Partner",
+      ownerEmail: body.ownerEmail ? String(body.ownerEmail).trim().toLowerCase() : undefined,
       title: body.title || "Public Lead Form",
       description: body.description || "Fill out this form and our team will contact you shortly.",
       campaign: body.campaign || "Public Web Form",
