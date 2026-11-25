@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    ...(process.env.DISABLE_WEBPACK_CACHE === '1'
+        ? { experimental: { cpus: 1, workerThreads: false } }
+        : {}),
     eslint: {
         ignoreDuringBuilds: true,
     },
@@ -46,6 +49,9 @@ const nextConfig = {
         ];
     },
     webpack(config: any, { isServer, webpack }: { isServer: boolean; webpack: any }) {
+        if (process.env.DISABLE_WEBPACK_CACHE === '1') {
+            config.cache = false;
+        }
         config.plugins.push(
             new webpack.NormalModuleReplacementPlugin(/^node:/, (resource: any) => {
                 resource.request = resource.request.replace(/^node:/, '');

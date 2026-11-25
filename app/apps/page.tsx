@@ -180,6 +180,7 @@ export default function AppsDashboardPage() {
         userPlan,
         freeSelectedApp,
         setFreeSelectedApp,
+        setActiveBranchId,
         createBranch,
         updateBranch,
         isModuleActive,
@@ -444,8 +445,15 @@ export default function AppsDashboardPage() {
     };
 
     // Strict App Filtering:
-    // - On Free Plan: ONLY the 1 chosen major app + Settings (/settings). NEVER Leads Pool!
-    // - On Paid Plan: All enabled modules for the active industry/company + Leads Pool + Settings.
+    // - On Free Plan: ONLY the 1 chosen major app + Dashboard + Settings (/settings). NEVER Leads Pool!
+    // - On Paid Plan in "All" mode (scopeMode === "all"): Show ALL apps across the entire system!
+    // - On Paid Plan when a specific company is selected (scopeMode === "single"): Show ONLY the apps enabled/related to THAT specific company!
+    const activeCompanyModules = activeBranch
+        ? activeBranch.enabledModules && activeBranch.enabledModules.length > 0
+            ? activeBranch.enabledModules
+            : getIndustryById(activeBranch.industryId).defaultModules
+        : [];
+
     const displayedApps = (activeBranch
         ? isFreePlan
             ? allApps.filter(app => {
@@ -459,14 +467,16 @@ export default function AppsDashboardPage() {
                       chosenFreeAppHref;
                   return app.href === activeFreeHref;
               })
-            : allApps.filter(
-                  app =>
-                      isModuleActive(app.href) ||
-                      app.href === "/settings" ||
-                      app.href === "/dashboard" ||
-                      app.href === "/reports" ||
-                      app.href === "/crm/leads-pool"
-              )
+            : scopeMode === "all"
+                ? allApps
+                : allApps.filter(
+                      app =>
+                          activeCompanyModules.includes(app.href) ||
+                          activeCompanyModules.some(m => app.href.startsWith(`${m}/`)) ||
+                          app.href === "/dashboard" ||
+                          app.href === "/reports" ||
+                          app.href === "/settings"
+                  )
         : []
     ).sort((a, b) => (a.href === "/dashboard" ? -1 : b.href === "/dashboard" ? 1 : 0));
 
@@ -988,26 +998,69 @@ export default function AppsDashboardPage() {
                                     </span>
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                    <div className={`inline-flex p-0.5 rounded-xl border text-[11px] font-bold ${isLight ? "bg-slate-100 border-slate-200" : "bg-[#060B19]/80 border-white/10"}`}>
-                                        <button
-                                            type="button"
-                                            onClick={() => setScopeMode("single")}
-                                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                                                scopeMode === "single"
-                                                    ? "beraxis-glow-pill"
-                                                    : isLight ? "text-slate-600 hover:text-slate-900" : "text-gray-400 hover:text-white"
-                                            }`}
-                                        >
-                                            Single Company
-                                        </button>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {/* Multi-Company Specific Selector + "All Companies" Switcher */}
+                                    <div className={`inline-flex flex-wrap items-center gap-1 p-1 rounded-xl border text-[11px] font-bold ${isLight ? "bg-slate-100 border-slate-200" : "bg-[#060B19]/80 border-white/10"}`}>
+                                        {branches.length <= 4 ? (
+                                            branches.map((b) => {
+                                                const isThisCompanySelected = scopeMode === "single" && activeBranch?.id === b.id;
+                                                return (
+                                                    <button
+                                                        key={b.id}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setActiveBranchId(b.id);
+                                                            setScopeMode("single");
+                                                        }}
+                                                        title={`Show apps & data for ${b.name}`}
+                                                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 max-w-[180px] truncate ${
+                                                            isThisCompanySelected
+                                                                ? "beraxis-glow-pill"
+                                                                : isLight
+                                                                    ? "text-slate-700 hover:text-slate-950 hover:bg-white"
+                                                                    : "text-gray-300 hover:text-white hover:bg-white/5"
+                                                        }`}
+                                                    >
+                                                        <Building2 size={11} className="shrink-0" />
+                                                        <span className="truncate">{b.name}</span>
+                                                    </button>
+                                                );
+                                            })
+                                        ) : (
+                                            <select
+                                                value={scopeMode === "single" ? activeBranch?.id || "" : ""}
+                                                onChange={(e) => {
+                                                    if (e.target.value) {
+                                                        setActiveBranchId(e.target.value);
+                                                        setScopeMode("single");
+                                                    }
+                                                }}
+                                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold outline-none cursor-pointer ${
+                                                    scopeMode === "single"
+                                                        ? "bg-purple-600 text-white"
+                                                        : isLight
+                                                            ? "bg-white text-slate-700"
+                                                            : "bg-[#0F172A] text-gray-200"
+                                                }`}
+                                            >
+                                                {branches.map((b) => (
+                                                    <option key={b.id} value={b.id}>
+                                                        🏢 {b.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
+
                                         <button
                                             type="button"
                                             onClick={() => setScopeMode("all")}
+                                            title="Show all apps across all companies"
                                             className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                                                 scopeMode === "all"
                                                     ? "beraxis-glow-pill"
-                                                    : isLight ? "text-slate-600 hover:text-slate-900" : "text-gray-400 hover:text-white"
+                                                    : isLight
+                                                        ? "text-slate-700 hover:text-slate-950 hover:bg-white"
+                                                        : "text-gray-300 hover:text-white hover:bg-white/5"
                                             }`}
                                         >
                                             All ({branches.length || 1})

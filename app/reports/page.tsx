@@ -1842,7 +1842,7 @@ export default function ReportsPage() {
 
       {/* ─── SPECIFIC REPORT DOWNLOAD CENTER MODAL ─── */}
       {isDownloadModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="max-w-2xl w-full bg-[#0F172A] border border-purple-500/40 rounded-3xl p-6 shadow-2xl space-y-5">
             <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
               <div className="flex items-center gap-3">

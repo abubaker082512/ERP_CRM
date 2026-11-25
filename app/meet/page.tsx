@@ -44,15 +44,23 @@ export default function MeetLandingPage() {
         setTimeout(() => setToastMsg(""), 4000);
     };
 
-    // 1. Start Instant Meeting (Immediate launch)
+    // 1. Start Instant Meeting (Immediate launch as Host — skips guest check-in gate!)
     const handleStartInstantMeeting = () => {
         const uniqueRoomCode = `meet-${Math.random().toString(36).substring(2, 8)}-${Math.random().toString(36).substring(2, 6)}`;
-        router.push(`/meet/${uniqueRoomCode}`);
+        try {
+            localStorage.setItem(`beraxis_meet_host_${uniqueRoomCode}`, "1");
+            sessionStorage.setItem(`beraxis_meet_host_${uniqueRoomCode}`, "1");
+        } catch {}
+        router.push(`/meet/${uniqueRoomCode}?host=1`);
     };
 
-    // 2. Create Meeting Link for Later
+    // 2. Create Meeting Link for Later (Shareable clean client URL; creator recorded as Host)
     const handleCreateLinkForLater = () => {
         const uniqueRoomCode = `meet-${Math.random().toString(36).substring(2, 8)}-${Math.random().toString(36).substring(2, 6)}`;
+        try {
+            localStorage.setItem(`beraxis_meet_host_${uniqueRoomCode}`, "1");
+            sessionStorage.setItem(`beraxis_meet_host_${uniqueRoomCode}`, "1");
+        } catch {}
         const url = typeof window !== "undefined"
             ? `${window.location.origin}/meet/${uniqueRoomCode}`
             : `https://www.beraxis.online/meet/${uniqueRoomCode}`;
@@ -162,10 +170,10 @@ export default function MeetLandingPage() {
                                 </div>
                                 <div className="flex gap-2">
                                     <a
-                                        href={createdLink}
+                                        href={`${createdLink}?host=1`}
                                         className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors text-center"
                                     >
-                                        <span>Join Room Now</span>
+                                        <span>Join Room Now (as Host)</span>
                                         <ArrowRight size={13} />
                                     </a>
                                 </div>
