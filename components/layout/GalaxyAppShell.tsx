@@ -21,6 +21,7 @@ const navItems = [
     { name: 'Sales', icon: ShoppingCart, href: '/sales' },
     { name: 'Inventory', icon: Package, href: '/inventory' },
     { name: 'Accounting', icon: BarChart3, href: '/accounting' },
+    { name: 'Reports', icon: BarChart3, href: '/reports' },
     { name: 'Discuss', icon: MessageSquare, href: '/discuss' },
     { name: 'Knowledge', icon: BookOpen, href: '/knowledge' },
     { name: 'Settings', icon: Settings, href: '/settings' },

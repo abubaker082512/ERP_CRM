@@ -564,6 +564,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/approvals",
       "/attendances",
       "/payroll",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [

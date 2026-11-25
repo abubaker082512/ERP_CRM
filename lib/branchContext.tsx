@@ -462,7 +462,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
             currency: "USD",
             enabledModules: [
               "/dashboard", "/crm", "/sales", "/accounting", "/inventory",
-              "/employees", "/team", "/approvals", "/settings",
+              "/employees", "/team", "/approvals", "/reports", "/settings",
             ],
             sharingRules: {
               shareEmployees: true,
@@ -634,6 +634,9 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         } catch {}
       }
     } else {
+      if (!finalModules.includes("/reports")) {
+        finalModules = [...finalModules, "/reports"];
+      }
       if (!finalModules.includes("/settings")) {
         finalModules = [...finalModules, "/settings"];
       }
@@ -736,8 +739,9 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isModuleActive = (moduleHref: string): boolean => {
-    // Settings is always available
+    // Settings is always available; Reports is available on all paid workspaces
     if (moduleHref === "/settings") return true;
+    if (moduleHref === "/reports" && !isFreePlan) return true;
 
     // Lead Pool is strictly ONLY available on Paid Plans (Standard, Custom, or Leads Pool Solo)
     if (
