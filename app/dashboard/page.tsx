@@ -128,6 +128,15 @@ export default function DashboardPage() {
         live_feeds: true,
         activity_feed: true,
     });
+    const [customCharts, setCustomCharts] = useState<{
+        id: string;
+        title: string;
+        source: 'finance' | 'crm' | 'hr' | 'operations';
+        chartType: 'bar' | 'area' | 'pie';
+    }[]>([]);
+    const [newChartTitle, setNewChartTitle] = useState('');
+    const [newChartSource, setNewChartSource] = useState<'finance' | 'crm' | 'hr' | 'operations'>('finance');
+    const [newChartType, setNewChartType] = useState<'bar' | 'area' | 'pie'>('bar');
 
     useEffect(() => {
         if (activeBranch?.industryId === 'call_center') {
@@ -140,8 +149,59 @@ export default function DashboardPage() {
                 if (Array.isArray(parsed.order) && parsed.order.length > 0) setWidgetOrder(parsed.order);
                 if (parsed.visibility) setWidgetVisibility(prev => ({ ...prev, ...parsed.visibility }));
             }
+            const savedCharts = localStorage.getItem(getEntityStorageKey('dashboard_custom_charts'));
+            if (savedCharts) {
+                const pc = JSON.parse(savedCharts);
+                if (Array.isArray(pc)) setCustomCharts(pc);
+            }
         } catch {}
     }, [activeBranch?.id, activeBranch?.industryId]);
+
+    const persistCustomCharts = (next: typeof customCharts) => {
+        setCustomCharts(next);
+        try {
+            localStorage.setItem(getEntityStorageKey('dashboard_custom_charts'), JSON.stringify(next));
+        } catch {}
+    };
+
+    const handleAddCustomChart = (e: React.FormEvent) => {
+        e.preventDefault();
+        const title = newChartTitle.trim() || `${newChartSource.toUpperCase()} Overview`;
+        const item = { id: `CHT-${Date.now()}`, title, source: newChartSource, chartType: newChartType };
+        persistCustomCharts([...customCharts, item]);
+        setNewChartTitle('');
+    };
+
+    const getCustomChartData = (source: 'finance' | 'crm' | 'hr' | 'operations') => {
+        if (source === 'finance') {
+            return [
+                { name: 'Revenue', value: (kpis?.revenue || 0) + entityMetrics.invoicedRevenue },
+                { name: 'Expenses', value: entityMetrics.billsExpense },
+                { name: 'Net Profit', value: Math.max(0, entityMetrics.netProfit) },
+            ];
+        }
+        if (source === 'crm') {
+            return (summary?.pipeline_stages && summary.pipeline_stages.length > 0)
+                ? summary.pipeline_stages.map(s => ({ name: s.stage, value: s.value || s.count }))
+                : [
+                    { name: 'Leads', value: kpis?.leads || 0 },
+                    { name: 'Quotations', value: kpis?.quotations || 0 },
+                    { name: 'Won Deals', value: kpis?.won_deals || 0 },
+                ];
+        }
+        if (source === 'hr') {
+            return [
+                { name: 'Employees', value: entityMetrics.employeesCount },
+                { name: 'Invoices', value: entityMetrics.invoicesCount },
+                { name: 'Tickets', value: entityMetrics.ticketsCount },
+            ];
+        }
+        return [
+            { name: 'Projects', value: entityMetrics.projectsCount },
+            { name: 'MRP Orders', value: entityMetrics.moCount },
+            { name: 'Helpdesk', value: entityMetrics.ticketsCount },
+        ];
+    };
 
     const persistDashboardLayout = (nextOrder: DashboardWidgetId[], nextVis: Record<DashboardWidgetId, boolean>) => {
         setWidgetOrder(nextOrder);
@@ -518,6 +578,87 @@ export default function DashboardPage() {
                                 );
                             })}
                         </div>
+
+                        {/* Add Custom Chart Form */}
+                        <form onSubmit={handleAddCustomChart} className="pt-3 border-t border-white/10 flex flex-wrap items-center gap-2 text-xs">
+                            <span className="font-bold text-purple-300">+ Pin Custom Chart:</span>
+                            <input
+                                value={newChartTitle}
+                                onChange={(e) => setNewChartTitle(e.target.value)}
+                                placeholder="Chart Title (e.g. Monthly Finance)"
+                                className="flex-1 min-w-[160px] bg-black/30 border border-white/15 rounded-xl px-3 py-1.5 text-white outline-none"
+                            />
+                            <select value={newChartSource} onChange={(e) => setNewChartSource(e.target.value as any)} className="bg-[#0B1022] border border-white/15 rounded-xl px-2.5 py-1.5 text-white">
+                                <option value="finance">Finance &amp; Revenue</option>
+                                <option value="crm">CRM Pipeline</option>
+                                <option value="hr">Employees &amp; HR</option>
+                                <option value="operations">Projects &amp; Operations</option>
+                            </select>
+                            <select value={newChartType} onChange={(e) => setNewChartType(e.target.value as any)} className="bg-[#0B1022] border border-white/15 rounded-xl px-2.5 py-1.5 text-white">
+                                <option value="bar">Bar Chart</option>
+                                <option value="area">Area Chart</option>
+                                <option value="pie">Pie Chart</option>
+                            </select>
+                            <button type="submit" className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold cursor-pointer">
+                                + Add Chart
+                            </button>
+                            <Link href="/reports" className="px-3 py-1.5 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 font-bold">
+                                Open Full Reports →
+                            </Link>
+                        </form>
+                    </div>
+                )}
+
+                {/* User's Custom Pinned Charts */}
+                {customCharts.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {customCharts.map((ch) => {
+                            const cData = getCustomChartData(ch.source);
+                            return (
+                                <div key={ch.id} className="beraxis-glass-dock p-5 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-white">{ch.title}</h3>
+                                        <button
+                                            type="button"
+                                            onClick={() => persistCustomCharts(customCharts.filter(x => x.id !== ch.id))}
+                                            className="text-[11px] text-rose-400 hover:text-rose-300 cursor-pointer"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                    <div className="h-52 w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            {ch.chartType === 'bar' ? (
+                                                <BarChart data={cData}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                                                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} />
+                                                    <YAxis stroke="#94a3b8" fontSize={11} />
+                                                    <Tooltip />
+                                                    <Bar dataKey="value" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                                                </BarChart>
+                                            ) : ch.chartType === 'area' ? (
+                                                <AreaChart data={cData}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                                                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} />
+                                                    <YAxis stroke="#94a3b8" fontSize={11} />
+                                                    <Tooltip />
+                                                    <Area type="monotone" dataKey="value" stroke="#06b6d4" fill="rgba(6,182,212,0.25)" />
+                                                </AreaChart>
+                                            ) : (
+                                                <PieChart>
+                                                    <Pie data={cData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label>
+                                                        {cData.map((_, idx) => (
+                                                            <Cell key={idx} fill={['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'][idx % 4]} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip />
+                                                </PieChart>
+                                            )}
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
 
