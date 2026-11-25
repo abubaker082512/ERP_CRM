@@ -481,15 +481,25 @@ html[data-theme="light"] :is(.min-h-screen, .h-screen):is(
 }
 
 html[data-theme="light"] :is(
-  .bg-\[\#090D1A\], .bg-\[\#0A0E17\], .bg-\[\#0B0F19\], .bg-\[\#0B0F19\]\/60, .bg-\[\#0B0F19\]\/80, .bg-\[\#0B0F19\]\/90,
-  .bg-\[\#0B101E\], .bg-\[\#0B1022\], .bg-\[\#0B1120\], .bg-\[\#0F172A\], .bg-\[\#0F172A\]\/70, .bg-\[\#0F172A\]\/90,
-  .bg-\[\#111622\], .bg-\[\#111622\]\/70, .bg-\[\#111622\]\/90, .bg-\[\#111827\], .bg-\[\#111827\]\/80,
-  .bg-\[\#141A28\], .bg-\[\#141C2E\], .bg-\[\#161F33\], .bg-\[\#1E293B\], .bg-\[\#1E293B\]\/70,
-  .bg-gray-950, .bg-gray-950\/60, .bg-gray-900, .bg-gray-900\/40, .bg-gray-900\/50, .bg-gray-900\/60, .bg-gray-900\/80, .bg-gray-900\/90,
-  .bg-gray-800, .bg-gray-800\/80, .bg-gray-800\/90, .bg-slate-950, .bg-slate-900, .bg-slate-800,
-  .bg-black\/25, .bg-black\/30, .bg-black\/40
+  [class*="bg-[#090D1A"], [class*="bg-[#0A0E17"], [class*="bg-[#0B0F19"], [class*="bg-[#0B101E"],
+  [class*="bg-[#0B1022"], [class*="bg-[#0B1120"], [class*="bg-[#0F172A"], [class*="bg-[#111622"],
+  [class*="bg-[#111827"], [class*="bg-[#141A28"], [class*="bg-[#141C2E"], [class*="bg-[#161F33"],
+  [class*="bg-[#1E293B"], [class*="bg-gray-950"], [class*="bg-gray-900"], [class*="bg-gray-800"],
+  [class*="bg-slate-950"], [class*="bg-slate-900"], [class*="bg-slate-800"],
+  .bg-black\/20, .bg-black\/25, .bg-black\/30, .bg-black\/40, .bg-black\/50
 ):not([class*="bg-gradient-"]):not(button[class*="bg-purple-"]):not(button[class*="bg-emerald-"]):not(button[class*="bg-cyan-"]):not(button[class*="bg-blue-"]) {
   background-color: rgba(255, 255, 255, 0.94) !important;
+  color: #0f172a !important;
+}
+
+/* Convert dark 900/950 gradient banners (e.g. /contacts, /crm/leads-pool, /team) to crisp light frosted gradients */
+html[data-theme="light"] :is(
+  [class*="from-[#0F172A]"], [class*="from-[#0B"], [class*="from-slate-900"], [class*="from-slate-950"],
+  [class*="from-gray-900"], [class*="from-gray-950"], [class*="from-purple-950"], [class*="from-purple-900"],
+  [class*="from-indigo-950"], [class*="from-emerald-950"], [class*="from-cyan-950"]
+):not(button):not(a) {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(241, 245, 249, 0.94) 100%) !important;
+  border-color: rgba(203, 213, 225, 0.9) !important;
   color: #0f172a !important;
 }
 
@@ -544,8 +554,21 @@ html[data-theme="light"] :is(input, textarea)::placeholder {
   color: #64748b !important;
 }
 
-html[data-theme="light"] :is([class*="bg-gradient-"], button[class*="bg-purple-600"], button[class*="bg-emerald-600"], button[class*="bg-cyan-600"], button[class*="bg-amber-600"]),
-html[data-theme="light"] :is([class*="bg-gradient-"], button[class*="bg-purple-600"], button[class*="bg-emerald-600"], button[class*="bg-cyan-600"], button[class*="bg-amber-600"]) * {
+/* Only solid-filled gradient/accent buttons keep white text; translucent /10 /20 /25 /30 buttons keep dark/colored text */
+html[data-theme="light"] :is(
+  [class*="bg-gradient-"]:not([class*="from-[#0F172A]"]):not([class*="from-slate-9"]):not([class*="from-gray-9"]):not([class*="from-purple-950"]):not([class*="from-purple-900"]):not([class*="from-indigo-950"]):not([class*="from-emerald-950"]),
+  button[class*="bg-purple-600"]:not([class*="bg-purple-600/"]),
+  button[class*="bg-emerald-600"]:not([class*="bg-emerald-600/"]),
+  button[class*="bg-cyan-600"]:not([class*="bg-cyan-600/"]),
+  button[class*="bg-amber-600"]:not([class*="bg-amber-600/"])
+),
+html[data-theme="light"] :is(
+  [class*="bg-gradient-"]:not([class*="from-[#0F172A]"]):not([class*="from-slate-9"]):not([class*="from-gray-9"]):not([class*="from-purple-950"]):not([class*="from-purple-900"]):not([class*="from-indigo-950"]):not([class*="from-emerald-950"]),
+  button[class*="bg-purple-600"]:not([class*="bg-purple-600/"]),
+  button[class*="bg-emerald-600"]:not([class*="bg-emerald-600/"]),
+  button[class*="bg-cyan-600"]:not([class*="bg-cyan-600/"]),
+  button[class*="bg-amber-600"]:not([class*="bg-amber-600/"])
+) * {
   color: #ffffff !important;
 }
 

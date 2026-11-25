@@ -386,6 +386,7 @@ export default function AppsDashboardPage() {
                       isModuleActive(app.href) ||
                       app.href === "/settings" ||
                       app.href === "/dashboard" ||
+                      app.href === "/reports" ||
                       app.href === "/crm/leads-pool"
               )
         : []
@@ -974,6 +975,9 @@ export default function AppsDashboardPage() {
                                 <Link href="/approvals" className={`px-3 py-1.5 rounded-full border text-[11px] font-bold transition-colors ${isLight ? "bg-white hover:bg-amber-50 border-slate-200 text-amber-700" : "bg-white/5 hover:bg-amber-500/20 border-white/10 text-amber-200"}`}>
                                     Approvals
                                 </Link>
+                                <Link href="/reports" className={`px-3 py-1.5 rounded-full border text-[11px] font-bold transition-colors ${isLight ? "bg-white hover:bg-purple-50 border-slate-200 text-purple-700" : "bg-white/5 hover:bg-purple-500/20 border-white/10 text-purple-200"}`}>
+                                    Reports &amp; BI
+                                </Link>
                             </div>
                         </div>
 
@@ -1045,9 +1049,9 @@ export default function AppsDashboardPage() {
                             {displayedApps.filter((app) => {
                                 if (appSearch && !app.name.toLowerCase().includes(appSearch.toLowerCase())) return false;
                                 if (appCategory === "all") return true;
-                                if (appCategory === "finance") return ["/dashboard", "/accounting", "/sales", "/purchase", "/pos"].some(p => app.href.startsWith(p));
-                                if (appCategory === "crm") return ["/dashboard", "/crm", "/call-center", "/forms", "/contacts", "/discuss", "/calendar"].some(p => app.href.startsWith(p));
-                                if (appCategory === "ops") return ["/dashboard", "/inventory", "/barcode", "/manufacturing", "/employees", "/payroll", "/project", "/helpdesk"].some(p => app.href.startsWith(p));
+                                if (appCategory === "finance") return ["/dashboard", "/accounting", "/sales", "/purchase", "/pos", "/reports"].some(p => app.href.startsWith(p));
+                                if (appCategory === "crm") return ["/dashboard", "/crm", "/call-center", "/forms", "/contacts", "/discuss", "/calendar", "/reports"].some(p => app.href.startsWith(p));
+                                if (appCategory === "ops") return ["/dashboard", "/inventory", "/barcode", "/manufacturing", "/employees", "/payroll", "/project", "/helpdesk", "/reports"].some(p => app.href.startsWith(p));
                                 if (appCategory === "office") return ["/dashboard", "/documents", "/spreadsheets", "/slides", "/meet", "/knowledge", "/sign", "/todo"].some(p => app.href.startsWith(p));
                                 return true;
                             }).map(app => {
