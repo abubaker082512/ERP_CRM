@@ -54,22 +54,44 @@ function SignupForm() {
 
         setLoading(true);
         try {
-            const resp = await fetchAPI('/auth/signup', {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    name, 
-                    email, 
-                    password, 
-                    invite_id,
-                    account_type: accountType,
-                    company_name: accountType === 'company' ? companyName : undefined,
-                    phone: phone.trim() || undefined,
-                    referral_code: referralCode || undefined
-                })
-            });
+            const signupPayload = {
+                name,
+                email,
+                password,
+                invite_id,
+                account_type: accountType,
+                company_name: accountType === 'company' ? companyName : undefined,
+                phone: phone.trim() || undefined,
+                referral_code: referralCode || undefined
+            };
 
-            const data = await resp.json();
+            let resp = await fetchAPI('/auth/signup', {
+                method: 'POST',
+                body: JSON.stringify(signupPayload)
+            }).catch(() => null);
+
+            // Instant Next.js + Isolated Cluster Provisioning fallback if Render backend is cold-starting
+            if (!resp || resp.status >= 500) {
+                resp = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(signupPayload)
+                });
+            }
+
+            const data = await resp.json().catch(() => ({}));
             if (resp.ok) {
+                // Guarantee dedicated isolated micro-database cluster is provisioned even if Render handled signup
+                fetch('/api/workspace/cluster', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email.trim().toLowerCase(),
+                        ownerUid: data?.user?.id || '',
+                        companyName: accountType === 'company' ? companyName : `${name || 'Personal'} Isolated Workspace`,
+                        entityType: accountType
+                    })
+                }).catch(() => {});
                 try {
                     fetch('/api/notifications/signup', {
                         method: 'POST',

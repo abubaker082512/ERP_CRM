@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
+import {
+  resolveSafeClusterId,
+  readClusterCollection,
+  writeClusterCollection,
+  savePublicFormRoutePointer,
+  resolvePublicFormCluster,
+  verifyClusterAccess,
+} from "@/lib/tenantClusterDb";
 
 export const dynamic = "force-dynamic";
 
-const TMP_STORE_PATH = "/tmp/beraxis_public_forms.json";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
@@ -74,109 +80,116 @@ export interface PublicFormDef {
   createdAt: string;
 }
 
-interface StoreShape {
-  forms: PublicFormDef[];
-  leads: any[];
-}
+const DEFAULT_TEMPLATE_FORM: PublicFormDef = {
+  id: "beraxis-callback",
+  companyId: "TEMPLATE",
+  companyName: "Beraxis Starter Template",
+  title: "Request a Callback & Custom Quote",
+  description: "Share your contact details and our specialist team will reach out within 15 minutes.",
+  campaign: "Inbound Web Form",
+  submitLabel: "Request Callback",
+  fields: [
+    { id: "name", label: "Full Name", type: "text", required: true, placeholder: "e.g. Sarah Khan" },
+    { id: "phone", label: "Phone / WhatsApp Number", type: "tel", required: true, placeholder: "+1 555-0199" },
+    { id: "email", label: "Work Email", type: "email", required: false, placeholder: "you@company.com" },
+    { id: "carrier", label: "Carrier", type: "carriers_dropdown", required: false, options: CALL_CENTER_CARRIERS },
+    { id: "notes", label: "How can we help?", type: "textarea", required: false, placeholder: "Tell us about your requirements..." },
+  ],
+  carriers: CALL_CENTER_CARRIERS,
+  submissionsCount: 0,
+  createdAt: "2026-11-24T00:00:00.000Z",
+};
 
-const DEFAULT_FORMS: PublicFormDef[] = [
-  {
-    id: "beraxis-callback",
-    companyId: "CMP-001",
-    companyName: "Beraxis Partner Desk",
-    title: "Request a Callback & Custom Quote",
-    description: "Share your contact details and our specialist team will reach out within 15 minutes.",
-    campaign: "Inbound Web Form",
-    submitLabel: "Request Callback",
-    fields: [
-      { id: "name", label: "Full Name", type: "text", required: true, placeholder: "e.g. Sarah Khan" },
-      { id: "phone", label: "Phone / WhatsApp Number", type: "tel", required: true, placeholder: "+1 555-0199" },
-      { id: "email", label: "Work Email", type: "email", required: false, placeholder: "you@company.com" },
-      { id: "carrier", label: "Carrier", type: "carriers_dropdown", required: false, options: CALL_CENTER_CARRIERS },
-      { id: "notes", label: "How can we help?", type: "textarea", required: false, placeholder: "Tell us about your requirements..." },
-    ],
-    carriers: CALL_CENTER_CARRIERS,
-    submissionsCount: 0,
-    createdAt: new Date().toISOString(),
-  },
-];
+const gMig = globalThis as unknown as { __beraxisFormsClusterMigrated?: boolean };
 
-let memStore: StoreShape = { forms: [...DEFAULT_FORMS], leads: [] };
+/**
+ * One-time lossless migration: moves any forms/submissions previously stored in legacy
+ * public_forms_registry into each company's OWN isolated cluster folder!
+ */
+async function ensureLegacyFormsMigratedToIsolatedClusters(): Promise<void> {
+  if (gMig.__beraxisFormsClusterMigrated) return;
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    gMig.__beraxisFormsClusterMigrated = true;
+    return;
+  }
 
-async function getRegistryHostUser(): Promise<any | null> {
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
   try {
+    const marker = await readClusterCollection<{ migrated: boolean }>(
+      "SYSTEM-MIGRATION",
+      "public_forms_v2",
+      { migrated: false }
+    );
+    if (marker.migrated) {
+      gMig.__beraxisFormsClusterMigrated = true;
+      return;
+    }
+
     const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=50`, {
       headers: sbHeaders,
       cache: "no-store",
     });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const users = Array.isArray(data?.users) ? data.users : [];
-    return (
-      users.find((u: any) => (u.email || "").toLowerCase() === "admin@beraxis.online") ||
-      users.find((u: any) => (u.email || "").toLowerCase() === "abubaker0825@gmail.com") ||
-      users[0] ||
-      null
-    );
-  } catch {
-    return null;
-  }
-}
+    if (res.ok) {
+      const data = await res.json();
+      const users = Array.isArray(data?.users) ? data.users : [];
+      const host =
+        users.find((u: any) => (u.email || "").toLowerCase() === "admin@beraxis.online") ||
+        users[0];
+      const legacy = host?.user_metadata?.public_forms_registry;
 
-async function readStore(): Promise<StoreShape> {
-  // 1. Try Supabase cloud registry first (persists across all Vercel instances)
-  try {
-    const host = await getRegistryHostUser();
-    const cloud = host?.user_metadata?.public_forms_registry;
-    if (cloud && Array.isArray(cloud.forms)) {
-      const hasDefault = cloud.forms.some((f: PublicFormDef) => f.id === "beraxis-callback");
-      const mergedForms = hasDefault ? cloud.forms : [...cloud.forms, ...DEFAULT_FORMS];
-      memStore = { forms: mergedForms, leads: Array.isArray(cloud.leads) ? cloud.leads : [] };
-      return memStore;
-    }
-  } catch {}
+      if (legacy && Array.isArray(legacy.forms)) {
+        const formsByCluster = new Map<string, PublicFormDef[]>();
+        for (const f of legacy.forms as PublicFormDef[]) {
+          if (!f?.id || f.id === "beraxis-callback") continue;
+          const cid = resolveSafeClusterId(f.companyId, f.ownerEmail);
+          const list = formsByCluster.get(cid) || [];
+          if (!list.some((x) => x.id === f.id)) list.push({ ...f, companyId: cid });
+          formsByCluster.set(cid, list);
+          await savePublicFormRoutePointer(f.id, cid);
+        }
 
-  // 2. Try /tmp fallback
-  try {
-    if (fs.existsSync(TMP_STORE_PATH)) {
-      const parsed = JSON.parse(fs.readFileSync(TMP_STORE_PATH, "utf-8"));
-      if (parsed && Array.isArray(parsed.forms)) {
-        memStore = parsed;
-        return parsed;
+        for (const [cid, list] of formsByCluster.entries()) {
+          const existing = await readClusterCollection<PublicFormDef[]>(cid, "public_forms", []);
+          const merged = [...existing];
+          for (const item of list) {
+            if (!merged.some((m) => m.id === item.id)) merged.push(item);
+          }
+          await writeClusterCollection(cid, "public_forms", merged, {
+            ownerEmail: list[0]?.ownerEmail,
+            companyName: list[0]?.companyName,
+          });
+        }
       }
+
+      if (legacy && Array.isArray(legacy.leads)) {
+        const leadsByCluster = new Map<string, any[]>();
+        for (const l of legacy.leads) {
+          if (!l?.companyId || l.companyId === "CMP-001") continue;
+          const cid = resolveSafeClusterId(l.companyId, null);
+          const list = leadsByCluster.get(cid) || [];
+          if (!list.some((x) => x.id === l.id)) list.push({ ...l, companyId: cid });
+          leadsByCluster.set(cid, list);
+        }
+
+        for (const [cid, list] of leadsByCluster.entries()) {
+          const existing = await readClusterCollection<any[]>(cid, "form_submissions", []);
+          const merged = [...existing];
+          for (const item of list) {
+            if (!merged.some((m) => m.id === item.id)) merged.push(item);
+          }
+          await writeClusterCollection(cid, "form_submissions", merged);
+        }
+      }
+
+      await writeClusterCollection("SYSTEM-MIGRATION", "public_forms_v2", { migrated: true });
     }
   } catch {}
 
-  return memStore;
-}
-
-async function writeStore(next: StoreShape): Promise<void> {
-  memStore = next;
-  try {
-    fs.writeFileSync(TMP_STORE_PATH, JSON.stringify(next), "utf-8");
-  } catch {}
-
-  try {
-    const host = await getRegistryHostUser();
-    if (host?.id) {
-      await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${host.id}`, {
-        method: "PUT",
-        headers: sbHeaders,
-        body: JSON.stringify({
-          user_metadata: {
-            public_forms_registry: {
-              forms: next.forms.slice(0, 120),
-              leads: next.leads.slice(0, 500),
-            },
-          },
-        }),
-      });
-    }
-  } catch {}
+  gMig.__beraxisFormsClusterMigrated = true;
 }
 
 export async function GET(req: NextRequest) {
+  await ensureLegacyFormsMigratedToIsolatedClusters();
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   const companyId = searchParams.get("company_id");
@@ -184,51 +197,109 @@ export async function GET(req: NextRequest) {
   const ownerEmail = (searchParams.get("owner_email") || "").trim().toLowerCase();
   const includeLeads = searchParams.get("include_leads") === "1";
 
-  const store = await readStore();
-
+  // 1. Public Visitor Opening /f/[id] -> Reads ONLY that 1 form via isolated route pointer!
   if (id) {
-    const form = store.forms.find((f) => f.id === id);
+    if (id === "beraxis-callback") {
+      return NextResponse.json(
+        { success: true, form: DEFAULT_TEMPLATE_FORM },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
+    const targetCluster = await resolvePublicFormCluster(id);
+    if (!targetCluster) {
+      return NextResponse.json({ error: "Public form not found" }, { status: 404 });
+    }
+
+    const clusterForms = await readClusterCollection<PublicFormDef[]>(
+      targetCluster,
+      "public_forms",
+      []
+    );
+    const form = clusterForms.find((f) => f.id === id);
     if (!form) {
       return NextResponse.json({ error: "Public form not found" }, { status: 404 });
     }
+
     return NextResponse.json({ success: true, form }, { headers: { "Cache-Control": "no-store" } });
   }
 
-  const allowedIds = new Set<string>(
-    (companyIdsParam ? companyIdsParam.split(",") : companyId ? [companyId] : [])
-      .map((s) => s.trim())
-      .filter(Boolean)
+  // 2. Authenticated Dashboard Query -> Reads ONLY from the user's own isolated company cluster(s)!
+  const rawIds = (companyIdsParam ? companyIdsParam.split(",") : companyId ? [companyId] : [])
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (rawIds.length === 0) {
+    // Never dump all tenants' forms when un-scoped! Return only the starter template.
+    return NextResponse.json(
+      { success: true, forms: [DEFAULT_TEMPLATE_FORM], leads: includeLeads ? [] : undefined },
+      { headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
+  const resolvedClusterIds = Array.from(
+    new Set(rawIds.map((rid) => resolveSafeClusterId(rid, ownerEmail)))
   );
 
-  const forms =
-    allowedIds.size > 0
-      ? store.forms.filter(
-          (f) =>
-            allowedIds.has(f.companyId) ||
-            (ownerEmail && (f.ownerEmail || "").toLowerCase() === ownerEmail) ||
-            f.id === "beraxis-callback"
-        )
-      : store.forms;
+  const aggregatedForms: PublicFormDef[] = [];
+  const aggregatedLeads: any[] = [];
 
-  const allowedFormIds = new Set(forms.map((f) => f.id));
+  for (const cid of resolvedClusterIds) {
+    const access = await verifyClusterAccess(cid, ownerEmail || null);
+    if (!access.allowed) continue;
 
-  const leads = includeLeads
-    ? store.leads.filter(
-        (l) =>
-          allowedIds.size === 0 ||
-          allowedIds.has(l.companyId) ||
-          allowedFormIds.has(l.formId) ||
-          l.companyId === "CMP-001"
-      )
-    : undefined;
+    const cForms = await readClusterCollection<PublicFormDef[]>(cid, "public_forms", []);
+    for (const f of cForms) {
+      if (!aggregatedForms.some((x) => x.id === f.id)) {
+        aggregatedForms.push(f);
+      }
+    }
 
-  return NextResponse.json({ success: true, forms, leads }, { headers: { "Cache-Control": "no-store" } });
+    if (includeLeads) {
+      const cLeads = await readClusterCollection<any[]>(cid, "form_submissions", []);
+      for (const l of cLeads) {
+        if (!aggregatedLeads.some((x) => x.id === l.id)) {
+          aggregatedLeads.push(l);
+        }
+      }
+    }
+  }
+
+  // Always include starter callback template at the end if not already customized
+  if (!aggregatedForms.some((f) => f.id === "beraxis-callback")) {
+    const primaryCid = resolvedClusterIds[0];
+    const templateLeadsCount = includeLeads
+      ? aggregatedLeads.filter((l) => l.formId === "beraxis-callback").length
+      : 0;
+    aggregatedForms.push({
+      ...DEFAULT_TEMPLATE_FORM,
+      companyId: primaryCid,
+      submissionsCount: templateLeadsCount,
+    });
+  }
+
+  return NextResponse.json(
+    {
+      success: true,
+      forms: aggregatedForms,
+      leads: includeLeads ? aggregatedLeads : undefined,
+    },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
 
 export async function POST(req: NextRequest) {
   try {
+    await ensureLegacyFormsMigratedToIsolatedClusters();
     const body = await req.json();
-    const store = await readStore();
+    const ownerEmail = body.ownerEmail ? String(body.ownerEmail).trim().toLowerCase() : "";
+    const clusterId = resolveSafeClusterId(body.companyId, ownerEmail);
+
+    const access = await verifyClusterAccess(clusterId, ownerEmail || null);
+    if (!access.allowed) {
+      return NextResponse.json({ error: access.reason || "Forbidden" }, { status: 403 });
+    }
+
     const slug = (body.title || "lead-form")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -238,27 +309,37 @@ export async function POST(req: NextRequest) {
 
     const form: PublicFormDef = {
       id,
-      companyId: body.companyId || "CMP-001",
-      companyName: body.companyName || "Beraxis Partner",
-      ownerEmail: body.ownerEmail ? String(body.ownerEmail).trim().toLowerCase() : undefined,
+      companyId: clusterId,
+      companyName: body.companyName || "Isolated Workspace",
+      ownerEmail: ownerEmail || undefined,
       title: body.title || "Public Lead Form",
       description: body.description || "Fill out this form and our team will contact you shortly.",
       campaign: body.campaign || "Public Web Form",
       submitLabel: body.submitLabel || "Submit",
-      fields: Array.isArray(body.fields) && body.fields.length > 0 ? body.fields : DEFAULT_FORMS[0].fields,
+      fields:
+        Array.isArray(body.fields) && body.fields.length > 0
+          ? body.fields
+          : DEFAULT_TEMPLATE_FORM.fields,
       carriers: Array.isArray(body.carriers) ? body.carriers : CALL_CENTER_CARRIERS,
       teamMembers: Array.isArray(body.teamMembers) ? body.teamMembers : [],
       submissionsCount: 0,
       createdAt: new Date().toISOString(),
     };
 
-    const next: StoreShape = {
-      ...store,
-      forms: [form, ...store.forms.filter((f) => f.id !== id)],
-    };
-    await writeStore(next);
+    const existingForms = await readClusterCollection<PublicFormDef[]>(
+      clusterId,
+      "public_forms",
+      []
+    );
+    const nextForms = [form, ...existingForms.filter((f) => f.id !== id)];
 
-    return NextResponse.json({ success: true, form });
+    await writeClusterCollection(clusterId, "public_forms", nextForms, {
+      ownerEmail,
+      companyName: form.companyName,
+    });
+    await savePublicFormRoutePointer(form.id, clusterId);
+
+    return NextResponse.json({ success: true, clusterId, form });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || "Invalid request" }, { status: 400 });
   }
@@ -266,54 +347,97 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    await ensureLegacyFormsMigratedToIsolatedClusters();
     const body = await req.json();
     const { formId, values } = body;
-    const store = await readStore();
-    const form = store.forms.find((f) => f.id === formId);
-    if (!form) {
+
+    let targetCluster = await resolvePublicFormCluster(formId);
+    let targetForm: PublicFormDef | undefined;
+
+    if (formId === "beraxis-callback") {
+      targetCluster = resolveSafeClusterId(body.companyId, null);
+      targetForm = { ...DEFAULT_TEMPLATE_FORM, companyId: targetCluster };
+    } else if (targetCluster) {
+      const clusterForms = await readClusterCollection<PublicFormDef[]>(
+        targetCluster,
+        "public_forms",
+        []
+      );
+      targetForm = clusterForms.find((f) => f.id === formId);
+    }
+
+    if (!targetCluster || !targetForm) {
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
     }
 
     const lead = {
       id: `FORM-${Date.now().toString().slice(-6)}`,
-      formId: form.id,
-      companyId: form.companyId,
+      formId: targetForm.id,
+      companyId: targetCluster,
       name: values?.name || values?.full_name || "Web Lead",
       phone: values?.phone || "",
       email: values?.email || "",
       company: values?.company || "",
       carrier: values?.carrier || "",
       assignedTo: values?.team_member || values?.agent || "Unassigned",
-      campaign: values?.campaign || values?.campaigns_dropdown || form.campaign,
-      source: `Public Form: ${form.title}`,
+      campaign: values?.campaign || values?.campaigns_dropdown || targetForm.campaign,
+      source: `Public Form: ${targetForm.title}`,
       disposition: "New",
       notes: values?.notes || JSON.stringify(values || {}),
       rawValues: values || {},
       createdAt: new Date().toISOString(),
     };
 
-    const next: StoreShape = {
-      forms: store.forms.map((f) =>
-        f.id === formId ? { ...f, submissionsCount: (f.submissionsCount || 0) + 1 } : f
-      ),
-      leads: [lead, ...store.leads],
-    };
-    await writeStore(next);
+    const existingLeads = await readClusterCollection<any[]>(
+      targetCluster,
+      "form_submissions",
+      []
+    );
+    await writeClusterCollection(targetCluster, "form_submissions", [lead, ...existingLeads]);
 
-    return NextResponse.json({ success: true, lead });
+    if (formId !== "beraxis-callback") {
+      const clusterForms = await readClusterCollection<PublicFormDef[]>(
+        targetCluster,
+        "public_forms",
+        []
+      );
+      const updatedForms = clusterForms.map((f) =>
+        f.id === formId ? { ...f, submissionsCount: (f.submissionsCount || 0) + 1 } : f
+      );
+      await writeClusterCollection(targetCluster, "public_forms", updatedForms);
+    }
+
+    return NextResponse.json({ success: true, clusterId: targetCluster, lead });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || "Submission failed" }, { status: 400 });
   }
 }
 
 export async function DELETE(req: NextRequest) {
+  await ensureLegacyFormsMigratedToIsolatedClusters();
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
+  const companyId = searchParams.get("company_id");
+  const ownerEmail = (searchParams.get("owner_email") || "").trim().toLowerCase();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
-  const store = await readStore();
-  await writeStore({
-    ...store,
-    forms: store.forms.filter((f) => f.id !== id),
-  });
+
+  const targetCluster =
+    (await resolvePublicFormCluster(id)) || resolveSafeClusterId(companyId, ownerEmail);
+
+  const access = await verifyClusterAccess(targetCluster, ownerEmail || null);
+  if (!access.allowed) {
+    return NextResponse.json({ error: access.reason || "Forbidden" }, { status: 403 });
+  }
+
+  const existingForms = await readClusterCollection<PublicFormDef[]>(
+    targetCluster,
+    "public_forms",
+    []
+  );
+  await writeClusterCollection(
+    targetCluster,
+    "public_forms",
+    existingForms.filter((f) => f.id !== id)
+  );
   return NextResponse.json({ success: true });
 }

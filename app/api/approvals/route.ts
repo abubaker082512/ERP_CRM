@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isGmailConfigured, sendBeraxisEmail, BERAXIS_SENDER_EMAIL } from "@/lib/gmailMailer";
+import {
+  resolveSafeClusterId,
+  verifyClusterAccess,
+  readClusterCollection,
+  writeClusterCollection,
+} from "@/lib/tenantClusterDb";
 
 export const dynamic = "force-dynamic";
 
@@ -32,8 +38,6 @@ const sbHeaders = {
   "Content-Type": "application/json",
 };
 
-const fallbackApprovals = new Map<string, ApprovalRequest[]>();
-
 function mapDbApproval(r: any): ApprovalRequest {
   return {
     id: r.id,
@@ -56,25 +60,34 @@ function mapDbApproval(r: any): ApprovalRequest {
   };
 }
 
-async function loadApprovals(companyId: string): Promise<ApprovalRequest[]> {
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/approval_requests?company_id=eq.${encodeURIComponent(companyId)}&order=created_at.desc`,
-      { headers: sbHeaders, cache: "no-store" }
-    );
-    if (res.ok) {
-      const rows = await res.json();
-      if (Array.isArray(rows)) {
-        const mapped = rows.map(mapDbApproval);
-        fallbackApprovals.set(companyId, mapped);
-        return mapped;
+async function loadApprovals(clusterId: string): Promise<ApprovalRequest[]> {
+  const clusterRows = await readClusterCollection<ApprovalRequest[]>(clusterId, "approvals", []);
+  if (Array.isArray(clusterRows) && clusterRows.length > 0) {
+    return clusterRows;
+  }
+
+  if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/approval_requests?company_id=eq.${encodeURIComponent(clusterId)}&order=created_at.desc`,
+        { headers: sbHeaders, cache: "no-store" }
+      );
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length > 0) {
+          const mapped = rows.map(mapDbApproval);
+          await writeClusterCollection(clusterId, "approvals", mapped);
+          return mapped;
+        }
       }
-    }
-  } catch {}
-  return fallbackApprovals.get(companyId) || [];
+    } catch {}
+  }
+
+  return [];
 }
 
 async function saveApprovalToDb(item: ApprovalRequest): Promise<void> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return;
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/approval_requests`, {
       method: "POST",
@@ -104,15 +117,35 @@ async function saveApprovalToDb(item: ApprovalRequest): Promise<void> {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const companyId = searchParams.get("company_id") || "CMP-001";
-  const approvals = await loadApprovals(companyId);
-  return NextResponse.json({ success: true, approvals });
+  const requesterEmail = searchParams.get("email") || searchParams.get("requester_email") || undefined;
+  const clusterId = resolveSafeClusterId(
+    searchParams.get("cluster_id") || searchParams.get("company_id"),
+    requesterEmail
+  );
+
+  const access = await verifyClusterAccess(clusterId, requesterEmail);
+  if (!access.allowed) {
+    return NextResponse.json({ success: false, error: access.reason || "Access denied" }, { status: 403 });
+  }
+
+  const approvals = await loadApprovals(clusterId);
+  return NextResponse.json({ success: true, clusterId, approvals });
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const companyId = body.companyId || body.company_id || "CMP-001";
+    const requesterEmail = String(body.requesterEmail || body.email || "").trim().toLowerCase() || undefined;
+    const clusterId = resolveSafeClusterId(
+      body.clusterId || body.cluster_id || body.companyId || body.company_id,
+      requesterEmail
+    );
+
+    const access = await verifyClusterAccess(clusterId, requesterEmail);
+    if (!access.allowed) {
+      return NextResponse.json({ success: false, error: access.reason || "Access denied" }, { status: 403 });
+    }
+
     const title = String(body.title || "").trim();
     if (!title) {
       return NextResponse.json({ success: false, error: "Request title is required" }, { status: 400 });
@@ -120,7 +153,7 @@ export async function POST(req: NextRequest) {
 
     const item: ApprovalRequest = {
       id: `APR-${Date.now()}`,
-      companyId,
+      companyId: clusterId,
       requesterId: body.requesterId || "USR-001",
       requesterName: body.requesterName || "Team Member",
       requesterEmail: body.requesterEmail || "",
@@ -137,8 +170,11 @@ export async function POST(req: NextRequest) {
       decidedAt: null,
     };
 
-    const list = await loadApprovals(companyId);
-    fallbackApprovals.set(companyId, [item, ...list]);
+    const list = await loadApprovals(clusterId);
+    const nextList = [item, ...list];
+    await writeClusterCollection(clusterId, "approvals", nextList, {
+      ownerEmail: requesterEmail,
+    });
     await saveApprovalToDb(item);
 
     // Notify Superior via beraxisai@gmail.com if approverEmail is set
@@ -166,7 +202,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ success: true, approval: item });
+    return NextResponse.json({ success: true, clusterId, approval: item });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err?.message || "Failed to create approval" }, { status: 500 });
   }
@@ -175,10 +211,20 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
-    const companyId = body.companyId || body.company_id || "CMP-001";
+    const requesterEmail = String(body.email || body.approverEmail || "").trim().toLowerCase() || undefined;
+    const clusterId = resolveSafeClusterId(
+      body.clusterId || body.cluster_id || body.companyId || body.company_id,
+      requesterEmail
+    );
+
+    const access = await verifyClusterAccess(clusterId, requesterEmail);
+    if (!access.allowed) {
+      return NextResponse.json({ success: false, error: access.reason || "Access denied" }, { status: 403 });
+    }
+
     const { id, status, reviewerNotes } = body;
 
-    const list = await loadApprovals(companyId);
+    const list = await loadApprovals(clusterId);
     const idx = list.findIndex((a) => a.id === id);
     if (idx === -1) {
       return NextResponse.json({ success: false, error: "Approval request not found" }, { status: 404 });
@@ -193,10 +239,10 @@ export async function PATCH(req: NextRequest) {
 
     const next = [...list];
     next[idx] = updated;
-    fallbackApprovals.set(companyId, next);
+    await writeClusterCollection(clusterId, "approvals", next);
     await saveApprovalToDb(updated);
 
-    return NextResponse.json({ success: true, approval: updated });
+    return NextResponse.json({ success: true, clusterId, approval: updated });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err?.message || "Failed to update approval" }, { status: 500 });
   }

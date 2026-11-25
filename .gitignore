@@ -26,4 +26,6 @@ Videos Demonstration of Odoo(Competitor)/
 BERAXIS Screenshots/
 scratch/
 *.tsbuildinfo
+.beraxis_clusters/
+
 

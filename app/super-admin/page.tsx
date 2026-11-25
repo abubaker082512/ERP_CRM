@@ -177,6 +177,18 @@ class SuperAdminErrorBoundary extends React.Component<{ children: React.ReactNod
     }
 }
 
+function formatTenantClusterBadge(emailOrId?: string, seats?: number): string {
+    const clean = (emailOrId || "tenant").trim().toLowerCase();
+    let h = 2166136261;
+    for (let i = 0; i < clean.length; i++) {
+        h ^= clean.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+    }
+    const hex = (h >>> 0).toString(16).toUpperCase().padStart(8, "0");
+    const suffix = (seats ?? 1) <= 1 ? "SOLO" : "HQ01";
+    return `CLS-${hex}-${suffix}`;
+}
+
 function SuperAdminPageContent() {
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [users, setUsers] = useState<GlobalUser[]>([]);
@@ -1689,7 +1701,12 @@ function SuperAdminPageContent() {
                                                         </div>
                                                         <div>
                                                             <span className="font-bold text-gray-100 block text-sm">{ws.name || "Workspace"}</span>
-                                                            <span className="text-[10px] text-gray-500 font-mono">ID: {(ws.id || "").slice(0, 18)}...</span>
+                                                            <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                                                <span className="text-[10px] text-gray-500 font-mono">ID: {(ws.id || "").slice(0, 14)}...</span>
+                                                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-[9px] font-mono font-bold text-emerald-300 inline-flex items-center gap-1" title="Dedicated Isolated Micro-Database Cluster">
+                                                                    <Database size={9} /> {formatTenantClusterBadge(ws.owner_email || ws.id, ws.member_count)}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -2758,6 +2775,9 @@ function SuperAdminPageContent() {
                                                         : <span className="text-gray-600">—</span>}
                                                     <span className="text-[10px] text-cyan-400 font-semibold mt-0.5 block">
                                                         {(u as any).seats ?? 1} {((u as any).seats ?? 1) === 1 ? "Seat" : "Seats"}{(u as any).industry_name ? ` • ${(u as any).industry_name}` : ""}
+                                                    </span>
+                                                    <span className="mt-1 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-[9px] font-mono font-bold text-emerald-300 inline-flex items-center gap-1">
+                                                        <Database size={9} /> {formatTenantClusterBadge(u.email || u.id, (u as any).seats ?? 1)}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">

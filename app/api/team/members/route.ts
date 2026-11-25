@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  INITIAL_TEAM_MEMBERS,
-  INITIAL_INVITATIONS,
-  INITIAL_CONTRACTORS,
   DEFAULT_ROLE_PERMISSIONS,
 } from "@/lib/teamStorage";
 import {
@@ -15,6 +12,14 @@ import {
   wouldCreateCycle,
 } from "@/lib/hierarchyUtils";
 import { BERAXIS_SENDER_EMAIL, isGmailConfigured, sendBeraxisEmail } from "@/lib/gmailMailer";
+import {
+  resolveSafeClusterId,
+  verifyClusterAccess,
+  getClusterManifest,
+  provisionTenantCluster,
+  readClusterCollection,
+  writeClusterCollection,
+} from "@/lib/tenantClusterDb";
 
 export const dynamic = "force-dynamic";
 
@@ -26,11 +31,6 @@ const sbHeaders = {
   Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
   "Content-Type": "application/json",
 };
-
-// Scoped fallback store if Supabase SQL migration v10 hasn't been applied yet
-const fallbackCompanyMembers = new Map<string, TeamMember[]>();
-let invitationsStore: TeamInvitation[] = [];
-let contractorsStore: FreelancerContractor[] = [];
 
 function mapDbRowToMember(row: any): TeamMember {
   return {
@@ -54,6 +54,7 @@ function mapDbRowToMember(row: any): TeamMember {
 }
 
 async function fetchMembersFromDb(companyId: string): Promise<TeamMember[] | null> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/company_members?company_id=eq.${encodeURIComponent(companyId)}&order=joined_at.asc`,
@@ -69,6 +70,7 @@ async function fetchMembersFromDb(companyId: string): Promise<TeamMember[] | nul
 }
 
 async function upsertMembersToDb(companyId: string, list: TeamMember[]): Promise<boolean> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return false;
   try {
     const payload = list.map((m) => ({
       id: m.id,
@@ -126,36 +128,64 @@ function buildRealOwnerMember(companyId: string, ownerName?: string, ownerEmail?
   };
 }
 
-async function loadCompanyMembers(companyId: string, ownerName?: string, ownerEmail?: string): Promise<TeamMember[]> {
-  const dbMembers = await fetchMembersFromDb(companyId);
+async function loadCompanyMembers(clusterId: string, ownerName?: string, ownerEmail?: string): Promise<TeamMember[]> {
+  // 1. Primary: Isolated Cluster Collection
+  const clusterMembers = await readClusterCollection<TeamMember[] | null>(clusterId, "team_members", null);
+  if (Array.isArray(clusterMembers) && clusterMembers.length > 0) {
+    const cleaned =
+      ownerEmail && !DUMMY_SEED_EMAILS.has(ownerEmail.toLowerCase())
+        ? clusterMembers.filter((m) => !DUMMY_SEED_EMAILS.has(m.email.toLowerCase()))
+        : clusterMembers;
+    if (cleaned.length > 0) return cleaned;
+  }
+
+  // 2. Migrate from legacy SQL table if present for this specific companyId
+  const dbMembers = await fetchMembersFromDb(clusterId);
   if (dbMembers !== null && dbMembers.length > 0) {
-    const cleaned = ownerEmail && !DUMMY_SEED_EMAILS.has(ownerEmail.toLowerCase())
-      ? dbMembers.filter((m) => !DUMMY_SEED_EMAILS.has(m.email.toLowerCase()))
-      : dbMembers;
-    const finalDb = cleaned.length > 0 ? cleaned : [buildRealOwnerMember(companyId, ownerName, ownerEmail)];
-    fallbackCompanyMembers.set(companyId, finalDb);
+    const cleaned =
+      ownerEmail && !DUMMY_SEED_EMAILS.has(ownerEmail.toLowerCase())
+        ? dbMembers.filter((m) => !DUMMY_SEED_EMAILS.has(m.email.toLowerCase()))
+        : dbMembers;
+    const finalDb = cleaned.length > 0 ? cleaned : ownerEmail ? [buildRealOwnerMember(clusterId, ownerName, ownerEmail)] : [];
+    if (finalDb.length > 0) {
+      await writeClusterCollection(clusterId, "team_members", finalDb, { ownerEmail });
+    }
     return finalDb;
   }
-  if (!fallbackCompanyMembers.has(companyId)) {
-    fallbackCompanyMembers.set(
-      companyId,
-      ownerEmail ? [buildRealOwnerMember(companyId, ownerName, ownerEmail)] : []
-    );
+
+  // 3. Clean fresh cluster — ONLY the real workspace owner (zero cross-tenant dummy users)
+  if (ownerEmail) {
+    const seeded = [buildRealOwnerMember(clusterId, ownerName, ownerEmail)];
+    await writeClusterCollection(clusterId, "team_members", seeded, { ownerEmail });
+    return seeded;
   }
-  return fallbackCompanyMembers.get(companyId)!;
+
+  return [];
 }
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const companyId = searchParams.get("company_id") || "CMP-001";
   const ownerName = searchParams.get("owner_name") || undefined;
-  const ownerEmail = searchParams.get("owner_email") || undefined;
+  const ownerEmail = searchParams.get("owner_email") || searchParams.get("email") || undefined;
+  const clusterId = resolveSafeClusterId(
+    searchParams.get("cluster_id") || searchParams.get("company_id"),
+    ownerEmail
+  );
+
+  const access = await verifyClusterAccess(clusterId, ownerEmail);
+  if (!access.allowed) {
+    return NextResponse.json({ success: false, error: access.reason || "Access denied" }, { status: 403 });
+  }
+
   const search = (searchParams.get("search") || "").trim().toLowerCase();
   const department = (searchParams.get("department") || "").trim().toLowerCase();
   const page = Math.max(1, Number(searchParams.get("page") || 1));
   const limit = Math.min(200, Math.max(1, Number(searchParams.get("limit") || 50)));
 
-  const all = await loadCompanyMembers(companyId, ownerName, ownerEmail);
+  const all = await loadCompanyMembers(clusterId, ownerName, ownerEmail);
+  const invitations = await readClusterCollection<TeamInvitation[]>(clusterId, "team_invitations", []);
+  const contractors = await readClusterCollection<FreelancerContractor[]>(clusterId, "team_contractors", []);
+
   const filtered = all.filter((m) => {
     if (department && department !== "all" && m.department.toLowerCase() !== department) {
       return false;
@@ -177,23 +207,46 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     success: true,
-    companyId,
+    companyId: clusterId,
+    clusterId,
     members: paginated,
     allMembers: all,
     totalCount: filtered.length,
     activeCount: activeMembers.length,
     page,
     limit,
-    invitations: invitationsStore,
-    contractors: contractorsStore,
+    invitations,
+    contractors,
   });
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const companyId: string = body.companyId || body.company_id || "CMP-001";
-    const currentList = await loadCompanyMembers(companyId);
+    const ownerEmail = String(body.ownerEmail || body.owner_email || body.requesterEmail || "").trim().toLowerCase() || undefined;
+    const clusterId = resolveSafeClusterId(
+      body.clusterId || body.cluster_id || body.companyId || body.company_id,
+      ownerEmail
+    );
+
+    const manifest = await getClusterManifest(clusterId);
+    if (manifest?.isolationMode === "solo_individual") {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "SOLO_CLUSTER_ISOLATED: Solo Individual databases enforce zero interlinked external users. Switch or upgrade to a Company Workspace to invite team members.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const access = await verifyClusterAccess(clusterId, ownerEmail);
+    if (!access.allowed) {
+      return NextResponse.json({ success: false, error: access.reason || "Access denied" }, { status: 403 });
+    }
+
+    const currentList = await loadCompanyMembers(clusterId, undefined, ownerEmail);
 
     // Bulk import mode (50+ users at once)
     if (Array.isArray(body.bulk)) {
@@ -201,7 +254,6 @@ export async function POST(req: Request) {
       const working = [...currentList];
       const byEmail = new Map(working.map((m) => [m.email.toLowerCase().trim(), m]));
 
-      // Pass 1: Create or update members so everyone has an ID
       const createdOrUpdated: TeamMember[] = [];
       let nextNum = working.length + 1;
 
@@ -232,7 +284,7 @@ export async function POST(req: Request) {
               email,
               role,
               department: row.department || "Operations",
-              companyIds: [companyId],
+              companyIds: [clusterId],
               reportsToId: row.reportsToId || null,
               managerEmail: row.managerEmail?.toLowerCase()?.trim(),
               dataScope: row.dataScope || getDefaultDataScopeForRole(role),
@@ -249,7 +301,6 @@ export async function POST(req: Request) {
         createdOrUpdated.push(member);
       }
 
-      // Pass 2: Resolve managerEmail -> reportsToId
       for (const m of byEmail.values()) {
         if (m.managerEmail) {
           const mgr = byEmail.get(m.managerEmail.toLowerCase().trim());
@@ -260,11 +311,22 @@ export async function POST(req: Request) {
       }
 
       const merged = Array.from(byEmail.values());
-      fallbackCompanyMembers.set(companyId, merged);
-      await upsertMembersToDb(companyId, merged);
+      await writeClusterCollection(clusterId, "team_members", merged, { ownerEmail });
+      await upsertMembersToDb(clusterId, merged);
+
+      const activeEmails = merged.filter((m) => m.status !== "deactivated").map((m) => m.email.toLowerCase());
+      if (manifest?.ownerEmail || ownerEmail) {
+        await provisionTenantCluster({
+          clusterId,
+          ownerEmail: manifest?.ownerEmail || ownerEmail!,
+          entityType: "company",
+          additionalAllowedEmails: activeEmails,
+        });
+      }
 
       return NextResponse.json({
         success: true,
+        clusterId,
         importedCount: createdOrUpdated.length,
         activeMembersCount: merged.filter((m) => m.status !== "deactivated").length,
         members: merged,
@@ -298,7 +360,7 @@ export async function POST(req: Request) {
       email: email.trim().toLowerCase(),
       role: assignedRole,
       department: department || "Operations & Field",
-      companyIds: companyIds && companyIds.length > 0 ? companyIds : [companyId],
+      companyIds: companyIds && companyIds.length > 0 ? companyIds : [clusterId],
       reportsToId: reportsToId || null,
       dataScope: dataScope || getDefaultDataScopeForRole(assignedRole),
       allowedModules: perms,
@@ -315,14 +377,24 @@ export async function POST(req: Request) {
         ? currentList.map((m) => (m.email.toLowerCase() === email.toLowerCase() ? newMember : m))
         : [newMember, ...currentList];
 
-    fallbackCompanyMembers.set(companyId, nextList);
-    await upsertMembersToDb(companyId, [newMember]);
+    await writeClusterCollection(clusterId, "team_members", nextList, { ownerEmail });
+    await upsertMembersToDb(clusterId, [newMember]);
 
-    // 1-Click Invite Email: Owner is paying, team member joins free under company seat
+    // Authorize this invited member inside ONLY this company's isolated cluster manifest
+    if (manifest?.ownerEmail || ownerEmail) {
+      await provisionTenantCluster({
+        clusterId,
+        ownerEmail: manifest?.ownerEmail || ownerEmail!,
+        companyName: body.companyName || body.company_name || manifest?.companyName,
+        entityType: "company",
+        additionalAllowedEmails: [newMember.email],
+      });
+    }
+
     let inviteEmailSent = false;
     if (body.sendInviteEmail !== false && isGmailConfigured()) {
       const companyName = String(body.companyName || body.company_name || "your company workspace").trim();
-      const joinUrl = `https://www.beraxis.online/signup?invite_id=${encodeURIComponent(newMember.id)}&company_id=${encodeURIComponent(companyId)}&email=${encodeURIComponent(newMember.email)}&role=${encodeURIComponent(newMember.role)}&company_name=${encodeURIComponent(companyName)}`;
+      const joinUrl = `https://www.beraxis.online/signup?invite_id=${encodeURIComponent(newMember.id)}&company_id=${encodeURIComponent(clusterId)}&email=${encodeURIComponent(newMember.email)}&role=${encodeURIComponent(newMember.role)}&company_name=${encodeURIComponent(companyName)}`;
       const mailRes = await sendBeraxisEmail({
         to: newMember.email,
         subject: `You're invited to join ${companyName} on BERAXIS (${newMember.role})`,
@@ -347,6 +419,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
+      clusterId,
       inviteEmailSent,
       message: `Member ${newMember.name} (${newMember.email}) added & assigned${inviteEmailSent ? " — invite email sent!" : "!"}`,
       member: newMember,
@@ -360,17 +433,27 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const companyId: string = body.companyId || body.company_id || "CMP-001";
+    const ownerEmail = String(body.ownerEmail || body.owner_email || "").trim().toLowerCase() || undefined;
+    const clusterId = resolveSafeClusterId(
+      body.clusterId || body.cluster_id || body.companyId || body.company_id,
+      ownerEmail
+    );
+
+    const access = await verifyClusterAccess(clusterId, ownerEmail);
+    if (!access.allowed) {
+      return NextResponse.json({ success: false, error: access.reason || "Access denied" }, { status: 403 });
+    }
+
     const { id, role, department, companyIds, reportsToId, allowedModules, dataScope, status, memberSnapshot } = body;
 
-    let currentList = await loadCompanyMembers(companyId);
+    let currentList = await loadCompanyMembers(clusterId, undefined, ownerEmail);
     let index = currentList.findIndex((m) => m.id === id);
     if (index === -1) {
       if (memberSnapshot && memberSnapshot.email) {
         const upserted: TeamMember = {
           ...memberSnapshot,
           id: memberSnapshot.id || id,
-          companyIds: memberSnapshot.companyIds || [companyId],
+          companyIds: memberSnapshot.companyIds || [clusterId],
           reportsToId: reportsToId !== undefined ? reportsToId : memberSnapshot.reportsToId ?? null,
         };
         currentList = [upserted, ...currentList];
@@ -401,11 +484,12 @@ export async function PATCH(req: Request) {
 
     const nextList = [...currentList];
     nextList[index] = updated;
-    fallbackCompanyMembers.set(companyId, nextList);
-    await upsertMembersToDb(companyId, [updated]);
+    await writeClusterCollection(clusterId, "team_members", nextList, { ownerEmail });
+    await upsertMembersToDb(clusterId, [updated]);
 
     return NextResponse.json({
       success: true,
+      clusterId,
       message: "Member reporting hierarchy & permissions updated",
       member: updated,
       activeMembersCount: nextList.filter((m) => m.status !== "deactivated").length,

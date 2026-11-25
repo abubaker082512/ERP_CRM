@@ -218,6 +218,58 @@ export default function SettingsPage() {
 
   const localeDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Live Isolated Micro-Database Cluster Diagnostics
+  const [clusterDiagnostics, setClusterDiagnostics] = useState<{
+    clusterId: string;
+    isolationMode: "solo_individual" | "company_cluster";
+    interlinkedUsersAllowed: boolean;
+    allowedEmails: string[];
+    collections: string[];
+    vaultMode: string;
+    ownedClustersCount: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let userEmail = "";
+    let entityType: "individual" | "company" = "company";
+    try {
+      const uStr = localStorage.getItem("user");
+      if (uStr) {
+        const u = JSON.parse(uStr);
+        userEmail = u.email || "";
+        if (u.account_type === "individual" || u.entity_type === "individual") {
+          entityType = "individual";
+        }
+      }
+      if (activeBranch?.id?.endsWith("-SOLO")) {
+        entityType = "individual";
+      }
+    } catch {}
+
+    const params = new URLSearchParams();
+    if (activeBranch?.id) params.set("cluster_id", activeBranch.id);
+    if (userEmail) params.set("email", userEmail);
+    if (activeBranch?.name) params.set("company_name", activeBranch.name);
+    params.set("entity_type", entityType);
+
+    fetch(`/api/workspace/cluster?${params.toString()}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && data?.manifest) {
+          setClusterDiagnostics({
+            clusterId: data.clusterId || data.manifest.clusterId,
+            isolationMode: data.manifest.isolationMode,
+            interlinkedUsersAllowed: Boolean(data.manifest.interlinkedUsersAllowed),
+            allowedEmails: Array.isArray(data.manifest.allowedEmails) ? data.manifest.allowedEmails : [],
+            collections: Array.isArray(data.manifest.collections) ? data.manifest.collections : [],
+            vaultMode: data.vaultMode || "supabase_private_vault",
+            ownedClustersCount: Array.isArray(data.ownedClusters) ? data.ownedClusters.length : 1,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [activeBranch?.id, activeBranch?.name]);
+
   useEffect(() => {
     const keyPrefix = getEntityStorageKey("settings");
     const savedCompany = localStorage.getItem(`${keyPrefix}_company_name`);
@@ -557,6 +609,78 @@ export default function SettingsPage() {
             {/* General Tab */}
             {activeTab === "general" && (
               <div className="space-y-6 max-w-3xl">
+                {/* Isolated Micro-Database Cluster Status Card */}
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-950/30 via-[#0F172A] to-purple-950/25 border border-emerald-500/30 shadow-lg">
+                  <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                        <Database size={18} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                          Isolated Micro-Database Cluster
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                            Active Vault
+                          </span>
+                        </h4>
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          Dedicated per-company / per-solo-user database partition — zero shared cross-tenant tables.
+                        </p>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-lg bg-[#0B101E] border border-purple-500/30 text-[11px] font-mono font-bold text-purple-300">
+                      {clusterDiagnostics?.clusterId || activeBranch?.id || "CLS-PROVISIONING"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 text-xs">
+                    <div className="p-3 rounded-xl bg-[#0B101E]/80 border border-white/10">
+                      <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Isolation Mode</div>
+                      <div className="font-bold text-emerald-300 mt-1 flex items-center gap-1.5">
+                        <Lock size={12} />
+                        {clusterDiagnostics?.isolationMode === "solo_individual"
+                          ? "Solo Vault (0 Interlinked Users)"
+                          : "Dedicated Company Cluster"}
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#0B101E]/80 border border-white/10">
+                      <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Authorized Identities</div>
+                      <div className="font-bold text-white mt-1">
+                        {clusterDiagnostics?.isolationMode === "solo_individual"
+                          ? "1 Solo Owner Only (Locked)"
+                          : `${Math.max(1, clusterDiagnostics?.allowedEmails?.length || 1)} Authorized Member(s)`}
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#0B101E]/80 border border-white/10">
+                      <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Vault Storage Engine</div>
+                      <div className="font-bold text-cyan-300 mt-1 font-mono text-[11px]">
+                        beraxis-tenant-clusters
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[10px] text-gray-400 font-semibold mr-1">Isolated Collections:</span>
+                    {(clusterDiagnostics?.collections || [
+                      "workspace_state",
+                      "public_forms",
+                      "form_submissions",
+                      "crm_leads",
+                      "calendar_events",
+                      "discuss",
+                      "approvals",
+                      "team_members",
+                    ]).map((col) => (
+                      <span
+                        key={col}
+                        className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-gray-300"
+                      >
+                        {col}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
                   <input 

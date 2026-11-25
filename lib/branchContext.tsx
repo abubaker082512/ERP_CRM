@@ -461,9 +461,10 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       try {
-        const res = await fetch(`/api/workspace/state?email=${encodeURIComponent(info.email)}&t=${Date.now()}`, {
-          cache: "no-store",
-        });
+          const activeId = localStorage.getItem(`beraxis_active_branch_id_${info.userKey}`) || localStorage.getItem("beraxis_active_branch_id") || `CLS-${info.userKey.slice(0, 6).toUpperCase()}-0001`;
+          const res = await fetch(`/api/workspace/state?email=${encodeURIComponent(info.email)}&cluster_id=${encodeURIComponent(activeId)}&t=${Date.now()}`, {
+            cache: "no-store",
+          });
         if (!res.ok) {
           cloudHydrated = true;
           return;
@@ -495,7 +496,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
           const defaultCompany = parsedUser?.company_name || parsedUser?.name || "My Workspace";
           const defaultIndustry = getIndustryById(parsedUser?.industry_id || GLOBAL_INDUSTRIES[0].id);
           const defaultBranch: BusinessBranch = {
-            id: `BRN-${info.userKey.slice(0, 4).toUpperCase()}-0001`,
+            id: `CLS-${info.userKey.slice(0, 6).toUpperCase()}-${parsedUser?.account_type === "company" ? "HQ01" : "SOLO"}`,
             name: defaultCompany,
             code: "HQ-01",
             industryId: defaultIndustry.id,
@@ -557,7 +558,11 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         await fetch("/api/workspace/state", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: info.email, state: payload }),
+          body: JSON.stringify({
+            email: info.email,
+            cluster_id: activeBranchVal || `CLS-${info.userKey.slice(0, 6).toUpperCase()}-0001`,
+            state: payload,
+          }),
         });
       } catch {}
     };
@@ -660,7 +665,11 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   const createBranch = (data: Omit<BusinessBranch, "id" | "createdAt">): BusinessBranch => {
     const info = getLoggedInUserInfo();
     const uKey = info.userKey;
-    const newId = `BRN-${uKey.slice(0, 4).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+    const resolvedEntityType = data.entityType || data.accountType || info.accountType;
+    const suffix = resolvedEntityType === "individual" && branches.length === 0
+      ? "SOLO"
+      : Date.now().toString().slice(-4);
+    const newId = `CLS-${uKey.slice(0, 6).toUpperCase()}-${suffix}`;
 
     // Enforce Free Plan 1-App + Settings rule
     let finalModules = data.enabledModules || [];
@@ -690,7 +699,6 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    const resolvedEntityType = data.entityType || data.accountType || info.accountType;
     const newBranch: BusinessBranch = {
       ...data,
       enabledModules: finalModules,
@@ -702,6 +710,20 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
       accountType: resolvedEntityType,
       entityType: resolvedEntityType
     };
+
+    // Provision dedicated isolated micro-database cluster in private vault for this new company/solo entity
+    if (info.email) {
+      fetch("/api/workspace/cluster", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clusterId: newId,
+          email: info.email,
+          companyName: data.name,
+          entityType: resolvedEntityType,
+        }),
+      }).catch(() => {});
+    }
 
     // Free Plan only allows 1 single company workspace
     const updated = isFreePlan ? [newBranch] : [...branches, newBranch];
@@ -850,7 +872,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
 
   const getEntityStorageKey = (resourceType: string): string => {
     const uKey = currentUserKey || getLoggedInUserInfo().userKey || "guest";
-    const branchId = activeBranch?.id || "entity_main";
+    const branchId = activeBranch?.id || `CLS-${uKey.slice(0, 6).toUpperCase()}-SOLO`;
     return `beraxis_${uKey}_${branchId}_${resourceType}`;
   };
 
