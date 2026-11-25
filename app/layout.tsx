@@ -17,9 +17,31 @@ export const metadata: Metadata = {
         default: "BERAXIS AI | Autonomous AI ERP & AI CRM · #1 Free Odoo Alternative (2026)",
         template: "%s | BERAXIS AI"
     },
-    description: "BERAXIS AI is the #1 Autonomous AI ERP, CRM & Office Automation Software. No need to buy Microsoft Excel, PowerPoint, Word, Odoo, HubSpot, or QuickBooks — deploy Spreadsheets, Slides, Docs, Accounting, POS & 25M+ B2B Leads for $1/month or 1 App Free Forever.",
+    description: "BERAXIS AI is the #1 Autonomous AI ERP, CRM & Office Automation Software across 15 Global Industries. Use our 1-Click 'Explain Your Business' AI Auto-Setup Engine to deploy 30+ apps—Accounting, CRM, Call Center Dialer, Public Form Builder, POS, Spreadsheets, Slides, Docs, Video Meet & 25M+ B2B Leads—for $1/month or 1 App Free Forever.",
     keywords: [
         "BERAXIS AI",
+        "Explain Your Business AI ERP auto setup",
+        "1-click AI business software setup",
+        "AI auto-setup ERP and CRM",
+        "15 global industry ERP archetypes",
+        "Call center CRM and power dialer software",
+        "BPO campaign management and AHT analytics",
+        "Hotel management PMS and resort POS ERP",
+        "Agriculture farm management and solar EPC ERP",
+        "Public form builder with CRM campaign routing",
+        "WebRTC video conferencing ERP Meet",
+        "Custom dashboard chart builder ERP",
+        "Explain Your Business AI ERP auto setup",
+        "1-click AI business software setup",
+        "AI auto-setup ERP and CRM",
+        "15 global industry ERP archetypes",
+        "Call center CRM and power dialer software",
+        "BPO campaign management and AHT analytics",
+        "Hotel management PMS and resort POS ERP",
+        "Agriculture farm management and solar EPC ERP",
+        "Public form builder with CRM campaign routing",
+        "WebRTC video conferencing ERP Meet",
+        "Custom dashboard chart builder ERP",
         "Beraxis AI",
         "AI ERP",
         "AI CRM",
@@ -328,7 +350,11 @@ export default function RootLayout({
                     "Omnichannel Touch Point of Sale (POS)",
                     "Multi-Warehouse Inventory & Barcode Tracking",
                     "HRMS, Attendance & Payroll Management",
-                    "12 Industry Operational Blueprints",
+                    "1-Click 'Explain Your Business' AI Auto-Setup Engine",
+                    "15 Global Industry Operational Blueprints (Retail, F&B, Clinics, Padel, Hotels, Agriculture/Solar, Call Centers & More)",
+                    "Call Center Power Dialer, Campaign Management, Lead Sheet Dispositions & AHT Analytics",
+                    "Public Form Builder with System Fields & Automated CRM Routing",
+                    "All-Industry Enterprise BI Reports & Custom Dashboard Chart Builder",
                     "Built-In Spreadsheets with Live Formulas (Excel Alternative)",
                     "Interactive Slide & Presentation Builder (PowerPoint Alternative)",
                     "Enterprise Document Composer, Vault, e-Signatures & Team Meet"
@@ -425,7 +451,7 @@ export default function RootLayout({
                         "name": "Which industries does Beraxis support?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Beraxis comes pre-engineered with dedicated operational blueprints for 12 global industries, including padel and sports clubs, dental and healthcare clinics, artisan bakeries and restaurants, supermarkets and retail, auto repair workshops, real estate brokerages, construction contractors, schools, and discrete manufacturing."
+                            "text": "BERAXIS AI comes pre-engineered with dedicated operational blueprints for 15 global industries—including padel and sports clubs, call centers and BPOs, hotels and resorts, agriculture and solar EPC contractors, dental and medical clinics, bakeries and restaurants, supermarkets and retail, auto repair workshops, real estate brokerages, construction contractors, schools, NGOs, logistics, professional services, and discrete manufacturing. Plus, with our 1-Click 'Explain Your Business' AI Auto-Setup Engine, you can simply describe your company in plain English and BERAXIS AI automatically configures your workspace and apps in seconds."
                         }
                     }
                 ]

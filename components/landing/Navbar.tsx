@@ -167,7 +167,7 @@ export default function Navbar() {
                                             </div>
                                             <div>
                                                 <div className="text-sm font-bold text-white group-hover:text-pink-300 transition-colors">AI Voice Pilot</div>
-                                                <div className="text-[11px] text-gray-400 leading-snug">Voice-driven autonomous copilot &amp; real-time OCR.</div>
+                                                <div className="text-[11px] text-gray-400 leading-snug">1-Click "Explain Business" Auto-Setup, Voice Pilot &amp; 3s OCR.</div>
                                             </div>
                                         </Link>
 
@@ -198,7 +198,7 @@ export default function Navbar() {
                                             </div>
                                             <div>
                                                 <div className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">Features &amp; 34+ Modules</div>
-                                                <div className="text-[11px] text-gray-400 leading-snug">Full breakdown of all 34+ integrated enterprise modules.</div>
+                                                <div className="text-[11px] text-gray-400 leading-snug">34+ Apps, 15 Industry Engines, Call Center, Forms &amp; BI Reports.</div>
                                             </div>
                                         </Link>
                                     </div>

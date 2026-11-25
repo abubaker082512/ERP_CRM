@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Our Industries | 12 Vertical AI ERP & CRM Operating Systems | Beraxis",
-  description: "Explore tailored ERP, CRM, and POS blueprints for 12 global industries: padel clubs, dental clinics, artisan bakeries, auto workshops, real estate, and schools for $1/month.",
+  title: "Our Industries | 15 Vertical AI ERP & CRM Operating Systems | Beraxis",
+  description: "Explore tailored ERP, CRM, and POS blueprints for 15 global industries: padel clubs, dental clinics, artisan bakeries, auto workshops, real estate, and schools for $1/month.",
   keywords: [
     "Our Industries",
     "Industry ERP",
@@ -35,8 +35,8 @@ export const metadata: Metadata = {
     canonical: "https://www.beraxis.online/industries",
   },
   openGraph: {
-    title: "Our Industries | 12 Vertical AI ERP & CRM Operating Systems | Beraxis",
-    description: "Pre-configured operational blueprints, workflows, roles, and POS for 12 global industries. $1/month.",
+    title: "Our Industries | 15 Vertical AI ERP & CRM Operating Systems | Beraxis",
+    description: "Pre-configured operational blueprints, workflows, roles, and POS for 15 global industries. $1/month.",
     url: "https://www.beraxis.online/industries",
     siteName: "Beraxis",
     images: [
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
         url: "https://www.beraxis.online/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Beraxis 12 Global Industry Blueprints",
+        alt: "Beraxis 15 Global Industry Blueprints",
       },
     ],
   },
@@ -84,12 +84,11 @@ export default function IndustriesHubPage() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-tight">
-            Tailored AI ERP Blueprints For <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">12 Global Industries</span>
+            Tailored AI ERP Blueprints For <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">15 Global Industries</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-300 font-light leading-relaxed max-w-3xl mx-auto mb-8">
-            One size never fits all. Rather than generic software bloat, Beraxis comes pre-engineered with the exact workflows, POS, KDS, court schedulers, tooth charts, and roles required by your specific trade.
-          </p>
+            One size never fits all. BERAXIS AI comes pre-engineered for 15 global industries—including Call Centers & BPO, Hotels & Resorts, Agriculture & Solar EPC, Padel Clubs, Clinics, Dining KDS, and Retail—plus our 1-Click "Explain Your Business" AI Auto-Setup Engine that configures your exact apps automatically.</p>
 
           <div className="flex flex-wrap justify-center gap-3">
             <span className="text-xs px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-emerald-400 flex items-center gap-1.5">

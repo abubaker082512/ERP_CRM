@@ -73,7 +73,7 @@ export default function Hero() {
 
                 {/* 3. Subheadline */}
                 <p className="text-sm sm:text-base md:text-lg text-gray-300 max-w-2xl mx-auto mb-6 sm:mb-8 font-normal leading-relaxed">
-                    The #1 Free Odoo Alternative in 2026. No need to buy <strong className="text-white font-semibold">Microsoft Excel, PowerPoint, Word, Odoo, QuickBooks, or HubSpot</strong> — BERAXIS AI covers all ERP, CRM, and Office Automation in 30+ unified modules, with <strong className="text-cyan-300 font-semibold drop-shadow-[0_0_8px_rgba(103,232,249,0.3)]">25M+ integrated B2B leads</strong> and AI Voice Pilot built-in.
+                    The #1 Free Odoo Alternative in 2026. No need to buy <strong className="text-white font-semibold">Microsoft Excel, PowerPoint, Word, Odoo, QuickBooks, or HubSpot</strong> — BERAXIS AI covers all ERP, CRM, Call Center Dialer, Public Forms, and Office Automation across 15 Global Industries with our 1-Click "Explain Your Business" Auto-Setup Engine, with <strong className="text-cyan-300 font-semibold drop-shadow-[0_0_8px_rgba(103,232,249,0.3)]">25M+ integrated B2B leads</strong> and AI Voice Pilot built-in.
                 </p>
 
                 {/* 4. Glassmorphic Action Buttons with Identical Height & Equal Spacing */}

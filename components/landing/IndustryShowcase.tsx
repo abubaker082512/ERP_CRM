@@ -20,6 +20,9 @@ import {
   GraduationCap,
   Dumbbell,
   HeartHandshake,
+  Headphones,
+  Hotel,
+  Sprout,
   ArrowRight,
   CheckCircle2,
   Sparkles,
@@ -41,7 +44,10 @@ const ICON_MAP: Record<string, any> = {
   HardHat,
   GraduationCap,
   Dumbbell,
-  HeartHandshake
+  HeartHandshake,
+  Headphones,
+  Hotel,
+  Sprout
 };
 
 const ID_TO_SLUG: Record<string, string> = {
@@ -57,6 +63,9 @@ const ID_TO_SLUG: Record<string, string> = {
   manufacturing: "manufacturing",
   logistics_wholesale: "logistics-wholesale",
   professional_services: "professional-services",
+  call_center: "call-centers-bpo",
+  hospitality_travel: "hospitality-hotels",
+  agriculture_agritech: "agriculture-agritech",
 };
 
 export default function IndustryShowcase() {
@@ -74,11 +83,10 @@ export default function IndustryShowcase() {
           <span>Tailored Worldwide Archetypes</span>
         </div>
         <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white">
-          Engineered for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400">12 Global Industries</span>
+          Engineered for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400">15 Global Industries</span>
         </h2>
         <p className="text-gray-400 text-sm sm:text-base max-w-3xl mx-auto font-light leading-relaxed">
-          From padel clubs, NGOs, and artisan bakeries to dental clinics, auto repair garages, real estate brokerages, and discrete manufacturing plants — Beraxis auto-configures your exact workflow, POS, KDS, and operational tools out of the box.
-        </p>
+          From padel clubs, call centers, hotels & resorts, and agriculture/solar EPC to dental clinics, bakeries, auto repair garages, real estate, and manufacturing — or simply type what your company does into our 1-Click "Explain Your Business" Engine and BERAXIS AI auto-sets up your apps in seconds.</p>
       </div>
 
       {/* 12 Industry Selector Tabs */}

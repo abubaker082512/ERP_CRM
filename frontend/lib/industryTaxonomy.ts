@@ -10,7 +10,10 @@ export type GlobalIndustryId =
   | "construction_contracting"
   | "education_academies"
   | "fitness_sports_club"
-  | "ngos";
+  | "ngos"
+  | "call_center"
+  | "hospitality_travel"
+  | "agriculture_agritech";
 
 export type OperationMode = {
   id: string;
@@ -73,6 +76,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/timesheets",
       "/attendances",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -116,7 +120,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/crm/leads-pool",
       "/contacts",
       "/employees",
-      "/attendances"
+      "/attendances",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "Barcode Label Hub", href: "/barcode", icon: "Barcode" },
@@ -159,7 +164,9 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/payroll",
       "/meet",
-      "/sign"
+      "/sign",
+      "/forms",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "Project Timesheets", href: "/timesheets", icon: "Clock" },
@@ -198,6 +205,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/attendances",
       "/barcode",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -236,6 +244,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/planning",
       "/documents",
+      "/forms",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -274,7 +284,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/crm",
       "/crm/leads-pool",
       "/employees",
-      "/timesheets"
+      "/timesheets",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "Vehicle Job Cards", href: "/automotive", icon: "Wrench" },
@@ -312,7 +323,9 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/sign",
       "/contacts",
       "/employees",
-      "/helpdesk"
+      "/helpdesk",
+      "/forms",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "Property & Lease Hub", href: "/real-estate", icon: "Building" },
@@ -349,6 +362,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/surveys",
       "/knowledge",
+      "/forms",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -386,7 +401,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/crm/leads-pool",
       "/contacts",
       "/employees",
-      "/barcode"
+      "/barcode",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "Warehouse Operations", href: "/inventory/operations", icon: "Package" },
@@ -423,6 +439,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/team",
       "/employees",
       "/sign",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -466,6 +483,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/planning",
       "/sign",
+      "/forms",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -509,7 +528,9 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/surveys",
       "/sign",
-      "/calendar"
+      "/calendar",
+      "/forms",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "NGOs & Grants Hub", href: "/ngos", icon: "HeartHandshake" },
@@ -531,8 +552,360 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "Fundraising & Donor Lead",
       "Field Operations Coordinator"
     ]
+  },
+  {
+    id: "call_center",
+    name: "Call Center, BPO & Outbound Sales",
+    tagline: "Lead Sheets, Agent Dialer, Restricted Access & Public Intake Forms",
+    description: "Built for outbound telemarketing, inbound support desks, and BPO teams managing Google Sheets/Excel lead lists with strict agent permissions.",
+    iconName: "Headphones",
+    themeColor: "bg-cyan-600",
+    accentColor: "text-cyan-400",
+    borderColor: "border-cyan-500/30",
+    subSectors: [
+      "Outbound Telemarketing & Lead Gen",
+      "Inbound Customer Support & Helpdesk",
+      "BPO & Multi-Campaign Operations",
+      "Appointment Setting & Qualification"
+    ],
+    operationModes: [
+      { id: "outbound_dialer", name: "Outbound Dialer & Lead Sheet", description: "Import Excel/Google Sheets, restrict agent visibility, and track call outcomes.", badge: "📞 Outbound" },
+      { id: "inbound_bpo", name: "Inbound Desk & Public Forms", description: "Capture web inquiries via public forms directly into agent queues.", badge: "🎧 Inbound" },
+      { id: "hybrid_bpo", name: "Full Multi-Campaign BPO", description: "Simultaneous outbound campaigns, public intake forms, and manager approvals.", badge: "⚡ Hybrid" }
+    ],
+    defaultModules: [
+      "/call-center",
+      "/forms",
+      "/crm",
+      "/spreadsheets",
+      "/helpdesk",
+      "/contacts",
+      "/team",
+      "/approvals",
+      "/attendances",
+      "/payroll",
+      "/reports",
+      "/crm/leads-pool"
+    ],
+    specializedRoutes: [
+      { name: "Call Center & Lead Sheet", href: "/call-center", icon: "PhoneCall" },
+      { name: "Public Lead Forms", href: "/forms", icon: "ClipboardList" },
+      { name: "CRM Pipeline", href: "/crm", icon: "Target" },
+      { name: "Sheets (Excel)", href: "/spreadsheets", icon: "FileSpreadsheet" }
+    ],
+    defaultDepartments: [
+      "Outbound Sales & Telemarketing",
+      "Inbound Support Desk",
+      "Quality Assurance & Coaching",
+      "Lead Data & Operations",
+      "HR & Shift Scheduling"
+    ],
+    defaultRoles: [
+      "Call Center Director",
+      "Floor Supervisor / Team Lead",
+      "Senior Telemarketer / Closer",
+      "Support Agent",
+      "QA Analyst"
+    ]
+  },
+  {
+    id: "hospitality_travel",
+    name: "Hospitality, Hotels, Resorts & Travel",
+    tagline: "Hotels, Resorts, Event Venues, Tour Operators & Travel Agencies",
+    description: "Guest room & event bookings, restaurant & room-service POS, housekeeping shifts, travel package itineraries, and invoicing.",
+    iconName: "Building",
+    themeColor: "bg-violet-600",
+    accentColor: "text-violet-400",
+    borderColor: "border-violet-500/30",
+    subSectors: [
+      "Boutique Hotel & Luxury Resort",
+      "Serviced Apartments & Guest House",
+      "Travel Agency & Tour Operator",
+      "Event, Banquet & Wedding Venue",
+      "Holiday Rental & Hospitality Group"
+    ],
+    operationModes: [
+      { id: "hotel_resort_ops", name: "Hotel Rooms, F&B & Front Desk", description: "Room check-in/out, restaurant POS, housekeeping & guest billing.", badge: "🏨 Hotel & F&B" },
+      { id: "travel_tour_agency", name: "Travel Packages & Bookings", description: "Client itineraries, visa/flight bookings, CRM leads, and agency billing.", badge: "✈️ Travel Agency" },
+      { id: "event_banquet_venue", name: "Event & Banquet Management", description: "Hall reservations, catering packages, contracts & milestone payments.", badge: "🎉 Events" }
+    ],
+    defaultModules: [
+      "/real-estate",
+      "/appointments",
+      "/pos",
+      "/pos/kds",
+      "/pos/tables",
+      "/crm",
+      "/forms",
+      "/calendar",
+      "/accounting",
+      "/inventory",
+      "/employees",
+      "/planning",
+      "/attendances",
+      "/helpdesk",
+      "/reports",
+      "/crm/leads-pool"
+    ],
+    specializedRoutes: [
+      { name: "Rooms & Units Hub", href: "/real-estate", icon: "Building" },
+      { name: "Bookings & Reservations", href: "/appointments", icon: "Calendar" },
+      { name: "Restaurant & Room POS", href: "/pos", icon: "ShoppingBag" }
+    ],
+    defaultDepartments: [
+      "Front Desk & Concierge",
+      "Housekeeping & Facilities",
+      "Food, Beverage & Banquet",
+      "Travel Desk & Reservations",
+      "Finance & Guest Billing"
+    ],
+    defaultRoles: [
+      "General Manager",
+      "Front Office Manager",
+      "Executive Housekeeper",
+      "Travel & Tour Consultant",
+      "Event & Banquet Coordinator"
+    ]
+  },
+  {
+    id: "agriculture_agritech",
+    name: "Agriculture, Farming, Livestock & Solar/Energy",
+    tagline: "Agribusiness, Crop & Dairy Farms, Solar Installers & Field Services",
+    description: "Crop/livestock batch inventory, feed & fertilizer BOM recipes, field installation projects, equipment maintenance, and wholesale distribution.",
+    iconName: "Truck",
+    themeColor: "bg-lime-600",
+    accentColor: "text-lime-400",
+    borderColor: "border-lime-500/30",
+    subSectors: [
+      "Commercial Crop & Greenhouse Farming",
+      "Dairy, Poultry & Livestock Ranch",
+      "Agri-Input, Seed & Fertilizer Supply",
+      "Solar, Renewable Energy & Field Installation",
+      "Cold Chain & Produce Export"
+    ],
+    operationModes: [
+      { id: "farm_batch_production", name: "Farm & Livestock Batch Yield", description: "Track feed/fertilizer inputs, harvest batches, warehouse stock & B2B sales.", badge: "🌾 Farm & Yield" },
+      { id: "field_solar_install", name: "Solar & Field Engineering", description: "Site surveys, equipment BOMs, installation projects, and maintenance tickets.", badge: "☀️ Field & Solar" }
+    ],
+    defaultModules: [
+      "/inventory",
+      "/manufacturing",
+      "/purchase",
+      "/sales",
+      "/project",
+      "/accounting",
+      "/crm",
+      "/forms",
+      "/employees",
+      "/attendances",
+      "/barcode",
+      "/reports",
+      "/crm/leads-pool"
+    ],
+    specializedRoutes: [
+      { name: "Stock & Warehouses", href: "/inventory", icon: "Package" },
+      { name: "Batch & BOM Processing", href: "/manufacturing", icon: "Cog" },
+      { name: "Field Projects", href: "/project", icon: "CheckSquare" }
+    ],
+    defaultDepartments: [
+      "Farm & Field Operations",
+      "Storage, Cold Chain & Logistics",
+      "Procurement & Inputs",
+      "Wholesale & Export Sales",
+      "Equipment & Site Maintenance"
+    ],
+    defaultRoles: [
+      "Farm / Operations Director",
+      "Agronomist / Field Engineer",
+      "Warehouse & Cold-Chain Supervisor",
+      "Procurement Officer",
+      "Wholesale Sales Manager"
+    ]
   }
 ];
+
+export interface BusinessExplanationResult {
+  industryId: GlobalIndustryId;
+  subSector: string;
+  operationMode: string;
+  suggestedCompanyName: string;
+  recommendedModules: string[];
+  matchedKeywords: string[];
+  summary: string;
+}
+
+export function analyzeBusinessExplanation(description: string): BusinessExplanationResult {
+  const text = (description || "").trim();
+  const lower = text.toLowerCase();
+
+  let industryId: GlobalIndustryId = "professional_services";
+  let subSector = "";
+  let operationMode = "";
+  const extraModules = new Set<string>(["/dashboard", "/reports", "/settings", "/crm/leads-pool"]);
+  const matchedKeywords: string[] = [];
+
+  const has = (...words: string[]) => {
+    for (const w of words) {
+      if (lower.includes(w)) {
+        if (!matchedKeywords.includes(w)) matchedKeywords.push(w);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // 1. Primary Industry Archetype Detection
+  if (has("call center", "call centre", "bpo", "telemarketing", "outbound", "dialer", "cold call", "dispatch", "lead generation", "customer support center")) {
+    industryId = "call_center";
+    subSector = has("inbound", "support") ? "Inbound Customer Support & Helpdesk" : "BPO & Multi-Campaign Operations";
+    operationMode = "hybrid_bpo";
+  } else if (has("restaurant", "cafe", "coffee", "bakery", "pastry", "pizza", "burger", "bistro", "kitchen", "catering", "food truck", "dine", "qsr", "bar", "cloud kitchen")) {
+    industryId = "food_beverage";
+    subSector = has("bake", "pastry") ? "Artisan Bakery & Pastry Shop" : has("cafe", "coffee") ? "Specialty Coffee Cafe" : has("cloud") ? "Cloud / Ghost Kitchen" : "Quick Service Restaurant (QSR)";
+    operationMode = has("cloud", "delivery") ? "cloud_kitchen" : "hybrid";
+  } else if (has("supermarket", "grocery", "retail", "boutique", "store", "mart", "fashion", "apparel", "clothing", "electronics", "hardware store", "cosmetics", "minimart", "cashier")) {
+    industryId = "retail_supermarket";
+    subSector = has("supermarket", "grocery", "mart") ? "Supermarket & Grocery Store" : has("fashion", "cloth", "boutique", "apparel") ? "Fashion & Apparel Boutique" : has("electronic") ? "Electronics & Appliance Retail" : "Supermarket & Grocery Store";
+    operationMode = has("online", "ecom", "website") ? "omnichannel" : "counter_pos";
+  } else if (has("clinic", "hospital", "doctor", "dental", "dentist", "medical", "patient", "pharmacy", "salon", "spa", "wellness", "therapy", "physiotherapy", "aesthetic")) {
+    industryId = "healthcare_wellness";
+    subSector = has("dental", "dentist") ? "Dental Practice" : has("salon", "hair", "beauty") ? "Hair & Beauty Salon" : has("spa") ? "Luxury Spa & Wellness Center" : "Medical & Specialist Clinic";
+    operationMode = "walkin_appointment";
+  } else if (has("hotel", "resort", "motel", "hostel", "guest house", "travel", "tour", "tourism", "banquet", "event venue", "hospitality", "wedding hall")) {
+    industryId = "hospitality_travel";
+    subSector = has("travel", "tour") ? "Travel Agency & Tour Operator" : has("event", "banquet", "wedding") ? "Event, Banquet & Wedding Venue" : "Boutique Hotel & Luxury Resort";
+    operationMode = has("travel", "tour") ? "travel_tour_agency" : "hotel_resort_ops";
+  } else if (has("padel", "gym", "fitness", "sports", "club", "turf", "arena", "crossfit", "yoga", "pilates", "martial arts", "swimming", "court", "country club")) {
+    industryId = "fitness_sports_club";
+    subSector = has("padel", "tennis", "court", "racquet") ? "Padel & Racquet Club (Indoor/Outdoor)" : has("yoga", "pilates") ? "Yoga, Pilates & Wellness Studio" : "Fitness Gym & Strength Center";
+    operationMode = has("padel", "court", "arena", "turf") ? "court_facility_booking" : "membership_tiers";
+  } else if (has("auto", "car", "vehicle", "garage", "workshop", "mechanic", "repair", "detailing", "dealership", "spare parts", "tire", "tyre")) {
+    industryId = "automotive_workshop";
+    subSector = has("dealer", "showroom") ? "Auto Dealership & Showroom" : has("parts") ? "Auto Spare Parts Retailer" : "Auto Repair & Service Garage";
+    operationMode = "garage_service";
+  } else if (has("factory", "manufactur", "production", "assembly", "cnc", "fabrication", "textile", "garment", "mill", "packaging", "plant", "chemical")) {
+    industryId = "manufacturing";
+    subSector = has("textile", "garment") ? "Textile & Garment Factory" : has("cnc", "metal") ? "Metal & CNC Custom Fabrication" : "Discrete Product Manufacturing";
+    operationMode = has("custom", "order") ? "make_to_order" : "make_to_stock";
+  } else if (has("real estate", "property", "broker", "leasing", "tenant", "landlord", "rental", "apartment", "housing", "realtor")) {
+    industryId = "real_estate";
+    subSector = has("broker", "sale") ? "Real Estate Sales Brokerage" : "Residential Property Management";
+    operationMode = has("broker", "sale") ? "sales_brokerage" : "leasing_management";
+  } else if (has("construction", "contractor", "builder", "civil", "mep", "fitout", "architecture", "engineering", "renovation", "plumbing", "electrical")) {
+    industryId = "construction_contracting";
+    subSector = has("mep", "plumbing", "electrical") ? "MEP (Mechanical, Electrical, Plumbing)" : has("fitout", "interior") ? "Interior Fitout & Architecture" : "General Construction Contractor";
+    operationMode = "fixed_contract";
+  } else if (has("school", "college", "university", "academy", "education", "training", "institute", "student", "tuition", "coaching", "bootcamp", "e-learning")) {
+    industryId = "education_academies";
+    subSector = has("school", "college") ? "Private School & College" : "Training Academy & Institute";
+    operationMode = "term_tuition";
+  } else if (has("logistic", "warehouse", "wholesale", "distributor", "import", "export", "freight", "3pl", "courier", "shipping", "supply chain", "fleet", "trading")) {
+    industryId = "logistics_wholesale";
+    subSector = has("import", "export", "trading") ? "Import & Export Trading House" : has("3pl", "warehouse") ? "3PL Fulfillment & Warehousing" : "B2B Wholesale Distributor";
+    operationMode = "wholesale_distribution";
+  } else if (has("ngo", "non-profit", "nonprofit", "charity", "foundation", "humanitarian", "donor", "grant", "relief", "welfare", "trust")) {
+    industryId = "ngos";
+    subSector = "Humanitarian & Disaster Relief NGO";
+    operationMode = "grant_donor_fund";
+  } else if (has("farm", "agriculture", "agritech", "crop", "livestock", "dairy", "poultry", "solar", "renewable", "energy", "greenhouse")) {
+    industryId = "agriculture_agritech";
+    subSector = has("solar", "energy") ? "Solar, Renewable Energy & Field Installation" : has("dairy", "poultry", "livestock") ? "Dairy, Poultry & Livestock Ranch" : "Commercial Crop & Greenhouse Farming";
+    operationMode = has("solar", "energy") ? "field_solar_install" : "farm_batch_production";
+  } else {
+    industryId = "professional_services";
+    subSector = has("law", "legal") ? "Legal Practice & Law Firm" : has("account", "cpa", "tax", "audit") ? "Accounting & CPA Audit Firm" : has("design", "marketing", "creative", "media") ? "Design, Branding & Creative Studio" : "Software & IT Engineering Agency";
+    operationMode = "hourly_billable";
+  }
+
+  const ind = getIndustryById(industryId);
+  if (!subSector) subSector = ind.subSectors[0] || "";
+  if (!operationMode) operationMode = ind.operationModes[0]?.id || "default";
+
+  // Start with industry's default modules
+  ind.defaultModules.forEach(m => extraModules.add(m));
+
+  // 2. Additive Capability Detection (Cross-Industry Hybrid Businesses!)
+  // If a user describes multiple business needs (e.g. "We run a supermarket AND a restaurant with online shop and call center"),
+  // automatically enable every mentioned module too!
+  if (has("pos", "point of sale", "cashier", "checkout", "counter", "billing counter")) extraModules.add("/pos");
+  if (has("kitchen", "kds", "chef", "cooking", "dine", "menu")) {
+    extraModules.add("/pos");
+    extraModules.add("/pos/kds");
+    extraModules.add("/pos/tables");
+    extraModules.add("/pos/recipes");
+  }
+  if (has("barcode", "scanner", "sku", "label")) {
+    extraModules.add("/barcode");
+    extraModules.add("/inventory");
+  }
+  if (has("inventory", "stock", "warehouse", "product", "item", "supply")) extraModules.add("/inventory");
+  if (has("purchase", "vendor", "supplier", "procurement", "buying")) extraModules.add("/purchase");
+  if (has("invoice", "accounting", "finance", "ledger", "tax", "vat", "billing", "expense", "profit")) extraModules.add("/accounting");
+  if (has("sale", "quotation", "order", "b2b")) extraModules.add("/sales");
+  if (has("crm", "lead", "deal", "pipeline", "client", "prospect", "sales team")) {
+    extraModules.add("/crm");
+    extraModules.add("/contacts");
+  }
+  if (has("call", "dialer", "campaign", "telemarketing", "agent", "outbound")) extraModules.add("/call-center");
+  if (has("form", "intake", "submission", "registration", "inquiry")) extraModules.add("/forms");
+  if (has("employee", "staff", "hr", "salary", "payroll", "attendance", "shift", "leave", "hiring", "recruit")) {
+    extraModules.add("/employees");
+    extraModules.add("/payroll");
+    extraModules.add("/attendances");
+    extraModules.add("/team");
+  }
+  if (has("recruit", "hiring", "job opening", "applicant", "cv")) extraModules.add("/recruitment");
+  if (has("project", "task", "milestone", "timesheet", "agile", "client work")) {
+    extraModules.add("/project");
+    extraModules.add("/timesheets");
+    extraModules.add("/todo");
+  }
+  if (has("manufactur", "bom", "factory", "recipe", "production", "work order")) extraModules.add("/manufacturing");
+  if (has("website", "online store", "ecommerce", "e-commerce", "shop online")) {
+    extraModules.add("/website");
+    extraModules.add("/shop");
+  }
+  if (has("appointment", "booking", "schedule", "reservation", "calendar")) {
+    extraModules.add("/appointments");
+    extraModules.add("/calendar");
+  }
+  if (has("contract", "signature", "nda", "sign", "agreement")) {
+    extraModules.add("/sign");
+    extraModules.add("/employees/contracts");
+  }
+  if (has("support", "ticket", "helpdesk", "complaint", "issue")) extraModules.add("/helpdesk");
+  if (has("excel", "sheet", "spreadsheet", "word", "doc", "presentation", "slide", "ppt")) {
+    extraModules.add("/spreadsheets");
+    extraModules.add("/documents");
+    extraModules.add("/slides");
+  }
+  if (has("approval", "manager", "hierarchy", "permission")) {
+    extraModules.add("/approvals");
+    extraModules.add("/team");
+  }
+
+  // Always include core collaboration & BI apps for paid workspaces
+  extraModules.add("/reports");
+  extraModules.add("/forms");
+  extraModules.add("/team");
+  extraModules.add("/approvals");
+
+  const recommendedModules = Array.from(extraModules);
+  const suggestedCompanyName =
+    text.length >= 3 && text.length <= 28 && !text.includes(" ")
+      ? text
+      : `${ind.name.split(" ")[0].replace(",", "")} Workspace`;
+
+  return {
+    industryId,
+    subSector,
+    operationMode,
+    suggestedCompanyName,
+    recommendedModules,
+    matchedKeywords,
+    summary: `Configured for ${ind.name} (${subSector}) with ${recommendedModules.length} tailored ERP & CRM apps.`
+  };
+}
 
 export function getIndustryById(id: string): IndustryArchetype {
   return GLOBAL_INDUSTRIES.find(i => i.id === id) || GLOBAL_INDUSTRIES[0];

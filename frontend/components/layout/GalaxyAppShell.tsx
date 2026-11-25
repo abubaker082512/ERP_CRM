@@ -16,11 +16,13 @@ import DonationMilestoneToast from '../common/DonationMilestoneToast';
 import { BranchProvider, useBranchContext } from '@/lib/branchContext';
 
 const navItems = [
+    { name: 'All Apps', icon: Sparkles, href: '/apps' },
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
     { name: 'CRM', icon: Users, href: '/crm' },
     { name: 'Sales', icon: ShoppingCart, href: '/sales' },
     { name: 'Inventory', icon: Package, href: '/inventory' },
     { name: 'Accounting', icon: BarChart3, href: '/accounting' },
+    { name: 'Reports', icon: BarChart3, href: '/reports' },
     { name: 'Discuss', icon: MessageSquare, href: '/discuss' },
     { name: 'Knowledge', icon: BookOpen, href: '/knowledge' },
     { name: 'Settings', icon: Settings, href: '/settings' },
@@ -71,6 +73,7 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
         pathname.startsWith('/cookies') ||
         pathname.startsWith('/about') ||
         pathname.startsWith('/ai') ||
+        pathname.startsWith('/ai-auto-setup') ||
         pathname.startsWith('/contact') ||
         pathname.startsWith('/pricing') ||
         pathname.startsWith('/donate') ||
@@ -104,34 +107,14 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
         return <>{children}</>;
     }
 
-    // Always allow Settings, AI, Billing, Super Admin, and Leads Pool (which renders its own Paid Plan gate)
+    // Always allow Settings, AI, Billing, Team, Approvals, Super Admin, and Leads Pool
     const isAlwaysAllowed =
         pathname.startsWith('/dashboard') ||
         pathname.startsWith('/settings') ||
         pathname.startsWith('/billing') ||
+        pathname.startsWith('/team') ||
+        pathname.startsWith('/approvals') ||
         pathname.startsWith('/super-admin');
-
-    if (!hasSelectedIndustry && ! pathname.startsWith('/super-admin')) {
-        return (
-            <div className="min-h-[80vh] flex items-center justify-center p-6 text-white">
-                <div className="max-w-lg w-full bg-[#0F172A] border border-purple-500/40 rounded-3xl p-8 text-center shadow-2xl space-y-4">
-                    <div className="w-14 h-14 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 mx-auto">
-                        <Sparkles size={28} />
-                    </div>
-                    <h2 className="text-xl font-black text-white">Complete Your Industry & Entity Setup First</h2>
-                    <p className="text-xs text-gray-300 leading-relaxed">
-                        Every user and company under Beraxis is an independent entity with its own isolated workspace. Please select your industry sector, entity structure (Individual or Company), and free app to initialize your workspace.
-                    </p>
-                    <Link
-                        href="/apps"
-                        className="inline-flex items-center justify-center w-full py-3 px-5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all"
-                    >
-                        Configure Industry & Entity Now →
-                    </Link>
-                </div>
-            </div>
-        );
-    }
 
     if (isFreePlan && !isAlwaysAllowed && !isModuleEnabled(pathname)) {
         return (
@@ -290,6 +273,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
         cleanPath.startsWith('/industries') || 
         cleanPath.startsWith('/shop') || 
         cleanPath.startsWith('/meet') || 
+        cleanPath.startsWith('/f/') || 
         cleanPath.startsWith('/appointments/book') ||
         cleanPath.startsWith('/recruitment/apply');
 
@@ -329,7 +313,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
 
     return (
         <BranchProvider>
-            <div className="flex h-screen overflow-hidden bg-[#020205] flex-col">
+            <div className="flex h-screen overflow-hidden bg-transparent flex-col">
             {/* Backend Connection Banner */}
             {backendStatus === 'waking' && (
                 <div className="w-full bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-center gap-2 text-xs text-amber-400 shrink-0 z-[100]">
@@ -346,7 +330,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
             <div className="flex flex-1 overflow-hidden">
             {/* Sidebar: Sleek Collapsible Translucent Icon Rail */}
             <aside 
-                className={`fixed inset-y-0 left-0 z-50 bg-[#060B19]/90 backdrop-blur-2xl border-r border-white/10 transition-all duration-300 ease-out flex flex-col ${
+                className={`fixed inset-y-0 left-0 z-50 bg-[#060B19]/35 backdrop-blur-md backdrop-saturate-150 border-r border-white/15 shadow-[inset_-1px_0_0_rgba(255,255,255,0.08)] transition-all duration-300 ease-out flex flex-col ${
                     isSidebarOpen ? 'w-60' : 'w-[76px]'
                 }`}
             >
@@ -439,7 +423,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                 isSidebarOpen ? 'ml-60' : 'ml-[76px]'
             }`}>
                 <div 
-                    className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#020205] relative custom-scrollbar"
+                    className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-transparent relative custom-scrollbar"
                     style={{ 
                         willChange: 'scroll-position',
                         WebkitOverflowScrolling: 'touch',

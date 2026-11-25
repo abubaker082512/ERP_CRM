@@ -53,9 +53,9 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 bg-[#0A0F1D]/90 backdrop-blur-md border-b border-white/10" style={{transform: 'translateZ(0)', willChange: 'transform'}}>
+        <nav className="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 bg-[#0A0F1D]/40 backdrop-blur-md backdrop-saturate-150 border-b border-white/15" style={{transform: 'translateZ(0)', willChange: 'transform'}}>
             {/* Top Announcement Bar with Specular Glass Polish */}
-            <div className="backdrop-blur-xl bg-gradient-to-r from-purple-950/80 via-slate-900/90 to-indigo-950/80 border-b border-white/10 text-white text-[11px] sm:text-xs py-2 px-4 text-center font-medium flex items-center justify-center gap-2 flex-wrap shadow-[inset_0_-1px_1px_rgba(255,255,255,0.08)]">
+            <div className="backdrop-blur-md bg-gradient-to-r from-purple-950/45 via-slate-900/40 to-indigo-950/45 border-b border-white/10 text-white text-[11px] sm:text-xs py-2 px-4 text-center font-medium flex items-center justify-center gap-2 flex-wrap shadow-[inset_0_-1px_1px_rgba(255,255,255,0.08)]">
                 <span className="bg-purple-500/20 text-purple-300 border border-purple-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
                     Special Launch
                 </span>
@@ -167,7 +167,7 @@ export default function Navbar() {
                                             </div>
                                             <div>
                                                 <div className="text-sm font-bold text-white group-hover:text-pink-300 transition-colors">AI Voice Pilot</div>
-                                                <div className="text-[11px] text-gray-400 leading-snug">Voice-driven autonomous copilot &amp; real-time OCR.</div>
+                                                <div className="text-[11px] text-gray-400 leading-snug">1-Click "Explain Business" Auto-Setup, Voice Pilot &amp; 3s OCR.</div>
                                             </div>
                                         </Link>
 
@@ -198,7 +198,7 @@ export default function Navbar() {
                                             </div>
                                             <div>
                                                 <div className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">Features &amp; 34+ Modules</div>
-                                                <div className="text-[11px] text-gray-400 leading-snug">Full breakdown of all 34+ integrated enterprise modules.</div>
+                                                <div className="text-[11px] text-gray-400 leading-snug">34+ Apps, 15 Industry Engines, Call Center, Forms &amp; BI Reports.</div>
                                             </div>
                                         </Link>
                                     </div>

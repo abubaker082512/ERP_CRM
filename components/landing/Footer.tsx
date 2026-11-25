@@ -77,6 +77,7 @@ export default function Footer() {
                             <li><Link href="/erp" className="hover:text-white transition-colors font-medium text-purple-300">Cloud ERP Software</Link></li>
                             <li><Link href="/crm-software" className="hover:text-white transition-colors font-medium text-blue-300">AI CRM Software</Link></li>
                             <li><Link href="/ai" className="hover:text-cyan-300 transition-colors font-medium text-cyan-400">Autonomous AI Copilot</Link></li>
+                            <li><Link href="/ai-auto-setup" className="hover:text-emerald-300 transition-colors font-semibold text-emerald-400">✨ 1-Click AI Business Auto-Setup</Link></li>
                             <li><Link href="/features/crm-pipeline" className="hover:text-white transition-colors">CRM Lead Pipeline</Link></li>
                             <li><Link href="/features/inventory" className="hover:text-white transition-colors">Smart Inventory</Link></li>
                             <li><Link href="/features/voice-pilot" className="hover:text-white transition-colors">AI Voice Pilot</Link></li>
@@ -90,7 +91,7 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {/* Column 3: 12 Industry Archetypes */}
+                    {/* Column 3: 15 Industry Archetypes */}
                     <div>
                         <h4 className="text-white font-bold uppercase tracking-wider text-xs mb-4 flex items-center gap-1.5">
                             <Globe size={13} className="text-cyan-400" />
@@ -109,7 +110,10 @@ export default function Footer() {
                             <li><Link href="/industries/manufacturing" className="hover:text-white transition-colors">Discrete Manufacturing</Link></li>
                             <li><Link href="/industries/logistics-wholesale" className="hover:text-white transition-colors">Logistics &amp; Wholesale</Link></li>
                             <li><Link href="/industries/professional-services" className="hover:text-white transition-colors">Professional Services</Link></li>
-                            <li><Link href="/industries" className="hover:text-cyan-300 font-semibold text-cyan-400 flex items-center gap-1">All 12 Archetypes &rarr;</Link></li>
+                            <li><Link href="/industries/call-centers-bpo" className="hover:text-cyan-300 font-medium text-cyan-400">Call Centers &amp; BPO Dialer</Link></li>
+                            <li><Link href="/industries/hospitality-hotels" className="hover:text-amber-300 font-medium text-amber-400">Hotels, Resorts &amp; Travel</Link></li>
+                            <li><Link href="/industries/agriculture-agritech" className="hover:text-emerald-300 font-medium text-emerald-400">Agriculture &amp; Solar EPC</Link></li>
+                            <li><Link href="/industries" className="hover:text-cyan-300 font-semibold text-cyan-400 flex items-center gap-1">All 15 Archetypes &rarr;</Link></li>
                         </ul>
                     </div>
 

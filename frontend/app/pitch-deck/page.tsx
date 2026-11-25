@@ -37,7 +37,7 @@ const SLIDES: SlideData[] = [
   { id: 2, tag: "02 / THE PROBLEM", title: "The $960/Mo SaaS Tax & The ERP Consultant Trap", subtitle: "30M+ growing SMBs are trapped between fragmented point tools and broken legacy ERPs" },
   { id: 3, tag: "03 / THE SOLUTION", title: "Autonomous Business OS in 30 Seconds", subtitle: "One unified platform replacing Odoo, HubSpot, QuickBooks, Square & Apollo with Dual-Brain AI" },
   { id: 4, tag: "04 / LIVE TRACTION", title: "100+ Active Users Milestone Achieved ($0 Ad Spend)", subtitle: "Real-world organic adoption, 307 live production routes, and compounding search velocity" },
-  { id: 5, tag: "05 / PRODUCT DEPTH", title: "28 Synchronized Modules & 12 Industry Archetypes", subtitle: "Full-stack operational moat built on a single unified schema with zero plugin dependencies" },
+  { id: 5, tag: "05 / PRODUCT DEPTH", title: "28 Synchronized Modules & 15 Industry Archetypes", subtitle: "Full-stack operational moat built on a single unified schema with zero plugin dependencies" },
   { id: 6, tag: "06 / MARKET SIZE", title: "Massive Market Wave: $62B → $136B Global TAM", subtitle: "Enterprise ERP is shifting downmarket to 30M+ SMBs demanding AI over consulting delays" },
   { id: 7, tag: "07 / COMPETITION", title: "Why BERAXIS AI Wins Every Head-to-Head", subtitle: "The only platform combining GAAP ERP, 25M+ B2B Leads, and Duplex Voice AI at 1/20th the TCO" },
   { id: 8, tag: "08 / BUSINESS MODEL", title: "Disruptive PLG Wedge → High-ARPU Expansion", subtitle: "Frictionless entry eliminates buyer resistance while AI & multi-seat scaling drive 132% NRR" },
@@ -200,7 +200,7 @@ export default function PitchDeckPage() {
                 </div>
                 <div className="bg-sky-950/30 border border-sky-500/30 rounded-2xl p-4">
                   <div className="text-2xl sm:text-3xl font-black text-sky-400">28 Apps</div>
-                  <div className="text-xs text-slate-400 mt-1">+ 12 Industry Archetypes</div>
+                  <div className="text-xs text-slate-400 mt-1">+ 15 Industry Archetypes</div>
                 </div>
                 <div className="bg-purple-950/30 border border-purple-500/30 rounded-2xl p-4">
                   <div className="text-2xl sm:text-3xl font-black text-purple-400">25M+ Leads</div>
@@ -286,9 +286,9 @@ export default function PitchDeckPage() {
           <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-center text-center">
             <div className="lg:col-span-5 space-y-3">
               <div className="bg-[#0B1120]/90 border border-cyan-500/30 rounded-2xl p-4">
-                <h4 className="text-sm font-bold text-cyan-400">1. 30-Second Industry Blueprints</h4>
+                <h4 className="text-sm font-bold text-cyan-400">1. 1-Click 'Explain Business' AI Auto-Setup</h4>
                 <p className="text-xs text-slate-300 mt-1">
-                  12 global industry archetypes auto-configure Charts of Accounts, tax rules, POS registers, and workflows in 1 click — zero consultants.
+                  15 global industry archetypes with our 1-Click 'Explain Your Business' Auto-Setup Engine auto-configure Charts of Accounts, tax rules, POS registers, and workflows in 1 click — zero consultants.
                 </p>
               </div>
               <div className="bg-[#0B1120]/90 border border-emerald-500/30 rounded-2xl p-4">
@@ -435,7 +435,7 @@ export default function PitchDeckPage() {
                 </ul>
               </div>
               <div className="bg-[#0B1120]/90 border border-amber-500/30 rounded-2xl p-5 space-y-2">
-                <h4 className="text-sm font-bold text-amber-400">12 Industry Archetypes</h4>
+                <h4 className="text-sm font-bold text-amber-400">15 Industry Archetypes</h4>
                 <ul className="space-y-1 text-slate-300">
                   <li>1. Padel &amp; Sports Clubs</li>
                   <li>2. Dental &amp; Medical Clinics (EMR)</li>
@@ -462,7 +462,7 @@ export default function PitchDeckPage() {
               <div className="bg-[#0B1120] border border-white/15 rounded-2xl p-2.5 shadow-xl">
                 <img
                   src="/images/showcase/industry-screen.png"
-                  alt="BERAXIS AI 12 Industry Archetypes"
+                  alt="BERAXIS AI 15 Industry Archetypes"
                   className="w-full h-auto rounded-xl object-cover max-h-[190px]"
                 />
               </div>

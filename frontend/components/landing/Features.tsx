@@ -31,8 +31,8 @@ const features = [
         bg: "bg-purple-500/10"
     },
     {
-        title: "AI Dual-Brain Context Engine",
-        description: "Macro-Brain global intelligence combined with micro-tenant vector memory for hyper-personalized, secure data insights.",
+        title: "1-Click 'Explain Business' Auto-Setup",
+        description: "Describe your business in plain English and BERAXIS AI automatically detects your industry archetype (across 15 global verticals) and configures your exact ERP, POS, and CRM apps in 1 click.",
         icon: Sparkles,
         color: "text-purple-400",
         bg: "bg-purple-500/10"
@@ -45,8 +45,8 @@ const features = [
         bg: "bg-sky-500/10"
     },
     {
-        title: "Executive BI Dashboards",
-        description: "Bird's-eye view analytics, financial statements, real-time KPI graphs, and custom reporting for data-driven decisions.",
+        title: "Call Center Dialer, Forms & BI Reports",
+        description: "Multi-campaign Call Center Power Dialer, Lead Sheet dispositions, AHT telemetry, Public Form Builder with System Fields, and Custom Dashboard Chart Builder.",
         icon: LayoutDashboard,
         color: "text-orange-400",
         bg: "bg-orange-500/10"
@@ -120,8 +120,8 @@ const platformComparison = [
         winner: "beraxis"
     },
     {
-        feature: "Crypto & Card Payments",
-        beraxis: "DirectPay Card + 30+ Cryptos Built-in",
+        feature: "Global Card & Wallet Payments",
+        beraxis: "Creem Merchant of Record (135+ Currencies)",
         others: "Requires Third-Party Addons & Extra Fees",
         winner: "beraxis"
     },
@@ -159,7 +159,7 @@ const platformComparison = [
 
 export default function Features() {
     return (
-        <section id="features" className="py-24 bg-[#02040A] relative z-10">
+        <section id="features" className="py-24 bg-transparent relative z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 {/* Section Title */}

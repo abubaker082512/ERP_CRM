@@ -73,6 +73,7 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
         pathname.startsWith('/cookies') ||
         pathname.startsWith('/about') ||
         pathname.startsWith('/ai') ||
+        pathname.startsWith('/ai-auto-setup') ||
         pathname.startsWith('/contact') ||
         pathname.startsWith('/pricing') ||
         pathname.startsWith('/donate') ||

@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/erp`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/crm-software`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/ai`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
+    { url: `${baseUrl}/ai-auto-setup`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/leads-pool`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/compare`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/pricing`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
@@ -60,7 +61,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.90,
   }));
 
-  // Dedicated Industry Landing Routes (12 Archetypes)
+  // Dedicated Industry Landing Routes (15 Archetypes)
   const industrySubRoutes: MetadataRoute.Sitemap = Object.keys(INDUSTRIES_MAP).map(slug => ({
     url: `${baseUrl}/industries/${slug}`,
     lastModified: now,

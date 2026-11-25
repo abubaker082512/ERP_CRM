@@ -959,5 +959,242 @@ export const INDUSTRIES_MAP: Record<string, IndustryData> = {
         a: "Yes. Team members can use one-click web timers, mobile apps, or dictate voice entries like 'Log 1.5 hours research for Client X'."
       }
     ]
+  },
+
+  "call-centers-bpo": {
+    slug: "call-centers-bpo",
+    name: "Call Centers, BPO & Outbound Sales",
+    h1: "AI Call Center Software, Power Dialer & BPO Campaign CRM",
+    tagline: "Multi-Campaign Dialer, Lead Sheet Dispositions, Public Intake Forms & AHT Analytics",
+    metaTitle: "Call Center CRM, Power Dialer & BPO Campaign Software | BERAXIS AI",
+    metaDescription: "Run inbound and outbound call centers with BERAXIS AI. Multi-campaign management, Lead Sheet dispositioning, Public Form Builder, WebRTC dialer, and Average Handle Time (AHT) analytics for $1/month.",
+    keywords: [
+      "call center CRM software",
+      "BPO campaign management software",
+      "outbound sales power dialer CRM",
+      "call center disposition and AHT tracking",
+      "telemarketing lead sheet software",
+      "free call center software",
+      "public lead intake form builder CRM",
+      "BERAXIS AI call center"
+    ],
+    themeColor: "from-cyan-600 to-blue-700",
+    accentColor: "text-cyan-400",
+    badge: "🎧 Call Center, BPO & Tele-Sales",
+    painPoints: [
+      {
+        title: "Disconnected Dialers, Google Sheets & CRM Silos",
+        desc: "Agents juggling messy Excel lead sheets, separate dialers, and disconnected intake forms lose 30% of daily talk time and misroute hot callbacks."
+      },
+      {
+        title: "Zero Visibility Into Agent AHT & Campaign ROI",
+        desc: "Team leads cannot see real-time Average Handle Time (AHT), carrier drop rates, or per-campaign conversion percentages until the end of the week."
+      },
+      {
+        title: "Expensive Per-Seat Call Center Licenses ($100+/Agent/Mo)",
+        desc: "Legacy BPO platforms like Five9, VICIdial hosts, and RingCentral charge $100–$180 per agent seat, crushing BPO profit margins."
+      }
+    ],
+    solutions: [
+      {
+        title: "Unified Campaign Hub, Lead Sheet & Power Dialer",
+        desc: "Assign agents to multi-carrier outbound/inbound campaigns with 1-click calling, instant disposition tags, and automated CRM deal creation."
+      },
+      {
+        title: "Drag-and-Drop Public Form Builder with System Fields",
+        desc: "Build public lead capture forms mapped directly to Campaigns, CRM Stages, Carriers, and Departments with instant Excel/CSV export."
+      },
+      {
+        title: "Real-Time AHT Telemetry & Agent Leaderboards",
+        desc: "Monitor live talk time, Average Handle Time (AHT), daily disposition breakdowns, and per-agent revenue attribution across shifts."
+      }
+    ],
+    keyFeatures: [
+      { title: "Multi-Campaign Management", desc: "Create outbound & inbound campaigns linked directly to lead pools, forms, and agent queues." },
+      { title: "Interactive Agent Lead Sheet", desc: "High-speed disposition logging, carrier selection, callback scheduling, and instant notes." },
+      { title: "Public Form Builder & Submissions", desc: "Embeddable forms with System Fields picker (Campaigns, Stages, Amount, Address) and CSV export." },
+      { title: "AHT & Enterprise BI Reports", desc: "Track Average Handle Time, first-call resolution, and conversion rates by agent or shift." },
+      { title: "25M+ Built-In B2B Leads Pool", desc: "Pre-fill outbound call campaigns with verified global decision-makers and direct dials." },
+      { title: "HRMS, Shift Attendance & Payroll", desc: "Track agent shift clock-ins, commission tiers, and automated monthly payroll slips." }
+    ],
+    operationModes: [
+      { badge: "📞 Outbound Sales", name: "High-Velocity Tele-Sales Mode", desc: "Power dialer queues, lead sheet dispositioning, commission tracking, and instant CRM handoff." },
+      { badge: "🎧 Inbound BPO", name: "Omnichannel Support Desk Mode", desc: "Ticket routing, SLA timers, AHT analytics, and client knowledge base scripts." },
+      { badge: "📋 Lead Generation", name: "Form & Campaign Intake Mode", desc: "Public intake forms routed automatically to dedicated campaign pools and agent teams." }
+    ],
+    departments: ["Outbound Tele-Sales Floor", "Inbound Customer Support", "Quality Assurance (QA) & AHT", "Campaign & Lead Operations", "HR, Shifts & Payroll"],
+    roles: ["Call Center Director", "Floor Campaign Manager", "QA & AHT Analyst", "Team Lead / Supervisor", "Outbound / Inbound Sales Agent"],
+    faqs: [
+      {
+        q: "Does BERAXIS AI include campaign management and public lead intake forms?",
+        a: "Yes. You can create custom Call Center Campaigns, build shareable Public Forms with System Fields (Campaigns, CRM Stages, Carriers, Amount, Date), and automatically route every form submission into your agents' Lead Sheet."
+      },
+      {
+        q: "Can we track Average Handle Time (AHT) and agent dispositions in real time?",
+        a: "Yes. Our Enterprise Reports & Call Center Analytics suite tracks real-time AHT, call volume, disposition breakdowns, and daily agent conversion leaderboards."
+      },
+      {
+        q: "How does BERAXIS AI Auto-Setup configure our call center workspace?",
+        a: "Simply type 'We run a 30-seat outbound sales call center' into our 1-Click Explain Your Business engine, and BERAXIS AI automatically provisions Call Center, CRM, Public Forms, Reports, Discuss, and Payroll in seconds."
+      }
+    ]
+  },
+
+  "hospitality-hotels": {
+    slug: "hospitality-hotels",
+    name: "Hospitality, Hotels, Resorts & Travel",
+    h1: "Hotel Management Software (PMS), Resort POS & Travel ERP",
+    tagline: "Room Reservations, Front-Desk Check-In, Housekeeping, Dining KDS & Accounting",
+    metaTitle: "Hotel Management Software (PMS), Resort POS & Hospitality ERP | BERAXIS AI",
+    metaDescription: "All-in-one Cloud PMS and ERP for hotels, resorts, and travel agencies. Manage room bookings, front-desk check-in, restaurant KDS POS, housekeeping, and GAAP accounting for $1/month.",
+    keywords: [
+      "hotel management software PMS",
+      "resort ERP and POS system",
+      "cloud hotel property management system",
+      "hospitality ERP software",
+      "hotel front desk and room booking software",
+      "travel agency CRM and invoicing ERP",
+      "free hotel management software",
+      "BERAXIS AI hospitality"
+    ],
+    themeColor: "from-amber-500 to-rose-600",
+    accentColor: "text-amber-400",
+    badge: "🏨 Hotels, Resorts & Travel",
+    painPoints: [
+      {
+        title: "Fragmented Front Desk PMS, Restaurant POS & Accounting",
+        desc: "When your room booking tool doesn't talk to your restaurant POS or back-office accounting ledger, guest folios have missing minibar/dining charges at checkout."
+      },
+      {
+        title: "Housekeeping Delays & Room Turnover Bottlenecks",
+        desc: "Relying on paper clipboards and walkie-talkies leaves front-desk staff guessing which rooms are clean, inspected, or out of order."
+      },
+      {
+        title: "High OTA Commissions & Per-Room Software Fees",
+        desc: "Legacy hotel PMS vendors charge steep per-room monthly fees plus extra add-ons for restaurant POS, banquets, and financial reporting."
+      }
+    ],
+    solutions: [
+      {
+        title: "Unified Guest Folio, Room Calendar & Front-Desk Check-In",
+        desc: "Manage room availability, group bookings, and VIP guest profiles while automatically posting restaurant, spa, and room-service charges to a single guest folio."
+      },
+      {
+        title: "Integrated Restaurant Table Map, KDS & Bar Touch POS",
+        desc: "Run hotel dining, poolside bars, and room service with interactive table layouts, instant Kitchen Display System (KDS) tickets, and room-charge billing."
+      },
+      {
+        title: "Live Housekeeping Dispatch & Multi-Property Accounting",
+        desc: "Track room cleaning statuses in real time and consolidate daily night-audit revenue into GAAP/IFRS double-entry ledgers across all hotel branches."
+      }
+    ],
+    keyFeatures: [
+      { title: "Interactive Room & Suite Calendar", desc: "Drag-and-drop reservations, seasonal rate tiers, and instant check-in/check-out folios." },
+      { title: "Restaurant KDS & Room-Charge POS", desc: "Post dining, cafe, and spa bills directly to the guest's room number in 1 tap." },
+      { title: "Housekeeping & Maintenance Board", desc: "Mobile room status updates (Dirty, Cleaning, Inspected) and maintenance work orders." },
+      { title: "Banquet, Event & Tour Package CRM", desc: "Manage corporate conferences, weddings, and travel itineraries with automated deposits." },
+      { title: "Night Audit & GAAP General Ledger", desc: "Automated daily revenue reconciliation across rooms, F&B, taxes, and multi-currency payments." },
+      { title: "1-Click AI Business Auto-Setup", desc: "Describe your hotel or resort in plain English and BERAXIS AI auto-configures all hospitality apps." }
+    ],
+    operationModes: [
+      { badge: "🏨 Hotel & Resort", name: "Full-Service PMS + POS Mode", desc: "Room reservations, front-desk folios, housekeeping dispatch, and integrated restaurant/bar KDS." },
+      { badge: "🏡 Boutique & Villas", name: "Self-Check-In & Concierge Mode", desc: "Online booking links, digital guest registration forms, and automated WhatsApp concierge." },
+      { badge: "✈️ Travel & Tours", name: "Itinerary & Agency CRM Mode", desc: "Tour package quoting, vendor voucher tracking, multi-currency billing, and B2B corporate leads." }
+    ],
+    departments: ["Front Desk & Guest Relations", "Housekeeping & Engineering", "Food, Beverage & Room Service", "Sales, Banquets & Tours", "Night Audit & Finance"],
+    roles: ["Hotel General Manager", "Front Office Manager", "Executive Housekeeper", "F&B / Restaurant Manager", "Night Auditor / Accountant"],
+    faqs: [
+      {
+        q: "Can restaurant and room-service POS bills be charged directly to a guest's room?",
+        a: "Yes. BERAXIS AI unifies your front-desk reservations, restaurant POS/KDS, and accounting ledger so all guest charges sync to one consolidated checkout invoice."
+      },
+      {
+        q: "Does it support multi-property hotel groups and travel agencies?",
+        a: "Yes. You can manage multiple hotel properties, resorts, or travel branches under one parent organization with consolidated financial statements."
+      },
+      {
+        q: "How fast can we set up BERAXIS AI for our hotel?",
+        a: "With our 1-Click 'Explain Your Business' engine, simply type 'We run a boutique hotel with a restaurant and spa' and BERAXIS AI automatically configures your PMS, POS, Inventory, CRM, and Accounting in 30 seconds."
+      }
+    ]
+  },
+
+  "agriculture-agritech": {
+    slug: "agriculture-agritech",
+    name: "Agriculture, Farming, Livestock & Solar/Energy",
+    h1: "Agriculture ERP, Farm Management & Solar Energy Project Software",
+    tagline: "Crop & Harvest Batch Tracking, Livestock Inventory, Agri-Supply Chain & Solar EPC Costing",
+    metaTitle: "Agriculture ERP, Farm Management & Solar Energy Software | BERAXIS AI",
+    metaDescription: "Modern Cloud ERP for agriculture, agribusiness, livestock farms, and solar/renewable energy contractors. Track crop yields, feed & fertilizer inventory, fleet maintenance, and GAAP accounting for $1/month.",
+    keywords: [
+      "agriculture ERP software",
+      "farm management and crop tracking ERP",
+      "agribusiness supply chain software",
+      "livestock and dairy farm ERP",
+      "solar EPC project management ERP",
+      "renewable energy contractor CRM",
+      "fertilizer and seed inventory software",
+      "BERAXIS AI agriculture"
+    ],
+    themeColor: "from-emerald-600 to-lime-600",
+    accentColor: "text-emerald-400",
+    badge: "🌾 Agriculture, Livestock & Solar EPC",
+    painPoints: [
+      {
+        title: "Untracked Input Costs Across Seeds, Fertilizer, Feed & Fuel",
+        desc: "Without batch-level inventory and field costing, farm operators cannot calculate true profit per acre, per harvest lot, or per livestock herd."
+      },
+      {
+        title: "Post-Harvest Spoilage & Cold-Chain Distribution Blindspots",
+        desc: "Managing perishable produce, grain silos, and wholesale buyer orders on paper leads to stock spoilage and delayed B2B invoicing."
+      },
+      {
+        title: "Complex Solar & Ag-Equipment Installation Costing",
+        desc: "Solar EPC contractors and agri-equipment dealers struggle to track serialized panels, inverter warranties, field crew installations, and milestone billing."
+      }
+    ],
+    solutions: [
+      {
+        title: "Field-to-Fork Batch Inventory & Harvest Yield Costing",
+        desc: "Track seeds, fertilizers, animal feed, and harvested produce across multiple farms, silos, and cold-storage warehouses with lot/expiry traceability."
+      },
+      {
+        title: "Solar EPC & Agri-Infrastructure Project WBS",
+        desc: "Manage renewable energy installations, irrigation projects, and serialized equipment BOMs with mobile field-crew timesheets and warranty helpdesk."
+      },
+      {
+        title: "Wholesale B2B Distribution & Automated Ledger Posting",
+        desc: "Sell directly to supermarkets, exporters, and commercial buyers with barcode dispatch, multi-currency invoicing, and 3-second AI supplier bill OCR."
+      }
+    ],
+    keyFeatures: [
+      { title: "Crop & Harvest Lot Traceability", desc: "Track batch numbers, moisture/quality grades, expiration dates, and silo storage locations." },
+      { title: "Feed, Seed & Fertilizer BOMs", desc: "Automate input consumption formulas and calculate exact cost-per-kilogram or cost-per-acre." },
+      { title: "Livestock & Herd Health Logs", desc: "Manage herd headcount, veterinary schedules, feed rations, and dairy/meat production yields." },
+      { title: "Solar EPC & Equipment Serial Tracking", desc: "Track solar panels, inverters, batteries, and tractor maintenance with warranty serial numbers." },
+      { title: "Wholesale B2B Buyer Leads Pool", desc: "Access 25M+ verified food distributors, supermarkets, and commercial solar prospects globally." },
+      { title: "Seasonal Labor Attendance & Payroll", desc: "Manage field workers, seasonal harvest crews, piece-rate payouts, and compliance records." }
+    ],
+    operationModes: [
+      { badge: "🌾 Crop & Produce", name: "Farm & Harvest Lot Mode", desc: "Input inventory (seed/fertilizer), harvest batch yields, silo storage, and wholesale distribution." },
+      { badge: "🐄 Livestock & Dairy", name: "Herd & Processing Mode", desc: "Feed BOMs, veterinary logs, daily milk/meat yield tracking, and cold-chain dispatch." },
+      { badge: "☀️ Solar & Energy EPC", name: "Renewable Project & Serial Mode", desc: "Site survey forms, solar BOM kits, serialized inverter warranties, and milestone invoicing." }
+    ],
+    departments: ["Farm & Field Operations", "Silo, Cold-Chain & Warehouse", "Solar / Equipment Engineering", "Wholesale B2B Sales & Export", "Agri-Finance & Seasonal HR"],
+    roles: ["Agribusiness Director", "Farm / Agronomy Manager", "Cold-Chain & Warehouse Lead", "Solar EPC Project Engineer", "Wholesale Export Sales Manager"],
+    faqs: [
+      {
+        q: "Can BERAXIS AI track both agricultural inputs (seeds, feed, fertilizer) and final harvest yields?",
+        a: "Yes. Our Multi-Warehouse Inventory and Manufacturing (BOM) modules track raw agricultural inputs per field or herd and calculate your exact unit cost per harvested batch."
+      },
+      {
+        q: "Does this archetype also support Solar EPC and renewable energy contractors?",
+        a: "Yes. The Agriculture & Solar/Energy archetype includes serialized inventory for panels/inverters, project WBS milestones, public site-survey intake forms, and field service dispatching."
+      },
+      {
+        q: "Can we auto-configure our farm or solar company in 1 click?",
+        a: "Yes. Use our 'Explain Your Business' auto-setup engine—just describe your farm, livestock operation, or solar EPC business, and BERAXIS AI provisions the exact modules automatically."
+      }
+    ]
   }
 };

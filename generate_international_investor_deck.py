@@ -88,7 +88,8 @@ def wrap_centered_slide(flowables, avail_w=720, avail_h=530):
 
 
 def generate_international_investor_deck():
-    pdf_path = os.path.join(BASE_DIR, "Beraxis_Investor_Pitch_Deck.pdf")
+    os.makedirs(os.path.join(BASE_DIR, "scratch"), exist_ok=True)
+    pdf_path = os.path.join(BASE_DIR, "scratch", "tmp_investor_deck.pdf")
     page_w, page_h = landscape(letter) # 792 x 612
     
     doc = BaseDocTemplate(
@@ -225,7 +226,7 @@ def generate_international_investor_deck():
     s1.append(Spacer(1, 8))
     s1.append(Paragraph(
         "Unifying <b>28 Enterprise Modules</b> (GAAP Accounting, CRM, Touch POS, Multi-Warehouse Inventory, HRMS &amp; MRP),<br/>"
-        "<b>12 Turnkey Industry Archetypes</b>, <b>25M+ Verified Global B2B Leads</b>, and a <b>Streaming Duplex AI Voice Pilot</b>.",
+        "<b>15 Turnkey Industry Archetypes & 1-Click AI Auto-Setup</b>, <b>25M+ Verified Global B2B Leads</b>, and a <b>Streaming Duplex AI Voice Pilot</b>.",
         ParagraphStyle('CoverDesc', fontName='Helvetica', fontSize=9.5, leading=14, textColor=colors.HexColor('#CBD5E1'), alignment=1)
     ))
     s1.append(Spacer(1, 18))
@@ -233,7 +234,7 @@ def generate_international_investor_deck():
     pills_row_1 = [
         [
             Paragraph("<font size='15' color='#34D399'><b>100+ Users</b></font><br/><font size='7.5' color='#94A3B8'>Organic Launch Milestone</font>", ParagraphStyle('P1', alignment=1)),
-            Paragraph("<font size='15' color='#38BDF8'><b>28 Modules</b></font><br/><font size='7.5' color='#94A3B8'>+ 12 Industry Blueprints</font>", ParagraphStyle('P2', alignment=1)),
+            Paragraph("<font size='15' color='#38BDF8'><b>28 Modules</b></font><br/><font size='7.5' color='#94A3B8'>+ 15 Industry Blueprints</font>", ParagraphStyle('P2', alignment=1)),
             Paragraph("<font size='15' color='#C084FC'><b>25M+ Leads</b></font><br/><font size='7.5' color='#94A3B8'>Built-In B2B Directory</font>", ParagraphStyle('P3', alignment=1)),
             Paragraph("<font size='15' color='#FBBF24'><b>26.6x</b></font><br/><font size='7.5' color='#94A3B8'>LTV:CAC (84% Margin)</font>", ParagraphStyle('P4', alignment=1)),
         ]
@@ -335,8 +336,8 @@ def generate_international_investor_deck():
         Paragraph("<b>4 Core Technological Breakthroughs:</b>", ParagraphStyle('SolH', parent=card_title_cyan, alignment=0)),
         Spacer(1, 4),
         Paragraph(
-            "<b>1. 30-Second Industry Blueprints (Zero Consultants):</b><br/>"
-            "Select from 12 global industry archetypes. BERAXIS AI auto-configures your Chart of Accounts, tax rules, POS layouts, and role permissions in 1 click.<br/><br/>"
+            "<b>1. 1-Click 'Explain Your Business' AI Auto-Setup (15 Industries):</b><br/>"
+            "Select from 15 global industry archetypes with our 1-Click 'Explain Your Business' Auto-Setup Engine. BERAXIS AI auto-configures your Chart of Accounts, tax rules, POS layouts, and role permissions in 1 click.<br/><br/>"
             "<b>2. 3.1-Second AI Receipt & Invoice OCR:</b><br/>"
             "Drop any supplier PDF or paper receipt into the workspace; AI extracts line items, tax codes, and posts balanced double-entry journal entries automatically.<br/><br/>"
             "<b>3. Streaming Duplex AI Voice Pilot:</b><br/>"
@@ -427,7 +428,7 @@ def generate_international_investor_deck():
     # SLIDE 5: Product Scope — 28 Enterprise Modules & Live Internal Views
     # =========================================================================
     s5 = [
-        Paragraph("Unmatched Product Depth: 28 Unified Apps & 12 Industry Blueprints", title_style),
+        Paragraph("Unmatched Product Depth: 28 Unified Apps & 15 Industry Blueprints", title_style),
         Paragraph("Live inside the BERAXIS AI system: Unified Apps Cockpit & Real-Time Executive Financial Command Center", subtitle_style)
     ]
     apps_img_path = os.path.join(DECK_ASSETS, "feature_showcase_2.jpg")
@@ -457,7 +458,7 @@ def generate_international_investor_deck():
             Paragraph("<b>Financial Core</b><br/><font size='7.8' color='#CBD5E1'>GAAP Ledger, Trial Balance, P&amp;L, 3.1s AI OCR, Multi-Currency</font>", ParagraphStyle('SP1', fontName='Helvetica', fontSize=8.5, leading=11.5, textColor=colors.HexColor('#38BDF8'), alignment=1)),
             Paragraph("<b>CRM, POS &amp; Leads</b><br/><font size='7.8' color='#CBD5E1'>Visual Kanban CRM, 25M+ B2B Leads, Touch POS, Split-Bills</font>", ParagraphStyle('SP2', fontName='Helvetica', fontSize=8.5, leading=11.5, textColor=colors.HexColor('#34D399'), alignment=1)),
             Paragraph("<b>Supply Chain &amp; HR</b><br/><font size='7.8' color='#CBD5E1'>Multi-Warehouse Stock, MRP/BOM, HRMS, 1-Click Payroll, E-Sign</font>", ParagraphStyle('SP3', fontName='Helvetica', fontSize=8.5, leading=11.5, textColor=colors.HexColor('#C084FC'), alignment=1)),
-            Paragraph("<b>12 Industry Engines</b><br/><font size='7.8' color='#CBD5E1'>Padel Clubs, Clinics, Dining, Garages, Real Estate, Retail, NGOs</font>", ParagraphStyle('SP4', fontName='Helvetica', fontSize=8.5, leading=11.5, textColor=colors.HexColor('#FBBF24'), alignment=1)),
+            Paragraph("<b>15 Industry Engines</b><br/><font size='7.8' color='#CBD5E1'>Padel Clubs, Clinics, Dining, Garages, Real Estate, Retail, NGOs</font>", ParagraphStyle('SP4', fontName='Helvetica', fontSize=8.5, leading=11.5, textColor=colors.HexColor('#FBBF24'), alignment=1)),
         ]
     ]
     t_spills = Table(scope_pills, colWidths=[178, 178, 178, 178], hAlign='CENTER')
@@ -788,14 +789,18 @@ def generate_international_investor_deck():
 
     # Copy to all public destinations so links work everywhere
     for target in [
+        os.path.join(BASE_DIR, "Beraxis_Investor_Pitch_Deck.pdf"),
         os.path.join(BASE_DIR, "Beraxis_Growth_and_Financial_Pitch_Deck.pdf"),
         os.path.join(PUBLIC_DIR, "Beraxis_Investor_Pitch_Deck.pdf"),
         os.path.join(PUBLIC_DIR, "Beraxis_Growth_and_Financial_Pitch_Deck.pdf"),
         os.path.join(FRONTEND_PUBLIC_DIR, "Beraxis_Investor_Pitch_Deck.pdf"),
         os.path.join(FRONTEND_PUBLIC_DIR, "Beraxis_Growth_and_Financial_Pitch_Deck.pdf"),
     ]:
-        shutil.copy2(pdf_path, target)
-    print(f"Successfully generated 12-slide Centered International Investor Pitch Deck PDF: {pdf_path}")
+        try:
+            shutil.copy2(pdf_path, target)
+        except Exception as e:
+            print(f"Note: could not overwrite {target} (likely open in viewer): {e}")
+    print(f"Successfully generated 12-slide Centered International Investor Pitch Deck PDF!")
 
 if __name__ == "__main__":
     generate_international_investor_deck()

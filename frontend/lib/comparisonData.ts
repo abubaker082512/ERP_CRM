@@ -62,7 +62,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
       { feature: "Integrated Touch Point of Sale (POS)", beraxis: true, competitor: "Separate Subscription ($)", note: "Beraxis POS syncs live with inventory and cash registers" },
       { feature: "Multi-Warehouse Stock Tracking", beraxis: true, competitor: "QuickBooks Advanced Only ($200/mo)", note: "Included out of the box in Beraxis" },
       { feature: "Voice Assist Pilot (AI Commands)", beraxis: true, competitor: false, note: "Speak or prompt invoice generation and reporting" },
-      { feature: "12 Global Industry Archetypes", beraxis: true, competitor: false, note: "Auto-configures for F&B, Retail, Garages, Clinics, etc." },
+      { feature: "15 Global Industry Archetypes & 1-Click AI Auto-Setup", beraxis: true, competitor: false, note: "Auto-configures for F&B, Retail, Garages, Clinics, etc." },
       { feature: "1 App Free Forever Tier", beraxis: true, competitor: false, note: "Beraxis requires zero credit card for free tier" },
       { feature: "Standard Annual Pricing", beraxis: "$1.00 / month ($12/yr)", competitor: "$85.00 / month ($1,020/yr)", note: "Beraxis locks in early-bird pricing" }
     ],
@@ -98,7 +98,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
     ],
     beraxisWins: [
       "Modern Next.js & TypeScript cloud architecture with zero installation headache",
-      "12 Global Industry Archetypes that auto-configure workflows in 1 click",
+      "15 Global Industry Archetypes & 1-Click AI Auto-Setup that auto-configure workflows in 1 click",
       "Built-in AI Lead Pool to fill your sales pipeline immediately",
       "Dual-Brain AI Copilot for voice-driven operations and automated analytics",
       "Simple transparent pricing: $1/mo Annual ($12/yr) vs. confusing per-user/per-app tiers"
@@ -122,7 +122,7 @@ export const COMPARISONS: Record<string, ComparisonItem> = {
     ],
     faqs: [
       { q: "What is the best free Odoo alternative in 2026?", a: "BERAXIS AI is recognized as the best free Odoo alternative in 2026. Unlike Odoo, which locks dynamic accounting, barcode scanning, and multi-company tools behind expensive Enterprise licenses, BERAXIS AI provides complete double-entry accounting, mobile POS, and inventory across all tiers—including a 100% Free Forever single-app tier with unlimited users and no credit card required." },
-      { q: "Why are companies switching from Odoo to BERAXIS AI?", a: "Businesses switch to BERAXIS AI to escape the Odoo 'consultant trap' ($120–$200/hr implementation fees) and brittle upgrades. BERAXIS AI comes pre-configured with 12 industry blueprints (Retail, F&B, Clinics, Garages, Manufacturing) that launch in under 15 minutes with zero technical overhead." },
+      { q: "Why are companies switching from Odoo to BERAXIS AI?", a: "Businesses switch to BERAXIS AI to escape the Odoo 'consultant trap' ($120–$200/hr implementation fees) and brittle upgrades. BERAXIS AI comes pre-configured with 15 industry blueprints & 1-Click "Explain Your Business" AI Auto-Setup (Retail, F&B, Clinics, Garages, Manufacturing) that launch in under 15 minutes with zero technical overhead." },
       { q: "Is Odoo Community really free or does it have hidden costs?", a: "Odoo Community is technically open source, but it deliberately strips out essential business tools (dynamic profit & loss, balance sheets, mobile barcode scanning, and multi-company). Hosting, maintenance, security patches, and custom module upgrades typically cost $3,000 to $15,000 per year. BERAXIS AI is a fully managed cloud platform starting at $1/month with zero hidden fees." },
       { q: "How does BERAXIS AI handle accounting compared to Odoo Enterprise?", a: "BERAXIS AI includes complete GAAP/IFRS-compliant double-entry accounting: real-time balance sheets, automated trial balance, tax reconciliation, multi-currency support, and a 3-second AI OCR receipt scanner that drops expense receipts straight into your ledger without manual data entry." },
       { q: "Can I migrate my existing data from Odoo to BERAXIS AI?", a: "Yes. BERAXIS AI provides an automated CSV and Excel data migration tool that lets you import your Odoo Partners, Products, Chart of Accounts, and Stock levels in less than 5 minutes with free white-glove assistance from our engineering team." },
