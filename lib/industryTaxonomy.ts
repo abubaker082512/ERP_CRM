@@ -74,6 +74,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/timesheets",
       "/attendances",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -117,7 +118,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/crm/leads-pool",
       "/contacts",
       "/employees",
-      "/attendances"
+      "/attendances",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "Barcode Label Hub", href: "/barcode", icon: "Barcode" },
@@ -160,7 +162,9 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/payroll",
       "/meet",
-      "/sign"
+      "/sign",
+      "/forms",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "Project Timesheets", href: "/timesheets", icon: "Clock" },
@@ -199,6 +203,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/attendances",
       "/barcode",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -237,6 +242,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/planning",
       "/documents",
+      "/forms",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -275,7 +282,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/crm",
       "/crm/leads-pool",
       "/employees",
-      "/timesheets"
+      "/timesheets",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "Vehicle Job Cards", href: "/automotive", icon: "Wrench" },
@@ -313,7 +321,9 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/sign",
       "/contacts",
       "/employees",
-      "/helpdesk"
+      "/helpdesk",
+      "/forms",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "Property & Lease Hub", href: "/real-estate", icon: "Building" },
@@ -350,6 +360,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/surveys",
       "/knowledge",
+      "/forms",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -387,7 +399,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/crm/leads-pool",
       "/contacts",
       "/employees",
-      "/barcode"
+      "/barcode",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "Warehouse Operations", href: "/inventory/operations", icon: "Package" },
@@ -424,6 +437,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/team",
       "/employees",
       "/sign",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -467,6 +481,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/planning",
       "/sign",
+      "/forms",
+      "/reports",
       "/crm/leads-pool"
     ],
     specializedRoutes: [
@@ -510,7 +526,9 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
       "/employees",
       "/surveys",
       "/sign",
-      "/calendar"
+      "/calendar",
+      "/forms",
+      "/reports"
     ],
     specializedRoutes: [
       { name: "NGOs & Grants Hub", href: "/ngos", icon: "HeartHandshake" },

@@ -124,6 +124,7 @@ const allApps = [
     { name: "Attendances", icon: UserCheck, color: "bg-[#f97316]", href: "/attendances" },
     { name: "Recruitment", icon: Target, color: "bg-[#0d9488]", href: "/recruitment" },
     { name: "Team", icon: Users, color: "bg-[#9333ea]", href: "/team" },
+    { name: "Approvals", icon: CheckSquare, color: "bg-amber-600", href: "/approvals" },
 
     // Specialized Subsystems
     { name: "Sign", icon: PenTool, color: "bg-[#06b6d4]", href: "/sign" },
@@ -1049,10 +1050,10 @@ export default function AppsDashboardPage() {
                             {displayedApps.filter((app) => {
                                 if (appSearch && !app.name.toLowerCase().includes(appSearch.toLowerCase())) return false;
                                 if (appCategory === "all") return true;
-                                if (appCategory === "finance") return ["/dashboard", "/accounting", "/sales", "/purchase", "/pos", "/reports"].some(p => app.href.startsWith(p));
-                                if (appCategory === "crm") return ["/dashboard", "/crm", "/call-center", "/forms", "/contacts", "/discuss", "/calendar", "/reports"].some(p => app.href.startsWith(p));
-                                if (appCategory === "ops") return ["/dashboard", "/inventory", "/barcode", "/manufacturing", "/employees", "/payroll", "/project", "/helpdesk", "/reports"].some(p => app.href.startsWith(p));
-                                if (appCategory === "office") return ["/dashboard", "/documents", "/spreadsheets", "/slides", "/meet", "/knowledge", "/sign", "/todo"].some(p => app.href.startsWith(p));
+                                if (appCategory === "finance") return ["/dashboard", "/accounting", "/sales", "/purchase", "/pos", "/shop", "/ngos", "/reports"].some(p => app.href.startsWith(p));
+                                if (appCategory === "crm") return ["/dashboard", "/crm", "/call-center", "/forms", "/contacts", "/discuss", "/calendar", "/website", "/surveys", "/reports"].some(p => app.href.startsWith(p));
+                                if (appCategory === "ops") return ["/dashboard", "/inventory", "/barcode", "/manufacturing", "/employees", "/payroll", "/attendances", "/recruitment", "/team", "/approvals", "/project", "/timesheets", "/planning", "/helpdesk", "/automotive", "/real-estate", "/education", "/appointments", "/club", "/migration", "/reports"].some(p => app.href.startsWith(p));
+                                if (appCategory === "office") return ["/dashboard", "/documents", "/spreadsheets", "/slides", "/meet", "/knowledge", "/sign", "/todo", "/calendar", "/discuss"].some(p => app.href.startsWith(p));
                                 return true;
                             }).map(app => {
                                 const IconComponent = app.icon;

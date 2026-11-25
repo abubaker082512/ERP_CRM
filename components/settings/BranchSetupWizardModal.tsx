@@ -58,6 +58,13 @@ const ICON_MAP: Record<string, any> = {
 
 // All available 30+ Enterprise Modules
 const ALL_SYSTEM_MODULES = [
+  { name: "Enterprise Reports & BI Suite", href: "/reports", category: "Analytics & BI", icon: Layers, color: "bg-purple-700" },
+  { name: "Call Center, Dialer & Campaigns", href: "/call-center", category: "Sales & CRM", icon: Briefcase, color: "bg-sky-600" },
+  { name: "Public Lead & Intake Forms", href: "/forms", category: "Sales & CRM", icon: Layers, color: "bg-violet-600" },
+  { name: "Team, Seats & Org Hierarchy", href: "/team", category: "Human Resources", icon: Briefcase, color: "bg-purple-600" },
+  { name: "Workflow Approvals Center", href: "/approvals", category: "Operations", icon: CheckCircle2, color: "bg-amber-600" },
+  { name: "Website Builder", href: "/website", category: "Commerce", icon: Globe, color: "bg-blue-600" },
+  { name: "eCommerce Storefront", href: "/shop", category: "Commerce", icon: ShoppingBag, color: "bg-emerald-600" },
   { name: "1-Click Data Migration Hub", href: "/migration", category: "Operations", icon: UploadCloud, color: "bg-cyan-600" },
   { name: "Global Leads Pool (Verified Directory)", href: "/crm/leads-pool", category: "Sales & CRM", icon: Globe, color: "bg-cyan-500" },
   { name: "NGOs, Grants & Humanitarian Hub", href: "/ngos", category: "NGOs & Non-Profit", icon: HeartHandshake, color: "bg-rose-600" },

@@ -16,6 +16,7 @@ import DonationMilestoneToast from '../common/DonationMilestoneToast';
 import { BranchProvider, useBranchContext } from '@/lib/branchContext';
 
 const navItems = [
+    { name: 'All Apps', icon: Sparkles, href: '/apps' },
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
     { name: 'CRM', icon: Users, href: '/crm' },
     { name: 'Sales', icon: ShoppingCart, href: '/sales' },

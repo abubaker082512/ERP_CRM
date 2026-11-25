@@ -777,6 +777,11 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
 
     // Built-in Office Automation & Workspace Productivity apps are always available on non-free plans
     const CORE_OFFICE_MODULES = [
+      "/dashboard",
+      "/reports",
+      "/forms",
+      "/team",
+      "/approvals",
       "/spreadsheets",
       "/slides",
       "/documents",
@@ -792,7 +797,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
       return true;
     }
 
-    return activeBranch.enabledModules.includes(moduleHref);
+    return activeBranch.enabledModules.some(m => moduleHref === m || moduleHref.startsWith(`${m}/`));
   };
 
   const getEntityStorageKey = (resourceType: string): string => {
