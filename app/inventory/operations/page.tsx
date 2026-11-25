@@ -1,133 +1,150 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
-import { Package, TruckIcon, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { useBranchContext } from "@/lib/branchContext";
+import { Package, TruckIcon, Clock, CheckCircle2, Plus, X, Trash2 } from "lucide-react";
 
 const MENU_ITEMS = [
-    { name: "Products", href: "/inventory" },
-    { name: "Operations", href: "/inventory/operations" },
-    { name: "Warehouses", href: "/inventory/warehouses" },
-    { name: "Reporting", href: "/inventory/reporting" },
-    { name: "Configuration", href: "/inventory/configuration" },
+  { name: "Products", href: "/inventory" },
+  { name: "Operations", href: "/inventory/operations" },
+  { name: "Warehouses", href: "/inventory/warehouses" },
+  { name: "Reporting", href: "/inventory/reporting" },
+  { name: "Configuration", href: "/inventory/configuration" },
 ];
 
 type Operation = {
-    id: string;
-    type: "receipt" | "delivery" | "transfer";
-    product: string;
-    quantity: number;
-    status: "draft" | "in_progress" | "done";
-    date: string;
+  id: string;
+  type: "receipt" | "delivery" | "transfer";
+  product: string;
+  quantity: number;
+  status: "draft" | "in_progress" | "done";
+  date: string;
 };
 
-const mockOperations: Operation[] = [
-    { id: "OP001", type: "receipt", product: "Product A", quantity: 100, status: "done", date: "2025-12-01" },
-    { id: "OP002", type: "delivery", product: "Product B", quantity: 50, status: "in_progress", date: "2025-12-02" },
-    { id: "OP003", type: "transfer", product: "Product C", quantity: 25, status: "draft", date: "2025-12-03" },
+const DEFAULT_OPS: Operation[] = [
+  { id: "WH-IN-001", type: "receipt", product: "Inbound Shipment Batch", quantity: 100, status: "done", date: new Date().toISOString().slice(0, 10) },
 ];
 
 export default function InventoryOperationsPage() {
-    return (
-        <div className="flex flex-col h-screen bg-[#0F172A]">
-            <StandardModuleHeader
-                moduleName="Inventory"
-                moduleIcon={<Package size={20} />}
-                menuItems={MENU_ITEMS}
-                searchPlaceholder="Search operations..."
-            />
+  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const [operations, setOperations] = useState<Operation[]>(DEFAULT_OPS);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [form, setForm] = useState({ type: "receipt" as Operation["type"], product: "", quantity: 25 });
 
-            <div className="flex-1 overflow-auto p-6">
-                <div className="mb-6">
-                    <h2 className="text-2xl font-semibold text-gray-200">Inventory Operations</h2>
-                    <p className="text-sm text-gray-400 mt-1">{mockOperations.length} operations</p>
-                </div>
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(getEntityStorageKey("inventory_operations"));
+      if (saved) setOperations(JSON.parse(saved));
+    } catch {}
+  }, [activeBranch?.id]);
 
-                {/* Key Metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-[#1E293B] rounded-lg p-4 border border-gray-700">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-gray-400">Receipts</span>
-                            <TruckIcon size={16} className="text-blue-400" />
-                        </div>
-                        <div className="text-2xl font-bold text-white">
-                            {mockOperations.filter(o => o.type === 'receipt').length}
-                        </div>
-                    </div>
-                    <div className="bg-[#1E293B] rounded-lg p-4 border border-gray-700">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-gray-400">Deliveries</span>
-                            <Package size={16} className="text-green-400" />
-                        </div>
-                        <div className="text-2xl font-bold text-white">
-                            {mockOperations.filter(o => o.type === 'delivery').length}
-                        </div>
-                    </div>
-                    <div className="bg-[#1E293B] rounded-lg p-4 border border-gray-700">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-gray-400">Transfers</span>
-                            <TruckIcon size={16} className="text-purple-400" />
-                        </div>
-                        <div className="text-2xl font-bold text-white">
-                            {mockOperations.filter(o => o.type === 'transfer').length}
-                        </div>
-                    </div>
-                    <div className="bg-[#1E293B] rounded-lg p-4 border border-gray-700">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-gray-400">In Progress</span>
-                            <Clock size={16} className="text-yellow-400" />
-                        </div>
-                        <div className="text-2xl font-bold text-white">
-                            {mockOperations.filter(o => o.status === 'in_progress').length}
-                        </div>
-                    </div>
-                </div>
+  const persist = (next: Operation[]) => {
+    setOperations(next);
+    try { localStorage.setItem(getEntityStorageKey("inventory_operations"), JSON.stringify(next)); } catch {}
+  };
 
-                {/* Operations List */}
-                <div className="bg-[#1E293B] rounded-lg border border-gray-700 overflow-hidden">
-                    <table className="w-full">
-                        <thead className="bg-[#0F172A] border-b border-gray-700">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Operation #</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Type</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Product</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Quantity</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Status</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Date</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {mockOperations.map(operation => (
-                                <tr key={operation.id} className="border-b border-gray-700 hover:bg-[#1E293B] transition-colors">
-                                    <td className="px-4 py-3 font-medium text-white">{operation.id}</td>
-                                    <td className="px-4 py-3">
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${operation.type === 'receipt' ? 'bg-blue-500/20 text-blue-400' :
-                                                operation.type === 'delivery' ? 'bg-green-500/20 text-green-400' :
-                                                    'bg-purple-500/20 text-purple-400'
-                                            }`}>
-                                            {operation.type}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-300">{operation.product}</td>
-                                    <td className="px-4 py-3 text-gray-300">{operation.quantity}</td>
-                                    <td className="px-4 py-3">
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${operation.status === 'done' ? 'bg-green-500/20 text-green-400' :
-                                                operation.status === 'in_progress' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                    'bg-gray-500/20 text-gray-400'
-                                            }`}>
-                                            {operation.status.replace('_', ' ')}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-400">{new Date(operation.date).toLocaleDateString()}</td>
-                                    <td className="px-4 py-3">
-                                        <button className="text-blue-400 hover:text-blue-300 text-sm">View</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.product.trim()) return;
+    const prefix = form.type === "receipt" ? "WH-IN" : form.type === "delivery" ? "WH-OUT" : "WH-INT";
+    const item: Operation = {
+      id: `${prefix}-${String(operations.length + 1).padStart(3, "0")}`,
+      type: form.type,
+      product: form.product.trim(),
+      quantity: Math.max(1, Number(form.quantity) || 1),
+      status: "in_progress",
+      date: new Date().toISOString().slice(0, 10),
+    };
+    persist([item, ...operations]);
+    setForm({ type: "receipt", product: "", quantity: 25 });
+    setIsModalOpen(false);
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-[#0F172A] text-white">
+      <StandardModuleHeader
+        moduleName="Inventory"
+        moduleIcon={<Package size={20} />}
+        menuItems={MENU_ITEMS}
+        searchPlaceholder="Search receipts, deliveries, transfers..."
+        onNewClick={() => setIsModalOpen(true)}
+        newButtonText="+ New Operation"
+      />
+
+      <div className="flex-1 overflow-auto p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-200">Receipts, Deliveries &amp; Internal Transfers</h2>
+            <p className="text-sm text-gray-400 mt-1">{operations.length} warehouse movement(s)</p>
+          </div>
+          <button onClick={() => setIsModalOpen(true)} className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+            <Plus size={15} /> + New Operation
+          </button>
         </div>
-    );
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-[#1E293B] rounded-xl p-4 border border-gray-700"><div className="text-xs text-gray-400">Receipts</div><div className="text-2xl font-bold text-blue-400 mt-1">{operations.filter((o) => o.type === "receipt").length}</div></div>
+          <div className="bg-[#1E293B] rounded-xl p-4 border border-gray-700"><div className="text-xs text-gray-400">Deliveries (Pick/Pack/Ship)</div><div className="text-2xl font-bold text-emerald-400 mt-1">{operations.filter((o) => o.type === "delivery").length}</div></div>
+          <div className="bg-[#1E293B] rounded-xl p-4 border border-gray-700"><div className="text-xs text-gray-400">Internal Transfers</div><div className="text-2xl font-bold text-purple-400 mt-1">{operations.filter((o) => o.type === "transfer").length}</div></div>
+          <div className="bg-[#1E293B] rounded-xl p-4 border border-gray-700"><div className="text-xs text-gray-400">In Progress</div><div className="text-2xl font-bold text-amber-400 mt-1">{operations.filter((o) => o.status === "in_progress").length}</div></div>
+        </div>
+
+        <div className="bg-[#1E293B] rounded-xl border border-gray-700 overflow-hidden">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-[#0F172A] border-b border-gray-700 text-xs uppercase text-gray-400">
+              <tr>
+                <th className="px-4 py-3">Reference</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Product / Batch</th>
+                <th className="px-4 py-3">Qty</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-700/70">
+              {operations.map((op) => (
+                <tr key={op.id} className="hover:bg-white/5">
+                  <td className="px-4 py-3 font-mono text-xs text-purple-300">{op.id}</td>
+                  <td className="px-4 py-3 uppercase text-xs font-bold text-cyan-300">{op.type}</td>
+                  <td className="px-4 py-3 font-semibold text-white">{op.product}</td>
+                  <td className="px-4 py-3 text-gray-200">{op.quantity}</td>
+                  <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${op.status === "done" ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"}`}>{op.status}</span></td>
+                  <td className="px-4 py-3 text-gray-400">{op.date}</td>
+                  <td className="px-4 py-3 text-right space-x-2">
+                    {op.status !== "done" && (
+                      <button onClick={() => persist(operations.map((x) => (x.id === op.id ? { ...x, status: "done" } : x)))} className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold inline-flex items-center gap-1 cursor-pointer"><CheckCircle2 size={12} /> Validate</button>
+                    )}
+                    <button onClick={() => persist(operations.filter((x) => x.id !== op.id))} className="text-rose-400 p-1 cursor-pointer"><Trash2 size={14} /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#141A28] border border-gray-700 rounded-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">New Warehouse Operation</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white cursor-pointer"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleCreate} className="space-y-3 text-xs">
+              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as any })} className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2 text-white">
+                <option value="receipt">Inbound Goods Receipt (GRN)</option>
+                <option value="delivery">Outbound Delivery (Pick / Pack / Ship)</option>
+                <option value="transfer">Internal Warehouse Transfer</option>
+              </select>
+              <input required value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} placeholder="Product / SKU *" className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2 text-white" />
+              <input type="number" min={1} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} placeholder="Quantity" className="w-full bg-[#0F172A] border border-gray-700 rounded-xl px-3 py-2 text-white" />
+              <button type="submit" className="w-full bg-purple-600 hover:bg-purple-500 text-white py-2.5 rounded-xl font-bold cursor-pointer">Create Operation</button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

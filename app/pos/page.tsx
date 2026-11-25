@@ -1,9 +1,75 @@
 "use client";
-import { fetchAPI } from "@/lib/api";
+
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import AppHeader from "@/components/layout/AppHeader";
-import { Calculator, ShoppingCart, DollarSign, X, Check, Search, CreditCard, Clock, Plus, Loader2, Printer, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Calculator,
+  ShoppingCart,
+  DollarSign,
+  X,
+  Check,
+  Search,
+  CreditCard,
+  Plus,
+  Loader2,
+  Printer,
+  CheckCircle2,
+  XCircle,
+  UtensilsCrossed,
+  ShoppingBag,
+  Flame,
+  LayoutGrid,
+  BookOpen,
+  Barcode,
+  Sparkles,
+} from "lucide-react";
 import { useBranchContext } from "@/lib/branchContext";
+
+type PosIndustryMode =
+  | "food_beverage"
+  | "retail_supermarket"
+  | "healthcare_wellness"
+  | "automotive_workshop"
+  | "fitness_sports_club";
+
+const INDUSTRY_STARTER_CATALOGS: Record<
+  PosIndustryMode,
+  { name: string; list_price: number; cost_price: number; sku: string; category: string; icon: string }[]
+> = {
+  food_beverage: [
+    { name: "Artisan Smash Burger", list_price: 14.5, cost_price: 4.8, sku: "FB-101", category: "Mains", icon: "🍔" },
+    { name: "Truffle Margherita Pizza", list_price: 18.0, cost_price: 5.5, sku: "FB-102", category: "Mains", icon: "🍕" },
+    { name: "Spanish Iced Latte", list_price: 5.5, cost_price: 1.4, sku: "FB-103", category: "Beverages", icon: "☕" },
+    { name: "Crispy Fries & Aioli", list_price: 6.0, cost_price: 1.5, sku: "FB-104", category: "Sides", icon: "🍟" },
+    { name: "Pistachio San Sebastian", list_price: 9.5, cost_price: 2.9, sku: "FB-105", category: "Desserts", icon: "🍰" },
+  ],
+  retail_supermarket: [
+    { name: "Organic Whole Milk 1L", list_price: 3.99, cost_price: 2.4, sku: "8901001", category: "Dairy", icon: "🥛" },
+    { name: "Artisan Sourdough Loaf", list_price: 4.5, cost_price: 1.8, sku: "8901002", category: "Bakery", icon: "🍞" },
+    { name: "Extra Virgin Olive Oil 1L", list_price: 14.99, cost_price: 9.2, sku: "8901003", category: "Pantry", icon: "🫒" },
+    { name: "Arabica Coffee Beans 500g", list_price: 16.5, cost_price: 10.0, sku: "8901004", category: "Beverages", icon: "🫘" },
+    { name: "Fresh Avocados (Pack 4)", list_price: 5.99, cost_price: 3.5, sku: "8901005", category: "Produce", icon: "🥑" },
+  ],
+  healthcare_wellness: [
+    { name: "General Consultation", list_price: 75.0, cost_price: 20.0, sku: "HC-201", category: "Consultation", icon: "🩺" },
+    { name: "Ultrasonic Dental Scaling", list_price: 120.0, cost_price: 35.0, sku: "HC-202", category: "Dental", icon: "🦷" },
+    { name: "Deep Tissue Therapy 60m", list_price: 95.0, cost_price: 30.0, sku: "HC-203", category: "Therapy", icon: "💆" },
+    { name: "Vitamin IV Hydration Drip", list_price: 150.0, cost_price: 45.0, sku: "HC-204", category: "Wellness", icon: "💧" },
+  ],
+  automotive_workshop: [
+    { name: "Full Synthetic Oil Change", list_price: 89.0, cost_price: 38.0, sku: "AW-301", category: "Service", icon: "🛢️" },
+    { name: "Ceramic Brake Pads Set", list_price: 145.0, cost_price: 72.0, sku: "AW-302", category: "Parts", icon: "🛞" },
+    { name: "3D Laser Wheel Alignment", list_price: 65.0, cost_price: 15.0, sku: "AW-303", category: "Service", icon: "🔧" },
+    { name: "OBD-II Engine Diagnostics", list_price: 45.0, cost_price: 10.0, sku: "AW-304", category: "Diagnostics", icon: "💻" },
+  ],
+  fitness_sports_club: [
+    { name: "Padel Court Booking (90m)", list_price: 48.0, cost_price: 10.0, sku: "SP-401", category: "Court", icon: "🎾" },
+    { name: "Carbon Padel Racket Rental", list_price: 8.0, cost_price: 1.0, sku: "SP-402", category: "Rental", icon: "🏓" },
+    { name: "Pro Padel Balls Tube (3x)", list_price: 9.5, cost_price: 4.5, sku: "SP-403", category: "Pro Shop", icon: "🟡" },
+    { name: "Whey Protein Shake", list_price: 6.5, cost_price: 2.2, sku: "SP-404", category: "Cafe", icon: "🥤" },
+  ],
+};
 
 export default function POSPage() {
   const { activeBranch, getEntityStorageKey } = useBranchContext();
@@ -12,31 +78,74 @@ export default function POSPage() {
   const [posTransactions, setPosTransactions] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(true);
   const [checkoutMode, setCheckoutMode] = useState(false);
   const [amountPaid, setAmountPaid] = useState("");
   const [terminalApproved, setTerminalApproved] = useState<"APPROVED" | "NOT APPROVED">("APPROVED");
+  const [paymentMethod, setPaymentMethod] = useState<"Cash" | "Card / Terminal" | "QR / Wallet" | "Split">("Card / Terminal");
+  const [discountPct, setDiscountPct] = useState(0);
+  const [taxPct, setTaxPct] = useState(0);
   const [processing, setProcessing] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+
+  // Industry-Adaptive Mode (Restaurant vs Supermarket vs Clinic vs Auto vs Club)
+  const [posMode, setPosMode] = useState<PosIndustryMode>("retail_supermarket");
+  // Restaurant F&B Controls
+  const [orderType, setOrderType] = useState<"Dine-In" | "Takeaway" | "Delivery">("Dine-In");
+  const [tableNumber, setTableNumber] = useState("Table 1");
+  const [kitchenNotes, setKitchenNotes] = useState("");
 
   // Receipt Modal State
   const [receiptOrder, setReceiptOrder] = useState<any>(null);
+  const [receiptHeader, setReceiptHeader] = useState("Welcome to Our Store");
+  const [receiptFooter, setReceiptFooter] = useState("Thank you for your business!");
+  const [receiptPaperSize, setReceiptPaperSize] = useState("80mm");
+
+  // New Product Modal States
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [newProdName, setNewProdName] = useState("");
+  const [newProdPrice, setNewProdPrice] = useState("");
+  const [newProdCost, setNewProdCost] = useState("");
+  const [newProdSku, setNewProdSku] = useState("");
+  const [newProdCategory, setNewProdCategory] = useState("General");
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState("");
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(""), 3500);
+  };
 
   const getCurrencySymbol = () => {
     if (typeof window !== "undefined") {
       const keyPrefix = getEntityStorageKey("settings");
       const cur = localStorage.getItem(`${keyPrefix}_currency`) || activeBranch?.currency || "USD";
       const symbols: Record<string, string> = {
-        USD: "$", EUR: "€", GBP: "£", AUD: "$", CAD: "$", JPY: "¥", PKR: "₨", INR: "₹"
+        USD: "$", EUR: "€", GBP: "£", AUD: "$", CAD: "$", JPY: "¥", PKR: "₨", INR: "₹", AED: "AED ",
       };
       return symbols[cur] || "$";
     }
     return "$";
   };
 
-  // Dynamic Receipt Configuration States
-  const [receiptHeader, setReceiptHeader] = useState("Welcome to Our Store");
-  const [receiptFooter, setReceiptFooter] = useState("Thank you for shopping with us!");
-  const [receiptPaperSize, setReceiptPaperSize] = useState("58mm");
+  useEffect(() => {
+    if (activeBranch?.industryId) {
+      const ind = activeBranch.industryId;
+      if (
+        ind === "food_beverage" ||
+        ind === "retail_supermarket" ||
+        ind === "healthcare_wellness" ||
+        ind === "automotive_workshop" ||
+        ind === "fitness_sports_club"
+      ) {
+        setPosMode(ind);
+      }
+    }
+    loadData();
+  }, [activeBranch?.id, activeBranch?.industryId, getEntityStorageKey]);
 
   useEffect(() => {
     const keyPrefix = getEntityStorageKey("settings");
@@ -49,61 +158,6 @@ export default function POSPage() {
     if (savedSize) setReceiptPaperSize(savedSize);
   }, [receiptOrder, activeBranch, getEntityStorageKey]);
 
-  // New Product Modal States
-  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
-  const [newProdName, setNewProdName] = useState("");
-  const [newProdPrice, setNewProdPrice] = useState("");
-  const [newProdCost, setNewProdCost] = useState("");
-  const [newProdSku, setNewProdSku] = useState("");
-  const [addLoading, setAddLoading] = useState(false);
-  const [addError, setAddError] = useState("");
-
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => { loadData(); }, [activeBranch, getEntityStorageKey]);
-
-  // ─── Shortcut Keys Keyboard Listener ──────────────────────────────────────
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const tag = document.activeElement?.tagName.toLowerCase();
-      const isInput = tag === "input" || tag === "textarea";
-
-      if (e.key === "Escape") {
-        if (isAddProductOpen) { setIsAddProductOpen(false); setAddError(""); }
-        else if (receiptOrder) { resetTransaction(); }
-        else if (checkoutMode) { setCheckoutMode(false); }
-        return;
-      }
-
-      if (isInput) {
-        if (e.key === "Enter" && checkoutMode && amountPaid) {
-          e.preventDefault();
-          handleCheckout();
-        }
-        return;
-      }
-
-      if (e.key.toLowerCase() === "s" || e.key === "/") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        searchInputRef.current?.select();
-      }
-
-      if (e.key.toLowerCase() === "c" && cart.length > 0 && !checkoutMode) {
-        e.preventDefault();
-        setCheckoutMode(true);
-      }
-
-      if (e.key.toLowerCase() === "p" && !isAddProductOpen) {
-        e.preventDefault();
-        setIsAddProductOpen(true);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [checkoutMode, isAddProductOpen, cart, amountPaid, receiptOrder]);
-
   const loadData = async () => {
     try {
       const sessKey = getEntityStorageKey("pos_session");
@@ -112,64 +166,116 @@ export default function POSPage() {
       const savedSess = localStorage.getItem(sessKey);
       const savedProds = localStorage.getItem(prodKey);
       const savedTxs = localStorage.getItem(txKey);
-      setSession(savedSess ? JSON.parse(savedSess) : null);
+      setSession(savedSess ? JSON.parse(savedSess) : { id: "pos_auto", state: "open", start_at: new Date().toISOString() });
       setProducts(savedProds ? JSON.parse(savedProds) : []);
       setPosTransactions(savedTxs ? JSON.parse(savedTxs) : []);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const openSession = async () => {
-    const newSess = {
-      id: `pos_sess_${Date.now()}`,
-      state: "open",
-      start_at: new Date().toISOString(),
-      entity_name: activeBranch?.name || "My Entity",
-    };
-    localStorage.setItem(getEntityStorageKey("pos_session"), JSON.stringify(newSess));
-    setSession(newSess);
-  };
-
-  const closeSession = async () => {
-    if (!confirm("Close POS session?")) return;
-    localStorage.removeItem(getEntityStorageKey("pos_session"));
-    setSession(null);
+  const handleLoadStarterCatalog = (modeOverride?: PosIndustryMode) => {
+    const targetMode = modeOverride || posMode;
+    const starter = (INDUSTRY_STARTER_CATALOGS[targetMode] || INDUSTRY_STARTER_CATALOGS.retail_supermarket).map((item, i) => ({
+      ...item,
+      id: `prod_${targetMode}_${i + 1}`,
+    }));
+    const merged = [...starter, ...products.filter((p) => !starter.some((s) => s.sku === p.sku))];
+    setProducts(merged);
+    try {
+      localStorage.setItem(getEntityStorageKey("pos_products"), JSON.stringify(merged));
+    } catch {}
+    showToast(`Loaded ${starter.length} starter items for ${targetMode.replace(/_/g, " ")}!`);
   };
 
   const addToCart = (product: any) => {
-    const existing = cart.find(i => i.id === product.id);
-    if (existing) setCart(cart.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i));
+    const existing = cart.find((i) => i.id === product.id);
+    if (existing) setCart(cart.map((i) => (i.id === product.id ? { ...i, qty: i.qty + 1 } : i)));
     else setCart([...cart, { ...product, qty: 1 }]);
   };
 
-  const updateQty = (id: string, delta: number) => {
-    setCart(cart.map(i => {
-      if (i.id === id) {
-        const newQty = i.qty + delta;
-        return newQty > 0 ? { ...i, qty: newQty } : i;
+  // Barcode / SKU Instant Scan on Enter
+  const handleBarcodeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && search.trim()) {
+      e.preventDefault();
+      const q = search.trim().toLowerCase();
+      const match =
+        products.find((p) => (p.sku || "").toLowerCase() === q) ||
+        products.find((p) => p.name.toLowerCase().includes(q));
+      if (match) {
+        addToCart(match);
+        setSearch("");
+        showToast(`Scanned: ${match.name} (+1)`);
       }
-      return i;
-    }).filter(i => i.qty > 0));
+    }
   };
 
-  const total = cart.reduce((sum, item) => sum + item.list_price * item.qty, 0);
+  const updateQty = (id: string, delta: number) => {
+    setCart(
+      cart
+        .map((i) => (i.id === id ? { ...i, qty: i.qty + delta } : i))
+        .filter((i) => i.qty > 0)
+    );
+  };
+
+  const subtotal = cart.reduce((sum, item) => sum + (Number(item.list_price) || 0) * item.qty, 0);
+  const discountAmount = subtotal * (Math.min(100, Math.max(0, discountPct)) / 100);
+  const taxable = Math.max(0, subtotal - discountAmount);
+  const taxAmount = taxable * (Math.max(0, taxPct) / 100);
+  const total = taxable + taxAmount;
+
+  // Send Order to Restaurant Kitchen Display (KDS)
+  const handleSendToKDS = () => {
+    if (cart.length === 0) return;
+    const kdsKey = getEntityStorageKey("kds_orders");
+    let existingKds: any[] = [];
+    try {
+      const raw = localStorage.getItem(kdsKey);
+      if (raw) existingKds = JSON.parse(raw);
+    } catch {}
+    const ticket = {
+      id: `KDS-${Date.now().toString().slice(-4)}`,
+      orderNumber: `#${Math.floor(100 + Math.random() * 900)}`,
+      table: orderType === "Dine-In" ? tableNumber : orderType,
+      type: orderType,
+      status: "preparing",
+      notes: kitchenNotes,
+      items: cart.map((c) => ({ name: c.name, qty: c.qty, notes: kitchenNotes })),
+      createdAt: new Date().toISOString(),
+    };
+    try {
+      localStorage.setItem(kdsKey, JSON.stringify([ticket, ...existingKds]));
+    } catch {}
+    showToast(`Sent ${ticket.orderNumber} (${ticket.table}) to Kitchen Display (KDS)!`);
+  };
 
   const handleCheckout = async () => {
     const paid = parseFloat(amountPaid || String(total));
-    if (terminalApproved === "APPROVED" && (isNaN(paid) || paid < total)) {
+    if (terminalApproved === "APPROVED" && (isNaN(paid) || paid + 0.001 < total)) {
       return alert("Paid amount must be >= total for an Approved POS terminal transaction.");
     }
     setProcessing(true);
     try {
+      if (posMode === "food_beverage") handleSendToKDS();
+
       const orderName = `POS/${new Date().getTime().toString().slice(-6)}`;
       const txRecord = {
         id: `tx_${Date.now()}`,
         name: orderName,
         items: [...cart],
+        subtotal,
+        discountAmount,
+        taxAmount,
         total,
+        amount_total: total,
         amountPaid: terminalApproved === "APPROVED" ? paid : 0,
         changeDue: terminalApproved === "APPROVED" ? Math.max(0, paid - total) : 0,
         status: terminalApproved,
-        date: new Date().toLocaleString()
+        state: terminalApproved === "APPROVED" ? "sale" : "cancel",
+        paymentMethod,
+        orderType: posMode === "food_beverage" ? `${orderType} (${tableNumber})` : paymentMethod,
+        date: new Date().toLocaleString(),
+        created_at: new Date().toISOString(),
       };
 
       const txKey = getEntityStorageKey("pos_transactions");
@@ -177,29 +283,31 @@ export default function POSPage() {
       setPosTransactions(updatedTxs);
       localStorage.setItem(txKey, JSON.stringify(updatedTxs));
 
+      // Also sync to pos_orders for Enterprise Reports (/reports)
+      try {
+        const ordersKey = getEntityStorageKey("pos_orders");
+        const existingOrders = JSON.parse(localStorage.getItem(ordersKey) || "[]");
+        localStorage.setItem(ordersKey, JSON.stringify([txRecord, ...(Array.isArray(existingOrders) ? existingOrders : [])]));
+      } catch {}
+
       setReceiptOrder(txRecord);
-    } catch (err: any) {
-      alert(`Checkout failed: ${err.message || 'Error occurred'}`);
-    } finally { setProcessing(false); }
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const resetTransaction = () => {
     setCart([]);
     setCheckoutMode(false);
     setAmountPaid("");
+    setKitchenNotes("");
     setTerminalApproved("APPROVED");
     setReceiptOrder(null);
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAddError("");
     if (!newProdName.trim() || !newProdPrice) return;
-
     setAddLoading(true);
     try {
       const newProd = {
@@ -208,6 +316,8 @@ export default function POSPage() {
         list_price: parseFloat(newProdPrice),
         cost_price: newProdCost ? parseFloat(newProdCost) : 0.0,
         sku: newProdSku.trim() || `SKU-${Date.now().toString().slice(-4)}`,
+        category: newProdCategory.trim() || "General",
+        icon: posMode === "food_beverage" ? "🍽️" : "📦",
       };
       const prodKey = getEntityStorageKey("pos_products");
       const updated = [newProd, ...products];
@@ -218,324 +328,387 @@ export default function POSPage() {
       setNewProdPrice("");
       setNewProdCost("");
       setNewProdSku("");
-    } catch (err: any) {
-      setAddError(err.message || "Error creating product");
+      showToast(`Added "${newProd.name}" to POS catalog!`);
     } finally {
       setAddLoading(false);
     }
   };
 
-  if (loading) return (
-    <div className="flex flex-col h-screen">
-      <AppHeader title="Point of Sale" />
-      <div className="flex-1 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    </div>
-  );
+  const categories = ["All", ...Array.from(new Set(products.map((p) => p.category || "General")))];
+  const filteredProducts = products.filter((p) => {
+    if (selectedCategory !== "All" && (p.category || "General") !== selectedCategory) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return p.name.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q);
+    }
+    return true;
+  });
 
-  if (!session) return (
-    <div className="flex flex-col h-screen">
-      <AppHeader title="Point of Sale" />
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="galaxy-card p-10 max-w-md w-full text-center">
-          <Calculator size={48} className="text-green-400 mx-auto mb-6" />
-          <h2 className="text-2xl font-bold text-white mb-2">Point of Sale</h2>
-          <p className="text-gray-400 mb-8">Start a new POS session to process sales.</p>
-          <button onClick={openSession} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-lg transition-colors shadow-lg shadow-green-600/20">
-            Open Session
+  if (loading) {
+    return (
+      <div className="flex flex-col h-screen bg-[#0B101E]">
+        <AppHeader title="Point of Sale" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-screen bg-[#0B101E] text-white">
+      {toastMsg && (
+        <div className="fixed top-16 right-6 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xl flex items-center gap-2">
+          <Sparkles size={14} /> {toastMsg}
+        </div>
+      )}
+
+      {/* POS Header with Industry Mode Switcher & Restaurant / Supermarket Shortcuts */}
+      <div className="border-b border-gray-800 bg-[#141A28] px-5 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0 no-print">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Calculator className="text-emerald-400" size={20} />
+          <span className="font-bold text-sm sm:text-base">{activeBranch?.name || "Workspace"} — Smart POS</span>
+          <select
+            value={posMode}
+            onChange={(e) => setPosMode(e.target.value as PosIndustryMode)}
+            className="px-3 py-1.5 rounded-xl bg-[#0B101E] border border-emerald-500/40 text-xs font-bold text-emerald-300 outline-none"
+          >
+            <option value="food_beverage">🍽️ Restaurant, Cafe &amp; Bakery Mode</option>
+            <option value="retail_supermarket">🛒 Supermarket &amp; Retail Barcode Mode</option>
+            <option value="healthcare_wellness">🩺 Clinic, Dental &amp; Salon Mode</option>
+            <option value="automotive_workshop">🔧 Auto Workshop &amp; Parts Mode</option>
+            <option value="fitness_sports_club">🎾 Gym, Padel &amp; Sports Club Mode</option>
+          </select>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {posMode === "food_beverage" && (
+            <>
+              <Link href="/pos/tables" className="px-3 py-1.5 rounded-xl bg-amber-600/20 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-1">
+                <LayoutGrid size={13} /> Tables
+              </Link>
+              <Link href="/pos/kds" className="px-3 py-1.5 rounded-xl bg-rose-600/20 border border-rose-500/30 text-rose-300 font-bold flex items-center gap-1">
+                <Flame size={13} /> Kitchen (KDS)
+              </Link>
+              <Link href="/pos/recipes" className="px-3 py-1.5 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-300 font-bold flex items-center gap-1">
+                <BookOpen size={13} /> Recipes
+              </Link>
+            </>
+          )}
+          {posMode === "retail_supermarket" && (
+            <Link href="/barcode" className="px-3 py-1.5 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 font-bold flex items-center gap-1">
+              <Barcode size={13} /> Barcode Labels
+            </Link>
+          )}
+          <button
+            onClick={() => handleLoadStarterCatalog()}
+            className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-gray-200 font-semibold cursor-pointer"
+          >
+            + Load {posMode === "food_beverage" ? "Menu" : "Starter Items"}
           </button>
         </div>
       </div>
-    </div>
-  );
 
-  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
-
-  return (
-    <div className="flex flex-col h-screen bg-[#0B101E]">
-      {/* Printable receipt stylesheet override */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          body * { visibility: hidden; }
-          .printable-receipt, .printable-receipt * { visibility: visible; }
-          .printable-receipt {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: ${receiptPaperSize === "58mm" ? "58mm" : receiptPaperSize === "80mm" ? "80mm" : "210mm"} !important;
-            max-width: ${receiptPaperSize === "58mm" ? "58mm" : receiptPaperSize === "80mm" ? "80mm" : "210mm"} !important;
-            background: white !important;
-            color: black !important;
-            padding: ${receiptPaperSize === "58mm" ? "3mm" : receiptPaperSize === "80mm" ? "5mm" : "20mm"} !important;
-            font-size: ${receiptPaperSize === "58mm" ? "9px" : receiptPaperSize === "80mm" ? "11px" : "14px"} !important;
-            line-height: 1.25 !important;
-          }
-          .no-print { display: none !important; }
-        }
-      `}} />
-
-      {/* POS Header */}
-      <div className="h-16 border-b border-gray-800 bg-[#141A28] flex items-center justify-between px-6 shrink-0 shadow-md no-print">
-        <div className="flex items-center gap-3 text-white font-semibold">
-          <Calculator className="text-green-400" />
-          <span>{activeBranch?.name || "My Entity"} — POS Machine Terminal</span>
-          <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full border border-green-500/30">MACHINE CONNECTED · FIGURES & APPROVAL ONLY</span>
-          <div className="text-[10px] text-gray-500 hidden md:flex items-center gap-2 pl-4 border-l border-gray-800">
-            <span>Shortcuts:</span>
-            <kbd className="bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 font-mono font-bold text-gray-300">s</kbd> search |
-            <kbd className="bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 font-mono font-bold text-gray-300">c</kbd> checkout |
-            <kbd className="bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 font-mono font-bold text-gray-300">p</kbd> add product
+      {/* Restaurant Dine-In / Takeaway / Table Bar */}
+      {posMode === "food_beverage" && (
+        <div className="px-5 py-2.5 bg-[#111622] border-b border-gray-800 flex flex-wrap items-center gap-3 text-xs no-print">
+          <div className="inline-flex p-1 rounded-xl bg-[#0B101E] border border-gray-800 gap-1">
+            {(["Dine-In", "Takeaway", "Delivery"] as const).map((ot) => (
+              <button
+                key={ot}
+                type="button"
+                onClick={() => setOrderType(ot)}
+                className={`px-3 py-1 rounded-lg font-bold cursor-pointer ${
+                  orderType === ot ? "bg-amber-600 text-white" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                {ot}
+              </button>
+            ))}
           </div>
+          {orderType === "Dine-In" && (
+            <select
+              value={tableNumber}
+              onChange={(e) => setTableNumber(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-[#0B101E] border border-amber-500/30 text-amber-300 font-bold"
+            >
+              {Array.from({ length: 12 }, (_, i) => `Table ${i + 1}`).map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          )}
+          <input
+            value={kitchenNotes}
+            onChange={(e) => setKitchenNotes(e.target.value)}
+            placeholder="Kitchen / Chef notes (e.g. extra spicy, no onions, allergy)..."
+            className="flex-1 min-w-[200px] px-3 py-1.5 rounded-xl bg-[#0B101E] border border-gray-800 text-white"
+          />
+          <button
+            type="button"
+            disabled={cart.length === 0}
+            onClick={handleSendToKDS}
+            className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-40 text-white font-bold flex items-center gap-1.5 cursor-pointer"
+          >
+            <Flame size={13} /> Send to Kitchen (KDS)
+          </button>
         </div>
-        <button onClick={closeSession} className="text-red-400 hover:bg-red-500/10 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-          Close Session
-        </button>
-      </div>
+      )}
 
-      <div className="flex-1 flex overflow-hidden no-print">
-        {/* Left: Products Grid + POS Machine Figures & Approval Status */}
-        <div className="flex-1 flex flex-col p-6 overflow-hidden gap-6">
-          <div className="flex gap-4 shrink-0">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input 
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden no-print">
+        {/* Left: Search/Barcode + Categories + Product Grid */}
+        <div className="flex-1 flex flex-col p-5 overflow-hidden gap-4">
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <input
                 ref={searchInputRef}
-                type="text" 
-                placeholder="Search products... (Press '/' or 's' to focus)" 
-                value={search} 
-                onChange={e => setSearch(e.target.value)}
-                className="w-full bg-[#1E293B] border border-gray-700 rounded-xl pl-11 pr-4 py-3 text-white outline-none focus:border-green-500 shadow-sm" 
+                type="text"
+                placeholder={
+                  posMode === "retail_supermarket"
+                    ? "Scan Barcode / SKU and press Enter, or search item..."
+                    : "Search menu items, services, or SKU..."
+                }
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleBarcodeKeyDown}
+                className="w-full bg-[#1E293B] border border-gray-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500"
               />
             </div>
-            <button onClick={() => setIsAddProductOpen(true)} className="bg-green-600 hover:bg-green-700 text-white px-5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-green-600/20 active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
-              <Plus size={16} /> Add Product <span className="opacity-50 text-[10px] bg-black/25 px-1.5 py-0.5 rounded font-mono font-bold">P</span>
+            <button
+              onClick={() => setIsAddProductOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus size={15} /> Add Item
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2">
-            {filteredProducts.length === 0 ? (
-              <div className="h-48 border border-dashed border-gray-800 rounded-2xl flex flex-col items-center justify-center text-gray-500 p-6 text-center">
-                <p className="text-sm font-semibold text-gray-300 mb-1">No POS products added for {activeBranch?.name || "your entity"} yet</p>
-                <p className="text-xs text-gray-500 mb-4">Your entity starts with a clean, isolated product catalog ($0.00). Click &ldquo;Add Product&rdquo; to add items.</p>
-                <button onClick={() => setIsAddProductOpen(true)} className="px-4 py-2 rounded-xl bg-green-600/20 border border-green-500/30 text-green-400 text-xs font-bold hover:bg-green-600/30">
-                  + Add First Product
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                {filteredProducts.map(p => (
-                  <div key={p.id} onClick={() => addToCart(p)}
-                    className="bg-[#1E293B] border border-gray-700 hover:border-green-500 rounded-xl p-4 cursor-pointer flex flex-col justify-between aspect-square transition-all shadow-sm active:scale-95">
-                    <div className="flex-1 flex items-center justify-center">
-                      <span className="text-4xl">📦</span>
-                    </div>
-                    <div className="mt-2 text-center">
-                      <p className="text-sm font-medium text-white truncate px-1">{p.name}</p>
-                      <p className="text-green-400 font-bold mt-1">{getCurrencySymbol()}{(p.list_price || 0).toFixed(2)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* POS Machine Figures & Approval Status Log (Read-Only Figures + Approved / Not Approved) */}
-          <div className="bg-[#141A28] border border-gray-800 rounded-2xl p-4 shrink-0 max-h-48 overflow-y-auto">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                POS Machine Terminal Figures & Approval Status
-              </h4>
-              <span className="text-[11px] text-gray-500 font-mono">
-                Approved Total: {getCurrencySymbol()}
-                {posTransactions.filter(t => t.status === "APPROVED").reduce((s, t) => s + Number(t.total || 0), 0).toFixed(2)}
-              </span>
-            </div>
-            {posTransactions.length === 0 ? (
-              <p className="text-xs text-gray-500 py-2">No POS machine transactions recorded in this entity yet.</p>
-            ) : (
-              <div className="space-y-1.5">
-                {posTransactions.slice(0, 10).map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between text-xs bg-[#0B101E] px-3 py-2 rounded-lg border border-gray-800/80">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono font-bold text-gray-200">{tx.name}</span>
-                      <span className="text-gray-500">{tx.date}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono font-bold text-white">{getCurrencySymbol()}{Number(tx.total || 0).toFixed(2)}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1 ${
-                        tx.status === "APPROVED"
-                          ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                          : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-                      }`}>
-                        {tx.status === "APPROVED" ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
-                        {tx.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right: Cart Panel */}
-        <div className="w-[400px] border-l border-gray-800 bg-[#141A28] flex flex-col shrink-0 shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.1)] z-10">
-          <div className="p-4 border-b border-gray-800 bg-black/20 flex items-center gap-2 text-white font-semibold">
-            <ShoppingCart size={18} /> Order Cart
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
-            {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-50">
-                <ShoppingCart size={64} className="mb-4" />
-                <p>Cart is empty</p>
-              </div>
-            ) : cart.map((item, i) => (
-              <div key={i} className="bg-[#1E293B] border border-gray-700 rounded-lg p-3 flex flex-col gap-2 shadow-sm">
-                <div className="flex justify-between items-start">
-                  <h4 className="text-white font-medium text-sm w-3/4 leading-tight">{item.name}</h4>
-                  <p className="text-green-400 font-bold text-sm">{getCurrencySymbol()}{(item.list_price * item.qty).toFixed(2)}</p>
-                </div>
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-gray-400">{getCurrencySymbol()}{item.list_price.toFixed(2)} / unit</p>
-                  <div className="flex items-center bg-black/30 rounded-lg border border-gray-700 overflow-hidden">
-                    <button onClick={() => updateQty(item.id, -1)} className="px-3 py-1 text-gray-300 hover:bg-white/10 hover:text-white transition-colors">-</button>
-                    <span className="px-3 py-1 text-white text-sm font-medium min-w-[2.5rem] text-center">{item.qty}</span>
-                    <button onClick={() => updateQty(item.id, 1)} className="px-3 py-1 text-gray-300 hover:bg-white/10 hover:text-white transition-colors">+</button>
-                  </div>
-                </div>
-              </div>
+          {/* Category Tabs */}
+          <div className="flex flex-wrap gap-1.5 shrink-0">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition ${
+                  selectedCategory === cat ? "bg-emerald-600 text-white" : "bg-[#1E293B] text-gray-300 hover:text-white"
+                }`}
+              >
+                {cat}
+              </button>
             ))}
           </div>
 
-          <div className="p-6 bg-[#0B101E] border-t border-gray-800 shrink-0 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.2)]">
-            <div className="flex justify-between mb-2 text-gray-400 text-sm"><span>Subtotal</span><span>{getCurrencySymbol()}{total.toFixed(2)}</span></div>
-            <div className="flex justify-between mb-4 text-gray-400 text-sm"><span>Taxes</span><span>{getCurrencySymbol()}0.00</span></div>
-            <div className="flex justify-between mb-6 text-xl font-bold text-white"><span>Total Figure</span><span className="text-green-400">{getCurrencySymbol()}{total.toFixed(2)}</span></div>
-            
-            {checkoutMode ? (
-              <div className="space-y-4 animate-in slide-in-from-bottom-4">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                    POS Machine Terminal Status
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setTerminalApproved("APPROVED")}
-                      className={`py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
-                        terminalApproved === "APPROVED"
-                          ? "bg-emerald-500/20 border-emerald-500 text-emerald-300"
-                          : "bg-[#1E293B] border-gray-700 text-gray-400"
-                      }`}
-                    >
-                      <CheckCircle2 size={14} /> APPROVED
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTerminalApproved("NOT APPROVED")}
-                      className={`py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
-                        terminalApproved === "NOT APPROVED"
-                          ? "bg-rose-500/20 border-rose-500 text-rose-300"
-                          : "bg-[#1E293B] border-gray-700 text-gray-400"
-                      }`}
-                    >
-                      <XCircle size={14} /> NOT APPROVED
-                    </button>
-                  </div>
-                </div>
-                <div className="relative">
-                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input type="number" placeholder="Amount figure tendered" autoFocus value={amountPaid} onChange={e => setAmountPaid(e.target.value)}
-                    className="w-full bg-[#1E293B] border border-green-500/50 rounded-xl pl-11 pr-4 py-3.5 text-white font-bold text-lg outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 shadow-[0_0_15px_rgba(34,197,94,0.1)]" />
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setCheckoutMode(false)} className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3.5 rounded-xl font-medium transition-colors">Cancel</button>
-                  <button onClick={handleCheckout} disabled={processing || (terminalApproved === "APPROVED" && !amountPaid)} className="flex-[2] bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white py-3.5 rounded-xl font-bold text-base transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-600/20">
-                    {processing ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} />} Record POS Status
+          {/* Product Grid */}
+          <div className="flex-1 overflow-y-auto pr-1">
+            {filteredProducts.length === 0 ? (
+              <div className="h-56 border border-dashed border-gray-800 rounded-2xl flex flex-col items-center justify-center text-center p-6 space-y-3">
+                <p className="text-sm font-bold text-gray-200">
+                  No items in {activeBranch?.name || "your workspace"} POS catalog yet
+                </p>
+                <p className="text-xs text-gray-400 max-w-md">
+                  Load a ready-made starter catalog for your industry in one click, or add your own custom products/dishes.
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <button
+                    onClick={() => handleLoadStarterCatalog()}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer"
+                  >
+                    + Load {posMode.replace(/_/g, " ").toUpperCase()} Starter Catalog
+                  </button>
+                  <button
+                    onClick={() => setIsAddProductOpen(true)}
+                    className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-bold cursor-pointer"
+                  >
+                    + Add Custom Item
                   </button>
                 </div>
               </div>
             ) : (
-              <button onClick={() => { setAmountPaid(total.toFixed(2)); setCheckoutMode(true); }} disabled={cart.length === 0} 
-                className="w-full bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:bg-gray-700 text-white font-bold py-5 rounded-xl text-lg flex items-center justify-center gap-2 transition-colors shadow-lg shadow-green-600/20 active:scale-95">
-                <CreditCard size={20} /> POS Terminal Checkout <span className="opacity-50 text-xs bg-black/25 px-1.5 py-0.5 rounded font-mono font-bold">C</span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+                {filteredProducts.map((p) => (
+                  <div
+                    key={p.id}
+                    onClick={() => addToCart(p)}
+                    className="bg-[#1E293B] border border-gray-700 hover:border-emerald-500 rounded-2xl p-4 cursor-pointer flex flex-col justify-between transition-all active:scale-95"
+                  >
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                      <span className="text-2xl">{p.icon || (posMode === "food_beverage" ? "🍽️" : "📦")}</span>
+                      <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-black/30">{p.sku || "SKU"}</span>
+                    </div>
+                    <div className="mt-3">
+                      <div className="text-[10px] uppercase text-gray-400 font-bold">{p.category || "General"}</div>
+                      <p className="text-sm font-bold text-white truncate">{p.name}</p>
+                      <p className="text-emerald-400 font-black text-base mt-1">
+                        {getCurrencySymbol()}{(Number(p.list_price) || 0).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Order Cart & Payment Panel */}
+        <div className="w-full lg:w-[400px] border-t lg:border-t-0 lg:border-l border-gray-800 bg-[#141A28] flex flex-col shrink-0">
+          <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+            <span className="font-bold text-sm flex items-center gap-2">
+              <ShoppingCart size={16} className="text-emerald-400" />
+              {posMode === "food_beverage" ? `${orderType} · ${orderType === "Dine-In" ? tableNumber : "Counter"}` : "Checkout Cart"}
+            </span>
+            {cart.length > 0 && (
+              <button onClick={() => setCart([])} className="text-xs text-rose-400 hover:underline cursor-pointer">
+                Clear
+              </button>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-2 max-h-64 lg:max-h-none">
+            {cart.length === 0 ? (
+              <div className="h-40 flex flex-col items-center justify-center text-gray-500 text-xs">
+                <ShoppingCart size={36} className="mb-2 opacity-40" />
+                <p>Click or scan items to add to order</p>
+              </div>
+            ) : (
+              cart.map((item) => (
+                <div key={item.id} className="bg-[#1E293B] border border-gray-700 rounded-xl p-3 flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-bold text-white truncate">{item.name}</div>
+                    <div className="text-[11px] text-gray-400">
+                      {getCurrencySymbol()}{Number(item.list_price).toFixed(2)} × {item.qty}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-lg bg-black/30 hover:bg-white/10 font-bold cursor-pointer">-</button>
+                    <span className="w-6 text-center text-xs font-bold">{item.qty}</span>
+                    <button onClick={() => updateQty(item.id, 1)} className="w-7 h-7 rounded-lg bg-black/30 hover:bg-white/10 font-bold cursor-pointer">+</button>
+                  </div>
+                  <div className="text-xs font-black text-emerald-400 w-16 text-right">
+                    {getCurrencySymbol()}{(item.list_price * item.qty).toFixed(2)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Discount, Tax & Payment Controls */}
+          <div className="p-4 bg-[#0B101E] border-t border-gray-800 space-y-3 text-xs">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center justify-between bg-[#141A28] border border-gray-800 rounded-xl px-3 py-1.5">
+                <span className="text-gray-400">Discount %</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={discountPct}
+                  onChange={(e) => setDiscountPct(Number(e.target.value))}
+                  className="w-12 text-right bg-transparent text-white font-bold outline-none"
+                />
+              </div>
+              <div className="flex items-center justify-between bg-[#141A28] border border-gray-800 rounded-xl px-3 py-1.5">
+                <span className="text-gray-400">Tax / VAT %</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={taxPct}
+                  onChange={(e) => setTaxPct(Number(e.target.value))}
+                  className="w-12 text-right bg-transparent text-white font-bold outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1 text-gray-400">
+              <div className="flex justify-between"><span>Subtotal</span><span>{getCurrencySymbol()}{subtotal.toFixed(2)}</span></div>
+              {discountAmount > 0 && <div className="flex justify-between text-amber-400"><span>Discount</span><span>-{getCurrencySymbol()}{discountAmount.toFixed(2)}</span></div>}
+              {taxAmount > 0 && <div className="flex justify-between"><span>Tax ({taxPct}%)</span><span>+{getCurrencySymbol()}{taxAmount.toFixed(2)}</span></div>}
+              <div className="flex justify-between text-base font-black text-white pt-1 border-t border-gray-800">
+                <span>Total Due</span>
+                <span className="text-emerald-400">{getCurrencySymbol()}{total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {checkoutMode ? (
+              <div className="space-y-2.5">
+                <div className="grid grid-cols-4 gap-1">
+                  {(["Cash", "Card / Terminal", "QR / Wallet", "Split"] as const).map((pm) => (
+                    <button
+                      key={pm}
+                      type="button"
+                      onClick={() => setPaymentMethod(pm)}
+                      className={`py-1.5 rounded-lg text-[10px] font-bold border cursor-pointer ${
+                        paymentMethod === pm ? "bg-emerald-600 text-white border-emerald-500" : "bg-[#141A28] text-gray-400 border-gray-800"
+                      }`}
+                    >
+                      {pm}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  placeholder="Amount Tendered"
+                  value={amountPaid}
+                  onChange={(e) => setAmountPaid(e.target.value)}
+                  className="w-full bg-[#1E293B] border border-emerald-500/50 rounded-xl px-3 py-2.5 text-white font-bold text-sm outline-none"
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => setCheckoutMode(false)} className="flex-1 bg-gray-800 py-2.5 rounded-xl font-bold cursor-pointer">
+                    Back
+                  </button>
+                  <button
+                    onClick={handleCheckout}
+                    disabled={processing}
+                    className="flex-[2] bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Check size={15} /> Complete Sale &amp; Receipt
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setAmountPaid(total.toFixed(2));
+                  setCheckoutMode(true);
+                }}
+                disabled={cart.length === 0}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <CreditCard size={17} /> Charge {getCurrencySymbol()}{total.toFixed(2)}
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Bill Printing / Receipt Modal */}
+      {/* Receipt Modal */}
       {receiptOrder && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className={`bg-[#1A2236] rounded-2xl p-6 w-full border border-white/8 shadow-2xl flex flex-col gap-5 max-h-[90vh] transition-all duration-300 ${
-            receiptPaperSize === "58mm" ? "max-w-[280px]" : receiptPaperSize === "80mm" ? "max-w-[360px]" : "max-w-[650px]"
-          }`}>
-            
-            {/* Modal Actions */}
-            <div className="flex items-center justify-between no-print border-b border-white/5 pb-3">
-              <h3 className="text-md font-bold text-white">Order Receipt ({receiptPaperSize})</h3>
-              <button onClick={resetTransaction} className="text-gray-500 hover:text-white p-1 rounded hover:bg-white/5">
-                <X size={18} />
-              </button>
+          <div className="bg-[#1A2236] rounded-2xl p-6 w-full max-w-sm border border-white/10 space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+              <h3 className="font-bold text-sm">Receipt · {receiptOrder.name}</h3>
+              <button onClick={resetTransaction} className="text-gray-400 hover:text-white cursor-pointer"><X size={16} /></button>
             </div>
-
-            {/* Printable Receipt Block */}
-            <div className={`printable-receipt bg-white text-black rounded-xl font-mono overflow-y-auto flex-1 shadow-inner ${
-              receiptPaperSize === "58mm" ? "text-[9px] leading-tight p-2.5" : receiptPaperSize === "80mm" ? "text-xs p-4" : "text-sm p-8"
-            }`}>
-              <div className="text-center mb-4">
-                <h2 className="text-md font-bold uppercase tracking-wider">BERAXIS</h2>
-                <p className="text-[10px] text-gray-500 mt-1">{receiptHeader}</p>
-                <p className="text-[10px] text-gray-500 mt-1">{receiptOrder.date}</p>
-                <p className="font-bold mt-2 text-[10px]">{receiptOrder.name}</p>
+            <div className="bg-white text-black rounded-xl p-4 font-mono text-xs space-y-2">
+              <div className="text-center border-b border-dashed border-gray-400 pb-2">
+                <div className="font-bold text-sm">{activeBranch?.name || "BERAXIS POS"}</div>
+                <div className="text-[10px] text-gray-500">{receiptOrder.orderType} · {receiptOrder.date}</div>
               </div>
-
-              <div className="border-t border-b border-dashed border-gray-400 py-2 my-2">
-                <div className="grid grid-cols-12 font-bold mb-1">
-                  <span className="col-span-6">Item</span>
-                  <span className="col-span-2 text-center">Qty</span>
-                  <span className="col-span-4 text-right">Subtotal</span>
+              {receiptOrder.items.map((it: any, idx: number) => (
+                <div key={idx} className="flex justify-between">
+                  <span>{it.qty}x {it.name}</span>
+                  <span>{getCurrencySymbol()}{(it.list_price * it.qty).toFixed(2)}</span>
                 </div>
-                {receiptOrder.items.map((item: any, i: number) => (
-                  <div key={i} className="grid grid-cols-12 py-0.5">
-                    <span className="col-span-6 truncate">{item.name}</span>
-                    <span className="col-span-2 text-center">{item.qty}</span>
-                    <span className="col-span-4 text-right">{getCurrencySymbol()}{(item.list_price * item.qty).toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-1 text-right mt-2">
-                <div className="flex justify-between"><span>Subtotal:</span><span>{getCurrencySymbol()}{receiptOrder.total.toFixed(2)}</span></div>
-                <div className="flex justify-between font-bold text-sm border-t border-dashed border-gray-300 pt-1 mt-1">
-                  <span>TOTAL:</span><span>{getCurrencySymbol()}{receiptOrder.total.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between mt-2"><span>Amount Paid:</span><span>{getCurrencySymbol()}{receiptOrder.amountPaid.toFixed(2)}</span></div>
-                <div className="flex justify-between font-semibold text-green-600"><span>Change Due:</span><span>{getCurrencySymbol()}{receiptOrder.changeDue.toFixed(2)}</span></div>
-              </div>
-
-              <div className="text-center mt-6 pt-4 border-t border-dashed border-gray-400 text-[10px] text-gray-400">
-                <p>{receiptFooter}</p>
-                <p className="mt-1">Beraxis Cloud ERP</p>
+              ))}
+              <div className="border-t border-dashed border-gray-400 pt-2 font-bold flex justify-between">
+                <span>TOTAL ({receiptOrder.paymentMethod})</span>
+                <span>{getCurrencySymbol()}{receiptOrder.total.toFixed(2)}</span>
               </div>
             </div>
-
-            {/* Modal Controls */}
-            <div className="flex gap-3 no-print border-t border-white/5 pt-4">
-              <button 
-                onClick={handlePrint}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"
-              >
-                <Printer size={16} /> Print Receipt
+            <div className="flex gap-2">
+              <button onClick={() => window.print()} className="flex-1 bg-purple-600 text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+                <Printer size={14} /> Print
               </button>
-              <button 
-                onClick={resetTransaction}
-                className="flex-1 bg-[#1E293B] hover:bg-white/10 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all active:scale-95"
-              >
-                New Order
+              <button onClick={resetTransaction} className="flex-1 bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-bold cursor-pointer">
+                Next Customer
               </button>
             </div>
           </div>
@@ -544,88 +717,25 @@ export default function POSPage() {
 
       {/* Add Product Modal */}
       {isAddProductOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1A2236] rounded-2xl p-6 w-full max-w-md border border-white/8 shadow-2xl">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h3 className="text-lg font-bold text-white">Quick Add Product</h3>
-                <p className="text-gray-500 text-xs mt-0.5">Create a product and make it available instantly</p>
-              </div>
-              <button onClick={() => { setIsAddProductOpen(false); setAddError(""); }} className="text-gray-500 hover:text-white p-1.5 rounded-xl hover:bg-white/5 transition-colors">
-                <X size={18} />
-              </button>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1A2236] rounded-2xl p-6 w-full max-w-md border border-white/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">Add POS Item / Dish / Service</h3>
+              <button onClick={() => setIsAddProductOpen(false)} className="text-gray-400 hover:text-white cursor-pointer"><X size={18} /></button>
             </div>
-
-            <form onSubmit={handleAddProduct} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Product Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={newProdName}
-                  onChange={e => setNewProdName(e.target.value)}
-                  className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500 outline-none transition-all"
-                  placeholder="e.g. Premium Coffee beans"
-                />
+            <form onSubmit={handleAddProduct} className="space-y-3 text-xs">
+              <input required value={newProdName} onChange={(e) => setNewProdName(e.target.value)} placeholder="Item Name *" className="w-full bg-[#0F172A] border border-white/15 rounded-xl px-3.5 py-2.5 text-white" />
+              <div className="grid grid-cols-2 gap-3">
+                <input required type="number" step="0.01" value={newProdPrice} onChange={(e) => setNewProdPrice(e.target.value)} placeholder="Sale Price *" className="w-full bg-[#0F172A] border border-white/15 rounded-xl px-3.5 py-2.5 text-white" />
+                <input type="number" step="0.01" value={newProdCost} onChange={(e) => setNewProdCost(e.target.value)} placeholder="Cost Price" className="w-full bg-[#0F172A] border border-white/15 rounded-xl px-3.5 py-2.5 text-white" />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Sale Price ($) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={newProdPrice}
-                    onChange={e => setNewProdPrice(e.target.value)}
-                    className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500 outline-none transition-all"
-                    placeholder="12.99"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Cost Price ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={newProdCost}
-                    onChange={e => setNewProdCost(e.target.value)}
-                    className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500 outline-none transition-all"
-                    placeholder="4.50"
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+                <input value={newProdCategory} onChange={(e) => setNewProdCategory(e.target.value)} placeholder="Category (e.g. Mains, Dairy)" className="w-full bg-[#0F172A] border border-white/15 rounded-xl px-3.5 py-2.5 text-white" />
+                <input value={newProdSku} onChange={(e) => setNewProdSku(e.target.value)} placeholder="Barcode / SKU" className="w-full bg-[#0F172A] border border-white/15 rounded-xl px-3.5 py-2.5 text-white" />
               </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Barcode / SKU</label>
-                <input
-                  type="text"
-                  value={newProdSku}
-                  onChange={e => setNewProdSku(e.target.value)}
-                  className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500 outline-none transition-all"
-                  placeholder="e.g. 200847294872"
-                />
-              </div>
-
-              {addError && (
-                <div className="px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400 flex items-start gap-2">
-                  <span className="shrink-0 mt-0.5">⚠</span>
-                  <span>{addError}</span>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/5">
-                <button type="button" onClick={() => { setIsAddProductOpen(false); setAddError(""); }} disabled={addLoading}
-                  className="px-4 py-2.5 text-sm text-gray-400 hover:text-white font-medium transition-colors">
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={addLoading || !newProdName.trim() || !newProdPrice}
-                  className="bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2"
-                >
-                  {addLoading ? <><Loader2 size={15} className="animate-spin" /> Creating...</> : <><Plus size={15} /> Create Product</>}
-                </button>
-              </div>
+              <button type="submit" disabled={addLoading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold cursor-pointer">
+                Save Item to POS Catalog
+              </button>
             </form>
           </div>
         </div>
