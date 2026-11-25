@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
@@ -27,6 +27,17 @@ export default function MeetLandingPage() {
     const [joinCode, setJoinCode] = useState("");
     const [createdLink, setCreatedLink] = useState("");
     const [toastMsg, setToastMsg] = useState("");
+    const [recentAttendees, setRecentAttendees] = useState<{ room_id: string; name: string; email: string; status: string; timestamp: string }[]>([]);
+
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem("beraxis_meet_attendees");
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) setRecentAttendees(parsed.slice(0, 8));
+            }
+        } catch {}
+    }, []);
 
     const showToast = (msg: string) => {
         setToastMsg(msg);
@@ -214,11 +225,36 @@ export default function MeetLandingPage() {
                                         <Lock size={16} />
                                     </div>
                                     <div>
-                                        <div className="font-bold text-white text-sm">End-to-End Encryption</div>
-                                        <div className="text-gray-400">Direct peer-to-peer WebRTC connections with zero third-party snooping.</div>
+                                        <div className="font-bold text-white text-sm">Client Name &amp; Email Lobby Gate</div>
+                                        <div className="text-gray-400">Any client or external user opening your link enters their Name &amp; Email first and waits in the lobby until you click Admit.</div>
                                     </div>
                                 </div>
                             </div>
+
+                            {recentAttendees.length > 0 && (
+                                <div className="pt-3 border-t border-gray-800 space-y-2">
+                                    <div className="text-[11px] font-extrabold uppercase tracking-wider text-purple-300 flex items-center justify-between">
+                                        <span>Recent Recorded Meeting Guests</span>
+                                        <span>Room</span>
+                                    </div>
+                                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                                        {recentAttendees.map((a, idx) => (
+                                            <div key={`${a.email}-${idx}`} className="flex items-center justify-between gap-2 bg-black/30 border border-white/5 rounded-xl px-3 py-2 text-xs">
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-white truncate">{a.name}</div>
+                                                    <div className="text-[10px] text-purple-300 truncate">{a.email}</div>
+                                                </div>
+                                                <Link
+                                                    href={`/meet/${a.room_id}`}
+                                                    className="text-[10px] font-mono text-cyan-300 hover:underline shrink-0"
+                                                >
+                                                    {a.room_id}
+                                                </Link>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="pt-2 border-t border-gray-800">
                                 <Link
