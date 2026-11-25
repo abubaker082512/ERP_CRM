@@ -6,7 +6,8 @@ import {
   GLOBAL_INDUSTRIES,
   GlobalIndustryId,
   getIndustryById,
-  IndustryArchetype
+  IndustryArchetype,
+  analyzeBusinessExplanation
 } from "@/lib/industryTaxonomy";
 import { useBranchContext, BusinessBranch, BranchSharingRules } from "@/lib/branchContext";
 import {
@@ -214,66 +215,57 @@ export default function BranchSetupWizardModal({
 
   const currentIndustry = getIndustryById(selectedIndustryId);
 
-  // AI Analyzer simulation
-  const handleAiAutoConfigure = () => {
+  // AI Natural Language Business Explainer & Auto-Setup
+  const [aiAnalysisSummary, setAiAnalysisSummary] = useState("");
+  const handleAiAutoConfigure = (instantLaunch = false) => {
     if (!aiPrompt.trim()) return;
     setIsAiAnalyzing(true);
 
     setTimeout(() => {
-      const lower = aiPrompt.toLowerCase();
-      let matchedIndustry: GlobalIndustryId = "food_beverage";
-      let matchedSub = "Artisan Bakery & Pastry Shop";
-      let matchedMode = "hybrid";
+      const result = analyzeBusinessExplanation(aiPrompt);
+      const ind = getIndustryById(result.industryId);
 
-      if (lower.includes("bake") || lower.includes("cafe") || lower.includes("restaurant") || lower.includes("food") || lower.includes("kitchen") || lower.includes("pizza") || lower.includes("bar")) {
-        matchedIndustry = "food_beverage";
-        matchedSub = lower.includes("bake") ? "Artisan Bakery & Pastry Shop" : lower.includes("cafe") || lower.includes("coffee") ? "Specialty Coffee Cafe" : "Quick Service Restaurant (QSR)";
-        matchedMode = lower.includes("takeaway") || lower.includes("delivery") ? "hybrid" : "dine_in";
-      } else if (lower.includes("shop") || lower.includes("store") || lower.includes("retail") || lower.includes("cloth") || lower.includes("boutique") || lower.includes("grocery")) {
-        matchedIndustry = "retail_supermarket";
-        matchedSub = "Fashion & Apparel Boutique";
-        matchedMode = "counter_pos";
-      } else if (lower.includes("software") || lower.includes("agency") || lower.includes("consult") || lower.includes("law") || lower.includes("legal") || lower.includes("accounting")) {
-        matchedIndustry = "professional_services";
-        matchedSub = "Software & IT Engineering Agency";
-        matchedMode = "hourly_billable";
-      } else if (lower.includes("factory") || lower.includes("manufactur") || lower.includes("cnc") || lower.includes("fabricat")) {
-        matchedIndustry = "manufacturing";
-        matchedSub = "Discrete Product Manufacturing";
-        matchedMode = "make_to_stock";
-      } else if (lower.includes("clinic") || lower.includes("dental") || lower.includes("doctor") || lower.includes("spa") || lower.includes("salon")) {
-        matchedIndustry = "healthcare_wellness";
-        matchedSub = lower.includes("dental") ? "Dental Practice" : "Medical & Specialist Clinic";
-        matchedMode = "appointment_only";
-      } else if (lower.includes("car") || lower.includes("auto") || lower.includes("garage") || lower.includes("repair") || lower.includes("mechanic")) {
-        matchedIndustry = "automotive_workshop";
-        matchedSub = "Auto Repair & Service Garage";
-        matchedMode = "garage_service";
-      } else if (lower.includes("property") || lower.includes("real estate") || lower.includes("tenant") || lower.includes("rent")) {
-        matchedIndustry = "real_estate";
-        matchedSub = "Residential Property Management";
-        matchedMode = "leasing_management";
-      } else if (lower.includes("school") || lower.includes("academy") || lower.includes("course") || lower.includes("student") || lower.includes("gym")) {
-        matchedIndustry = "education_academies";
-        matchedSub = "Training Academy & Institute";
-        matchedMode = "term_tuition";
-      } else if (lower.includes("ngo") || lower.includes("non-profit") || lower.includes("nonprofit") || lower.includes("charity") || lower.includes("foundation") || lower.includes("humanitarian") || lower.includes("donor") || lower.includes("relief") || lower.includes("grant")) {
-        matchedIndustry = "ngos";
-        matchedSub = "Humanitarian & Disaster Relief NGO";
-        matchedMode = "grant_donor_fund";
-      }
-
-      setSelectedIndustryId(matchedIndustry);
-      const ind = getIndustryById(matchedIndustry);
-      setSubSector(matchedSub);
-      setOperationMode(matchedMode);
-      setSelectedModules(isFreePlan ? [ind.defaultModules.find(m => m !== "/crm/leads-pool" && m !== "/settings") || "/crm"] : ind.defaultModules);
-      if (!branchName) {
-        setBranchName(aiPrompt.length < 30 ? aiPrompt : `${ind.name.split(" ")[0]} Branch`);
+      setSelectedIndustryId(result.industryId);
+      setSubSector(result.subSector);
+      setOperationMode(result.operationMode);
+      const resolvedMods = isFreePlan
+        ? [result.recommendedModules.find(m => m !== "/crm/leads-pool" && m !== "/settings" && m !== "/dashboard") || "/crm"]
+        : result.recommendedModules;
+      setSelectedModules(resolvedMods);
+      setAiAnalysisSummary(result.summary);
+      const resolvedName = branchName.trim() || result.suggestedCompanyName;
+      if (!branchName.trim()) {
+        setBranchName(resolvedName);
       }
       setIsAiAnalyzing(false);
-      setStep(2);
-    }, 600);
+
+      if (instantLaunch) {
+        const finalModules = isFreePlan
+          ? Array.from(new Set([resolvedMods[0] || "/crm", "/settings"]))
+          : Array.from(new Set([...resolvedMods, "/settings"]));
+        const payload = {
+          name: resolvedName,
+          code: branchCode.trim() || `${result.industryId.slice(0, 3).toUpperCase()}-${Math.floor(10 + Math.random() * 90)}`,
+          industryId: result.industryId,
+          subSector: result.subSector || ind.subSectors[0],
+          operationMode: result.operationMode || ind.operationModes[0]?.id || "default",
+          location: location.trim() || "Main Facility",
+          currency: currency.trim() || "$ USD",
+          enabledModules: finalModules,
+          sharingRules,
+          entityType,
+          isPrimary: false
+        };
+        if (editingBranch) {
+          updateBranch(editingBranch.id, payload);
+        } else {
+          createBranch(payload);
+        }
+        onClose();
+      } else {
+        setStep(4);
+      }
+    }, 350);
   };
 
   const handleSelectIndustry = (indId: GlobalIndustryId) => {
@@ -404,31 +396,51 @@ export default function BranchSetupWizardModal({
             <div className="space-y-5">
               {/* AI Natural Language Profiler Box */}
               <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-purple-950/40 border border-purple-500/30 space-y-3 shadow-lg">
-                <div className="flex items-center gap-2 text-purple-300 font-bold">
-                  <Sparkles size={16} className="animate-spin text-purple-400" />
-                  <span>AI Business Auto-Configurator</span>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 text-purple-300 font-bold">
+                    <Sparkles size={16} className="text-purple-400" />
+                    <span>Explain Your Business — BERAXIS Auto-Builds Your Apps</span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                    Supports Single or Multi-Niche Businesses
+                  </span>
                 </div>
                 <p className="text-gray-300 text-xs">
-                  Type your business type in plain English (e.g. <em>&quot;We operate an artisan bakery and specialty cafe with dine-in tables, takeaway counter, and fresh batch pastry production&quot;</em>):
+                  Explain what your company does in plain English (e.g. <em>&quot;We run a restaurant and supermarket with barcode scanning, kitchen KDS, delivery, outbound call center, and HR payroll&quot;</em>) and BERAXIS will automatically configure all required apps:
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={aiPrompt}
                     onChange={e => setAiPrompt(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && handleAiAutoConfigure()}
-                    placeholder="e.g. Boutique fashion retail store with size/color variants and barcode scanner..."
-                    className="flex-1 bg-gray-950/80 border border-gray-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                    onKeyDown={e => e.key === "Enter" && handleAiAutoConfigure(false)}
+                    placeholder="Describe your business, operations, departments, or required workflows..."
+                    className="flex-1 bg-gray-950/80 border border-gray-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
                   />
                   <button
                     type="button"
                     disabled={isAiAnalyzing || !aiPrompt.trim()}
-                    onClick={handleAiAutoConfigure}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white rounded-xl font-bold shadow-md shadow-purple-600/30 transition-all flex items-center gap-1.5 shrink-0"
+                    onClick={() => handleAiAutoConfigure(false)}
+                    className="px-4 py-2 bg-purple-600/30 hover:bg-purple-600/50 border border-purple-400/40 disabled:opacity-50 text-purple-100 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
                   >
-                    {isAiAnalyzing ? "Analyzing..." : "Auto-Detect"}
+                    {isAiAnalyzing ? "Analyzing..." : "Auto-Select Apps"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isAiAnalyzing || !aiPrompt.trim()}
+                    onClick={() => handleAiAutoConfigure(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white rounded-xl font-bold shadow-md shadow-emerald-600/30 transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                  >
+                    <Sparkles size={13} />
+                    <span>1-Click Auto-Setup &amp; Launch</span>
                   </button>
                 </div>
+                {aiAnalysisSummary && (
+                  <div className="text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                    <span>{aiAnalysisSummary}</span>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -708,6 +720,49 @@ export default function BranchSetupWizardModal({
           {/* STEP 4: PRE-FINALIZATION REVIEW & MODULE TOGGLES */}
           {step === 4 && (
             <div className="space-y-4">
+              {/* AI Explain Your Business Bar right inside Step 4 (Manage Apps) */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/50 via-[#111827] to-indigo-950/50 border border-purple-500/40 space-y-2.5 shadow-lg">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 text-purple-300 font-bold text-xs">
+                    <Sparkles size={14} className="text-purple-400" />
+                    <span>Explain Your Business — Let BERAXIS Auto-Select Your Apps</span>
+                  </div>
+                  <span className="text-[10px] text-gray-400">Type what your company does and click Auto-Setup</span>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={aiPrompt}
+                    onChange={e => setAiPrompt(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleAiAutoConfigure(false)}
+                    placeholder="e.g. We run a restaurant with KDS + a retail supermarket with barcode scanner + outbound call center..."
+                    className="flex-1 bg-gray-950/90 border border-gray-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                  />
+                  <button
+                    type="button"
+                    disabled={isAiAnalyzing || !aiPrompt.trim()}
+                    onClick={() => handleAiAutoConfigure(false)}
+                    className="px-3.5 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
+                  >
+                    {isAiAnalyzing ? "Configuring..." : "Auto-Select Apps"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isAiAnalyzing || !aiPrompt.trim()}
+                    onClick={() => handleAiAutoConfigure(true)}
+                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
+                  >
+                    Auto-Setup &amp; Save
+                  </button>
+                </div>
+                {aiAnalysisSummary && (
+                  <div className="text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                    <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+                    <span>{aiAnalysisSummary}</span>
+                  </div>
+                )}
+              </div>
+
               {/* 1-Click Migration Banner for Switching Companies */}
               <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/50 via-slate-900 to-purple-950/40 border border-cyan-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
                 <div className="flex items-center gap-3">

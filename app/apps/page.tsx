@@ -63,7 +63,7 @@ import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
 import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
 import { useBranchContext } from "@/lib/branchContext";
 import { useTheme } from "@/lib/themeContext";
-import { GLOBAL_INDUSTRIES, GlobalIndustryId, getIndustryById } from "@/lib/industryTaxonomy";
+import { GLOBAL_INDUSTRIES, GlobalIndustryId, getIndustryById, analyzeBusinessExplanation } from "@/lib/industryTaxonomy";
 import UniversalBranchSwitcher from "@/components/shared/UniversalBranchSwitcher";
 import BranchSetupWizardModal from "@/components/settings/BranchSetupWizardModal";
 import OnboardingChecklist from "@/components/onboarding/OnboardingChecklist";
@@ -181,10 +181,17 @@ export default function AppsDashboardPage() {
         freeSelectedApp,
         setFreeSelectedApp,
         createBranch,
+        updateBranch,
         isModuleActive,
         refreshUserContext,
         currencySymbol
     } = useBranchContext();
+
+    // AI "Explain Your Business" Auto-Configurator State
+    const [businessExplanation, setBusinessExplanation] = useState("");
+    const [aiDetectedModules, setAiDetectedModules] = useState<string[] | null>(null);
+    const [aiSetupFeedback, setAiSetupFeedback] = useState("");
+    const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
 
     // Industry Selection & Onboarding Mode
     const [isSelectingIndustry, setIsSelectingIndustry] = useState(false);
@@ -273,6 +280,8 @@ export default function AppsDashboardPage() {
 
     const handlePickIndustry = (indId: GlobalIndustryId) => {
         setSelectedIndId(indId);
+        setAiDetectedModules(null);
+        setAiSetupFeedback("");
         const ind = getIndustryById(indId);
         setSelectedSubSector(ind.subSectors[0] || "");
         setSelectedOpMode(ind.operationModes[0]?.id || "default");
@@ -284,6 +293,73 @@ export default function AppsDashboardPage() {
             if (firstRecommended) {
                 setChosenFreeAppHref(firstRecommended);
             }
+        }
+    };
+
+    const handleExplainBusinessSetup = (instantLaunch = false) => {
+        if (!businessExplanation.trim()) return;
+        const result = analyzeBusinessExplanation(businessExplanation);
+        const ind = getIndustryById(result.industryId);
+
+        setSelectedIndId(result.industryId);
+        setSelectedSubSector(result.subSector);
+        setSelectedOpMode(result.operationMode);
+        setAiDetectedModules(result.recommendedModules);
+        setAiSetupFeedback(result.summary);
+        if (!companyName.trim()) {
+            setCompanyName(result.suggestedCompanyName);
+        }
+
+        const firstRecommended = result.recommendedModules.find(
+            m => m !== "/settings" && m !== "/crm/leads-pool" && m !== "/dashboard"
+        );
+        if (isFreePlan && firstRecommended) {
+            setChosenFreeAppHref(firstRecommended);
+        }
+
+        if (instantLaunch) {
+            const fallbackName =
+                companyName.trim() ||
+                result.suggestedCompanyName ||
+                `${ind.name.split(" ")[0]} Workspace`;
+            const modulesToEnable = isFreePlan
+                ? [firstRecommended || chosenFreeAppHref || "/accounting", "/settings"]
+                : Array.from(new Set([...result.recommendedModules, "/settings"]));
+
+            if (isFreePlan && firstRecommended) {
+                setFreeSelectedApp(firstRecommended);
+            }
+
+            if (activeBranch && !showOnboarding) {
+                updateBranch(activeBranch.id, {
+                    industryId: result.industryId,
+                    subSector: result.subSector || ind.subSectors[0],
+                    operationMode: result.operationMode || ind.operationModes[0]?.id || "default",
+                    enabledModules: modulesToEnable
+                });
+            } else {
+                createBranch({
+                    name: fallbackName,
+                    code: `${result.industryId.slice(0, 3).toUpperCase()}-${Math.floor(10 + Math.random() * 90)}`,
+                    industryId: result.industryId,
+                    subSector: result.subSector || ind.subSectors[0],
+                    operationMode: result.operationMode || ind.operationModes[0]?.id || "default",
+                    location: "Main Location",
+                    currency: "$ USD",
+                    enabledModules: modulesToEnable,
+                    sharingRules: {
+                        shareEmployees: false,
+                        shareCustomers: false,
+                        shareInventory: false,
+                        shareAccounting: false,
+                        shareVendors: false
+                    },
+                    isPrimary: branches.length === 0,
+                    accountType: entityType
+                });
+            }
+            setIsSelectingIndustry(false);
+            setIsExplainModalOpen(false);
         }
     };
 
@@ -328,7 +404,8 @@ export default function AppsDashboardPage() {
             setFreeSelectedApp(appToUse);
             modulesToEnable = [appToUse, "/settings"];
         } else {
-            modulesToEnable = Array.from(new Set([...ind.defaultModules, "/settings"]));
+            const baseModules = aiDetectedModules && aiDetectedModules.length > 0 ? aiDetectedModules : ind.defaultModules;
+            modulesToEnable = Array.from(new Set([...baseModules, "/settings"]));
         }
 
         // Persist entityType on user object
@@ -562,7 +639,61 @@ export default function AppsDashboardPage() {
                             )}
                         </div>
 
-                                                {/* ─── 1-CLICK MIGRATION CALLOUT FOR SWITCHING USERS ─── */}
+                        {/* ─── EXPLAIN YOUR BUSINESS: AI AUTO-APP CONFIGURATOR ─── */}
+                        <div className="max-w-4xl mx-auto p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-purple-950/70 via-[#0e1528] to-indigo-950/70 border border-purple-500/40 shadow-2xl space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 text-purple-300 font-extrabold text-sm">
+                                    <Sparkles size={16} className="text-purple-400" />
+                                    <span>Explain Your Business — BERAXIS Automatically Sets Up Your Apps</span>
+                                </div>
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                    Works for Any Single or Multi-Niche Company
+                                </span>
+                            </div>
+                            <p className="text-gray-300 text-xs">
+                                Describe your company in plain English (for example: <em>&quot;We run a restaurant with dine-in tables &amp; kitchen KDS, a retail supermarket with barcode scanning, and an outbound call center with HR payroll&quot;</em>). BERAXIS will automatically detect your industry and activate every app you need:
+                            </p>
+                            <div className="flex flex-col sm:flex-row gap-2.5">
+                                <input
+                                    type="text"
+                                    value={businessExplanation}
+                                    onChange={e => setBusinessExplanation(e.target.value)}
+                                    onKeyDown={e => e.key === "Enter" && handleExplainBusinessSetup(false)}
+                                    placeholder="Explain your business, workflows, or departments here..."
+                                    className="flex-1 bg-black/60 border border-white/15 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => handleExplainBusinessSetup(false)}
+                                    disabled={!businessExplanation.trim()}
+                                    className="px-4 py-2.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-400/40 disabled:opacity-40 text-purple-100 text-xs font-extrabold transition-all shrink-0 cursor-pointer"
+                                >
+                                    Auto-Select Apps
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleExplainBusinessSetup(true)}
+                                    disabled={!businessExplanation.trim()}
+                                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white text-xs font-extrabold shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                                >
+                                    <Sparkles size={14} />
+                                    <span>1-Click Auto-Setup &amp; Launch</span>
+                                </button>
+                            </div>
+                            {aiSetupFeedback && (
+                                <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex flex-wrap items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2 font-semibold">
+                                        <Check size={14} className="text-emerald-400 shrink-0" />
+                                        <span>{aiSetupFeedback}</span>
+                                    </div>
+                                    <span className="text-[11px] text-emerald-200/80">
+                                        Review details below or click <strong>1-Click Auto-Setup &amp; Launch</strong>
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ─── 1-CLICK MIGRATION CALLOUT FOR SWITCHING USERS ─── */}
                         <div className="max-w-4xl mx-auto p-4 rounded-3xl bg-gradient-to-r from-cyan-950/60 via-[#0e1628] to-purple-950/50 border border-cyan-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
                             <div className="flex items-center gap-3.5">
                                 <div className="w-11 h-11 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
@@ -889,6 +1020,18 @@ export default function AppsDashboardPage() {
                                     >
                                         User Dashboard <ArrowRight size={12} />
                                     </Link>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setBusinessExplanation("");
+                                            setAiSetupFeedback("");
+                                            setIsExplainModalOpen(true);
+                                        }}
+                                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[11px] font-extrabold shadow-md transition-all flex items-center gap-1 cursor-pointer"
+                                        title="Explain your business in plain English and BERAXIS will automatically set up your apps"
+                                    >
+                                        <Sparkles size={12} /> Explain Business &amp; Auto-Setup
+                                    </button>
                                 </div>
                             </div>
 
@@ -1164,6 +1307,94 @@ export default function AppsDashboardPage() {
                     </div>
                 )}
             </main>
+
+            {/* Explain Your Business -> Instant AI Auto-Setup Modal */}
+            {isExplainModalOpen && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="max-w-xl w-full bg-[#0F172A] border border-purple-500/40 rounded-3xl p-6 shadow-2xl space-y-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-300 flex items-center justify-center">
+                                    <Sparkles size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-extrabold text-white">Explain Your Business — Auto-Setup Apps</h3>
+                                    <p className="text-[11px] text-gray-400">Tell BERAXIS what your company does and we will configure all matching apps</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsExplainModalOpen(false)}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <textarea
+                            rows={4}
+                            value={businessExplanation}
+                            onChange={e => setBusinessExplanation(e.target.value)}
+                            placeholder="Example: We run a restaurant with dine-in tables and kitchen KDS, plus a supermarket with barcode scanner, an outbound call center with public intake forms, and employee payroll..."
+                            className="w-full bg-black/50 border border-white/15 rounded-2xl p-3.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                        />
+
+                        <div className="flex flex-wrap gap-1.5">
+                            {[
+                                "Restaurant & Cafe with Kitchen KDS, Tables & Recipes",
+                                "Supermarket & Retail Store with Barcode Scanner & Inventory",
+                                "Outbound Call Center with Lead Sheets, Campaigns & Public Forms",
+                                "Medical Clinic / Salon with Appointments & Patient POS",
+                                "Hotel, Resort & Travel Agency with Room Booking & Restaurant POS",
+                                "Manufacturing Factory with BOM, Work Orders & Warehouses"
+                            ].map(sample => (
+                                <button
+                                    key={sample}
+                                    type="button"
+                                    onClick={() => setBusinessExplanation(sample)}
+                                    className="text-[10px] px-2.5 py-1 rounded-full bg-white/5 hover:bg-purple-500/20 border border-white/10 text-gray-300 hover:text-white transition-colors cursor-pointer"
+                                >
+                                    + {sample}
+                                </button>
+                            ))}
+                        </div>
+
+                        {aiSetupFeedback && (
+                            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
+                                <Check size={14} className="text-emerald-400 shrink-0" />
+                                <span>{aiSetupFeedback}</span>
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-white/10">
+                            <button
+                                type="button"
+                                onClick={() => setIsExplainModalOpen(false)}
+                                className="px-4 py-2 rounded-xl border border-white/10 text-gray-300 hover:text-white text-xs font-bold cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                disabled={!businessExplanation.trim()}
+                                onClick={() => handleExplainBusinessSetup(false)}
+                                className="px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-400/40 disabled:opacity-40 text-purple-100 text-xs font-bold cursor-pointer"
+                            >
+                                Preview Matches
+                            </button>
+                            <button
+                                type="button"
+                                disabled={!businessExplanation.trim()}
+                                onClick={() => handleExplainBusinessSetup(true)}
+                                className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white text-xs font-extrabold shadow-lg cursor-pointer flex items-center gap-1.5"
+                            >
+                                <Sparkles size={13} />
+                                <span>Auto-Setup My Apps Now</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Upgrade Plan Modal for Free Plan Restrictions */}
             {upgradePromptModal.open && (
