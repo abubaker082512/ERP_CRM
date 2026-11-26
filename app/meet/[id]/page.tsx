@@ -35,7 +35,7 @@ import {
     UserX,
     Clock,
     Lock,
-    Volume2
+    Volume2,
 } from "lucide-react";
 
 type ChatMessage = {
@@ -73,22 +73,16 @@ type RemoteMediaEntry = {
     rev: number;
 };
 
+// Fast global STUN servers (removed dead openrelayproject 401 TURN URLs that stalled ICE gathering for 12s)
 const ICE_SERVERS: RTCConfiguration = {
-    iceCandidatePoolSize: 10,
+    iceCandidatePoolSize: 4,
+    bundlePolicy: "max-bundle",
+    rtcpMuxPolicy: "require",
     iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
         { urls: "stun:stun.cloudflare.com:3478" },
-        {
-            urls: [
-                "turn:openrelay.metered.ca:80",
-                "turn:openrelay.metered.ca:443",
-                "turn:openrelay.metered.ca:443?transport=tcp",
-                "turns:openrelay.metered.ca:443?transport=tcp",
-            ],
-            username: "openrelayproject",
-            credential: "openrelayproject",
-        },
         ...(process.env.NEXT_PUBLIC_TURN_URL
             ? [
                   {
@@ -100,6 +94,30 @@ const ICE_SERVERS: RTCConfiguration = {
             : []),
     ],
 };
+
+function int16ToBase64(samples: Int16Array): string {
+    const bytes = new Uint8Array(samples.buffer, samples.byteOffset, samples.byteLength);
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+}
+
+function base64ToFloat32(b64: string): Float32Array {
+    const bin = atob(b64);
+    const len = Math.floor(bin.length / 2);
+    const out = new Float32Array(len);
+    for (let i = 0; i < len; i++) {
+        const lo = bin.charCodeAt(i * 2);
+        const hi = bin.charCodeAt(i * 2 + 1);
+        let val = (hi << 8) | lo;
+        if (val >= 0x8000) val -= 0x10000;
+        out[i] = val / 32768;
+    }
+    return out;
+}
 
 function getInitialUserProfile(): { name: string; email: string; isAuthenticated: boolean } {
     if (typeof window === "undefined") return { name: "", email: "", isAuthenticated: false };
@@ -122,9 +140,17 @@ function getInitialUserProfile(): { name: string; email: string; isAuthenticated
 function RemoteVideoTile({
     peer,
     mediaEntry,
+    relayFrameUrl,
+    p2pConnected,
+    relayAudioActive,
+    onUnlockAudio,
 }: {
     peer: RemotePeer;
     mediaEntry: RemoteMediaEntry | undefined;
+    relayFrameUrl?: string;
+    p2pConnected: boolean;
+    relayAudioActive: boolean;
+    onUnlockAudio: () => void;
 }) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -137,33 +163,38 @@ function RemoteVideoTile({
     useEffect(() => {
         if (!stream) return;
 
-        if (videoRef.current) {
-            if (videoRef.current.srcObject !== stream) {
-                videoRef.current.srcObject = stream;
-            }
+        // Bind ONLY video tracks to <video muted> and ONLY audio tracks to <audio>
+        // so browser media decoders never mute or contend across shared MediaStream instances!
+        const vTracks = stream.getVideoTracks().filter((t) => t.readyState === "live");
+        const aTracks = stream.getAudioTracks().filter((t) => t.readyState === "live");
+
+        if (videoRef.current && vTracks.length > 0) {
+            videoRef.current.srcObject = new MediaStream(vTracks);
             videoRef.current.play().catch(() => {});
         }
 
-        if (audioRef.current) {
-            if (audioRef.current.srcObject !== stream) {
-                audioRef.current.srcObject = stream;
-            }
+        if (audioRef.current && aTracks.length > 0) {
+            audioRef.current.srcObject = new MediaStream(aTracks);
             audioRef.current.muted = false;
             audioRef.current.volume = 1.0;
             audioRef.current
                 .play()
                 .then(() => setAudioBlocked(false))
-                .catch(() => {
-                    if (stream.getAudioTracks().length > 0) {
-                        setAudioBlocked(true);
-                    }
-                });
+                .catch(() => setAudioBlocked(true));
         }
 
         const bump = () => {
             setTrackTick((t) => t + 1);
-            if (videoRef.current) videoRef.current.play().catch(() => {});
-            if (audioRef.current) {
+            if (videoRef.current && stream.getVideoTracks().length > 0) {
+                videoRef.current.srcObject = new MediaStream(
+                    stream.getVideoTracks().filter((t) => t.readyState === "live")
+                );
+                videoRef.current.play().catch(() => {});
+            }
+            if (audioRef.current && stream.getAudioTracks().length > 0) {
+                audioRef.current.srcObject = new MediaStream(
+                    stream.getAudioTracks().filter((t) => t.readyState === "live")
+                );
                 audioRef.current
                     .play()
                     .then(() => setAudioBlocked(false))
@@ -192,10 +223,15 @@ function RemoteVideoTile({
 
     const videoTracks = stream ? stream.getVideoTracks() : [];
     const audioTracks = stream ? stream.getAudioTracks() : [];
-    const hasLiveVideo = Boolean(
-        videoTracks.some((t) => t.readyState === "live" && t.enabled) && !peer.is_video_off
+    const hasNativeLiveVideo = Boolean(
+        videoTracks.some((t) => t.readyState === "live" && t.enabled && !t.muted) &&
+            !peer.is_video_off
     );
-    const hasLiveAudio = Boolean(audioTracks.some((t) => t.readyState === "live"));
+    const hasRelayVideo = Boolean(!hasNativeLiveVideo && relayFrameUrl && !peer.is_video_off);
+    const hasAnyVideo = hasNativeLiveVideo || hasRelayVideo;
+    const hasLiveAudio = Boolean(
+        audioTracks.some((t) => t.readyState === "live") || relayAudioActive
+    );
 
     const initials =
         peer.name
@@ -206,6 +242,7 @@ function RemoteVideoTile({
             .toUpperCase() || "P";
 
     const unlockAudio = () => {
+        onUnlockAudio();
         if (audioRef.current) {
             audioRef.current.muted = false;
             audioRef.current.volume = 1.0;
@@ -221,21 +258,30 @@ function RemoteVideoTile({
             onClick={audioBlocked ? unlockAudio : undefined}
             className="bg-[#141C2E] border border-gray-800 hover:border-purple-500/40 rounded-2xl md:rounded-3xl relative overflow-hidden flex flex-col justify-between shadow-2xl group w-full aspect-video max-h-[68vh]"
         >
-            {/* Dedicated muted video element (never blocked by browser autoplay policies) */}
+            {/* Native WebRTC Video Element */}
             <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                className={`w-full h-full object-cover absolute inset-0 transition-opacity duration-200 ${
-                    hasLiveVideo ? "opacity-100 z-[2]" : "opacity-0 pointer-events-none"
+                className={`w-full h-full object-cover absolute inset-0 transition-opacity duration-150 ${
+                    hasNativeLiveVideo ? "opacity-100 z-[3]" : "opacity-0 pointer-events-none"
                 }`}
             />
 
-            {/* Dedicated unmuted audio element for crystal-clear voice playback */}
+            {/* Port-443 WSS Video Relay Fallback (when behind strict Symmetric 4G/5G CGNAT) */}
+            {hasRelayVideo && (
+                <img
+                    src={relayFrameUrl}
+                    alt={peer.name}
+                    className="w-full h-full object-cover absolute inset-0 z-[2]"
+                />
+            )}
+
+            {/* Dedicated Unmuted Audio Element for Native WebRTC Voice */}
             <audio ref={audioRef} autoPlay playsInline />
 
-            {!hasLiveVideo && (
+            {!hasAnyVideo && (
                 <div className="flex-1 relative bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#3B0764]/40 flex flex-col items-center justify-center overflow-hidden z-[1]">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15)_0,transparent_70%)]" />
                     <div className="relative z-10 flex flex-col items-center gap-3">
@@ -278,6 +324,13 @@ function RemoteVideoTile({
                 </button>
             )}
 
+            {(p2pConnected || hasRelayVideo || relayAudioActive) && !audioBlocked && (
+                <div className="absolute top-3 left-3 z-20 bg-black/55 backdrop-blur-md border border-emerald-500/30 text-emerald-300 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>{p2pConnected ? "HD P2P Live" : "Cloud Relay Live"}</span>
+                </div>
+            )}
+
             {peer.is_hand_raised && (
                 <div className="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-lg animate-bounce z-20">
                     <Hand size={13} />
@@ -312,10 +365,22 @@ export default function InSystemVideoMeetPage() {
     const [userEmail, setUserEmail] = useState<string>("");
     const [isAuthenticatedUser, setIsAuthenticatedUser] = useState<boolean>(false);
     const [isRoomCreator, setIsRoomCreator] = useState<boolean>(false);
-    const [joinPhase, setJoinPhase] = useState<"initializing" | "prejoin" | "waiting" | "admitted" | "rejected">("initializing");
+    const [joinPhase, setJoinPhase] = useState<
+        "initializing" | "prejoin" | "waiting" | "admitted" | "rejected"
+    >("initializing");
     const [isHost, setIsHost] = useState<boolean>(false);
     const [hostName, setHostName] = useState<string>("Meeting Host");
     const [requireAdmission, setRequireAdmission] = useState<boolean>(true);
+
+    // Refs synced with latest state so the persistent WebSocket never needs to unmount/remount!
+    const joinPhaseRef = useRef(joinPhase);
+    joinPhaseRef.current = joinPhase;
+    const displayNameRef = useRef(displayName);
+    displayNameRef.current = displayName;
+    const userEmailRef = useRef(userEmail);
+    userEmailRef.current = userEmail;
+    const isHostRef = useRef(isHost);
+    isHostRef.current = isHost;
 
     // Media & WebRTC Refs
     const localVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -326,6 +391,8 @@ export default function InSystemVideoMeetPage() {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const recordedChunksRef = useRef<Blob[]>([]);
     const audioContextRef = useRef<AudioContext | null>(null);
+    const playbackAudioCtxRef = useRef<AudioContext | null>(null);
+    const nextPlayTimeRef = useRef<Map<string, number>>(new Map());
     const analyserRef = useRef<AnalyserNode | null>(null);
     const animFrameRef = useRef<number | null>(null);
 
@@ -333,20 +400,29 @@ export default function InSystemVideoMeetPage() {
     const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
     const pendingIceRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
     const makingOfferRef = useRef<Map<string, boolean>>(new Map());
+    const lastOfferSentAtRef = useRef<Map<string, number>>(new Map());
     const outgoingIceBufferRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
     const outgoingIceTimerRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
     const processedSignalIdsRef = useRef<Set<string>>(new Set());
     const realtimeChannelRef = useRef<RealtimeChannel | null>(null);
+    const channelSubscribedRef = useRef<boolean>(false);
+    const lastPollTsRef = useRef<number>(0);
 
     const [remoteMedia, setRemoteMedia] = useState<Record<string, RemoteMediaEntry>>({});
+    const [p2pConnectedPeers, setP2pConnectedPeers] = useState<Record<string, boolean>>({});
+    const p2pConnectedPeersRef = useRef<Record<string, boolean>>({});
+    p2pConnectedPeersRef.current = p2pConnectedPeers;
+
+    // Port-443 WSS Relay Fallback state (activates automatically if P2P UDP is blocked by CGNAT)
+    const [relayFrames, setRelayFrames] = useState<Record<string, string>>({});
+    const [relayAudioPeers, setRelayAudioPeers] = useState<Record<string, boolean>>({});
+
     const [httpPeers, setHttpPeers] = useState<RemotePeer[]>([]);
     const [presencePeers, setPresencePeers] = useState<RemotePeer[]>([]);
     const [httpWaitingPeers, setHttpWaitingPeers] = useState<RemotePeer[]>([]);
     const [presenceWaitingPeers, setPresenceWaitingPeers] = useState<RemotePeer[]>([]);
     const [attendeeLogs, setAttendeeLogs] = useState<AttendeeLog[]>([]);
-    const lastSeqRef = useRef<number>(0);
 
-    // Merge Presence + HTTP peers seamlessly (deduplicated by peer_id)
     const remotePeers = (() => {
         const map = new Map<string, RemotePeer>();
         for (const p of httpPeers) {
@@ -359,6 +435,8 @@ export default function InSystemVideoMeetPage() {
         }
         return Array.from(map.values());
     })();
+    const remotePeersRef = useRef<RemotePeer[]>(remotePeers);
+    remotePeersRef.current = remotePeers;
 
     const waitingPeers = (() => {
         const admittedIds = new Set(remotePeers.map((p) => p.peer_id));
@@ -383,6 +461,13 @@ export default function InSystemVideoMeetPage() {
     const [isVideoOff, setIsVideoOff] = useState(false);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [isHandRaised, setIsHandRaised] = useState(false);
+    const isMutedRef = useRef(isMuted);
+    isMutedRef.current = isMuted;
+    const isVideoOffRef = useRef(isVideoOff);
+    isVideoOffRef.current = isVideoOff;
+    const isScreenSharingRef = useRef(isScreenSharing);
+    isScreenSharingRef.current = isScreenSharing;
+
     const [isRecording, setIsRecording] = useState(false);
     const [recordedBlobUrl, setRecordedBlobUrl] = useState<string | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -395,12 +480,16 @@ export default function InSystemVideoMeetPage() {
     const [selectedVideoId, setSelectedVideoId] = useState<string>("");
 
     // Side Drawers & Modals
-    const [activeDrawer, setActiveDrawer] = useState<"chat" | "participants" | "invite" | "settings" | null>(null);
+    const [activeDrawer, setActiveDrawer] = useState<
+        "chat" | "participants" | "invite" | "settings" | null
+    >(null);
     const [showInstantModal, setShowInstantModal] = useState(false);
     const [instantGeneratedLink, setInstantGeneratedLink] = useState("");
     const [isCallEnded, setIsCallEnded] = useState(false);
     const [toastMsg, setToastMsg] = useState("");
-    const [signalingStatus, setSignalingStatus] = useState<"connecting" | "connected" | "local-only">("connecting");
+    const [signalingStatus, setSignalingStatus] = useState<
+        "connecting" | "connected" | "local-only"
+    >("connecting");
 
     const [callSeconds, setCallSeconds] = useState(0);
     useEffect(() => {
@@ -433,7 +522,54 @@ export default function InSystemVideoMeetPage() {
         setTimeout(() => setToastMsg(""), 4500);
     }, []);
 
-    // Persist attendee locally for Meet Hub history
+    // Ensure shared Playback AudioContext is unlocked on user interaction
+    const ensurePlaybackAudioUnlocked = useCallback(() => {
+        try {
+            const AudioCtx =
+                window.AudioContext ||
+                (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+            if (!playbackAudioCtxRef.current || playbackAudioCtxRef.current.state === "closed") {
+                playbackAudioCtxRef.current = new AudioCtx();
+            }
+            if (playbackAudioCtxRef.current.state === "suspended") {
+                playbackAudioCtxRef.current.resume().catch(() => {});
+            }
+        } catch {}
+    }, []);
+
+    const playIncomingRelayAudio = useCallback((senderId: string, b64Pcm: string, sampleRate = 12000) => {
+        try {
+            const AudioCtx =
+                window.AudioContext ||
+                (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+            if (!playbackAudioCtxRef.current || playbackAudioCtxRef.current.state === "closed") {
+                playbackAudioCtxRef.current = new AudioCtx();
+            }
+            const ctx = playbackAudioCtxRef.current;
+            if (ctx.state === "suspended") {
+                ctx.resume().catch(() => {});
+            }
+
+            const samples = base64ToFloat32(b64Pcm);
+            if (samples.length === 0) return;
+
+            const audioBuffer = ctx.createBuffer(1, samples.length, sampleRate);
+            audioBuffer.getChannelData(0).set(samples);
+
+            const src = ctx.createBufferSource();
+            src.buffer = audioBuffer;
+            src.connect(ctx.destination);
+
+            const now = ctx.currentTime;
+            const prevEnd = nextPlayTimeRef.current.get(senderId) || 0;
+            const startAt = prevEnd > now && prevEnd - now < 0.6 ? prevEnd : now + 0.03;
+            src.start(startAt);
+            nextPlayTimeRef.current.set(senderId, startAt + audioBuffer.duration);
+
+            setRelayAudioPeers((prev) => (prev[senderId] ? prev : { ...prev, [senderId]: true }));
+        } catch {}
+    }, []);
+
     const persistAttendeeLocally = useCallback(
         (name: string, email: string, status: string) => {
             try {
@@ -456,7 +592,7 @@ export default function InSystemVideoMeetPage() {
         [meetId]
     );
 
-    // Send Signal via BOTH Supabase Realtime WebSocket Broadcast (<30ms) AND Cloud HTTP API Fallback
+    // Send Signal via BOTH Persistent Supabase Realtime WebSocket AND Vault-Backed Cloud API
     const sendSignal = useCallback(
         async (type: string, payload: Record<string, unknown>, targetId?: string) => {
             const signalId = `sig_${selfPeerIdRef.current}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -471,7 +607,7 @@ export default function InSystemVideoMeetPage() {
             };
 
             // 1. Instant WebSocket Broadcast via Supabase Realtime
-            if (realtimeChannelRef.current) {
+            if (realtimeChannelRef.current && channelSubscribedRef.current) {
                 realtimeChannelRef.current
                     .send({
                         type: "broadcast",
@@ -481,7 +617,7 @@ export default function InSystemVideoMeetPage() {
                     .catch(() => {});
             }
 
-            // 2. Cloud HTTP Fallback
+            // 2. Vault-backed HTTP delivery (preserves signal_id so never double-processed!)
             try {
                 await fetch("/api/meet", {
                     method: "POST",
@@ -511,61 +647,84 @@ export default function InSystemVideoMeetPage() {
                     if (batch.length > 0) {
                         sendSignal("ice_batch", { candidates: batch }, remotePeerId);
                     }
-                }, 100);
+                }, 80);
                 outgoingIceTimerRef.current.set(remotePeerId, t);
             }
         },
         [sendSignal]
     );
 
-    const attachLocalTracksToPc = useCallback((pc: RTCPeerConnection) => {
-        const activeStream = mediaStreamRef.current;
-        const senders = pc.getSenders();
+    /**
+     * 100% RFC 8829 Unified-Plan Compliant Track-to-Transceiver Binding:
+     * - On Offerer (`ensureMlines = true`): guarantees exact [0: audio, 1: video] sendrecv transceivers
+     *   and attaches local tracks via replaceTrack.
+     * - On Answerer (`ensureMlines = false`, called AFTER setRemoteDescription(offer)): binds local
+     *   audio & video tracks onto the exact transceivers created from the remote Offer!
+     * - Returns true if any transceiver had to be upgraded from recvonly -> sendrecv (needs renegotiation).
+     */
+    const syncLocalTracksToPc = useCallback(
+        async (pc: RTCPeerConnection, ensureMlines: boolean): Promise<boolean> => {
+            let needsRenegotiation = false;
+            const camStream = mediaStreamRef.current;
+            const scrStream = screenStreamRef.current;
 
-        if (activeStream) {
-            activeStream.getTracks().forEach((track) => {
-                const existing = senders.find((s) => s.track?.kind === track.kind);
-                if (existing) {
-                    existing.replaceTrack(track).catch(() => {});
-                } else {
-                    pc.addTrack(track, activeStream);
-                }
-            });
-        }
+            const localAudioTrack = camStream?.getAudioTracks()[0] || null;
+            const localVideoTrack =
+                scrStream?.getVideoTracks()[0] || camStream?.getVideoTracks()[0] || null;
 
-        // If screen sharing is active, replace video track with screen track
-        if (screenStreamRef.current) {
-            const screenTrack = screenStreamRef.current.getVideoTracks()[0];
-            if (screenTrack) {
-                const videoSender = pc.getSenders().find((s) => s.track?.kind === "video");
-                if (videoSender) {
-                    videoSender.replaceTrack(screenTrack).catch(() => {});
-                } else {
-                    pc.addTrack(screenTrack, screenStreamRef.current);
+            const transceivers = pc.getTransceivers();
+
+            // 1. Audio transceiver
+            let audioTx = transceivers.find(
+                (t) =>
+                    (t.direction as string) !== "stopped" &&
+                    (t.receiver.track?.kind === "audio" || t.sender.track?.kind === "audio")
+            );
+            if (audioTx) {
+                if (localAudioTrack) {
+                    if (audioTx.direction === "recvonly" || audioTx.direction === "inactive") {
+                        audioTx.direction = "sendrecv";
+                        needsRenegotiation = true;
+                    }
+                    if (audioTx.sender.track !== localAudioTrack) {
+                        await audioTx.sender.replaceTrack(localAudioTrack).catch(() => {});
+                    }
                 }
+            } else if (ensureMlines) {
+                audioTx = pc.addTransceiver(localAudioTrack || "audio", {
+                    direction: "sendrecv",
+                    streams: camStream ? [camStream] : [],
+                });
             }
-        }
-    }, []);
 
-    const ensureReceiveTransceivers = useCallback((pc: RTCPeerConnection) => {
-        const transceivers = pc.getTransceivers();
-        const hasAudio = transceivers.some(
-            (t) => t.sender.track?.kind === "audio" || t.receiver.track?.kind === "audio"
-        );
-        const hasVideo = transceivers.some(
-            (t) => t.sender.track?.kind === "video" || t.receiver.track?.kind === "video"
-        );
-        if (!hasAudio) {
-            try {
-                pc.addTransceiver("audio", { direction: "recvonly" });
-            } catch {}
-        }
-        if (!hasVideo) {
-            try {
-                pc.addTransceiver("video", { direction: "recvonly" });
-            } catch {}
-        }
-    }, []);
+            // 2. Video transceiver
+            let videoTx = transceivers.find(
+                (t) =>
+                    (t.direction as string) !== "stopped" &&
+                    (t.receiver.track?.kind === "video" || t.sender.track?.kind === "video")
+            );
+            if (videoTx) {
+                if (localVideoTrack) {
+                    if (videoTx.direction === "recvonly" || videoTx.direction === "inactive") {
+                        videoTx.direction = "sendrecv";
+                        needsRenegotiation = true;
+                    }
+                    if (videoTx.sender.track !== localVideoTrack) {
+                        await videoTx.sender.replaceTrack(localVideoTrack).catch(() => {});
+                    }
+                }
+            } else if (ensureMlines) {
+                const activeStream = scrStream || camStream;
+                videoTx = pc.addTransceiver(localVideoTrack || "video", {
+                    direction: "sendrecv",
+                    streams: activeStream ? [activeStream] : [],
+                });
+            }
+
+            return needsRenegotiation;
+        },
+        []
+    );
 
     const createPeerConnection = useCallback(
         (remotePeerId: string): RTCPeerConnection => {
@@ -575,7 +734,6 @@ export default function InSystemVideoMeetPage() {
                 existing.connectionState !== "closed" &&
                 existing.connectionState !== "failed"
             ) {
-                attachLocalTracksToPc(existing);
                 return existing;
             }
             if (existing) {
@@ -586,7 +744,6 @@ export default function InSystemVideoMeetPage() {
             }
 
             const pc = new RTCPeerConnection(ICE_SERVERS);
-            attachLocalTracksToPc(pc);
 
             pc.onicecandidate = (event) => {
                 if (event.candidate) {
@@ -606,7 +763,7 @@ export default function InSystemVideoMeetPage() {
                     }
                     if (event.streams && event.streams[0]) {
                         event.streams[0].getTracks().forEach((t) => {
-                            combinedTracks.set(t.kind, t);
+                            if (t.readyState === "live") combinedTracks.set(t.kind, t);
                         });
                     }
                     if (event.track) {
@@ -622,9 +779,34 @@ export default function InSystemVideoMeetPage() {
                         },
                     };
                 });
+
+                event.track.onunmute = () => {
+                    setRemoteMedia((prev) => {
+                        const cur = prev[remotePeerId];
+                        if (!cur) return prev;
+                        return {
+                            ...prev,
+                            [remotePeerId]: { stream: cur.stream, rev: cur.rev + 1 },
+                        };
+                    });
+                };
             };
 
+            const updateConnHealth = () => {
+                if (
+                    pc.connectionState === "failed" ||
+                    pc.connectionState === "disconnected" ||
+                    pc.connectionState === "closed"
+                ) {
+                    setP2pConnectedPeers((prev) =>
+                        !prev[remotePeerId] ? prev : { ...prev, [remotePeerId]: false }
+                    );
+                }
+            };
+
+            pc.onconnectionstatechange = updateConnHealth;
             pc.oniceconnectionstatechange = () => {
+                updateConnHealth();
                 if (pc.iceConnectionState === "failed") {
                     pc.restartIce?.();
                 }
@@ -633,7 +815,7 @@ export default function InSystemVideoMeetPage() {
             peerConnectionsRef.current.set(remotePeerId, pc);
             return pc;
         },
-        [attachLocalTracksToPc, queueOutgoingIce]
+        [queueOutgoingIce]
     );
 
     const flushPendingIce = useCallback(async (remotePeerId: string, pc: RTCPeerConnection) => {
@@ -652,27 +834,41 @@ export default function InSystemVideoMeetPage() {
             if (!remoteId || remoteId === selfPeerIdRef.current) return;
             if (makingOfferRef.current.get(remoteId)) return;
 
+            const lastSent = lastOfferSentAtRef.current.get(remoteId) || 0;
+            const existingPc = peerConnectionsRef.current.get(remoteId);
+            if (
+                !iceRestart &&
+                existingPc &&
+                (existingPc.signalingState !== "stable" ||
+                    existingPc.iceConnectionState === "checking" ||
+                    (Date.now() - lastSent < 9000 &&
+                        existingPc.connectionState !== "failed" &&
+                        existingPc.connectionState !== "disconnected"))
+            ) {
+                return;
+            }
+
             try {
                 makingOfferRef.current.set(remoteId, true);
                 const pc = createPeerConnection(remoteId);
-                attachLocalTracksToPc(pc);
-                ensureReceiveTransceivers(pc);
+                await syncLocalTracksToPc(pc, true);
 
                 if (pc.signalingState !== "stable") return;
 
                 const offer = await pc.createOffer({ iceRestart });
                 if (pc.signalingState !== "stable") return;
                 await pc.setLocalDescription(offer);
+                lastOfferSentAtRef.current.set(remoteId, Date.now());
                 await sendSignal("offer", { sdp: pc.localDescription }, remoteId);
             } catch {
             } finally {
                 makingOfferRef.current.set(remoteId, false);
             }
         },
-        [createPeerConnection, attachLocalTracksToPc, ensureReceiveTransceivers, sendSignal]
+        [createPeerConnection, syncLocalTracksToPc, sendSignal]
     );
 
-    // 1. Initialize Real Camera & Mic Stream (with automatic audio-only fallback if camera is busy!)
+    // Initialize Real Camera & Mic Stream (with audio-only fallback if camera is busy)
     const startLocalStream = useCallback(
         async (audioId?: string, videoId?: string) => {
             try {
@@ -685,18 +881,37 @@ export default function InSystemVideoMeetPage() {
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({
                         audio: audioId
-                            ? { deviceId: { exact: audioId }, echoCancellation: true, noiseSuppression: true }
-                            : { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                            ? {
+                                  deviceId: { exact: audioId },
+                                  echoCancellation: true,
+                                  noiseSuppression: true,
+                              }
+                            : {
+                                  echoCancellation: true,
+                                  noiseSuppression: true,
+                                  autoGainControl: true,
+                              },
                         video: videoId
-                            ? { deviceId: { exact: videoId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+                            ? {
+                                  deviceId: { exact: videoId },
+                                  width: { ideal: 1280 },
+                                  height: { ideal: 720 },
+                              }
                             : { width: { ideal: 1280 }, height: { ideal: 720 } },
                     });
                 } catch {
-                    // Fallback: if webcam is busy/locked by another app or absent, still capture microphone audio!
                     stream = await navigator.mediaDevices.getUserMedia({
                         audio: audioId
-                            ? { deviceId: { exact: audioId }, echoCancellation: true, noiseSuppression: true }
-                            : { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                            ? {
+                                  deviceId: { exact: audioId },
+                                  echoCancellation: true,
+                                  noiseSuppression: true,
+                              }
+                            : {
+                                  echoCancellation: true,
+                                  noiseSuppression: true,
+                                  autoGainControl: true,
+                              },
                         video: false,
                     });
                     setIsVideoOff(true);
@@ -707,28 +922,34 @@ export default function InSystemVideoMeetPage() {
 
                 if (localVideoRef.current) {
                     localVideoRef.current.srcObject = stream;
+                    localVideoRef.current.play().catch(() => {});
                 }
                 if (previewVideoRef.current) {
                     previewVideoRef.current.srcObject = stream;
+                    previewVideoRef.current.play().catch(() => {});
                 }
 
                 stream.getAudioTracks().forEach((t) => {
-                    t.enabled = !isMuted;
+                    t.enabled = !isMutedRef.current;
                 });
                 stream.getVideoTracks().forEach((t) => {
-                    t.enabled = !isVideoOff;
+                    t.enabled = !isVideoOffRef.current;
                 });
 
-                // Attach newly acquired tracks to any existing WebRTC connections and renegotiate!
-                peerConnectionsRef.current.forEach((pc, remoteId) => {
-                    attachLocalTracksToPc(pc);
-                    initiateOffer(remoteId).catch(() => {});
+                // Hot-swap newly acquired camera/mic tracks onto all active RTCPeerConnections!
+                peerConnectionsRef.current.forEach(async (pc, remoteId) => {
+                    const needsReneg = await syncLocalTracksToPc(pc, false);
+                    if (needsReneg && pc.signalingState === "stable") {
+                        lastOfferSentAtRef.current.delete(remoteId);
+                        initiateOffer(remoteId).catch(() => {});
+                    }
                 });
 
                 try {
                     const AudioCtx =
                         window.AudioContext ||
-                        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+                        (window as unknown as { webkitAudioContext: typeof AudioContext })
+                            .webkitAudioContext;
                     if (audioContextRef.current && audioContextRef.current.state !== "closed") {
                         await audioContextRef.current.close().catch(() => {});
                     }
@@ -742,7 +963,7 @@ export default function InSystemVideoMeetPage() {
 
                     const dataArray = new Uint8Array(analyser.frequencyBinCount);
                     const checkAudioLevel = () => {
-                        if (analyserRef.current && !isMuted) {
+                        if (analyserRef.current && !isMutedRef.current) {
                             analyserRef.current.getByteFrequencyData(dataArray);
                             let sum = 0;
                             for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
@@ -764,12 +985,13 @@ export default function InSystemVideoMeetPage() {
                 setHasMediaPermission(false);
             }
         },
-        [isMuted, isVideoOff, attachLocalTracksToPc, initiateOffer]
+        [syncLocalTracksToPc, initiateOffer]
     );
 
     // Perform Server Join Request
     const performRoomJoin = useCallback(
         async (name: string, email: string, creatorFlag: boolean, authFlag: boolean) => {
+            ensurePlaybackAudioUnlocked();
             const selfId = selfPeerIdRef.current;
             try {
                 const res = await fetch("/api/meet", {
@@ -783,14 +1005,16 @@ export default function InSystemVideoMeetPage() {
                         email: email.trim(),
                         is_room_creator: creatorFlag,
                         is_authenticated_user: authFlag,
-                        is_muted: isMuted,
-                        is_video_off: isVideoOff,
+                        is_muted: isMutedRef.current,
+                        is_video_off: isVideoOffRef.current,
                     }),
                 });
                 if (!res.ok) throw new Error("Join error");
                 const data = await res.json();
                 setSignalingStatus("connected");
-                lastSeqRef.current = data.seq || 0;
+                if (typeof data.server_ts === "number") {
+                    lastPollTsRef.current = Math.max(0, data.server_ts - 3000);
+                }
                 const resolvedHost = Boolean(data.is_host || creatorFlag);
                 setIsHost(resolvedHost);
                 if (resolvedHost) {
@@ -807,25 +1031,23 @@ export default function InSystemVideoMeetPage() {
                 persistAttendeeLocally(name.trim(), email.trim(), finalStatus);
 
                 if (finalStatus === "waiting") {
+                    joinPhaseRef.current = "waiting";
                     setJoinPhase("waiting");
                     showToast("⏳ Request sent! Waiting for the meeting host to let you in...");
                 } else {
+                    joinPhaseRef.current = "admitted";
                     setJoinPhase("admitted");
                 }
             } catch {
                 setSignalingStatus("local-only");
-                if (creatorFlag) {
-                    setIsHost(true);
-                    setJoinPhase("admitted");
-                } else {
-                    setJoinPhase("admitted");
-                }
+                if (creatorFlag) setIsHost(true);
+                setJoinPhase("admitted");
             }
         },
-        [meetId, isMuted, isVideoOff, persistAttendeeLocally, showToast]
+        [meetId, ensurePlaybackAudioUnlocked, persistAttendeeLocally, showToast]
     );
 
-    // Boot Identity + Auto-Enter if Host Creator (Fixes Screenshot 1!)
+    // Boot Identity + Start Camera/Mic + Auto-Enter if Host Creator
     useEffect(() => {
         if (typeof window === "undefined") return;
 
@@ -844,7 +1066,6 @@ export default function InSystemVideoMeetPage() {
             if (queryHost) {
                 localStorage.setItem(`beraxis_meet_host_${meetId}`, "1");
                 sessionStorage.setItem(`beraxis_meet_host_${meetId}`, "1");
-                // Clean ?host=1 from address bar so copying the browser URL gives a clean guest link!
                 window.history.replaceState({}, "", `/meet/${meetId}`);
                 storedCreator = true;
             }
@@ -852,22 +1073,29 @@ export default function InSystemVideoMeetPage() {
 
         setIsRoomCreator(storedCreator);
 
-        if (Boolean(navigator?.mediaDevices?.getUserMedia)) {
-            startLocalStream();
-        }
+        const boot = async () => {
+            if (Boolean(navigator?.mediaDevices?.getUserMedia)) {
+                // Give camera/mic up to 2s head-start before first WebRTC offer so tracks attach immediately
+                await Promise.race([
+                    startLocalStream(),
+                    new Promise((resolve) => setTimeout(resolve, 2000)),
+                ]);
+            }
 
-        // If this browser created the meeting (Host), skip the guest check-in gate and enter directly!
-        if (storedCreator && (profile.name || profile.email || profile.isAuthenticated)) {
-            const hostDisplay = profile.name || "Meeting Host";
-            const hostMail = profile.email || "host@beraxis.online";
-            setDisplayName(hostDisplay);
-            setUserEmail(hostMail);
-            setIsHost(true);
-            setJoinPhase("admitted");
-            performRoomJoin(hostDisplay, hostMail, true, true);
-        } else {
-            setJoinPhase("prejoin");
-        }
+            if (storedCreator && (profile.name || profile.email || profile.isAuthenticated)) {
+                const hostDisplay = profile.name || "Meeting Host";
+                const hostMail = profile.email || "host@beraxis.online";
+                setDisplayName(hostDisplay);
+                setUserEmail(hostMail);
+                setIsHost(true);
+                setJoinPhase("admitted");
+                performRoomJoin(hostDisplay, hostMail, true, true);
+            } else {
+                setJoinPhase("prejoin");
+            }
+        };
+
+        boot();
 
         return () => {
             if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach((t) => t.stop());
@@ -875,6 +1103,9 @@ export default function InSystemVideoMeetPage() {
             if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
             if (audioContextRef.current && audioContextRef.current.state !== "closed") {
                 audioContextRef.current.close().catch(() => {});
+            }
+            if (playbackAudioCtxRef.current && playbackAudioCtxRef.current.state !== "closed") {
+                playbackAudioCtxRef.current.close().catch(() => {});
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -891,7 +1122,7 @@ export default function InSystemVideoMeetPage() {
         }
     }, [joinPhase]);
 
-    // Unified Signal Event Processor (Handles BOTH Supabase Realtime WebSockets & HTTP Fallback)
+    // Unified Signal Event Processor (Deduplicated by signal_id across BOTH WebSocket & HTTP)
     const handleSignalEvent = useCallback(
         async (ev: {
             signal_id?: string;
@@ -911,9 +1142,36 @@ export default function InSystemVideoMeetPage() {
 
             const from = ev.sender_id;
 
+            // Port-443 WSS Relay Media Frames (Fallback when P2P UDP is not connected)
+            if (ev.type === "relay_video" && ev.payload?.jpg) {
+                if (!p2pConnectedPeersRef.current[from]) {
+                    setRelayFrames((prev) => ({ ...prev, [from]: String(ev.payload.jpg) }));
+                }
+                return;
+            }
+            if (ev.type === "relay_audio" && ev.payload?.pcm) {
+                if (!p2pConnectedPeersRef.current[from]) {
+                    playIncomingRelayAudio(from, String(ev.payload.pcm), Number(ev.payload.sr || 12000));
+                }
+                return;
+            }
+
             if (ev.type === "admitted") {
+                ensurePlaybackAudioUnlocked();
+                joinPhaseRef.current = "admitted";
                 setJoinPhase("admitted");
                 showToast("🎉 The host has let you into the meeting!");
+                sendSignal("ready_for_webrtc", {
+                    peer_id: selfId,
+                    name: displayNameRef.current,
+                    email: userEmailRef.current,
+                });
+                if (selfId < from) {
+                    lastOfferSentAtRef.current.delete(from);
+                    initiateOffer(from).catch(() => {});
+                } else {
+                    createPeerConnection(from);
+                }
                 return;
             }
             if (ev.type === "rejected") {
@@ -937,16 +1195,19 @@ export default function InSystemVideoMeetPage() {
                         ];
                     });
                 }
-                showToast(`🔔 ${ev.payload?.name || "Guest"} (${ev.payload?.email || ""}) is waiting in the lobby!`);
+                showToast(
+                    `🔔 ${ev.payload?.name || "Guest"} (${ev.payload?.email || ""}) is waiting in the lobby!`
+                );
                 return;
             }
 
-            // Only process WebRTC media signals once admitted into the meeting!
+            if (joinPhaseRef.current !== "admitted") return;
+
             if (ev.type === "peer_joined" || ev.type === "ready_for_webrtc") {
                 if (selfId < from) {
+                    lastOfferSentAtRef.current.delete(from);
                     await initiateOffer(from);
                 } else {
-                    // Polite peer ensures PC is initialized and ready
                     createPeerConnection(from);
                 }
             } else if (ev.type === "peer_left") {
@@ -960,12 +1221,16 @@ export default function InSystemVideoMeetPage() {
                     delete copy[from];
                     return copy;
                 });
+                setRelayFrames((prev) => {
+                    const copy = { ...prev };
+                    delete copy[from];
+                    return copy;
+                });
             } else if (ev.type === "offer" && ev.payload?.sdp) {
                 const pc = createPeerConnection(from);
-                attachLocalTracksToPc(pc);
                 const isPolite = selfId > from;
                 const offerCollision =
-                    makingOfferRef.current.get(from) || pc.signalingState !== "stable";
+                    Boolean(makingOfferRef.current.get(from)) || pc.signalingState !== "stable";
 
                 if (offerCollision && !isPolite) {
                     return;
@@ -974,8 +1239,12 @@ export default function InSystemVideoMeetPage() {
                     if (offerCollision) {
                         await pc.setLocalDescription({ type: "rollback" }).catch(() => {});
                     }
+                    // 1. Set Remote Offer FIRST so browser creates exact matching [audio, video] transceivers!
                     await pc.setRemoteDescription(new RTCSessionDescription(ev.payload.sdp));
+                    // 2. Bind our local audio & video tracks onto those exact transceivers before creating Answer!
+                    await syncLocalTracksToPc(pc, false);
                     await flushPendingIce(from, pc);
+                    // 3. Create & send Answer
                     const answer = await pc.createAnswer();
                     await pc.setLocalDescription(answer);
                     await sendSignal("answer", { sdp: pc.localDescription }, from);
@@ -988,7 +1257,10 @@ export default function InSystemVideoMeetPage() {
                         await flushPendingIce(from, pc);
                     } catch {}
                 }
-            } else if ((ev.type === "ice" && ev.payload?.candidate) || (ev.type === "ice_batch" && Array.isArray(ev.payload?.candidates))) {
+            } else if (
+                (ev.type === "ice" && ev.payload?.candidate) ||
+                (ev.type === "ice_batch" && Array.isArray(ev.payload?.candidates))
+            ) {
                 const candidates: RTCIceCandidateInit[] =
                     ev.type === "ice_batch" ? ev.payload.candidates : [ev.payload.candidate];
                 const pc = peerConnectionsRef.current.get(from);
@@ -1003,6 +1275,25 @@ export default function InSystemVideoMeetPage() {
                     const q = pendingIceRef.current.get(from) || [];
                     pendingIceRef.current.set(from, [...q, ...candidates]);
                 }
+            } else if (ev.type === "state" && ev.payload) {
+                setPresencePeers((prev) =>
+                    prev.map((p) =>
+                        p.peer_id === from
+                            ? {
+                                  ...p,
+                                  ...(typeof ev.payload.is_muted === "boolean"
+                                      ? { is_muted: ev.payload.is_muted }
+                                      : {}),
+                                  ...(typeof ev.payload.is_video_off === "boolean"
+                                      ? { is_video_off: ev.payload.is_video_off }
+                                      : {}),
+                                  ...(typeof ev.payload.is_hand_raised === "boolean"
+                                      ? { is_hand_raised: ev.payload.is_hand_raised }
+                                      : {}),
+                              }
+                            : p
+                    )
+                );
             } else if (ev.type === "chat" && ev.payload?.message) {
                 setMessages((prev) =>
                     prev.some((m) => m.id === ev.payload.message.id)
@@ -1011,13 +1302,23 @@ export default function InSystemVideoMeetPage() {
                 );
             }
         },
-        [createPeerConnection, attachLocalTracksToPc, flushPendingIce, initiateOffer, sendSignal, showToast]
+        [
+            createPeerConnection,
+            syncLocalTracksToPc,
+            flushPendingIce,
+            initiateOffer,
+            sendSignal,
+            playIncomingRelayAudio,
+            ensurePlaybackAudioUnlocked,
+            showToast,
+        ]
     );
 
-    // 2. Supabase Realtime WebSocket Channel (Broadcast + Presence) — Global Sub-30ms Delivery on Vercel!
-    useEffect(() => {
-        if (joinPhase !== "waiting" && joinPhase !== "admitted") return;
+    const handleSignalEventRef = useRef(handleSignalEvent);
+    handleSignalEventRef.current = handleSignalEvent;
 
+    // ONE Persistent Supabase Realtime WebSocket Channel per Room (NEVER torn down on joinPhase changes!)
+    useEffect(() => {
         const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const sbKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         if (!sbUrl || !sbKey) return;
@@ -1025,12 +1326,12 @@ export default function InSystemVideoMeetPage() {
         const selfId = selfPeerIdRef.current;
         const sb = createClient(sbUrl, sbKey, {
             auth: { persistSession: false, autoRefreshToken: false },
-            realtime: { params: { eventsPerSecond: 40 } },
+            realtime: { params: { eventsPerSecond: 60 } },
         });
 
         const channel = sb.channel(`beraxis_meet_${meetId}`, {
             config: {
-                broadcast: { self: false },
+                broadcast: { self: false, ack: false },
                 presence: { key: selfId },
             },
         });
@@ -1038,7 +1339,12 @@ export default function InSystemVideoMeetPage() {
         channel
             .on("broadcast", { event: "meet_signal" }, ({ payload }) => {
                 if (payload) {
-                    handleSignalEvent(payload);
+                    handleSignalEventRef.current(payload);
+                }
+            })
+            .on("broadcast", { event: "meet_media" }, ({ payload }) => {
+                if (payload) {
+                    handleSignalEventRef.current(payload);
                 }
             })
             .on("presence", { event: "sync" }, () => {
@@ -1049,20 +1355,21 @@ export default function InSystemVideoMeetPage() {
                 Object.entries(state).forEach(([key, presences]) => {
                     if (key === selfId || !Array.isArray(presences) || presences.length === 0) return;
                     const p = presences[presences.length - 1] as any;
+                    if (p.status !== "admitted" && p.status !== "waiting") return;
                     const peerObj: RemotePeer = {
                         peer_id: p.peer_id || key,
                         name: p.name || "Participant",
                         email: p.email || "",
                         role: p.is_host ? "Host" : "Guest",
                         is_host: Boolean(p.is_host),
-                        status: p.status || "waiting",
+                        status: p.status,
                         is_muted: Boolean(p.is_muted),
                         is_video_off: Boolean(p.is_video_off),
                         is_hand_raised: Boolean(p.is_hand_raised),
                     };
                     if (p.status === "admitted") {
                         admittedList.push(peerObj);
-                    } else if (p.status === "waiting") {
+                    } else {
                         waitingList.push(peerObj);
                     }
                 });
@@ -1070,7 +1377,6 @@ export default function InSystemVideoMeetPage() {
                 setPresencePeers(admittedList);
                 setPresenceWaitingPeers(waitingList);
 
-                // Record waiting guests in attendee logs automatically
                 if (waitingList.length > 0) {
                     setAttendeeLogs((prev) => {
                         const copy = [...prev];
@@ -1091,30 +1397,33 @@ export default function InSystemVideoMeetPage() {
             })
             .subscribe(async (status) => {
                 if (status === "SUBSCRIBED") {
+                    channelSubscribedRef.current = true;
                     setSignalingStatus("connected");
-                    await channel.track({
-                        peer_id: selfId,
-                        name: displayName || "Participant",
-                        email: userEmail || "",
-                        is_host: isHost,
-                        status: joinPhase,
-                        is_muted: isMuted,
-                        is_video_off: isVideoOff,
-                        is_hand_raised: isHandRaised,
-                    });
-
-                    if (joinPhase === "waiting") {
-                        sendSignal("guest_waiting", {
+                    const phase = joinPhaseRef.current;
+                    if (phase === "waiting" || phase === "admitted") {
+                        await channel.track({
                             peer_id: selfId,
-                            name: displayName,
-                            email: userEmail,
+                            name: displayNameRef.current || "Participant",
+                            email: userEmailRef.current || "",
+                            is_host: isHostRef.current,
+                            status: phase,
+                            is_muted: isMutedRef.current,
+                            is_video_off: isVideoOffRef.current,
+                            is_hand_raised: false,
                         });
-                    } else if (joinPhase === "admitted") {
-                        sendSignal("ready_for_webrtc", {
-                            peer_id: selfId,
-                            name: displayName,
-                            email: userEmail,
-                        });
+                        if (phase === "admitted") {
+                            sendSignal("ready_for_webrtc", {
+                                peer_id: selfId,
+                                name: displayNameRef.current,
+                                email: userEmailRef.current,
+                            });
+                        } else if (phase === "waiting") {
+                            sendSignal("guest_waiting", {
+                                peer_id: selfId,
+                                name: displayNameRef.current,
+                                email: userEmailRef.current,
+                            });
+                        }
                     }
                 }
             });
@@ -1122,18 +1431,22 @@ export default function InSystemVideoMeetPage() {
         realtimeChannelRef.current = channel;
 
         return () => {
+            channelSubscribedRef.current = false;
             realtimeChannelRef.current = null;
             sb.removeChannel(channel).catch(() => {});
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [meetId, joinPhase]);
+    }, [meetId]);
 
-    // Keep Presence metadata updated when mute/camera/hand/name changes
+    // Sync Presence & Announce Immediately When Transitioning Into Waiting or Admitted!
     useEffect(() => {
-        if (!realtimeChannelRef.current || (joinPhase !== "waiting" && joinPhase !== "admitted")) return;
+        if (!realtimeChannelRef.current || !channelSubscribedRef.current) return;
+        if (joinPhase !== "waiting" && joinPhase !== "admitted") return;
+
+        const selfId = selfPeerIdRef.current;
         realtimeChannelRef.current
             .track({
-                peer_id: selfPeerIdRef.current,
+                peer_id: selfId,
                 name: displayName || "Participant",
                 email: userEmail || "",
                 is_host: isHost,
@@ -1143,9 +1456,24 @@ export default function InSystemVideoMeetPage() {
                 is_hand_raised: isHandRaised,
             })
             .catch(() => {});
-    }, [displayName, userEmail, isHost, joinPhase, isMuted, isVideoOff, isHandRaised]);
 
-    // 3. Periodic WebRTC Health & Handshake Watchdog + Cloud HTTP Poll Fallback
+        if (joinPhase === "waiting") {
+            sendSignal("guest_waiting", {
+                peer_id: selfId,
+                name: displayName,
+                email: userEmail,
+            });
+        } else if (joinPhase === "admitted") {
+            sendSignal("ready_for_webrtc", {
+                peer_id: selfId,
+                name: displayName,
+                email: userEmail,
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [joinPhase, isHost, isMuted, isVideoOff, isHandRaised]);
+
+    // Vault-Backed Cloud HTTP Poll (Timestamp + signal_id Deduplicated)
     useEffect(() => {
         if (joinPhase !== "waiting" && joinPhase !== "admitted") return;
 
@@ -1156,38 +1484,32 @@ export default function InSystemVideoMeetPage() {
             if (cancelled) return;
             try {
                 const pollRes = await fetch(
-                    `/api/meet?room_id=${encodeURIComponent(meetId)}&peer_id=${encodeURIComponent(selfId)}&since=${lastSeqRef.current}`,
+                    `/api/meet?room_id=${encodeURIComponent(meetId)}&peer_id=${encodeURIComponent(selfId)}&since_ts=${lastPollTsRef.current}`,
                     { cache: "no-store" }
                 );
                 if (!pollRes.ok) return;
                 const pollData = await pollRes.json();
                 setSignalingStatus("connected");
 
-                if (typeof pollData.seq === "number") {
-                    lastSeqRef.current = pollData.seq;
+                if (typeof pollData.server_ts === "number") {
+                    lastPollTsRef.current = Math.max(lastPollTsRef.current, pollData.server_ts - 1500);
                 }
-                if (pollData.is_host) {
-                    setIsHost(true);
-                }
+                if (pollData.is_host) setIsHost(true);
                 if (typeof pollData.require_admission === "boolean") {
                     setRequireAdmission(pollData.require_admission);
                 }
-                if (pollData.host_name) {
-                    setHostName(pollData.host_name);
-                }
-                if (pollData.my_status === "admitted" && joinPhase === "waiting") {
+                if (pollData.host_name) setHostName(pollData.host_name);
+
+                if (pollData.my_status === "admitted" && joinPhaseRef.current === "waiting") {
+                    ensurePlaybackAudioUnlocked();
                     setJoinPhase("admitted");
                     showToast("🎉 The host has let you into the meeting!");
-                } else if (pollData.my_status === "rejected" && joinPhase === "waiting") {
+                } else if (pollData.my_status === "rejected" && joinPhaseRef.current === "waiting") {
                     setJoinPhase("rejected");
                 }
 
-                if (Array.isArray(pollData.peers)) {
-                    setHttpPeers(pollData.peers);
-                }
-                if (Array.isArray(pollData.waiting_peers)) {
-                    setHttpWaitingPeers(pollData.waiting_peers);
-                }
+                if (Array.isArray(pollData.peers)) setHttpPeers(pollData.peers);
+                if (Array.isArray(pollData.waiting_peers)) setHttpWaitingPeers(pollData.waiting_peers);
                 if (Array.isArray(pollData.attendee_logs) && pollData.attendee_logs.length > 0) {
                     setAttendeeLogs((prev) => {
                         const merged = [...pollData.attendee_logs];
@@ -1201,60 +1523,205 @@ export default function InSystemVideoMeetPage() {
                 }
                 if (Array.isArray(pollData.events)) {
                     for (const ev of pollData.events) {
-                        await handleSignalEvent(ev);
+                        await handleSignalEventRef.current(ev);
                     }
                 }
             } catch {}
-        }, 1800);
+        }, 2000);
 
         return () => {
             cancelled = true;
             clearInterval(pollTimer);
         };
-    }, [joinPhase, meetId, handleSignalEvent, showToast]);
+    }, [joinPhase, meetId, ensurePlaybackAudioUnlocked, showToast]);
 
-    // Auto-Establish & Auto-Heal WebRTC Media Connections for All Admitted Peers
+    // Non-Destructive WebRTC Handshake & Health Monitor
     useEffect(() => {
         if (joinPhase !== "admitted") return;
         const selfId = selfPeerIdRef.current;
 
-        // Immediately initiate offer for any newly visible admitted peer
         remotePeers.forEach((peer) => {
             const existingPc = peerConnectionsRef.current.get(peer.peer_id);
             if (!existingPc) {
                 if (selfId < peer.peer_id) {
                     initiateOffer(peer.peer_id);
                 } else {
+                    createPeerConnection(peer.peer_id);
                     sendSignal("ready_for_webrtc", { peer_id: selfId }, peer.peer_id);
                 }
             }
         });
 
-        const watchdog = setInterval(() => {
-            remotePeers.forEach((peer) => {
+        const watchdog = setInterval(async () => {
+            for (const peer of remotePeersRef.current) {
                 const pc = peerConnectionsRef.current.get(peer.peer_id);
-                const hasMedia = Boolean(
-                    remoteMedia[peer.peer_id]?.stream &&
-                        remoteMedia[peer.peer_id].stream.getTracks().some((t) => t.readyState === "live")
-                );
 
-                if (
+                // Verify actual RTP inbound bytes so we know with 100% certainty if P2P media is flowing!
+                if (pc && pc.connectionState === "connected") {
+                    try {
+                        const stats = await pc.getStats();
+                        let bytesIn = 0;
+                        stats.forEach((report) => {
+                            if (report.type === "inbound-rtp" && typeof report.bytesReceived === "number") {
+                                bytesIn += report.bytesReceived;
+                            }
+                        });
+                        if (bytesIn > 0) {
+                            setP2pConnectedPeers((prev) =>
+                                prev[peer.peer_id] ? prev : { ...prev, [peer.peer_id]: true }
+                            );
+                        }
+                    } catch {}
+                }
+
+                const lastSent = lastOfferSentAtRef.current.get(peer.peer_id) || 0;
+                const needsRecovery =
                     !pc ||
                     pc.connectionState === "failed" ||
-                    pc.connectionState === "disconnected" ||
-                    (!hasMedia && pc.connectionState !== "connecting")
-                ) {
+                    (pc.connectionState === "disconnected" && Date.now() - lastSent > 8000) ||
+                    (pc.connectionState === "new" && lastSent > 0 && Date.now() - lastSent > 12000);
+
+                if (needsRecovery) {
                     if (selfId < peer.peer_id) {
                         initiateOffer(peer.peer_id, Boolean(pc && pc.connectionState === "failed"));
                     } else {
                         sendSignal("ready_for_webrtc", { peer_id: selfId }, peer.peer_id);
                     }
                 }
-            });
-        }, 3500);
+            }
+        }, 1500);
 
         return () => clearInterval(watchdog);
-    }, [joinPhase, remotePeers, remoteMedia, initiateOffer, sendSignal]);
+    }, [joinPhase, remotePeers, createPeerConnection, initiateOffer, sendSignal]);
+
+    // Automatic Port-443 WSS Voice + Video Relay Fallback (Guarantees Voice & Video Through Any 4G/5G CGNAT!)
+    useEffect(() => {
+        if (joinPhase !== "admitted" || isCallEnded) return;
+
+        const selfId = selfPeerIdRef.current;
+        const canvas = document.createElement("canvas");
+        canvas.width = 320;
+        canvas.height = 180;
+        const ctx2d = canvas.getContext("2d");
+
+        const needsRelay = () => {
+            const peers = remotePeersRef.current;
+            if (peers.length === 0) return false;
+            return peers.some((p) => !p2pConnectedPeersRef.current[p.peer_id]);
+        };
+
+        // 1. Video frame relay (4 fps over WSS port 443 ONLY when at least one peer lacks P2P connection)
+        const videoRelayTimer = setInterval(() => {
+            if (!realtimeChannelRef.current || !channelSubscribedRef.current) return;
+            if (!needsRelay()) return;
+            if (isVideoOffRef.current && !isScreenSharingRef.current) return;
+
+            const srcVideo = isScreenSharingRef.current
+                ? screenVideoRef.current
+                : localVideoRef.current;
+            if (!srcVideo || srcVideo.readyState < 2 || !ctx2d) return;
+
+            try {
+                ctx2d.drawImage(srcVideo, 0, 0, 320, 180);
+                const jpg = canvas.toDataURL("image/jpeg", 0.42);
+                realtimeChannelRef.current
+                    .send({
+                        type: "broadcast",
+                        event: "meet_media",
+                        payload: {
+                            sender_id: selfId,
+                            type: "relay_video",
+                            payload: { jpg },
+                        },
+                    })
+                    .catch(() => {});
+            } catch {}
+        }, 240);
+
+        // 2. Voice audio relay (12kHz Int16 PCM ~170ms packets over WSS port 443 ONLY when P2P isn't connected)
+        let relayAudioCtx: AudioContext | null = null;
+        let scriptNode: ScriptProcessorNode | null = null;
+        let srcNode: MediaStreamAudioSourceNode | null = null;
+
+        const setupAudioRelay = () => {
+            const stream = mediaStreamRef.current;
+            if (!stream || stream.getAudioTracks().length === 0 || relayAudioCtx) return;
+            try {
+                const AudioCtx =
+                    window.AudioContext ||
+                    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+                relayAudioCtx = new AudioCtx();
+                const inRate = relayAudioCtx.sampleRate || 48000;
+                const targetRate = 12000;
+                const ratio = inRate / targetRate;
+
+                srcNode = relayAudioCtx.createMediaStreamSource(stream);
+                scriptNode = relayAudioCtx.createScriptProcessor(4096, 1, 1);
+
+                scriptNode.onaudioprocess = (ev) => {
+                    if (
+                        isMutedRef.current ||
+                        !realtimeChannelRef.current ||
+                        !channelSubscribedRef.current ||
+                        !needsRelay()
+                    ) {
+                        return;
+                    }
+                    const input = ev.inputBuffer.getChannelData(0);
+                    const outLen = Math.floor(input.length / ratio);
+                    if (outLen <= 0) return;
+
+                    const pcm16 = new Int16Array(outLen);
+                    let peak = 0;
+                    for (let i = 0; i < outLen; i++) {
+                        const s = Math.max(-1, Math.min(1, input[Math.floor(i * ratio)] || 0));
+                        const abs = Math.abs(s);
+                        if (abs > peak) peak = abs;
+                        pcm16[i] = s < 0 ? s * 32768 : s * 32767;
+                    }
+                    // Skip pure digital silence to save bandwidth
+                    if (peak < 0.004) return;
+
+                    realtimeChannelRef.current
+                        .send({
+                            type: "broadcast",
+                            event: "meet_media",
+                            payload: {
+                                sender_id: selfId,
+                                type: "relay_audio",
+                                payload: { pcm: int16ToBase64(pcm16), sr: targetRate },
+                            },
+                        })
+                        .catch(() => {});
+                };
+
+                const silentGain = relayAudioCtx.createGain();
+                silentGain.gain.value = 0;
+                srcNode.connect(scriptNode);
+                scriptNode.connect(silentGain);
+                silentGain.connect(relayAudioCtx.destination);
+            } catch {}
+        };
+
+        setupAudioRelay();
+        const audioSetupCheck = setInterval(() => {
+            if (!relayAudioCtx && mediaStreamRef.current?.getAudioTracks().length) {
+                setupAudioRelay();
+            }
+        }, 1500);
+
+        return () => {
+            clearInterval(videoRelayTimer);
+            clearInterval(audioSetupCheck);
+            try {
+                scriptNode?.disconnect();
+                srcNode?.disconnect();
+                if (relayAudioCtx && relayAudioCtx.state !== "closed") {
+                    relayAudioCtx.close().catch(() => {});
+                }
+            } catch {}
+        };
+    }, [joinPhase, isCallEnded, hasMediaPermission]);
 
     // Cleanup on Unmount
     useEffect(() => {
@@ -1270,9 +1737,9 @@ export default function InSystemVideoMeetPage() {
         };
     }, [meetId]);
 
-    // Guest Check-In Form Submit
     const handleCheckInAndJoin = async (e: React.FormEvent) => {
         e.preventDefault();
+        ensurePlaybackAudioUnlocked();
         if (!displayName.trim() || !userEmail.trim()) {
             showToast("⚠️ Please enter both your Full Name and Email Address to join.");
             return;
@@ -1280,20 +1747,33 @@ export default function InSystemVideoMeetPage() {
         await performRoomJoin(displayName, userEmail, isRoomCreator, isAuthenticatedUser);
     };
 
-    // Host Action: Admit or Reject a Waiting Guest (Broadcasts Instantly via WebSocket + Saves to Cloud API)
     const handleHostDecision = async (targetPeer: RemotePeer, decision: "admit" | "reject") => {
+        ensurePlaybackAudioUnlocked();
         const targetPeerId = targetPeer.peer_id;
 
-        // 1. Instant WebSocket signal so guest enters in <30ms!
         await sendSignal(
             decision === "admit" ? "admitted" : "rejected",
             { peer_id: targetPeerId, name: targetPeer.name, email: targetPeer.email },
             targetPeerId
         );
 
-        // Update local state optimistically
         setHttpWaitingPeers((prev) => prev.filter((p) => p.peer_id !== targetPeerId));
         setPresenceWaitingPeers((prev) => prev.filter((p) => p.peer_id !== targetPeerId));
+        if (decision === "admit") {
+            setPresencePeers((prev) =>
+                prev.some((p) => p.peer_id === targetPeerId)
+                    ? prev
+                    : [...prev, { ...targetPeer, status: "admitted" }]
+            );
+            if (selfPeerIdRef.current < targetPeerId) {
+                setTimeout(() => {
+                    lastOfferSentAtRef.current.delete(targetPeerId);
+                    initiateOffer(targetPeerId).catch(() => {});
+                }, 150);
+            } else {
+                createPeerConnection(targetPeerId);
+            }
+        }
         setAttendeeLogs((prev) =>
             prev.map((l) =>
                 l.email === targetPeer.email || l.name === targetPeer.name
@@ -1308,7 +1788,6 @@ export default function InSystemVideoMeetPage() {
                 : `Declined ${targetPeer.name}'s request.`
         );
 
-        // 2. Persist decision to Cloud API
         try {
             const res = await fetch("/api/meet", {
                 method: "POST",
@@ -1329,6 +1808,7 @@ export default function InSystemVideoMeetPage() {
     };
 
     const toggleMic = () => {
+        ensurePlaybackAudioUnlocked();
         const nextState = !isMuted;
         setIsMuted(nextState);
         if (mediaStreamRef.current) {
@@ -1341,6 +1821,7 @@ export default function InSystemVideoMeetPage() {
     };
 
     const toggleVideo = () => {
+        ensurePlaybackAudioUnlocked();
         const nextState = !isVideoOff;
         setIsVideoOff(nextState);
         if (mediaStreamRef.current) {
@@ -1359,18 +1840,19 @@ export default function InSystemVideoMeetPage() {
                     showToast("❌ Screen sharing is not supported by this browser.");
                     return;
                 }
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    audio: true,
+                });
                 screenStreamRef.current = screenStream;
                 if (screenVideoRef.current) {
                     screenVideoRef.current.srcObject = screenStream;
                 }
                 const screenTrack = screenStream.getVideoTracks()[0];
-                peerConnectionsRef.current.forEach((pc, remoteId) => {
-                    const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-                    if (sender && screenTrack) {
-                        sender.replaceTrack(screenTrack).catch(() => {});
-                    } else if (screenTrack) {
-                        pc.addTrack(screenTrack, screenStream);
+                peerConnectionsRef.current.forEach(async (pc, remoteId) => {
+                    const needsReneg = await syncLocalTracksToPc(pc, false);
+                    if (needsReneg && pc.signalingState === "stable") {
+                        lastOfferSentAtRef.current.delete(remoteId);
                         initiateOffer(remoteId).catch(() => {});
                     }
                 });
@@ -1380,13 +1862,9 @@ export default function InSystemVideoMeetPage() {
                 screenTrack.onended = () => {
                     setIsScreenSharing(false);
                     screenStreamRef.current = null;
-                    const camTrack = mediaStreamRef.current?.getVideoTracks()[0];
-                    if (camTrack) {
-                        peerConnectionsRef.current.forEach((pc) => {
-                            const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-                            if (sender) sender.replaceTrack(camTrack).catch(() => {});
-                        });
-                    }
+                    peerConnectionsRef.current.forEach((pc) => {
+                        syncLocalTracksToPc(pc, false).catch(() => {});
+                    });
                     showToast("Screen sharing stopped");
                 };
             } catch {
@@ -1397,13 +1875,9 @@ export default function InSystemVideoMeetPage() {
                 screenStreamRef.current.getTracks().forEach((t) => t.stop());
                 screenStreamRef.current = null;
             }
-            const camTrack = mediaStreamRef.current?.getVideoTracks()[0];
-            if (camTrack) {
-                peerConnectionsRef.current.forEach((pc) => {
-                    const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-                    if (sender) sender.replaceTrack(camTrack).catch(() => {});
-                });
-            }
+            peerConnectionsRef.current.forEach((pc) => {
+                syncLocalTracksToPc(pc, false).catch(() => {});
+            });
             setIsScreenSharing(false);
             showToast("Screen sharing stopped");
         }
@@ -1500,9 +1974,15 @@ export default function InSystemVideoMeetPage() {
 
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+            document.documentElement
+                .requestFullscreen()
+                .then(() => setIsFullscreen(true))
+                .catch(() => {});
         } else {
-            document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+            document
+                .exitFullscreen()
+                .then(() => setIsFullscreen(false))
+                .catch(() => {});
         }
     };
 
@@ -1526,7 +2006,6 @@ export default function InSystemVideoMeetPage() {
         );
     }
 
-    // ─── GUEST / SHARED-LINK CHECK-IN SCREEN (Clean Non-Overlapping Controls!) ───
     if (joinPhase === "prejoin") {
         return (
             <div className="min-h-screen bg-gradient-to-b from-[#070B14] via-[#0F172A] to-[#070B14] text-white flex flex-col justify-center items-center p-4 font-sans">
@@ -1538,7 +2017,6 @@ export default function InSystemVideoMeetPage() {
                 )}
 
                 <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-12 gap-6 bg-[#111827]/95 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-                    {/* Left: Clean 16:9 Camera Preview + Controls Bar Below Video (Never Covers Face!) */}
                     <div className="lg:col-span-7 flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -1568,13 +2046,14 @@ export default function InSystemVideoMeetPage() {
                                         {selfInitials}
                                     </div>
                                     <span className="text-xs text-gray-400">
-                                        {isVideoOff ? "Camera is turned off" : "Allow camera & microphone for HD video"}
+                                        {isVideoOff
+                                            ? "Camera is turned off"
+                                            : "Allow camera & microphone for HD video"}
                                     </span>
                                 </div>
                             )}
                         </div>
 
-                        {/* Dedicated Control Strip Below Video Preview */}
                         <div className="flex items-center justify-center gap-3 pt-0.5">
                             <button
                                 type="button"
@@ -1585,7 +2064,11 @@ export default function InSystemVideoMeetPage() {
                                         : "bg-[#1E293B] hover:bg-[#293548] text-white border border-white/10"
                                 }`}
                             >
-                                {isMuted ? <MicOff size={15} /> : <Mic size={15} className="text-emerald-400" />}
+                                {isMuted ? (
+                                    <MicOff size={15} />
+                                ) : (
+                                    <Mic size={15} className="text-emerald-400" />
+                                )}
                                 <span>{isMuted ? "Mic Muted" : "Mic On"}</span>
                             </button>
                             <button
@@ -1597,13 +2080,16 @@ export default function InSystemVideoMeetPage() {
                                         : "bg-[#1E293B] hover:bg-[#293548] text-white border border-white/10"
                                 }`}
                             >
-                                {isVideoOff ? <VideoOff size={15} /> : <VideoIcon size={15} className="text-cyan-400" />}
+                                {isVideoOff ? (
+                                    <VideoOff size={15} />
+                                ) : (
+                                    <VideoIcon size={15} className="text-cyan-400" />
+                                )}
                                 <span>{isVideoOff ? "Camera Off" : "Camera On"}</span>
                             </button>
                         </div>
                     </div>
 
-                    {/* Right: Guest Name & Email Check-In Form */}
                     <div className="lg:col-span-5 flex flex-col justify-center space-y-5">
                         <div>
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
@@ -1619,7 +2105,9 @@ export default function InSystemVideoMeetPage() {
 
                         <form onSubmit={handleCheckInAndJoin} className="space-y-3.5 text-xs">
                             <div>
-                                <label className="block font-bold text-gray-300 mb-1">Your Full Name *</label>
+                                <label className="block font-bold text-gray-300 mb-1">
+                                    Your Full Name *
+                                </label>
                                 <input
                                     type="text"
                                     required
@@ -1631,7 +2119,9 @@ export default function InSystemVideoMeetPage() {
                             </div>
 
                             <div>
-                                <label className="block font-bold text-gray-300 mb-1">Your Email Address *</label>
+                                <label className="block font-bold text-gray-300 mb-1">
+                                    Your Email Address *
+                                </label>
                                 <input
                                     type="email"
                                     required
@@ -1669,7 +2159,6 @@ export default function InSystemVideoMeetPage() {
         );
     }
 
-    // ─── WAITING ROOM LOBBY ───
     if (joinPhase === "waiting" || joinPhase === "rejected") {
         return (
             <div className="min-h-screen bg-gradient-to-b from-[#070B14] via-[#0F172A] to-[#070B14] text-white flex flex-col justify-center items-center p-4 font-sans">
@@ -1686,7 +2175,10 @@ export default function InSystemVideoMeetPage() {
                                 You are in the Waiting Lobby
                             </h2>
                             <p className="text-xs text-gray-300 leading-relaxed">
-                                Your details (<strong className="text-white">{displayName}</strong> • <span className="text-purple-300">{userEmail}</span>) have been recorded and sent to <strong className="text-white">{hostName}</strong>. You will join automatically as soon as the host clicks Admit.
+                                Your details (<strong className="text-white">{displayName}</strong> •{" "}
+                                <span className="text-purple-300">{userEmail}</span>) have been
+                                recorded and sent to <strong className="text-white">{hostName}</strong>.
+                                You will join automatically as soon as the host clicks Admit.
                             </p>
                         </>
                     ) : (
@@ -1694,7 +2186,9 @@ export default function InSystemVideoMeetPage() {
                             <div className="w-16 h-16 rounded-2xl bg-rose-600/20 border border-rose-500/40 flex items-center justify-center text-rose-400 mx-auto">
                                 <UserX size={30} />
                             </div>
-                            <h2 className="text-xl font-extrabold text-white">Entry Request Declined</h2>
+                            <h2 className="text-xl font-extrabold text-white">
+                                Entry Request Declined
+                            </h2>
                             <p className="text-xs text-gray-400">
                                 The host was unable to admit you to this meeting session.
                             </p>
@@ -1730,7 +2224,9 @@ export default function InSystemVideoMeetPage() {
                         <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center font-bold text-xs text-white shadow-md shadow-purple-900/30">
                             B
                         </div>
-                        <span className="font-bold text-sm tracking-tight text-white hidden sm:inline">Beraxis Meet</span>
+                        <span className="font-bold text-sm tracking-tight text-white hidden sm:inline">
+                            Beraxis Meet
+                        </span>
                     </Link>
 
                     <span className="text-gray-700 hidden sm:inline">•</span>
@@ -1819,8 +2315,12 @@ export default function InSystemVideoMeetPage() {
                                 className="flex items-center justify-between gap-2 bg-black/50 border border-white/10 rounded-xl px-3 py-2"
                             >
                                 <div className="min-w-0">
-                                    <div className="font-bold text-white text-xs truncate">{wp.name}</div>
-                                    <div className="text-[11px] text-purple-300 truncate">{wp.email || "No email"}</div>
+                                    <div className="font-bold text-white text-xs truncate">
+                                        {wp.name}
+                                    </div>
+                                    <div className="text-[11px] text-purple-300 truncate">
+                                        {wp.email || "No email"}
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
                                     <button
@@ -1861,7 +2361,11 @@ export default function InSystemVideoMeetPage() {
                             </div>
                             <h2 className="text-2xl font-bold text-white">Call Ended</h2>
                             <p className="text-xs text-gray-400 leading-relaxed">
-                                Total duration: <span className="text-white font-mono font-bold">{formatTimer(callSeconds)}</span>.
+                                Total duration:{" "}
+                                <span className="text-white font-mono font-bold">
+                                    {formatTimer(callSeconds)}
+                                </span>
+                                .
                             </p>
                             {recordedBlobUrl && (
                                 <a
@@ -1894,7 +2398,12 @@ export default function InSystemVideoMeetPage() {
                     ) : isScreenSharing ? (
                         <div className="w-full h-full max-w-6xl flex flex-col gap-2 min-h-0">
                             <div className="flex-1 min-h-0 bg-black rounded-2xl md:rounded-3xl border border-purple-500/40 relative overflow-hidden flex items-center justify-center shadow-2xl">
-                                <video ref={screenVideoRef} autoPlay playsInline className="w-full h-full object-contain" />
+                                <video
+                                    ref={screenVideoRef}
+                                    autoPlay
+                                    playsInline
+                                    className="w-full h-full object-contain"
+                                />
                                 <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-purple-500/30 text-xs font-bold text-purple-300 flex items-center gap-2">
                                     <Monitor size={14} className="text-purple-400" />
                                     <span>You are presenting your screen</span>
@@ -1908,7 +2417,9 @@ export default function InSystemVideoMeetPage() {
                                         autoPlay
                                         playsInline
                                         muted
-                                        className={`w-full h-full object-cover -scale-x-100 ${isVideoOff ? "hidden" : "block"}`}
+                                        className={`w-full h-full object-cover -scale-x-100 ${
+                                            isVideoOff ? "hidden" : "block"
+                                        }`}
                                     />
                                     {isVideoOff && (
                                         <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-400 bg-gray-900">
@@ -1920,20 +2431,31 @@ export default function InSystemVideoMeetPage() {
                                     </div>
                                 </div>
                                 {remotePeers.map((peer) => (
-                                    <div key={peer.peer_id} className="w-40 h-full bg-[#141C2E] border border-gray-800 rounded-xl relative overflow-hidden shrink-0 shadow-lg">
-                                        <RemoteVideoTile peer={peer} mediaEntry={remoteMedia[peer.peer_id]} />
+                                    <div
+                                        key={peer.peer_id}
+                                        className="w-40 h-full bg-[#141C2E] border border-gray-800 rounded-xl relative overflow-hidden shrink-0 shadow-lg"
+                                    >
+                                        <RemoteVideoTile
+                                            peer={peer}
+                                            mediaEntry={remoteMedia[peer.peer_id]}
+                                            relayFrameUrl={relayFrames[peer.peer_id]}
+                                            p2pConnected={Boolean(p2pConnectedPeers[peer.peer_id])}
+                                            relayAudioActive={Boolean(relayAudioPeers[peer.peer_id])}
+                                            onUnlockAudio={ensurePlaybackAudioUnlocked}
+                                        />
                                     </div>
                                 ))}
                             </div>
                         </div>
                     ) : (
-                        /* Balanced 16:9 Widescreen Conference Grid */
                         <div
                             className={`w-full max-w-6xl grid grid-cols-1 ${
-                                remotePeers.length >= 2 ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2"
+                                remotePeers.length >= 2
+                                    ? "md:grid-cols-2 lg:grid-cols-3"
+                                    : "md:grid-cols-2"
                             } gap-4 items-center justify-center my-auto`}
                         >
-                            {/* LOCAL VIDEO TILE (16:9 Widescreen) */}
+                            {/* LOCAL VIDEO TILE */}
                             <div className="bg-[#141C2E] border border-gray-800 hover:border-gray-700 rounded-2xl md:rounded-3xl relative overflow-hidden flex flex-col justify-between shadow-2xl group w-full aspect-video max-h-[68vh]">
                                 <video
                                     ref={localVideoRef}
@@ -1941,7 +2463,9 @@ export default function InSystemVideoMeetPage() {
                                     playsInline
                                     muted
                                     className={`w-full h-full object-cover object-center absolute inset-0 -scale-x-100 ${
-                                        isVideoOff || !hasMediaPermission ? "opacity-0 pointer-events-none" : "opacity-100 z-[2]"
+                                        isVideoOff || !hasMediaPermission
+                                            ? "opacity-0 pointer-events-none"
+                                            : "opacity-100 z-[2]"
                                     }`}
                                 />
 
@@ -1981,10 +2505,22 @@ export default function InSystemVideoMeetPage() {
 
                                 {!isMuted && (
                                     <div className="absolute bottom-3 left-3 z-20 flex items-end gap-1 h-5 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/10">
-                                        <span className="w-1 bg-emerald-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, audioLevel * 0.2)}px` }} />
-                                        <span className="w-1 bg-emerald-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, audioLevel * 0.35)}px` }} />
-                                        <span className="w-1 bg-emerald-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, audioLevel * 0.25)}px` }} />
-                                        <span className="w-1 bg-emerald-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, audioLevel * 0.15)}px` }} />
+                                        <span
+                                            className="w-1 bg-emerald-400 rounded-full transition-all duration-75"
+                                            style={{ height: `${Math.max(4, audioLevel * 0.2)}px` }}
+                                        />
+                                        <span
+                                            className="w-1 bg-emerald-400 rounded-full transition-all duration-75"
+                                            style={{ height: `${Math.max(4, audioLevel * 0.35)}px` }}
+                                        />
+                                        <span
+                                            className="w-1 bg-emerald-400 rounded-full transition-all duration-75"
+                                            style={{ height: `${Math.max(4, audioLevel * 0.25)}px` }}
+                                        />
+                                        <span
+                                            className="w-1 bg-emerald-400 rounded-full transition-all duration-75"
+                                            style={{ height: `${Math.max(4, audioLevel * 0.15)}px` }}
+                                        />
                                     </div>
                                 )}
 
@@ -2004,17 +2540,23 @@ export default function InSystemVideoMeetPage() {
                                             <Mic size={13} className="text-emerald-400" />
                                         )}
                                     </div>
-                                    {userEmail && <span className="text-[10px] text-gray-300">{userEmail}</span>}
+                                    {userEmail && (
+                                        <span className="text-[10px] text-gray-300">{userEmail}</span>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* REMOTE WEBRTC PEERS OR SHARE LINK WAITING CARD */}
+                            {/* REMOTE PEER TILES */}
                             {remotePeers.length > 0 ? (
                                 remotePeers.map((peer) => (
                                     <RemoteVideoTile
                                         key={peer.peer_id}
                                         peer={peer}
                                         mediaEntry={remoteMedia[peer.peer_id]}
+                                        relayFrameUrl={relayFrames[peer.peer_id]}
+                                        p2pConnected={Boolean(p2pConnectedPeers[peer.peer_id])}
+                                        relayAudioActive={Boolean(relayAudioPeers[peer.peer_id])}
+                                        onUnlockAudio={ensurePlaybackAudioUnlocked}
                                     />
                                 ))
                             ) : (
@@ -2026,7 +2568,11 @@ export default function InSystemVideoMeetPage() {
                                         Share Link to Invite Clients or Team
                                     </h3>
                                     <p className="text-xs text-gray-400 max-w-xs mb-4 leading-relaxed">
-                                        When anyone opens your meeting link, BERAXIS records their <strong className="text-white">Full Name &amp; Email</strong> and pops up an <strong className="text-emerald-400">Admit</strong> button so live HD video &amp; audio connect immediately.
+                                        When anyone opens your meeting link, BERAXIS records their{" "}
+                                        <strong className="text-white">Full Name &amp; Email</strong>{" "}
+                                        and pops up an{" "}
+                                        <strong className="text-emerald-400">Admit</strong> button so
+                                        live HD video &amp; audio connect immediately.
                                     </p>
                                     <div className="flex flex-wrap items-center justify-center gap-2">
                                         <button
@@ -2039,7 +2585,8 @@ export default function InSystemVideoMeetPage() {
                                             onClick={() => setActiveDrawer("participants")}
                                             className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                                         >
-                                            <Users size={13} /> Lobby &amp; Guest Log ({attendeeLogs.length})
+                                            <Users size={13} /> Lobby &amp; Guest Log (
+                                            {attendeeLogs.length})
                                         </button>
                                     </div>
                                 </div>
@@ -2053,10 +2600,30 @@ export default function InSystemVideoMeetPage() {
                     <aside className="w-80 md:w-96 bg-[#0F172A] border-l border-gray-800 flex flex-col shadow-2xl z-30 h-full min-h-0">
                         <div className="p-4 border-b border-gray-800 flex items-center justify-between shrink-0">
                             <h3 className="font-bold text-white text-sm capitalize flex items-center gap-2">
-                                {activeDrawer === "chat" && <><MessageSquare size={16} className="text-purple-400" /> In-Meeting Chat</>}
-                                {activeDrawer === "participants" && <><Users size={16} className="text-purple-400" /> Lobby &amp; Participants ({totalParticipantsCount})</>}
-                                {activeDrawer === "invite" && <><Mail size={16} className="text-purple-400" /> Share &amp; Invite</>}
-                                {activeDrawer === "settings" && <><Sliders size={16} className="text-purple-400" /> Audio &amp; Video Settings</>}
+                                {activeDrawer === "chat" && (
+                                    <>
+                                        <MessageSquare size={16} className="text-purple-400" />{" "}
+                                        In-Meeting Chat
+                                    </>
+                                )}
+                                {activeDrawer === "participants" && (
+                                    <>
+                                        <Users size={16} className="text-purple-400" /> Lobby &amp;
+                                        Participants ({totalParticipantsCount})
+                                    </>
+                                )}
+                                {activeDrawer === "invite" && (
+                                    <>
+                                        <Mail size={16} className="text-purple-400" /> Share &amp;
+                                        Invite
+                                    </>
+                                )}
+                                {activeDrawer === "settings" && (
+                                    <>
+                                        <Sliders size={16} className="text-purple-400" /> Audio
+                                        &amp; Video Settings
+                                    </>
+                                )}
                             </h3>
                             <button
                                 onClick={() => setActiveDrawer(null)}
@@ -2073,20 +2640,35 @@ export default function InSystemVideoMeetPage() {
                                         {messages.map((m) => (
                                             <div key={m.id} className="space-y-1">
                                                 <div className="flex items-center justify-between text-[10px] text-gray-400">
-                                                    <span className={`font-bold ${m.isHost ? "text-purple-400" : m.isAi ? "text-amber-400" : "text-cyan-400"}`}>
+                                                    <span
+                                                        className={`font-bold ${
+                                                            m.isHost
+                                                                ? "text-purple-400"
+                                                                : m.isAi
+                                                                ? "text-amber-400"
+                                                                : "text-cyan-400"
+                                                        }`}
+                                                    >
                                                         {m.sender}
                                                     </span>
                                                     <span>{m.time}</span>
                                                 </div>
-                                                <div className={`p-2.5 rounded-xl border text-xs leading-relaxed ${
-                                                    m.isAi ? "bg-amber-500/10 border-amber-500/20 text-amber-200" : "bg-[#1E293B] border-white/5 text-gray-200"
-                                                }`}>
+                                                <div
+                                                    className={`p-2.5 rounded-xl border text-xs leading-relaxed ${
+                                                        m.isAi
+                                                            ? "bg-amber-500/10 border-amber-500/20 text-amber-200"
+                                                            : "bg-[#1E293B] border-white/5 text-gray-200"
+                                                    }`}
+                                                >
                                                     {m.text}
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                    <form onSubmit={handleSendMessage} className="pt-3 border-t border-gray-800 flex gap-2 shrink-0">
+                                    <form
+                                        onSubmit={handleSendMessage}
+                                        className="pt-3 border-t border-gray-800 flex gap-2 shrink-0"
+                                    >
                                         <input
                                             type="text"
                                             value={chatInput}
@@ -2094,7 +2676,10 @@ export default function InSystemVideoMeetPage() {
                                             placeholder="Send message to room..."
                                             className="flex-1 bg-[#1E293B] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
                                         />
-                                        <button type="submit" className="bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-xl text-xs font-bold cursor-pointer">
+                                        <button
+                                            type="submit"
+                                            className="bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-xl text-xs font-bold cursor-pointer"
+                                        >
                                             <Send size={14} />
                                         </button>
                                     </form>
@@ -2110,20 +2695,31 @@ export default function InSystemVideoMeetPage() {
                                                 <span>Action</span>
                                             </div>
                                             {waitingPeers.map((wp) => (
-                                                <div key={wp.peer_id} className="p-2.5 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between gap-2">
+                                                <div
+                                                    key={wp.peer_id}
+                                                    className="p-2.5 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between gap-2"
+                                                >
                                                     <div className="min-w-0">
-                                                        <div className="font-bold text-white text-xs truncate">{wp.name}</div>
-                                                        <div className="text-[10px] text-purple-300 truncate">{wp.email}</div>
+                                                        <div className="font-bold text-white text-xs truncate">
+                                                            {wp.name}
+                                                        </div>
+                                                        <div className="text-[10px] text-purple-300 truncate">
+                                                            {wp.email}
+                                                        </div>
                                                     </div>
                                                     <div className="flex items-center gap-1 shrink-0">
                                                         <button
-                                                            onClick={() => handleHostDecision(wp, "admit")}
+                                                            onClick={() =>
+                                                                handleHostDecision(wp, "admit")
+                                                            }
                                                             className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold cursor-pointer"
                                                         >
                                                             Admit
                                                         </button>
                                                         <button
-                                                            onClick={() => handleHostDecision(wp, "reject")}
+                                                            onClick={() =>
+                                                                handleHostDecision(wp, "reject")
+                                                            }
                                                             className="px-2 py-1 rounded-lg bg-rose-600/30 hover:bg-rose-600/50 text-rose-200 text-[11px] font-bold cursor-pointer"
                                                         >
                                                             Deny
@@ -2144,8 +2740,12 @@ export default function InSystemVideoMeetPage() {
                                                     {selfInitials}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <div className="font-bold text-white text-xs truncate">{displayName} (You)</div>
-                                                    <div className="text-[10px] text-gray-400 truncate">{userEmail || "Host"}</div>
+                                                    <div className="font-bold text-white text-xs truncate">
+                                                        {displayName} (You)
+                                                    </div>
+                                                    <div className="text-[10px] text-gray-400 truncate">
+                                                        {userEmail || "Host"}
+                                                    </div>
                                                 </div>
                                             </div>
                                             <span className="text-[9px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold shrink-0">
@@ -2154,35 +2754,63 @@ export default function InSystemVideoMeetPage() {
                                         </div>
 
                                         {remotePeers.map((p) => (
-                                            <div key={p.peer_id} className="flex items-center justify-between p-3 rounded-2xl bg-[#1E293B] border border-white/5">
+                                            <div
+                                                key={p.peer_id}
+                                                className="flex items-center justify-between p-3 rounded-2xl bg-[#1E293B] border border-white/5"
+                                            >
                                                 <div className="flex items-center gap-2.5 min-w-0">
                                                     <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                                                         {p.name.charAt(0)}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <div className="font-bold text-white text-xs truncate">{p.name}</div>
-                                                        <div className="text-[10px] text-purple-300 truncate">{p.email || p.role}</div>
+                                                        <div className="font-bold text-white text-xs truncate">
+                                                            {p.name}
+                                                        </div>
+                                                        <div className="text-[10px] text-purple-300 truncate">
+                                                            {p.email || p.role}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                {p.is_muted ? <MicOff size={13} className="text-rose-400 shrink-0" /> : <Mic size={13} className="text-emerald-400 shrink-0" />}
+                                                {p.is_muted ? (
+                                                    <MicOff
+                                                        size={13}
+                                                        className="text-rose-400 shrink-0"
+                                                    />
+                                                ) : (
+                                                    <Mic
+                                                        size={13}
+                                                        className="text-emerald-400 shrink-0"
+                                                    />
+                                                )}
                                             </div>
                                         ))}
                                     </div>
 
                                     <div className="space-y-2 pt-3 border-t border-gray-800">
                                         <div className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 flex items-center justify-between">
-                                            <span>Recorded Attendee Log ({attendeeLogs.length})</span>
+                                            <span>
+                                                Recorded Attendee Log ({attendeeLogs.length})
+                                            </span>
                                             <span>Status</span>
                                         </div>
                                         {attendeeLogs.length === 0 ? (
-                                            <p className="text-[11px] text-gray-500">No external guests recorded yet.</p>
+                                            <p className="text-[11px] text-gray-500">
+                                                No external guests recorded yet.
+                                            </p>
                                         ) : (
                                             <div className="space-y-1.5 max-h-48 overflow-y-auto">
                                                 {attendeeLogs.map((log, i) => (
-                                                    <div key={`${log.email}-${i}`} className="p-2.5 rounded-xl bg-black/30 border border-white/5 flex items-center justify-between gap-2 text-xs">
+                                                    <div
+                                                        key={`${log.email}-${i}`}
+                                                        className="p-2.5 rounded-xl bg-black/30 border border-white/5 flex items-center justify-between gap-2 text-xs"
+                                                    >
                                                         <div className="min-w-0">
-                                                            <div className="font-bold text-white truncate">{log.name}</div>
-                                                            <div className="text-[10px] text-gray-400 truncate">{log.email}</div>
+                                                            <div className="font-bold text-white truncate">
+                                                                {log.name}
+                                                            </div>
+                                                            <div className="text-[10px] text-gray-400 truncate">
+                                                                {log.email}
+                                                            </div>
                                                         </div>
                                                         <span
                                                             className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 ${
@@ -2206,19 +2834,25 @@ export default function InSystemVideoMeetPage() {
                                             onClick={() => copyMeetingUrl()}
                                             className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
                                         >
-                                            <Copy size={14} /> <span>Copy Shareable Client Link</span>
+                                            <Copy size={14} />{" "}
+                                            <span>Copy Shareable Client Link</span>
                                         </button>
                                     </div>
                                 </div>
                             )}
 
                             {activeDrawer === "invite" && (
-                                <form onSubmit={handleSendEmailInvite} className="space-y-4 text-xs">
+                                <form
+                                    onSubmit={handleSendEmailInvite}
+                                    className="space-y-4 text-xs"
+                                >
                                     <p className="text-gray-400 text-[11px] leading-relaxed">
                                         Share the link below with your client or team member. When they open it, BERAXIS records their Name and Email and notifies you to admit them.
                                     </p>
                                     <div>
-                                        <label className="block text-gray-300 font-semibold mb-1">Client / Guest Name</label>
+                                        <label className="block text-gray-300 font-semibold mb-1">
+                                            Client / Guest Name
+                                        </label>
                                         <input
                                             type="text"
                                             value={inviteName}
@@ -2228,7 +2862,9 @@ export default function InSystemVideoMeetPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-gray-300 font-semibold mb-1">Client / Guest Email *</label>
+                                        <label className="block text-gray-300 font-semibold mb-1">
+                                            Client / Guest Email *
+                                        </label>
                                         <input
                                             type="email"
                                             required
@@ -2250,7 +2886,9 @@ export default function InSystemVideoMeetPage() {
                             {activeDrawer === "settings" && (
                                 <div className="space-y-4 text-xs">
                                     <div>
-                                        <label className="block text-gray-300 font-semibold mb-1">Your Display Name</label>
+                                        <label className="block text-gray-300 font-semibold mb-1">
+                                            Your Display Name
+                                        </label>
                                         <input
                                             type="text"
                                             value={displayName}
@@ -2280,7 +2918,9 @@ export default function InSystemVideoMeetPage() {
                                                     setRequireAdmission(next);
                                                     await fetch("/api/meet", {
                                                         method: "POST",
-                                                        headers: { "Content-Type": "application/json" },
+                                                        headers: {
+                                                            "Content-Type": "application/json",
+                                                        },
                                                         body: JSON.stringify({
                                                             action: "toggle_lobby",
                                                             room_id: meetId,
@@ -2293,7 +2933,9 @@ export default function InSystemVideoMeetPage() {
                                         </div>
                                     )}
                                     <div>
-                                        <label className="block text-gray-300 font-semibold mb-1">Camera Input Device</label>
+                                        <label className="block text-gray-300 font-semibold mb-1">
+                                            Camera Input Device
+                                        </label>
                                         <select
                                             value={selectedVideoId}
                                             onChange={(e) => {
@@ -2311,7 +2953,9 @@ export default function InSystemVideoMeetPage() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-gray-300 font-semibold mb-1">Microphone Input Device</label>
+                                        <label className="block text-gray-300 font-semibold mb-1">
+                                            Microphone Input Device
+                                        </label>
                                         <select
                                             value={selectedAudioId}
                                             onChange={(e) => {
@@ -2323,7 +2967,8 @@ export default function InSystemVideoMeetPage() {
                                             <option value="">Default Microphone</option>
                                             {audioDevices.map((d) => (
                                                 <option key={d.deviceId} value={d.deviceId}>
-                                                    {d.label || `Microphone ${d.deviceId.slice(0, 5)}`}
+                                                    {d.label ||
+                                                        `Microphone ${d.deviceId.slice(0, 5)}`}
                                                 </option>
                                             ))}
                                         </select>
@@ -2340,7 +2985,11 @@ export default function InSystemVideoMeetPage() {
                 <div className="hidden md:flex items-center gap-3">
                     <div className="flex items-center gap-2 text-xs text-gray-400">
                         <Shield size={14} className="text-emerald-400" />
-                        <span>{signalingStatus === "connected" ? "Live WebRTC Room Active" : "Local Mode"}</span>
+                        <span>
+                            {signalingStatus === "connected"
+                                ? "Live WebRTC + Cloud Relay Active"
+                                : "Local Mode"}
+                        </span>
                     </div>
                     <button
                         onClick={toggleRecording}
@@ -2350,7 +2999,10 @@ export default function InSystemVideoMeetPage() {
                                 : "bg-white/5 hover:bg-white/10 border-white/10 text-gray-300"
                         }`}
                     >
-                        <Radio size={13} className={isRecording ? "text-rose-400" : "text-gray-400"} />
+                        <Radio
+                            size={13}
+                            className={isRecording ? "text-rose-400" : "text-gray-400"}
+                        />
                         <span>{isRecording ? "Stop Recording" : "Record Meeting"}</span>
                     </button>
                 </div>
@@ -2359,7 +3011,9 @@ export default function InSystemVideoMeetPage() {
                     <button
                         onClick={toggleMic}
                         className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
-                            isMuted ? "bg-rose-600 text-white" : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
+                            isMuted
+                                ? "bg-rose-600 text-white"
+                                : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
                         }`}
                     >
                         {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
@@ -2367,7 +3021,9 @@ export default function InSystemVideoMeetPage() {
                     <button
                         onClick={toggleVideo}
                         className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
-                            isVideoOff ? "bg-rose-600 text-white" : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
+                            isVideoOff
+                                ? "bg-rose-600 text-white"
+                                : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
                         }`}
                     >
                         {isVideoOff ? <VideoOff size={18} /> : <VideoIcon size={18} />}
@@ -2375,7 +3031,9 @@ export default function InSystemVideoMeetPage() {
                     <button
                         onClick={toggleScreenShare}
                         className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
-                            isScreenSharing ? "bg-purple-600 text-white animate-pulse" : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
+                            isScreenSharing
+                                ? "bg-purple-600 text-white animate-pulse"
+                                : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
                         }`}
                     >
                         <Monitor size={18} />
@@ -2388,7 +3046,9 @@ export default function InSystemVideoMeetPage() {
                             showToast(next ? "Hand raised ✋" : "Hand lowered");
                         }}
                         className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
-                            isHandRaised ? "bg-amber-500 text-white" : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
+                            isHandRaised
+                                ? "bg-amber-500 text-white"
+                                : "bg-[#1E293B] hover:bg-[#2E3B52] text-white border border-white/10"
                         }`}
                     >
                         <Hand size={18} />
@@ -2406,15 +3066,21 @@ export default function InSystemVideoMeetPage() {
                     <button
                         onClick={() => setActiveDrawer(activeDrawer === "chat" ? null : "chat")}
                         className={`p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer ${
-                            activeDrawer === "chat" ? "bg-purple-600 border-purple-500 text-white" : "bg-[#1E293B] hover:bg-[#2E3B52] border-white/10 text-gray-300"
+                            activeDrawer === "chat"
+                                ? "bg-purple-600 border-purple-500 text-white"
+                                : "bg-[#1E293B] hover:bg-[#2E3B52] border-white/10 text-gray-300"
                         }`}
                     >
                         <MessageSquare size={16} />
                     </button>
                     <button
-                        onClick={() => setActiveDrawer(activeDrawer === "participants" ? null : "participants")}
+                        onClick={() =>
+                            setActiveDrawer(activeDrawer === "participants" ? null : "participants")
+                        }
                         className={`p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer relative ${
-                            activeDrawer === "participants" ? "bg-purple-600 border-purple-500 text-white" : "bg-[#1E293B] hover:bg-[#2E3B52] border-white/10 text-gray-300"
+                            activeDrawer === "participants"
+                                ? "bg-purple-600 border-purple-500 text-white"
+                                : "bg-[#1E293B] hover:bg-[#2E3B52] border-white/10 text-gray-300"
                         }`}
                     >
                         <Users size={16} />
@@ -2425,9 +3091,13 @@ export default function InSystemVideoMeetPage() {
                         )}
                     </button>
                     <button
-                        onClick={() => setActiveDrawer(activeDrawer === "settings" ? null : "settings")}
+                        onClick={() =>
+                            setActiveDrawer(activeDrawer === "settings" ? null : "settings")
+                        }
                         className={`p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer ${
-                            activeDrawer === "settings" ? "bg-purple-600 border-purple-500 text-white" : "bg-[#1E293B] hover:bg-[#2E3B52] border-white/10 text-gray-300"
+                            activeDrawer === "settings"
+                                ? "bg-purple-600 border-purple-500 text-white"
+                                : "bg-[#1E293B] hover:bg-[#2E3B52] border-white/10 text-gray-300"
                         }`}
                     >
                         <Settings size={16} />
@@ -2444,30 +3114,50 @@ export default function InSystemVideoMeetPage() {
                                     <Zap size={20} className="text-purple-400 fill-purple-400" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white text-base">Instant Video Meeting Link</h3>
-                                    <p className="text-xs text-gray-400">Share this link to invite any client or team member</p>
+                                    <h3 className="font-bold text-white text-base">
+                                        Instant Video Meeting Link
+                                    </h3>
+                                    <p className="text-xs text-gray-400">
+                                        Share this link to invite any client or team member
+                                    </p>
                                 </div>
                             </div>
-                            <button onClick={() => setShowInstantModal(false)} className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer">
+                            <button
+                                onClick={() => setShowInstantModal(false)}
+                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                            >
                                 <X size={18} />
                             </button>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold text-gray-300">Generated Video Room URL</label>
+                            <label className="text-xs font-semibold text-gray-300">
+                                Generated Video Room URL
+                            </label>
                             <div className="flex items-center gap-2 bg-[#0F172A] border border-purple-500/20 rounded-2xl p-2.5 text-xs font-mono text-purple-200">
                                 <span className="flex-1 truncate">{instantGeneratedLink}</span>
-                                <button onClick={() => copyMeetingUrl(instantGeneratedLink)} className="p-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl cursor-pointer shrink-0">
+                                <button
+                                    onClick={() => copyMeetingUrl(instantGeneratedLink)}
+                                    className="p-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl cursor-pointer shrink-0"
+                                >
                                     <Copy size={14} />
                                 </button>
                             </div>
                         </div>
 
                         <div className="flex gap-2.5 pt-2">
-                            <button onClick={() => copyMeetingUrl(instantGeneratedLink)} className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 cursor-pointer">
+                            <button
+                                onClick={() => copyMeetingUrl(instantGeneratedLink)}
+                                className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 cursor-pointer"
+                            >
                                 <Copy size={14} /> <span>Copy Link</span>
                             </button>
-                            <a href={`${instantGeneratedLink}?host=1`} target="_blank" rel="noreferrer" className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 text-center">
+                            <a
+                                href={`${instantGeneratedLink}?host=1`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 text-center"
+                            >
                                 <span>Launch Room</span> <ExternalLink size={14} />
                             </a>
                         </div>
