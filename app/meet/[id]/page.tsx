@@ -325,9 +325,12 @@ function RemoteVideoTile({
             )}
 
             {(p2pConnected || hasRelayVideo || relayAudioActive) && !audioBlocked && (
-                <div className="absolute top-3 left-3 z-20 bg-black/55 backdrop-blur-md border border-emerald-500/30 text-emerald-300 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                <div
+                    style={{ backgroundColor: "rgba(9, 13, 22, 0.82)", color: "#6EE7B7" }}
+                    className="absolute top-3 left-3 z-20 backdrop-blur-md border border-emerald-500/40 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5"
+                >
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>{p2pConnected ? "HD P2P Live" : "Cloud Relay Live"}</span>
+                    <span style={{ color: "#6EE7B7" }}>{p2pConnected ? "HD P2P Live" : "Cloud Relay Live"}</span>
                 </div>
             )}
 
@@ -338,16 +341,19 @@ function RemoteVideoTile({
                 </div>
             )}
 
-            <div className="absolute bottom-3 left-3 bg-black/65 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-xs flex flex-col gap-0.5 text-white font-medium z-20">
+            <div
+                style={{ backgroundColor: "rgba(9, 13, 22, 0.82)", color: "#FFFFFF" }}
+                className="absolute bottom-3 left-3 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/15 text-xs flex flex-col gap-0.5 font-medium z-20"
+            >
                 <div className="flex items-center gap-2">
-                    <span className="font-bold">{peer.name}</span>
+                    <span className="font-bold" style={{ color: "#FFFFFF" }}>{peer.name}</span>
                     {peer.is_muted ? (
                         <MicOff size={13} className="text-rose-400" />
                     ) : (
                         <span className="w-2 h-2 rounded-full bg-emerald-400" />
                     )}
                 </div>
-                {peer.email && <span className="text-[10px] text-gray-300">{peer.email}</span>}
+                {peer.email && <span className="text-[10px]" style={{ color: "#CBD5E1" }}>{peer.email}</span>}
             </div>
         </div>
     );
@@ -2531,9 +2537,12 @@ export default function InSystemVideoMeetPage() {
                                     </div>
                                 )}
 
-                                <div className="absolute bottom-3 right-3 bg-black/65 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-xs flex flex-col items-end text-white font-medium z-20">
+                                <div
+                                    style={{ backgroundColor: "rgba(9, 13, 22, 0.82)", color: "#FFFFFF" }}
+                                    className="absolute bottom-3 right-3 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/15 text-xs flex flex-col items-end font-medium z-20"
+                                >
                                     <div className="flex items-center gap-2">
-                                        <span className="font-bold">{displayName} (You)</span>
+                                        <span className="font-bold" style={{ color: "#FFFFFF" }}>{displayName} (You)</span>
                                         {isMuted ? (
                                             <MicOff size={13} className="text-rose-400" />
                                         ) : (
@@ -2541,7 +2550,7 @@ export default function InSystemVideoMeetPage() {
                                         )}
                                     </div>
                                     {userEmail && (
-                                        <span className="text-[10px] text-gray-300">{userEmail}</span>
+                                        <span className="text-[10px]" style={{ color: "#CBD5E1" }}>{userEmail}</span>
                                     )}
                                 </div>
                             </div>

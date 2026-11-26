@@ -176,8 +176,7 @@ export async function POST(req: NextRequest) {
       const email = String(body.email || "").trim();
       const isCreator = Boolean(body.is_room_creator);
 
-      const hasActiveHost = room.peers.some((p) => p.is_host && p.peer_id !== peerId);
-      const isHost = isCreator || (!hasActiveHost && Boolean(body.is_authenticated_user));
+      const isHost = isCreator;
 
       if (isHost) {
         room.host_peer_id = peerId;
