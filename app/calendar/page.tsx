@@ -8,6 +8,7 @@ import {
     Trash2, Edit, CheckCircle2
 } from 'lucide-react';
 import { useBranchContext } from '@/lib/branchContext';
+import { triggerNotificationRefresh } from '@/lib/notificationContext';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -152,9 +153,11 @@ function NewEventModal({
             if (res.ok) {
                 const saved = await res.json().catch(() => created);
                 onSuccess(saved?.id ? saved : created);
+                triggerNotificationRefresh();
                 onClose();
             } else {
                 onSuccess(created);
+                triggerNotificationRefresh();
                 onClose();
             }
         } catch (err) {

@@ -44,11 +44,28 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const allMsgs = store.messages && typeof store.messages === "object" ? store.messages : {};
+  const channelStats: Record<
+    string,
+    { total: number; lastAt: string | null; lastAuthorEmail: string | null; lastBody: string | null }
+  > = {};
+  for (const ch of store.channels || []) {
+    const list = Array.isArray(allMsgs[ch.id]) ? allMsgs[ch.id] : [];
+    const last = list.length > 0 ? list[list.length - 1] : null;
+    channelStats[ch.id] = {
+      total: list.length,
+      lastAt: last?.created_at || null,
+      lastAuthorEmail: last?.author_email || null,
+      lastBody: last?.body || null,
+    };
+  }
+
   return NextResponse.json(
     {
       success: true,
       clusterId,
       channels: store.channels || [],
+      channelStats,
     },
     { headers: { "Cache-Control": "no-store" } }
   );

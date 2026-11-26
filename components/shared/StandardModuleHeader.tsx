@@ -16,7 +16,9 @@ import {
 import UniversalModuleSearch from "./UniversalModuleSearch";
 import UserProfileDropdown from "./UserProfileDropdown";
 import UniversalBranchSwitcher from "./UniversalBranchSwitcher";
+import NotificationBellDropdown from "./NotificationBellDropdown";
 import { useTheme } from "@/lib/themeContext";
+import { useNotifications } from "@/lib/notificationContext";
 
 export type MenuItem = {
     name: string;
@@ -55,6 +57,8 @@ export default function StandardModuleHeader({
     const pathname = usePathname();
     const router = useRouter();
     const { isLight, toggleTheme } = useTheme();
+    const { getBadgeForHref } = useNotifications();
+    const discussUnread = getBadgeForHref("/discuss");
 
     return (
         <header className={`border-b sticky top-0 z-50 shadow-md w-full max-w-full overflow-x-clip transition-colors ${
@@ -132,17 +136,23 @@ export default function StandardModuleHeader({
                         <nav className="hidden 2xl:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-none">
                             {menuItems.map((item) => {
                                 const isActive = pathname === item.href || (item.href !== "/" && item.href !== "/apps" && pathname.startsWith(item.href));
+                                const itemBadge = item.href !== pathname ? getBadgeForHref(item.href) : 0;
                                 return (
                                     <Link
                                         key={item.name}
                                         href={item.href}
-                                        className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+                                        className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap inline-flex items-center gap-1.5 ${
                                             isActive
                                                 ? "text-white bg-white/15 border border-white/10 shadow-inner"
                                                 : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
                                         }`}
                                     >
-                                        {item.name}
+                                        <span>{item.name}</span>
+                                        {itemBadge > 0 && (
+                                            <span className="px-1.5 rounded-full bg-rose-500 text-white text-[9px] font-black">
+                                                {itemBadge}
+                                            </span>
+                                        )}
                                     </Link>
                                 );
                             })}
@@ -184,15 +194,19 @@ export default function StandardModuleHeader({
                         <Bot size={17} />
                     </Link>
 
+                    <NotificationBellDropdown />
+
                     <Link
                         href="/discuss"
                         title="Team Chat & Discuss"
                         className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 relative transition-colors cursor-pointer"
                     >
                         <MessageSquare size={17} />
-                        <span className="absolute top-1 right-1 bg-purple-500 text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
-                            3
-                        </span>
+                        {discussUnread > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black rounded-full min-w-[16px] h-[16px] px-1 flex items-center justify-center">
+                                {discussUnread > 99 ? "99+" : discussUnread}
+                            </span>
+                        )}
                     </Link>
 
                     <Link
@@ -216,17 +230,23 @@ export default function StandardModuleHeader({
                 <div className="2xl:hidden flex items-center px-3 py-1.5 gap-1.5 text-xs overflow-x-auto bg-[#1E293B]/90 border-t border-gray-700/50 scrollbar-none">
                     {menuItems.map((item) => {
                         const isActive = pathname === item.href || (item.href !== "/" && item.href !== "/apps" && pathname.startsWith(item.href));
+                        const itemBadge = item.href !== pathname ? getBadgeForHref(item.href) : 0;
                         return (
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className={`font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md transition-colors whitespace-nowrap ${
+                                className={`font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md transition-colors whitespace-nowrap inline-flex items-center gap-1.5 ${
                                     isActive
                                         ? "text-white bg-white/10"
                                         : "text-gray-400 hover:text-gray-200"
                                 }`}
                             >
-                                {item.name}
+                                <span>{item.name}</span>
+                                {itemBadge > 0 && (
+                                    <span className="px-1.5 rounded-full bg-rose-500 text-white text-[9px] font-black">
+                                        {itemBadge}
+                                    </span>
+                                )}
                             </Link>
                         );
                     })}

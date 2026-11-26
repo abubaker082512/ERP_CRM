@@ -275,6 +275,7 @@ export async function provisionTenantCluster(params: {
     allowedEmails: finalAllowedEmails,
     collections: existing?.collections || [
       "workspace_state",
+      "tasks",
       "public_forms",
       "form_submissions",
       "crm_leads",

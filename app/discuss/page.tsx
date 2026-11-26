@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import AppHeader from "@/components/layout/AppHeader";
 import { useBranchContext } from "@/lib/branchContext";
+import { useNotifications, triggerNotificationRefresh } from "@/lib/notificationContext";
 import {
   Hash,
   MessageSquare,
@@ -19,13 +21,18 @@ import {
   UserMinus,
   Check,
   Shield,
+  CheckSquare,
 } from "lucide-react";
 
 interface Channel {
   id: string;
   name: string;
   description?: string;
-  channel_type: "channel" | "group" | "dm";
+  channel_type: "channel" | "group" | "dm" | "task";
+  taskId?: string;
+  taskTitle?: string;
+  priority?: string;
+  deadlineAt?: string;
   members?: string[]; // array of member emails or IDs
 }
 
@@ -83,6 +90,7 @@ function formatTime(iso: string) {
 
 export default function DiscussPage() {
   const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { channelUnreads, markChannelSeen } = useNotifications();
   const companyId = activeBranch?.id || "default";
 
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -91,6 +99,7 @@ export default function DiscussPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [search, setSearch] = useState("");
+  const [tasksExpanded, setTasksExpanded] = useState(true);
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string }>({
     id: "USR-001",
     name: "Workspace User",
@@ -161,40 +170,97 @@ export default function DiscussPage() {
       })
       .catch(() => {});
 
-    // Load channels
+    // Load channels (merge local + live isolated cluster channels including Task Discussions!)
     const defaultChannels: Channel[] = [
       { id: "CH-GENERAL", name: "general", description: "Company-wide announcements & operations", channel_type: "channel", members: [me.email] },
       { id: "CH-FLOOR", name: "call-floor-ops", description: "Live call center floor & escalations", channel_type: "group", members: [me.email] },
     ];
+    let initialChannels = defaultChannels;
     try {
       const rawCh = localStorage.getItem(getEntityStorageKey("discuss_channels"));
       if (rawCh) {
         const parsed = JSON.parse(rawCh);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setChannels(parsed);
-          setActiveChannel(parsed[0]);
-          return;
+          initialChannels = parsed;
         }
       }
     } catch {}
-    setChannels(defaultChannels);
-    setActiveChannel(defaultChannels[0]);
-    try {
-      localStorage.setItem(getEntityStorageKey("discuss_channels"), JSON.stringify(defaultChannels));
-    } catch {}
+
+    const urlChannelParam =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("channel")
+        : null;
+
+    setChannels(initialChannels);
+    const matchedLocal = urlChannelParam
+      ? initialChannels.find((c) => c.id === urlChannelParam || c.name === urlChannelParam)
+      : null;
+    setActiveChannel(matchedLocal || initialChannels[0]);
+
+    // Sync live channels from isolated cluster (/api/discuss)
+    fetch(`/api/discuss?company_id=${encodeURIComponent(companyId)}&email=${encodeURIComponent(me.email)}`, {
+      cache: "no-store",
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.success && Array.isArray(d.channels)) {
+          const byId = new Map<string, Channel>();
+          for (const c of initialChannels) byId.set(c.id, c);
+          for (const c of d.channels) byId.set(c.id, c);
+          const merged = Array.from(byId.values());
+          setChannels(merged);
+          try {
+            localStorage.setItem(getEntityStorageKey("discuss_channels"), JSON.stringify(merged));
+          } catch {}
+          if (urlChannelParam) {
+            const foundTarget = merged.find(
+              (c) => c.id === urlChannelParam || c.name === urlChannelParam
+            );
+            if (foundTarget) setActiveChannel(foundTarget);
+          }
+        }
+      })
+      .catch(() => {});
   }, [companyId]);
 
-  // Load messages when activeChannel changes
+  // Load & poll messages from isolated cluster when activeChannel changes
   useEffect(() => {
     if (!activeChannel) return;
+    let cancelled = false;
     const msgKey = getEntityStorageKey(`discuss_msgs_${activeChannel.id}`);
     try {
       const raw = localStorage.getItem(msgKey);
-      setMessages(raw ? JSON.parse(raw) : []);
+      if (raw) setMessages(JSON.parse(raw));
     } catch {
       setMessages([]);
     }
-  }, [activeChannel?.id, companyId]);
+
+    const syncChannelMsgs = async () => {
+      try {
+        const res = await fetch(
+          `/api/discuss?company_id=${encodeURIComponent(companyId)}&channel_id=${encodeURIComponent(activeChannel.id)}&email=${encodeURIComponent(currentUser.email)}`,
+          { cache: "no-store" }
+        );
+        const data = await res.json();
+        if (!cancelled && data?.success && Array.isArray(data.messages)) {
+          if (data.messages.length > 0) {
+            setMessages(data.messages);
+            try {
+              localStorage.setItem(msgKey, JSON.stringify(data.messages));
+            } catch {}
+          }
+          markChannelSeen(activeChannel.id, data.messages.length);
+        }
+      } catch {}
+    };
+
+    syncChannelMsgs();
+    const interval = setInterval(syncChannelMsgs, 6000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [activeChannel?.id, companyId, currentUser.email]);
 
   useEffect(() => {
     if (messages.length > 0) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -312,13 +378,17 @@ export default function DiscussPage() {
       author_email: currentUser.email,
       created_at: new Date().toISOString(),
     };
-    persistMessages(activeChannel.id, [...messages, msg]);
+    const nextMsgs = [...messages, msg];
+    persistMessages(activeChannel.id, nextMsgs);
+    markChannelSeen(activeChannel.id, nextMsgs.length);
     setNewMsg("");
     fetch("/api/discuss", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "send_message", company_id: companyId, ...msg }),
-    }).catch(() => {});
+    })
+      .then(() => triggerNotificationRefresh())
+      .catch(() => {});
   };
 
   const deleteMessage = (id: string) => {
@@ -335,13 +405,19 @@ export default function DiscussPage() {
     setEmojiMsgId(null);
   };
 
+  const taskChannels = channels.filter(
+    (c) =>
+      (c.channel_type === "task" || c.id.startsWith("TASK-")) &&
+      (c.name.toLowerCase().includes(search.toLowerCase()) ||
+        (c.taskTitle || "").toLowerCase().includes(search.toLowerCase()))
+  );
   const publicChannels = channels.filter((c) => c.channel_type === "channel" && c.name.toLowerCase().includes(search.toLowerCase()));
   const privateGroups = channels.filter((c) => c.channel_type === "group" && c.name.toLowerCase().includes(search.toLowerCase()));
   const dmChannels = channels.filter((c) => c.channel_type === "dm");
 
   return (
     <div className="flex flex-col h-screen bg-[#0B101E] text-white">
-      <AppHeader />
+      <AppHeader title="Discuss" />
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Sidebar */}
         <aside className="w-72 bg-[#111622] border-r border-gray-800 flex flex-col shrink-0">
@@ -366,13 +442,61 @@ export default function DiscussPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search channels or groups..."
+                placeholder="Search channels, tasks, groups..."
                 className="w-full bg-gray-950 border border-gray-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white outline-none focus:border-purple-500"
               />
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 space-y-4">
+            {/* Task Discussions (Single & Group Tasks) */}
+            <div>
+              <button
+                onClick={() => setTasksExpanded((v) => !v)}
+                className="w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-orange-400 px-1 mb-1.5 cursor-pointer"
+              >
+                <span className="flex items-center gap-1">
+                  <ChevronDown size={12} className={tasksExpanded ? "" : "-rotate-90"} /> Task Discussions ({taskChannels.length})
+                </span>
+                <Link href="/tasks" onClick={(e) => e.stopPropagation()} className="hover:text-white text-[10px]">
+                  + Task
+                </Link>
+              </button>
+              {tasksExpanded && (
+                <div className="space-y-1">
+                  {taskChannels.map((ch) => {
+                    const unread = channelUnreads[ch.id] || 0;
+                    return (
+                      <button
+                        key={ch.id}
+                        onClick={() => setActiveChannel(ch)}
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                          activeChannel?.id === ch.id ? "bg-orange-600 text-white" : "text-gray-300 hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          <CheckSquare size={13} className="shrink-0" />
+                          <span className="truncate">{ch.taskTitle || ch.name}</span>
+                        </span>
+                        {unread > 0 ? (
+                          <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black">
+                            {unread}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] opacity-70">{(ch.members || []).length}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {taskChannels.length === 0 && (
+                    <p className="text-[11px] text-gray-500 px-2">
+                      Tasks created in the Tasks app automatically open a chat thread here.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Public Channels */}
             <div>
               <button
@@ -384,18 +508,27 @@ export default function DiscussPage() {
               </button>
               {channelsExpanded && (
                 <div className="space-y-1">
-                  {publicChannels.map((ch) => (
-                    <button
-                      key={ch.id}
-                      onClick={() => setActiveChannel(ch)}
-                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                        activeChannel?.id === ch.id ? "bg-purple-600 text-white" : "text-gray-300 hover:bg-white/5"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2 truncate"><Hash size={13} /> {ch.name}</span>
-                      <span className="text-[10px] opacity-70">{(ch.members || []).length}</span>
-                    </button>
-                  ))}
+                  {publicChannels.map((ch) => {
+                    const unread = channelUnreads[ch.id] || 0;
+                    return (
+                      <button
+                        key={ch.id}
+                        onClick={() => setActiveChannel(ch)}
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                          activeChannel?.id === ch.id ? "bg-purple-600 text-white" : "text-gray-300 hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2 truncate"><Hash size={13} /> {ch.name}</span>
+                        {unread > 0 ? (
+                          <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black">
+                            {unread}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] opacity-70">{(ch.members || []).length}</span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -411,18 +544,27 @@ export default function DiscussPage() {
               </button>
               {groupsExpanded && (
                 <div className="space-y-1">
-                  {privateGroups.map((ch) => (
-                    <button
-                      key={ch.id}
-                      onClick={() => setActiveChannel(ch)}
-                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                        activeChannel?.id === ch.id ? "bg-cyan-600 text-white" : "text-gray-300 hover:bg-white/5"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2 truncate"><Lock size={12} /> {ch.name}</span>
-                      <span className="text-[10px] opacity-70">{(ch.members || []).length}</span>
-                    </button>
-                  ))}
+                  {privateGroups.map((ch) => {
+                    const unread = channelUnreads[ch.id] || 0;
+                    return (
+                      <button
+                        key={ch.id}
+                        onClick={() => setActiveChannel(ch)}
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                          activeChannel?.id === ch.id ? "bg-cyan-600 text-white" : "text-gray-300 hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2 truncate"><Lock size={12} /> {ch.name}</span>
+                        {unread > 0 ? (
+                          <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black">
+                            {unread}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] opacity-70">{(ch.members || []).length}</span>
+                        )}
+                      </button>
+                    );
+                  })}
                   {privateGroups.length === 0 && (
                     <p className="text-[11px] text-gray-500 px-2">No specific groups yet.</p>
                   )}
@@ -483,6 +625,14 @@ export default function DiscussPage() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  {(activeChannel.channel_type === "task" || activeChannel.id.startsWith("TASK-")) && (
+                    <Link
+                      href="/tasks"
+                      className="px-3 py-1.5 rounded-xl bg-orange-600/20 hover:bg-orange-600/35 border border-orange-500/35 text-orange-300 text-xs font-bold flex items-center gap-1.5"
+                    >
+                      <CheckSquare size={13} /> Open in Tasks App →
+                    </Link>
+                  )}
                   <button
                     onClick={() => setIsManageMembersOpen(true)}
                     className="px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
 import { useBranchContext } from "@/lib/branchContext";
 import { useTheme } from "@/lib/themeContext";
+import { triggerNotificationRefresh } from "@/lib/notificationContext";
 import { INITIAL_TEAM_MEMBERS } from "@/lib/teamStorage";
 import { TeamMember } from "@/lib/teamTypes";
 import { getSubordinateIds, getSuperiorChain } from "@/lib/hierarchyUtils";
@@ -131,6 +132,7 @@ export default function ApprovalsInboxPage() {
       setReqAmount("");
       setReqDesc("");
       setBannerMsg(`Submitted to ${directSuperior ? `${directSuperior.name} (${directSuperior.role})` : "Top Level"}!`);
+      triggerNotificationRefresh();
       setTimeout(() => setBannerMsg(null), 3500);
     } finally {
       setSubmitting(false);
@@ -150,6 +152,7 @@ export default function ApprovalsInboxPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ companyId, id, status }),
     }).catch(() => {});
+    triggerNotificationRefresh();
   };
 
   const displayedList = viewTab === "mine" ? myItems : inboxItems;

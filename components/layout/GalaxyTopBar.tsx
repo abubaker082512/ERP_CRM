@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Bell, User, Settings, LogOut, ChevronDown, Rocket, Sparkles, Users, ShoppingCart, MessageSquare, Package, Menu } from 'lucide-react';
 import GlobalSearch from './GlobalSearch';
+import NotificationBellDropdown from '../shared/NotificationBellDropdown';
 import { useRouter } from 'next/navigation';
 
 export default function GalaxyTopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
@@ -56,11 +57,8 @@ export default function GalaxyTopBar({ onToggleSidebar }: { onToggleSidebar?: ()
 
             {/* Right Section: Actions & Profile */}
             <div className="flex items-center gap-4">
-                {/* Notifications */}
-                <button className="relative p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                    <Bell size={20} />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-pink-500 rounded-full border-2 border-[#0F172A]"></span>
-                </button>
+                {/* Live Numeric Notifications */}
+                <NotificationBellDropdown />
 
                 {/* Vertical Divider */}
                 <div className="w-px h-6 bg-white/10 mx-2"></div>

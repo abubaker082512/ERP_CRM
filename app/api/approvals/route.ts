@@ -18,7 +18,7 @@ export interface ApprovalRequest {
   approverId: string | null;
   approverName: string;
   approverEmail: string;
-  module: "leave" | "expense" | "purchase" | "sales_discount";
+  module: "leave" | "expense" | "purchase" | "sales_discount" | "task";
   referenceId?: string;
   title: string;
   description?: string;

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, LayoutGrid, Globe, Mic, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/lib/themeContext";
+import NotificationBellDropdown from "@/components/shared/NotificationBellDropdown";
 
 export default function AppHeader({ title }: { title?: string }) {
   const router = useRouter();
@@ -58,6 +59,7 @@ export default function AppHeader({ title }: { title?: string }) {
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
+        <NotificationBellDropdown />
         <button
           type="button"
           onClick={toggleTheme}

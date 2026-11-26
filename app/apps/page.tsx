@@ -57,12 +57,16 @@ import {
     Search,
     ArrowRight,
     PhoneCall,
-    Headphones
+    Headphones,
+    ShieldCheck,
+    Bot
 } from "lucide-react";
 import BeraxisSupportWidgets from "@/components/support/BeraxisSupportWidgets";
 import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
+import NotificationBellDropdown from "@/components/shared/NotificationBellDropdown";
 import { useBranchContext } from "@/lib/branchContext";
 import { useTheme } from "@/lib/themeContext";
+import { useNotifications } from "@/lib/notificationContext";
 import { GLOBAL_INDUSTRIES, GlobalIndustryId, getIndustryById, analyzeBusinessExplanation } from "@/lib/industryTaxonomy";
 import UniversalBranchSwitcher from "@/components/shared/UniversalBranchSwitcher";
 import BranchSetupWizardModal from "@/components/settings/BranchSetupWizardModal";
@@ -85,67 +89,107 @@ const INDUSTRY_ICON_MAP: Record<string, any> = {
     HeartHandshake
 };
 
-// Complete Enterprise App Catalog
+// Complete Enterprise App Catalog — Every BERAXIS module exposed as a first-class App tile
 const allApps = [
-    // Primary User Executive Dashboard (Always Row 1, Position 1)
+    // Primary Executive & Daily Action Hub
     { name: "Dashboard", icon: LayoutDashboard, color: "bg-gradient-to-br from-[#8B5CF6] to-[#EC4899]", href: "/dashboard" },
-    // Core & Retail
+    { name: "Tasks", icon: CheckSquare, color: "bg-indigo-600", href: "/tasks" },
+    { name: "Approvals", icon: ShieldCheck, color: "bg-amber-600", href: "/approvals" },
+    { name: "Discuss", icon: MessageSquare, color: "bg-orange-500", href: "/discuss" },
+    { name: "Calendar", icon: Calendar, color: "bg-yellow-600", href: "/calendar" },
+    { name: "Meet", icon: Users, color: "bg-purple-600", href: "/meet" },
+    { name: "AI Copilot", icon: Bot, color: "bg-fuchsia-600", href: "/ai" },
+
+    // Core Commerce, Retail & Supply Chain
     { name: "Point of Sale", icon: ShoppingBag, color: "bg-amber-600", href: "/pos" },
     { name: "Kitchen (KDS)", icon: UtensilsCrossed, color: "bg-red-600", href: "/pos/kds" },
     { name: "Recipes & BOM", icon: ClipboardList, color: "bg-orange-600", href: "/pos/recipes" },
     { name: "Floor & Tables", icon: Grid3x3, color: "bg-amber-700", href: "/pos/tables" },
-    { name: "Club Hub", icon: Dumbbell, color: "bg-emerald-600", href: "/club" },
-    { name: "NGOs & Grants", icon: HeartHandshake, color: "bg-rose-600", href: "/ngos" },
-    { name: "Website", icon: Globe, color: "bg-blue-600", href: "/website" },
-    { name: "eCommerce", icon: ShoppingCart, color: "bg-emerald-600", href: "/shop" },
+    { name: "Products", icon: Package, color: "bg-violet-600", href: "/products" },
     { name: "Inventory", icon: Package, color: "bg-purple-600", href: "/inventory" },
     { name: "Barcode", icon: Barcode, color: "bg-[#e11d74]", href: "/barcode" },
     { name: "Purchase", icon: ShoppingCart, color: "bg-pink-600", href: "/purchase" },
     { name: "Sales", icon: BarChart3, color: "bg-orange-500", href: "/sales" },
     { name: "Accounting", icon: CreditCard, color: "bg-red-500", href: "/accounting" },
+    { name: "Website", icon: Globe, color: "bg-blue-600", href: "/website" },
+    { name: "eCommerce", icon: ShoppingCart, color: "bg-emerald-600", href: "/shop" },
 
-    // CRM & Growth
+    // CRM, Call Center & Growth
     { name: "CRM", icon: Target, color: "bg-cyan-600", href: "/crm" },
     { name: "Call Center", icon: PhoneCall, color: "bg-sky-600", href: "/call-center" },
     { name: "Public Forms", icon: ClipboardList, color: "bg-violet-600", href: "/forms" },
     { name: "Leads Pool", icon: Globe, color: "bg-cyan-500", href: "/crm/leads-pool", paidOnly: true },
     { name: "Contacts", icon: Users, color: "bg-purple-500", href: "/contacts" },
 
-    // Operations & Projects
+    // Operations, Projects & Manufacturing
     { name: "Project", icon: Palette, color: "bg-blue-600", href: "/project" },
     { name: "Timesheets", icon: Clock, color: "bg-indigo-500", href: "/timesheets" },
     { name: "Planning", icon: Grid3x3, color: "bg-yellow-500", href: "/planning" },
     { name: "Manufacturing", icon: Cog, color: "bg-[#d9480f]", href: "/manufacturing" },
+    { name: "Helpdesk", icon: Headphones, color: "bg-[#6366f1]", href: "/helpdesk" },
 
-    // HR & Talent
+    // HR, Hierarchy & Talent
+    { name: "Team", icon: Users, color: "bg-[#9333ea]", href: "/team" },
+    { name: "HR Hub", icon: UserCircle, color: "bg-indigo-700", href: "/hr" },
     { name: "Employees", icon: UserCircle, color: "bg-[#4338ca]", href: "/employees" },
     { name: "Contracts", icon: PenTool, color: "bg-blue-500", href: "/employees/contracts" },
     { name: "Payroll", icon: CreditCard, color: "bg-[#f43f5e]", href: "/payroll" },
     { name: "Attendances", icon: UserCheck, color: "bg-[#f97316]", href: "/attendances" },
     { name: "Recruitment", icon: Target, color: "bg-[#0d9488]", href: "/recruitment" },
-    { name: "Team", icon: Users, color: "bg-[#9333ea]", href: "/team" },
-    { name: "Approvals", icon: CheckSquare, color: "bg-amber-600", href: "/approvals" },
 
-    // Specialized Subsystems
+    // Office Suite, Analytics & Industry Verticals
+    { name: "Reports", icon: PieChart, color: "bg-[#7e22ce]", href: "/reports" },
     { name: "Sign", icon: PenTool, color: "bg-[#06b6d4]", href: "/sign" },
     { name: "Docs (Word)", icon: BookOpen, color: "bg-[#3b82f6]", href: "/documents" },
     { name: "Sheets (Excel)", icon: FileSpreadsheet, color: "bg-emerald-600", href: "/spreadsheets" },
     { name: "Slides (PPT)", icon: Presentation, color: "bg-indigo-600", href: "/slides" },
-    { name: "Helpdesk", icon: CheckSquare, color: "bg-[#6366f1]", href: "/helpdesk" },
-    { name: "Reports", icon: PieChart, color: "bg-[#7e22ce]", href: "/reports" },
+    { name: "Knowledge", icon: BookOpen, color: "bg-teal-500", href: "/knowledge" },
+    { name: "To do", icon: CheckSquare, color: "bg-blue-500", href: "/todo" },
+    { name: "Surveys", icon: MessageSquare, color: "bg-blue-400", href: "/surveys" },
+    { name: "Appointments", icon: Calendar, color: "bg-cyan-500", href: "/appointments" },
     { name: "Vehicle Jobs", icon: Wrench, color: "bg-red-600", href: "/automotive" },
     { name: "Properties", icon: Building2, color: "bg-indigo-600", href: "/real-estate" },
     { name: "Education", icon: GraduationCap, color: "bg-teal-600", href: "/education" },
-    { name: "Appointments", icon: Calendar, color: "bg-cyan-500", href: "/appointments" },
-    { name: "Discuss", icon: MessageSquare, color: "bg-orange-500", href: "/discuss" },
-    { name: "Meet", icon: Users, color: "bg-purple-600", href: "/meet" },
-    { name: "Knowledge", icon: BookOpen, color: "bg-teal-500", href: "/knowledge" },
-    { name: "To do", icon: CheckSquare, color: "bg-blue-500", href: "/todo" },
-    { name: "Calendar", icon: Calendar, color: "bg-yellow-600", href: "/calendar" },
-    { name: "Surveys", icon: MessageSquare, color: "bg-blue-400", href: "/surveys" },
+    { name: "Club Hub", icon: Dumbbell, color: "bg-emerald-600", href: "/club" },
+    { name: "NGOs & Grants", icon: HeartHandshake, color: "bg-rose-600", href: "/ngos" },
     { name: "Migration Hub", icon: UploadCloud, color: "bg-cyan-600", href: "/migration" },
+    { name: "Billing", icon: CreditCard, color: "bg-amber-500", href: "/billing" },
     { name: "Settings", icon: Cog, color: "bg-[#64748b]", href: "/settings" }
 ];
+
+const UNIVERSAL_COMPANY_APPS = new Set([
+    "/dashboard",
+    "/tasks",
+    "/approvals",
+    "/discuss",
+    "/calendar",
+    "/meet",
+    "/ai",
+    "/team",
+    "/forms",
+    "/contacts",
+    "/reports",
+    "/documents",
+    "/spreadsheets",
+    "/slides",
+    "/sign",
+    "/knowledge",
+    "/todo",
+    "/migration",
+    "/billing",
+    "/settings"
+]);
+
+const FREE_ALWAYS_INCLUDED_APPS = new Set([
+    "/dashboard",
+    "/tasks",
+    "/approvals",
+    "/discuss",
+    "/calendar",
+    "/team",
+    "/billing",
+    "/settings"
+]);
 
 // Selectable apps for Free Plan (excludes Settings which is always free, and excludes Leads Pool which is Paid Only)
 const FREE_PLAN_SELECTABLE_APPS = allApps.filter(
@@ -157,6 +201,7 @@ export default function AppsDashboardPage() {
     const [mounted, setMounted] = useState(false);
     const [userData, setUserData] = useState<any>(null);
     const { isLight, toggleTheme } = useTheme();
+    const { getBadgeForHref } = useNotifications();
     const spotlightInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -458,11 +503,11 @@ export default function AppsDashboardPage() {
         ? isFreePlan
             ? allApps.filter(app => {
                   if (app.href === "/crm/leads-pool") return false;
-                  if (app.href === "/dashboard" || app.href === "/settings") return true;
+                  if (FREE_ALWAYS_INCLUDED_APPS.has(app.href)) return true;
                   const activeFreeHref =
                       freeSelectedApp ||
                       activeBranch.enabledModules.find(
-                          m => m !== "/settings" && m !== "/crm/leads-pool" && m !== "/dashboard"
+                          m => !FREE_ALWAYS_INCLUDED_APPS.has(m) && m !== "/crm/leads-pool"
                       ) ||
                       chosenFreeAppHref;
                   return app.href === activeFreeHref;
@@ -471,11 +516,9 @@ export default function AppsDashboardPage() {
                 ? allApps
                 : allApps.filter(
                       app =>
+                          UNIVERSAL_COMPANY_APPS.has(app.href) ||
                           activeCompanyModules.includes(app.href) ||
-                          activeCompanyModules.some(m => app.href.startsWith(`${m}/`)) ||
-                          app.href === "/dashboard" ||
-                          app.href === "/reports" ||
-                          app.href === "/settings"
+                          activeCompanyModules.some(m => app.href.startsWith(`${m}/`))
                   )
         : []
     ).sort((a, b) => (a.href === "/dashboard" ? -1 : b.href === "/dashboard" ? 1 : 0));
@@ -565,6 +608,9 @@ export default function AppsDashboardPage() {
                             </Link>
                         </>
                     )}
+
+                    {/* Live Notification Bell (Tasks, Approvals, Events, Discuss) */}
+                    <NotificationBellDropdown />
 
                     {/* Light / Dark Theme Toggle */}
                     <button
@@ -1169,8 +1215,21 @@ export default function AppsDashboardPage() {
                                 <Link href="/employees" className={`px-3 py-1.5 rounded-full border text-[11px] font-bold transition-colors ${isLight ? "bg-white hover:bg-emerald-50 border-slate-200 text-emerald-700" : "bg-white/5 hover:bg-emerald-500/20 border-white/10 text-emerald-200"}`}>
                                     + Employee
                                 </Link>
-                                <Link href="/approvals" className={`px-3 py-1.5 rounded-full border text-[11px] font-bold transition-colors ${isLight ? "bg-white hover:bg-amber-50 border-slate-200 text-amber-700" : "bg-white/5 hover:bg-amber-500/20 border-white/10 text-amber-200"}`}>
+                                <Link href="/tasks" className={`relative px-3 py-1.5 rounded-full border text-[11px] font-bold transition-colors flex items-center gap-1 ${isLight ? "bg-white hover:bg-indigo-50 border-slate-200 text-indigo-700" : "bg-white/5 hover:bg-indigo-500/20 border-white/10 text-indigo-200"}`}>
+                                    Tasks
+                                    {getBadgeForHref("/tasks") > 0 && (
+                                        <span className="px-1.5 rounded-full bg-rose-500 text-white text-[9px] font-black">
+                                            {getBadgeForHref("/tasks")}
+                                        </span>
+                                    )}
+                                </Link>
+                                <Link href="/approvals" className={`relative px-3 py-1.5 rounded-full border text-[11px] font-bold transition-colors flex items-center gap-1 ${isLight ? "bg-white hover:bg-amber-50 border-slate-200 text-amber-700" : "bg-white/5 hover:bg-amber-500/20 border-white/10 text-amber-200"}`}>
                                     Approvals
+                                    {getBadgeForHref("/approvals") > 0 && (
+                                        <span className="px-1.5 rounded-full bg-rose-500 text-white text-[9px] font-black">
+                                            {getBadgeForHref("/approvals")}
+                                        </span>
+                                    )}
                                 </Link>
                                 <Link href="/reports" className={`px-3 py-1.5 rounded-full border text-[11px] font-bold transition-colors ${isLight ? "bg-white hover:bg-purple-50 border-slate-200 text-purple-700" : "bg-white/5 hover:bg-purple-500/20 border-white/10 text-purple-200"}`}>
                                     Reports &amp; BI
@@ -1246,24 +1305,33 @@ export default function AppsDashboardPage() {
                             {displayedApps.filter((app) => {
                                 if (appSearch && !app.name.toLowerCase().includes(appSearch.toLowerCase())) return false;
                                 if (appCategory === "all") return true;
-                                if (appCategory === "finance") return ["/dashboard", "/accounting", "/sales", "/purchase", "/pos", "/shop", "/ngos", "/reports"].some(p => app.href.startsWith(p));
-                                if (appCategory === "crm") return ["/dashboard", "/crm", "/call-center", "/forms", "/contacts", "/discuss", "/calendar", "/website", "/surveys", "/reports"].some(p => app.href.startsWith(p));
-                                if (appCategory === "ops") return ["/dashboard", "/inventory", "/barcode", "/manufacturing", "/employees", "/payroll", "/attendances", "/recruitment", "/team", "/approvals", "/project", "/timesheets", "/planning", "/helpdesk", "/automotive", "/real-estate", "/education", "/appointments", "/club", "/migration", "/reports"].some(p => app.href.startsWith(p));
-                                if (appCategory === "office") return ["/dashboard", "/documents", "/spreadsheets", "/slides", "/meet", "/knowledge", "/sign", "/todo", "/calendar", "/discuss"].some(p => app.href.startsWith(p));
+                                if (appCategory === "finance") return ["/dashboard", "/accounting", "/sales", "/purchase", "/products", "/pos", "/shop", "/ngos", "/billing", "/reports"].some(p => app.href.startsWith(p));
+                                if (appCategory === "crm") return ["/dashboard", "/crm", "/call-center", "/forms", "/contacts", "/discuss", "/calendar", "/website", "/surveys", "/ai", "/reports"].some(p => app.href.startsWith(p));
+                                if (appCategory === "ops") return ["/dashboard", "/tasks", "/approvals", "/inventory", "/products", "/barcode", "/manufacturing", "/hr", "/employees", "/payroll", "/attendances", "/recruitment", "/team", "/project", "/timesheets", "/planning", "/helpdesk", "/automotive", "/real-estate", "/education", "/appointments", "/club", "/migration", "/reports"].some(p => app.href.startsWith(p));
+                                if (appCategory === "office") return ["/dashboard", "/tasks", "/approvals", "/documents", "/spreadsheets", "/slides", "/meet", "/knowledge", "/sign", "/todo", "/calendar", "/discuss", "/ai"].some(p => app.href.startsWith(p));
                                 return true;
                             }).map(app => {
                                 const IconComponent = app.icon;
+                                const badgeCount = getBadgeForHref(app.href);
 
                                 return (
                                     <Link
                                         key={app.name}
                                         href={app.href}
-                                        className="group flex flex-col items-center gap-2 focus:outline-none cursor-pointer"
+                                        className="group flex flex-col items-center gap-2 focus:outline-none cursor-pointer relative"
                                     >
                                         <div
-                                            className={`w-14 h-14 sm:w-16 sm:h-16 lg:w-[68px] lg:h-[68px] rounded-2xl ${app.color} ring-1 ring-inset ring-white/25 flex items-center justify-center text-white shadow-lg ${isLight ? "shadow-slate-900/15" : "shadow-black/50"} group-hover:scale-105 group-hover:ring-white/45 transition-all duration-200 ease-out`}
+                                            className={`relative w-14 h-14 sm:w-16 sm:h-16 lg:w-[68px] lg:h-[68px] rounded-2xl ${app.color} ring-1 ring-inset ring-white/25 flex items-center justify-center text-white shadow-lg ${isLight ? "shadow-slate-900/15" : "shadow-black/50"} group-hover:scale-105 group-hover:ring-white/45 transition-all duration-200 ease-out`}
                                         >
                                             <IconComponent className="w-7 h-7 sm:w-8 sm:h-8 text-white" strokeWidth={1.8} />
+                                            {badgeCount > 0 && (
+                                                <span
+                                                    data-testid={`app-badge-${app.href.replace(/\//g, "")}`}
+                                                    className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1.5 rounded-full bg-rose-500 text-white text-[11px] font-black flex items-center justify-center shadow-lg ring-2 ring-[#0B101E]"
+                                                >
+                                                    {badgeCount > 99 ? "99+" : badgeCount}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <span className={`text-[11px] sm:text-xs font-semibold transition-colors text-center tracking-tight leading-tight ${

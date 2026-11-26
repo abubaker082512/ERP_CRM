@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
       meet_link: body.meet_link || "",
       notes: body.notes || "",
       state: "confirmed",
+      created_at: new Date().toISOString(),
     };
     await writeClusterCollection(
       clusterId,

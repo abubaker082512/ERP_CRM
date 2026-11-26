@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { 
     LayoutDashboard, ShoppingCart, Users, Package, 
     BarChart3, MessageSquare, BookOpen, Settings, 
-    Menu, X, Sparkles, Database, ShieldCheck, Wifi, WifiOff, Loader2, LogOut
+    Menu, X, Sparkles, Database, ShieldCheck, Wifi, WifiOff, Loader2, LogOut,
+    CheckSquare, Calendar
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import GalaxyTopBar from './GalaxyTopBar';
@@ -14,20 +15,92 @@ import BeraxisSupportWidgets from '../support/BeraxisSupportWidgets';
 import InactivitySessionTracker from '../auth/InactivitySessionTracker';
 import DonationMilestoneToast from '../common/DonationMilestoneToast';
 import { BranchProvider, useBranchContext } from '@/lib/branchContext';
+import { NotificationProvider, useNotifications } from '@/lib/notificationContext';
 
 const navItems = [
     { name: 'All Apps', icon: Sparkles, href: '/apps' },
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+    { name: 'Tasks', icon: CheckSquare, href: '/tasks' },
+    { name: 'Approvals', icon: ShieldCheck, href: '/approvals' },
+    { name: 'Discuss', icon: MessageSquare, href: '/discuss' },
+    { name: 'Calendar', icon: Calendar, href: '/calendar' },
     { name: 'CRM', icon: Users, href: '/crm' },
     { name: 'Sales', icon: ShoppingCart, href: '/sales' },
     { name: 'Inventory', icon: Package, href: '/inventory' },
     { name: 'Accounting', icon: BarChart3, href: '/accounting' },
     { name: 'Reports', icon: BarChart3, href: '/reports' },
-    { name: 'Discuss', icon: MessageSquare, href: '/discuss' },
     { name: 'Knowledge', icon: BookOpen, href: '/knowledge' },
     { name: 'Settings', icon: Settings, href: '/settings' },
     { name: 'SaaS Admin', icon: ShieldCheck, href: '/super-admin' },
 ];
+
+function SidebarNavItems({
+    pathname,
+    isSidebarOpen,
+    isAdmin,
+}: {
+    pathname: string | null;
+    isSidebarOpen: boolean;
+    isAdmin: boolean;
+}) {
+    const { getBadgeForHref, totalUnread } = useNotifications();
+    return (
+        <nav className="px-2.5 space-y-1.5 flex-1 overflow-y-auto scrollbar-none pb-28">
+            {navItems
+                .filter((item) => item.name !== 'SaaS Admin' || isAdmin)
+                .map((item) => {
+                    const isActive =
+                        pathname === item.href ||
+                        (item.href !== '/dashboard' && item.href !== '/apps' && Boolean(pathname?.startsWith(item.href)));
+                    const badge =
+                        item.href === '/apps' ? totalUnread : getBadgeForHref(item.href);
+
+                    return (
+                        <Link
+                            key={item.name}
+                            href={item.href}
+                            title={badge > 0 ? `${item.name} (${badge})` : item.name}
+                            className={`flex items-center ${
+                                isSidebarOpen ? 'gap-3 px-3.5 justify-between' : 'justify-center px-0'
+                            } py-2.5 rounded-2xl transition-all duration-200 relative group ${
+                                isActive
+                                    ? 'beraxis-glow-pill text-white'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                        >
+                            <span className="flex items-center gap-3 min-w-0">
+                                <span className="relative shrink-0">
+                                    <item.icon
+                                        size={19}
+                                        className={`shrink-0 transition-colors duration-200 ${
+                                            isActive
+                                                ? 'text-[#38BDF8]'
+                                                : 'text-gray-500 group-hover:text-gray-200'
+                                        }`}
+                                    />
+                                    {!isSidebarOpen && badge > 0 && (
+                                        <span className="absolute -top-2 -right-2.5 min-w-[17px] h-[17px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow">
+                                            {badge > 99 ? '99+' : badge}
+                                        </span>
+                                    )}
+                                </span>
+                                {isSidebarOpen && (
+                                    <span className="font-semibold text-xs tracking-wide truncate">
+                                        {item.name}
+                                    </span>
+                                )}
+                            </span>
+                            {isSidebarOpen && badge > 0 && (
+                                <span className="min-w-[20px] h-[20px] px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center shrink-0">
+                                    {badge > 99 ? '99+' : badge}
+                                </span>
+                            )}
+                        </Link>
+                    );
+                })}
+        </nav>
+    );
+}
 
 function SidebarPlanInfo() {
     const { userPlan } = useBranchContext();
@@ -108,13 +181,16 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
         return <>{children}</>;
     }
 
-    // Always allow Settings, AI, Billing, Team, Approvals, Super Admin, and Leads Pool
+    // Always allow Settings, AI, Billing, Team, Approvals, Tasks, Discuss, Calendar, Super Admin, and Leads Pool
     const isAlwaysAllowed =
         pathname.startsWith('/dashboard') ||
         pathname.startsWith('/settings') ||
         pathname.startsWith('/billing') ||
         pathname.startsWith('/team') ||
         pathname.startsWith('/approvals') ||
+        pathname.startsWith('/tasks') ||
+        pathname.startsWith('/discuss') ||
+        pathname.startsWith('/calendar') ||
         pathname.startsWith('/super-admin');
 
     if (isFreePlan && !isAlwaysAllowed && !isModuleEnabled(pathname)) {
@@ -281,10 +357,12 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
     if (isPublicMarketingPage) {
         return (
             <BranchProvider>
-                {children}
-                {mounted && !cleanPath.startsWith('/meet') && !cleanPath.startsWith('/appointments/book') && (
-                    <BeraxisSupportWidgets />
-                )}
+                <NotificationProvider>
+                    {children}
+                    {mounted && !cleanPath.startsWith('/meet') && !cleanPath.startsWith('/appointments/book') && (
+                        <BeraxisSupportWidgets />
+                    )}
+                </NotificationProvider>
             </BranchProvider>
         );
     }
@@ -300,20 +378,23 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
     if (isStandaloneWorkspace) {
         return (
             <BranchProvider>
-                {children}
-                {mounted && (
-                    <>
-                        {cleanPath !== '/apps' && !cleanPath.startsWith('/super-admin') && <BeraxisSupportWidgets />}
-                        {!cleanPath.startsWith('/super-admin') && <InactivitySessionTracker />}
-                        <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />
-                    </>
-                )}
+                <NotificationProvider>
+                    {children}
+                    {mounted && (
+                        <>
+                            {cleanPath !== '/apps' && !cleanPath.startsWith('/super-admin') && <BeraxisSupportWidgets />}
+                            {!cleanPath.startsWith('/super-admin') && <InactivitySessionTracker />}
+                            <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />
+                        </>
+                    )}
+                </NotificationProvider>
             </BranchProvider>
         );
     }
 
     return (
         <BranchProvider>
+            <NotificationProvider>
             <div className="flex h-screen overflow-hidden bg-transparent flex-col">
             {/* Backend Connection Banner */}
             {backendStatus === 'waking' && (
@@ -354,36 +435,8 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
                     </button>
                 </div>
 
-                {/* Nav Items */}
-                <nav className="px-2.5 space-y-1.5 flex-1 overflow-y-auto scrollbar-none">
-                    {navItems.filter(item => item.name !== 'SaaS Admin' || isAdmin).map((item) => {
-                        const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
-                        return (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                title={item.name}
-                                className={`flex items-center ${isSidebarOpen ? 'gap-3 px-3.5' : 'justify-center px-0'} py-2.5 rounded-2xl transition-all duration-200 relative group ${
-                                    isActive
-                                        ? 'beraxis-glow-pill text-white'
-                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
-                                }`}
-                            >
-                                <item.icon 
-                                    size={19} 
-                                    className={`shrink-0 transition-colors duration-200 ${
-                                        isActive ? 'text-[#38BDF8]' : 'text-gray-500 group-hover:text-gray-200'
-                                    }`} 
-                                />
-                                {isSidebarOpen && (
-                                    <span className="font-semibold text-xs tracking-wide truncate">
-                                        {item.name}
-                                    </span>
-                                )}
-                            </Link>
-                        );
-                    })}
-                </nav>
+                {/* Nav Items with Live Numeric Notification Badges */}
+                <SidebarNavItems pathname={pathname} isSidebarOpen={isSidebarOpen} isAdmin={isAdmin} />
 
                 {/* Sidebar Footer */}
                 <div className="absolute bottom-4 left-0 right-0 px-4">
@@ -454,6 +507,7 @@ export default function GalaxyAppShell({ children }: { children: React.ReactNode
             {mounted && <CommandOverlay isOpen={isAntigravityOpen} onClose={() => setIsAntigravityOpen(false)} />}
                 </div>{/* end flex-1 overflow-hidden */}
             </div>
+            </NotificationProvider>
         </BranchProvider>
     );
 }
