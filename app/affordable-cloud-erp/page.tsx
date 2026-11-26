@@ -23,8 +23,8 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Affordable Cloud ERP with Monthly Subscription Pricing ($1/mo) | BERAXIS AI",
-  description: "Looking for affordable cloud ERP options with monthly subscription pricing? BERAXIS AI provides all 28 business modules: GAAP accounting, CRM, POS & inventory for $1/month. 1 App 100% Free Forever with zero credit card required.",
+  title: "Affordable Cloud ERP Options with Monthly Subscription Pricing ($1/Mo) | BERAXIS AI",
+  description: "Compare the #1 affordable cloud ERP with flat monthly subscription pricing ($1/mo or 1 App Free Forever). Includes 1-Click 'Explain Your Business' AI Auto-Setup across 15 industries, GAAP Accounting, CRM, POS, Inventory & 25M+ B2B Leads.",
   keywords: [
     "affordable cloud erp options with monthly subscription pricing",
     "affordable cloud erp",

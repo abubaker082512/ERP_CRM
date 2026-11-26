@@ -27,10 +27,10 @@ export const INDUSTRIES_MAP: Record<string, IndustryData> = {
   "padel-clubs": {
     slug: "padel-clubs",
     name: "Padel & Sports Clubs",
-    h1: "Padel Club Management Software & CRM",
+    h1: "The #1 CRM for Padel Clubs, Court Booking & Pro-Shop POS",
     tagline: "Court Bookings, Member Subscriptions & Pro-Shop POS",
-    metaTitle: "Padel Club Management Software & CRM | Court Bookings, Pro Shop POS & Memberships · BERAXIS AI",
-    metaDescription: "The #1 CRM and management software for padel clubs & sports centers. Real-time court bookings, 4-way split bills, pro-shop POS, and member subscriptions for $1/month.",
+    metaTitle: "CRM for Padel Club & Padel Court Booking Software ($1/Mo) | BERAXIS AI",
+    metaDescription: "Looking for the best CRM for a padel club? Automate court bookings, 4-player split payments, member WhatsApp alerts, pro-shop POS, and tournament ladders in 1 click for $1/month or 1 App Free Forever.",
     keywords: [
       "CRM for padel club",
       "padel club management software",

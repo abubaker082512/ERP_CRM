@@ -144,6 +144,7 @@ export default function Footer() {
                             <li><Link href="/affordable-cloud-erp" className="hover:text-emerald-300 font-semibold text-emerald-400">⚡ Affordable Cloud ERP ($1/mo)</Link></li>
                             <li><Link href="/one-dollar-erp" className="hover:text-cyan-300 font-semibold text-cyan-400">$1 Dollar ERP</Link></li>
                             <li><Link href="/cheap-erp-for-small-business" className="hover:text-purple-300 font-semibold text-purple-400">Cheap ERP for Small Business</Link></li>
+                            <li><Link href="/cheap-erp-system" className="hover:text-amber-300 font-semibold text-amber-400">Cheap ERP System ($1/mo)</Link></li>
                         </ul>
                     </div>
 

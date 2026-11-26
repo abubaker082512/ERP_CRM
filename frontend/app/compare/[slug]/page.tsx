@@ -156,10 +156,15 @@ export async function generateMetadata({ params }: CompareSlugProps): Promise<Me
   }
 
   const title = comp.slug === 'odoo-alternative'
-    ? `Best Free Odoo Alternative (2026) – $1/Mo Cloud ERP | BERAXIS AI`
-    : `Best Free ${comp.competitorName} Alternative (2026) | BERAXIS AI`;
+    ? `Best Free Odoo Alternative & Top Odoo Alternatives (2026) – $1/Mo AI ERP | BERAXIS AI`
+    : comp.slug === 'salesforce-alternative'
+    ? `Best Free Salesforce Alternative (2026) – $1/Mo AI CRM, Power Dialer & 25M Leads | BERAXIS AI`
+    : `Best Free ${comp.competitorName} Alternative (2026) – $1/Mo Cloud ERP & CRM | BERAXIS AI`;
+
   const description = comp.slug === 'odoo-alternative'
-    ? `Switch from Odoo in 15 mins. Save $2,400+/yr with built-in accounting, CRM, POS & AI receipt OCR. 1 App 100% Free Forever. No credit card required.`
+    ? `Compare the #1 Free Odoo Alternative in 2026. Skip $150/hr consultants with our 1-Click "Explain Your Business" AI Auto-Setup across 15 industries. Full Accounting, CRM, POS, Call Center & 25M+ B2B Leads for $1/mo or 1 App Free Forever.`
+    : comp.slug === 'salesforce-alternative'
+    ? `Looking for a modern Salesforce alternative for enterprise or mid-market? Replace $300/seat CRM bloat with BERAXIS AI: Visual Kanban CRM, 25M+ verified B2B leads, Call Center Power Dialer, Public Form Builder & full ERP for $1/month.`
     : `${comp.heroHeadline}. ${comp.heroSubheadline.slice(0, 150)}... Save ${comp.annualSavings} annually with double-entry accounting, CRM, POS, and verified B2B leads for $1/mo.`;
 
   return {

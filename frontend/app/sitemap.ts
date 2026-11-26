@@ -20,6 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/affordable-cloud-erp`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/one-dollar-erp`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/cheap-erp-for-small-business`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },
+    { url: `${baseUrl}/cheap-erp-system`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },
     { url: `${baseUrl}/affordable-cloud-erp`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/one-dollar-erp`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/cheap-erp-for-small-business`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },

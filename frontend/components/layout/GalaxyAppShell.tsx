@@ -85,6 +85,7 @@ function WorkspaceModuleGuard({ pathname, children }: { pathname: string; childr
         pathname.startsWith('/affordable-cloud-erp') ||
         pathname.startsWith('/one-dollar-erp') ||
         pathname.startsWith('/cheap-erp-for-small-business') ||
+        pathname.startsWith('/cheap-erp-system') ||
         pathname.startsWith('/affordable-cloud-erp') ||
         pathname.startsWith('/one-dollar-erp') ||
         pathname.startsWith('/cheap-erp-for-small-business') ||

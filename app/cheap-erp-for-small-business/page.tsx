@@ -18,9 +18,11 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Best Cheap ERP Software for Small Business (2026) | Free & $1/Mo · BERAXIS AI",
-  description: "Looking for the best cheap ERP software for small business in 2026? BERAXIS AI replaces expensive tool sprawl with full double-entry accounting, CRM, POS, and inventory for $1/month or 1 App 100% Free Forever.",
+  title: "Best Cheap ERP System for Small Business (2026) – Free & $1/Mo Cloud ERP | BERAXIS AI",
+  description: "Looking for a cheap ERP system that doesn't cut corners? BERAXIS AI gives small businesses all 30+ apps—GAAP accounting, CRM, POS, inventory, Call Center & 1-Click AI Auto-Setup across 15 industries—for $1/month or 1 App Free Forever.",
   keywords: [
+    "cheap erp system",
+    "best cheap erp system 2026",
     "cheap erp for small business",
     "best cheap erp software for small business",
     "affordable erp for small business",
@@ -135,7 +137,7 @@ export default function CheapErpForSmallBusinessPage() {
             </div>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
-              The Best Cheap ERP Software for{" "}
+              The #1 Cheap ERP System for{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">
                 Small Business in 2026
               </span>
