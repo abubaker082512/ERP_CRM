@@ -906,7 +906,7 @@ export default function HierarchyTasksPage() {
 
       {/* Create Hierarchical Task Modal */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-[200] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div
             className={`w-full max-w-xl rounded-3xl border p-6 shadow-2xl max-h-[92vh] overflow-y-auto ${
               isLight
@@ -1165,7 +1165,7 @@ export default function HierarchyTasksPage() {
 
       {/* Live Task Discuss Chat Slide-Over Drawer */}
       {chatTask && (
-        <div className="fixed inset-0 z-[210] bg-black/60 backdrop-blur-xs flex justify-end">
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-xs flex justify-end">
           <div
             className={`w-full max-w-md h-full flex flex-col border-l shadow-2xl ${
               isLight
@@ -1233,7 +1233,7 @@ export default function HierarchyTasksPage() {
 
             <form
               onSubmit={sendTaskChatMessage}
-              className="p-3 border-t border-white/10 flex items-center gap-2"
+              className="p-3 pb-16 border-t border-white/10 flex items-center gap-2"
             >
               <input
                 type="text"

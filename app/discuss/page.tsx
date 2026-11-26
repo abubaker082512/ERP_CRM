@@ -706,7 +706,7 @@ export default function DiscussPage() {
               </div>
 
               {/* Composer */}
-              <form onSubmit={sendMessage} className="p-4 border-t border-gray-800 bg-[#111622]/70">
+              <form onSubmit={sendMessage} className="p-4 pb-16 border-t border-gray-800 bg-[#111622]/70">
                 <div className="flex items-center gap-2 bg-gray-950 border border-gray-800 focus-within:border-purple-500 rounded-2xl px-4 py-2">
                   <input
                     value={newMsg}
