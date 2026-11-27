@@ -29,7 +29,7 @@ const DEFAULT_WOS: WorkOrder[] = [
 ];
 
 export default function WorkOrdersPage() {
-  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>(DEFAULT_WOS);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState({ operation: "", work_center: "Assembly Line 1", mo_reference: "MO-001", product: "", duration: 45 });
@@ -39,11 +39,32 @@ export default function WorkOrdersPage() {
       const saved = localStorage.getItem(getEntityStorageKey("mrp_work_orders"));
       if (saved) setWorkOrders(JSON.parse(saved));
     } catch {}
-  }, [activeBranch?.id]);
+    if (activeBranch?.id || userEmail) {
+      const params = new URLSearchParams({ domain: "mrp_work_orders" });
+      if (activeBranch?.id) params.set("company_id", activeBranch.id);
+      if (userEmail) params.set("email", userEmail);
+      fetch(`/api/industry-ops?${params.toString()}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d && Array.isArray(d.items) && d.items.length > 0) {
+            setWorkOrders(d.items);
+            try { localStorage.setItem(getEntityStorageKey("mrp_work_orders"), JSON.stringify(d.items)); } catch {}
+          }
+        })
+        .catch(() => {});
+    }
+  }, [activeBranch?.id, userEmail]);
 
   const persist = (next: WorkOrder[]) => {
     setWorkOrders(next);
     try { localStorage.setItem(getEntityStorageKey("mrp_work_orders"), JSON.stringify(next)); } catch {}
+    if (activeBranch?.id || userEmail) {
+      fetch("/api/industry-ops", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: "mrp_work_orders", company_id: activeBranch?.id, email: userEmail, records: next }),
+      }).catch(() => {});
+    }
   };
 
   const handleCreate = (e: React.FormEvent) => {

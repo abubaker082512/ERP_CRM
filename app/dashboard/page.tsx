@@ -184,7 +184,7 @@ export default function DashboardPage() {
             return (summary?.pipeline_stages && summary.pipeline_stages.length > 0)
                 ? summary.pipeline_stages.map(s => ({ name: s.stage, value: s.value || s.count }))
                 : [
-                    { name: 'Leads', value: kpis?.leads || 0 },
+                    { name: 'Leads', value: (kpis as any)?.leads || 0 },
                     { name: 'Quotations', value: kpis?.quotations || 0 },
                     { name: 'Won Deals', value: kpis?.won_deals || 0 },
                 ];

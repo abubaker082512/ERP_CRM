@@ -155,6 +155,7 @@ export type BranchContextType = {
   freePlanModule: string;
   accountType: "individual" | "company";
   currentUserKey: string;
+  userEmail: string;
   currencySymbol: string;
   formatMoney: (amount: number) => string;
   setUserPlan: (plan: UserPlanType) => void;
@@ -235,6 +236,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   const [branches, setBranches] = useState<BusinessBranch[]>([]);
   const [activeBranchId, setActiveBranchIdState] = useState<string | null>(null);
   const [currentUserKey, setCurrentUserKey] = useState<string>("guest");
+  const [userEmail, setUserEmail] = useState<string>("");
   const [accountType, setAccountType] = useState<"individual" | "company">("individual");
   const [userPlan, setUserPlanState] = useState<UserPlanType>("free");
   const [freeSelectedApp, setFreeSelectedAppState] = useState<string>("");
@@ -244,6 +246,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
       const info = getLoggedInUserInfo();
       const uKey = info.userKey;
       setCurrentUserKey(uKey);
+      setUserEmail(info.email || "");
       setAccountType(info.accountType);
 
       if (uKey === "guest") {
@@ -896,6 +899,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         freePlanModule: freeSelectedApp,
         accountType,
         currentUserKey,
+        userEmail,
         currencySymbol,
         formatMoney,
         setUserPlan,

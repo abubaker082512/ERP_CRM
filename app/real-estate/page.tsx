@@ -35,10 +35,18 @@ type PropertyUnit = {
   id: string;
   propertyName: string;
   unitNumber: string;
-  unitType: "Commercial Office" | "Retail Storefront" | "Luxury Apartment" | "Warehouse Bay";
+  unitType:
+    | "Commercial Office"
+    | "Retail Storefront"
+    | "Luxury Apartment"
+    | "Warehouse Bay"
+    | "Executive Hotel Suite"
+    | "Resort Pool Villa"
+    | "Banquet & Conference Hall";
   sqft: number;
   monthlyRent: number;
   status: UnitStatus;
+  housekeeping?: "Clean" | "Dirty" | "Inspecting";
   tenantName?: string;
   tenantPhone?: string;
   leaseStart?: string;
@@ -49,12 +57,15 @@ type PropertyUnit = {
 const INITIAL_UNITS: PropertyUnit[] = [];
 
 export default function RealEstatePropertyPage() {
-  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
+  const [operatingMode, setOperatingMode] = useState<"property" | "hospitality">("property");
   const [units, setUnits] = useState<PropertyUnit[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUnit, setSelectedUnit] = useState<PropertyUnit | null>(null);
   const [isNewUnitModalOpen, setIsNewUnitModalOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [guestInput, setGuestInput] = useState("");
 
   // Form State
   const [propName, setPropName] = useState("Corporate Tower");
@@ -62,6 +73,7 @@ export default function RealEstatePropertyPage() {
   const [unitType, setUnitType] = useState<any>("Commercial Office");
   const [sqft, setSqft] = useState(2500);
   const [rent, setRent] = useState(8500);
+  const [tenantInput, setTenantInput] = useState("");
 
   // Entity-scoped data loading
   useEffect(() => {
@@ -131,6 +143,7 @@ export default function RealEstatePropertyPage() {
     e.preventDefault();
     if (!unitNum.trim()) return;
 
+    const hasGuest = Boolean(tenantInput.trim());
     const newUnit: PropertyUnit = {
       id: `UNT-${Date.now().toString().slice(-3)}`,
       propertyName: propName,
@@ -138,7 +151,11 @@ export default function RealEstatePropertyPage() {
       unitType,
       sqft: Number(sqft),
       monthlyRent: Number(rent),
-      status: "vacant"
+      housekeeping: "Clean",
+      status: hasGuest ? "occupied" : "vacant",
+      tenantName: hasGuest ? tenantInput.trim() : undefined,
+      leaseStart: hasGuest ? new Date().toISOString().slice(0, 10) : undefined,
+      leaseEnd: hasGuest ? new Date(Date.now() + (operatingMode === "hospitality" ? 3 : 365) * 86400000).toISOString().slice(0, 10) : undefined,
     };
 
     const updated = [newUnit, ...units];
@@ -146,6 +163,80 @@ export default function RealEstatePropertyPage() {
     setSelectedUnit(newUnit);
     setIsNewUnitModalOpen(false);
     setUnitNum("");
+    setTenantInput("");
+  };
+
+  const handleSetHousekeeping = (unitId: string, hk: "Clean" | "Dirty" | "Inspecting") => {
+    const next = units.map((u) => (u.id === unitId ? { ...u, housekeeping: hk } : u));
+    persistUnits(next);
+    const updatedSel = next.find((u) => u.id === unitId) || null;
+    setSelectedUnit(updatedSel);
+  };
+
+  const handleCheckInOrAssign = (unit: PropertyUnit) => {
+    const who = guestInput.trim() || (operatingMode === "hospitality" ? "Walk-In VIP Guest" : "Corporate Leaseholder");
+    const next = units.map((u) =>
+      u.id === unit.id
+        ? {
+            ...u,
+            status: "occupied" as UnitStatus,
+            tenantName: who,
+            housekeeping: "Clean" as const,
+            leaseStart: new Date().toISOString().slice(0, 10),
+            leaseEnd: new Date(Date.now() + (operatingMode === "hospitality" ? 3 : 365) * 86400000).toISOString().slice(0, 10),
+          }
+        : u
+    );
+    persistUnits(next);
+    setSelectedUnit(next.find((u) => u.id === unit.id) || null);
+    setGuestInput("");
+    setToastMsg(`${operatingMode === "hospitality" ? "Checked in guest" : "Assigned tenant"} "${who}" to ${unit.unitNumber}`);
+    setTimeout(() => setToastMsg(""), 4000);
+  };
+
+  const handleCheckOutUnit = (unit: PropertyUnit) => {
+    const next = units.map((u) =>
+      u.id === unit.id
+        ? { ...u, status: "vacant" as UnitStatus, tenantName: undefined, housekeeping: "Dirty" as const }
+        : u
+    );
+    persistUnits(next);
+    setSelectedUnit(next.find((u) => u.id === unit.id) || null);
+    setToastMsg(`${unit.unitNumber} marked Vacant & routed to Housekeeping (Dirty).`);
+    setTimeout(() => setToastMsg(""), 4000);
+  };
+
+  const handleBillUnitOrFolio = async (unit: PropertyUnit) => {
+    try {
+      const res = await fetch("/api/industry-ops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "bill_property_or_folio",
+          company_id: activeBranch?.id,
+          email: userEmail,
+          industryId: operatingMode === "hospitality" ? "hospitality_travel" : "real_estate",
+          id: unit.id,
+          propertyName: unit.propertyName,
+          unitNumber: unit.unitNumber,
+          unitType: unit.unitType,
+          sqft: unit.sqft,
+          amount: unit.monthlyRent,
+          housekeeping: unit.housekeeping || "Clean",
+          tenantName: unit.tenantName || guestInput.trim() || (operatingMode === "hospitality" ? "Hotel Folio Guest" : "Commercial Tenant"),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.unit) {
+          const next = [data.unit, ...units.filter((u) => u.id !== data.unit.id)];
+          setUnits(next);
+          setSelectedUnit(data.unit);
+        }
+        setToastMsg(`Posted ${operatingMode === "hospitality" ? "Guest Stay Folio" : "Rent Invoice"} ($${unit.monthlyRent.toLocaleString()}) → Sales & Accounting Ledger!`);
+        setTimeout(() => setToastMsg(""), 5000);
+      }
+    } catch {}
   };
 
   return (
@@ -158,13 +249,64 @@ export default function RealEstatePropertyPage() {
       />
 
       <div className="flex-1 overflow-auto p-4 sm:p-6 space-y-6">
+        {toastMsg && (
+          <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-2xl text-xs font-bold flex items-center justify-between">
+            <span>{toastMsg}</span>
+            <button onClick={() => setToastMsg("")} className="text-gray-400 hover:text-white cursor-pointer">✕</button>
+          </div>
+        )}
+
+        {/* Dual Industry Mode Switcher: Property Leasing vs. Hotel & Resort Front-Desk */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-[#101422] p-3.5 rounded-2xl border border-indigo-500/25">
+          <div>
+            <h2 className="text-sm font-bold text-white">
+              {operatingMode === "hospitality" ? "Hotel, Resort & Hospitality Front-Desk PMS" : "Commercial & Residential Property Leasing Hub"}
+            </h2>
+            <p className="text-[11px] text-gray-400">
+              {operatingMode === "hospitality"
+                ? "Manage suites, villas, guest check-in/out, housekeeping status, and 1-click stay folio settlement"
+                : "Manage commercial towers, retail storefronts, tenant leases, escrow deposits, and monthly rent billing"}
+            </p>
+          </div>
+          <div className="flex bg-gray-900 p-1 rounded-xl border border-gray-800 text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => {
+                setOperatingMode("property");
+                setPropName("Corporate Tower");
+                setUnitType("Commercial Office");
+                setRent(4500);
+              }}
+              className={`px-3.5 py-1.5 rounded-lg transition cursor-pointer ${
+                operatingMode === "property" ? "bg-indigo-600 text-white shadow" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Property & Lease Roll
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOperatingMode("hospitality");
+                setPropName("Grand Beraxis Resort & Spa");
+                setUnitType("Executive Hotel Suite");
+                setRent(320);
+              }}
+              className={`px-3.5 py-1.5 rounded-lg transition cursor-pointer ${
+                operatingMode === "hospitality" ? "bg-emerald-600 text-white shadow" : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Hotel & Resort Front-Desk
+            </button>
+          </div>
+        </div>
+
         {/* KPI Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="galaxy-card p-4 rounded-2xl bg-[#101422] border border-blue-500/20 flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-bold uppercase text-gray-400">Total Unit Portfolio</span>
+              <span className="text-[10px] font-bold uppercase text-gray-400">{operatingMode === "hospitality" ? "Rooms & Suites" : "Total Unit Portfolio"}</span>
               <h3 className="text-2xl font-bold text-blue-400 mt-0.5">{units.length} Units</h3>
-              <p className="text-[10px] text-gray-400 mt-0.5">Commercial & Residential</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{operatingMode === "hospitality" ? "Suites, Villas & Halls" : "Commercial & Residential"}</p>
             </div>
             <div className="p-3 bg-blue-500/20 text-blue-400 rounded-xl">
               <Building2 size={20} />
@@ -175,9 +317,9 @@ export default function RealEstatePropertyPage() {
             <div>
               <span className="text-[10px] font-bold uppercase text-gray-400">Portfolio Occupancy</span>
               <h3 className="text-2xl font-bold text-emerald-400 mt-0.5">
-                {Math.round((occupiedCount / units.length) * 100)}%
+                {units.length > 0 ? Math.round((occupiedCount / units.length) * 100) : 0}%
               </h3>
-              <p className="text-[10px] text-gray-400 mt-0.5">{occupiedCount} Leased • {vacantCount} Vacant</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{occupiedCount} Occupied • {vacantCount} Vacant</p>
             </div>
             <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl">
               <CheckCircle2 size={20} />
@@ -352,6 +494,66 @@ export default function RealEstatePropertyPage() {
                 </div>
               </div>
 
+              {/* Housekeeping & Front-Desk / Lease Billing Actions */}
+              <div className="bg-gray-950/60 p-4 rounded-2xl border border-gray-800 space-y-3 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">
+                    Housekeeping &amp; Readiness: <strong className="text-emerald-400">{selectedUnit.housekeeping || "Clean"}</strong>
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {(["Clean", "Inspecting", "Dirty"] as const).map((hk) => (
+                      <button
+                        key={hk}
+                        type="button"
+                        onClick={() => handleSetHousekeeping(selectedUnit.id, hk)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border cursor-pointer ${
+                          (selectedUnit.housekeeping || "Clean") === hk
+                            ? "bg-indigo-600 text-white border-indigo-400"
+                            : "bg-gray-900 text-gray-400 border-gray-700 hover:text-white"
+                        }`}
+                      >
+                        {hk}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-800">
+                  <input
+                    type="text"
+                    value={guestInput}
+                    onChange={(e) => setGuestInput(e.target.value)}
+                    placeholder={operatingMode === "hospitality" ? "Guest name for Check-In..." : "Tenant name to assign..."}
+                    className="flex-1 min-w-[160px] bg-gray-900 border border-gray-700 rounded-xl px-3 py-1.5 text-xs text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleCheckInOrAssign(selectedUnit)}
+                    className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold cursor-pointer"
+                  >
+                    {operatingMode === "hospitality" ? "Check-In Guest" : "Assign Tenant"}
+                  </button>
+                  {selectedUnit.status === "occupied" && (
+                    <button
+                      type="button"
+                      onClick={() => handleCheckOutUnit(selectedUnit)}
+                      className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold cursor-pointer"
+                    >
+                      {operatingMode === "hospitality" ? "Check-Out" : "Vacate"}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleBillUnitOrFolio(selectedUnit)}
+                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md cursor-pointer"
+                  >
+                    {operatingMode === "hospitality"
+                      ? `Settle Stay Folio ($${selectedUnit.monthlyRent.toLocaleString()}) → Accounting`
+                      : `Bill Monthly Rent ($${selectedUnit.monthlyRent.toLocaleString()}) → Accounting`}
+                  </button>
+                </div>
+              </div>
+
               {/* Tenant Profile */}
               {selectedUnit.tenantName ? (
                 <div className="space-y-3 bg-gray-900/60 p-4 rounded-2xl border border-gray-800 text-xs">
@@ -435,8 +637,24 @@ export default function RealEstatePropertyPage() {
                   <option value="Retail Storefront">Retail Storefront</option>
                   <option value="Luxury Apartment">Luxury Apartment</option>
                   <option value="Warehouse Bay">Warehouse Bay</option>
+                  <option value="Executive Hotel Suite">Executive Hotel Suite</option>
+                  <option value="Resort Pool Villa">Resort Pool Villa</option>
+                  <option value="Banquet & Conference Hall">Banquet &amp; Conference Hall</option>
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label className="font-bold text-gray-300 block mb-1">
+                {operatingMode === "hospitality" ? "Current Guest Name (Optional — auto Check-In)" : "Current Tenant Name (Optional)"}
+              </label>
+              <input
+                type="text"
+                value={tenantInput}
+                onChange={e => setTenantInput(e.target.value)}
+                placeholder={operatingMode === "hospitality" ? "e.g. Dr. Nadia Al-Farsi" : "e.g. Horizon Capital Partners"}
+                className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">

@@ -53,7 +53,7 @@ export default function StandardModuleHeader({
     newButtonLabel,
     actionButton
 }: StandardModuleHeaderProps) {
-    const resolvedNewLabel = newButtonLabel || newButtonText;
+    const resolvedNewLabel = (newButtonLabel || newButtonText || "New").replace(/^\+\s*/, "");
     const pathname = usePathname();
     const router = useRouter();
     const { isLight, toggleTheme } = useTheme();
@@ -179,7 +179,7 @@ export default function StandardModuleHeader({
                 </div>
 
                 {/* Center: Universal Search */}
-                <div className="flex-1 max-w-[200px] 2xl:max-w-[260px] mx-1 hidden xl:block min-w-0">
+                <div className="flex-1 max-w-[165px] 2xl:max-w-[260px] mx-1 hidden 2xl:block min-w-0">
                     <UniversalModuleSearch
                         moduleName={moduleName}
                         placeholder={searchPlaceholder || `Search ${moduleName}...`}

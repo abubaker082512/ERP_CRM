@@ -513,9 +513,9 @@ html[data-theme="light"] :is(
   [class*="bg-slate-950"], [class*="bg-slate-900"], [class*="bg-slate-800"],
   [class*="bg-emerald-950"], [class*="bg-blue-950"], [class*="bg-purple-950"],
   [class*="bg-cyan-950"], [class*="bg-amber-950"], [class*="bg-rose-950"], [class*="bg-indigo-950"], [class*="bg-red-950"],
-  .bg-black\/20, .bg-black\/25, .bg-black\/30, .bg-black\/40, .bg-black\/50
+  .bg-black\/20, .bg-black\/25, .bg-black\/30, .bg-black\/35, .bg-black\/40, .bg-black\/45, .bg-black\/50, .bg-black\/60, .bg-black\/70
 ):not(.fixed.inset-0):not([class*="bg-gradient-"]):not(button[class*="bg-purple-"]):not(button[class*="bg-emerald-"]):not(button[class*="bg-cyan-"]):not(button[class*="bg-blue-"]):not(button[class*="bg-rose-"]):not(button[class*="bg-amber-"]):not(button[class*="bg-green-"]):not(button[class*="bg-indigo-"]) {
-  background-color: rgba(255, 255, 255, 0.97) !important;
+  background-color: #f8fafc !important;
   color: #0f172a !important;
 }
 

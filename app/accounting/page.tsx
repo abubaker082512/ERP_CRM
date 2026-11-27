@@ -68,6 +68,32 @@ export default function AccountingPage() {
             setBills(savedBills ? JSON.parse(savedBills) : []);
             setEntries(savedEntries ? JSON.parse(savedEntries) : []);
             setJournals(savedJournals ? JSON.parse(savedJournals) : []);
+
+            if (activeBranch?.id) {
+                let email = "";
+                try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+                fetch(`/api/accounting?company_id=${encodeURIComponent(activeBranch.id)}&email=${encodeURIComponent(email)}`, { cache: "no-store" })
+                    .then((r) => (r.ok ? r.json() : null))
+                    .then((d) => {
+                        if (!d) return;
+                        if (Array.isArray(d.invoices) && d.invoices.length > 0) {
+                            setInvoices(d.invoices);
+                            try { localStorage.setItem(invKey, JSON.stringify(d.invoices)); } catch {}
+                        }
+                        if (Array.isArray(d.bills) && d.bills.length > 0) {
+                            setBills(d.bills);
+                            try { localStorage.setItem(billKey, JSON.stringify(d.bills)); } catch {}
+                        }
+                        if (Array.isArray(d.entries) && d.entries.length > 0) {
+                            setEntries(d.entries);
+                            try { localStorage.setItem(entryKey, JSON.stringify(d.entries)); } catch {}
+                        }
+                        if (Array.isArray(d.journals) && d.journals.length > 0) {
+                            setJournals(d.journals);
+                        }
+                    })
+                    .catch(() => {});
+            }
         } catch (err) {
             console.error("Failed to load entity accounting data:", err);
         } finally {
@@ -111,6 +137,22 @@ export default function AccountingPage() {
         setEntries(updated);
         try {
             localStorage.setItem(getEntityStorageKey("accounting_entries"), JSON.stringify(updated));
+            if (activeBranch?.id) {
+                let email = "";
+                try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+                fetch("/api/accounting", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "add_entry",
+                        company_id: activeBranch.id,
+                        email,
+                        ...newEntry,
+                        reference: newEntry.ref,
+                        type: txType,
+                    }),
+                }).catch(() => {});
+            }
         } catch {}
 
         setTxRef("");
@@ -119,18 +161,19 @@ export default function AccountingPage() {
         setShowQuickModal(null);
     };
 
-    // Dynamically computed metrics for this isolated entity (0 by default for new accounts)
-    const unpaidInvoices = invoices.filter(i => i.status !== "paid");
-    const draftInvoices = invoices.filter(i => i.status === "draft");
-    const paidInvoicesTotal = invoices.filter(i => i.status === "paid").reduce((s, i) => s + (Number(i.amount) || 0), 0);
-    const accountsReceivable = unpaidInvoices.reduce((s, i) => s + (Number(i.amount) || 0), 0);
-    const draftInvoicesTotal = draftInvoices.reduce((s, i) => s + (Number(i.amount) || 0), 0);
+    // Dynamically computed metrics for this isolated entity (case-insensitive status matching!)
+    const isPaid = (st: any) => String(st || "").toLowerCase() === "paid";
+    const unpaidInvoices = invoices.filter(i => !isPaid(i.status));
+    const draftInvoices = invoices.filter(i => String(i.status || "").toLowerCase() === "draft");
+    const paidInvoicesTotal = invoices.filter(i => isPaid(i.status)).reduce((s, i) => s + (Number(i.amount ?? i.amount_total) || 0), 0);
+    const accountsReceivable = unpaidInvoices.reduce((s, i) => s + (Number(i.amount ?? i.amount_total) || 0), 0);
+    const draftInvoicesTotal = draftInvoices.reduce((s, i) => s + (Number(i.amount ?? i.amount_total) || 0), 0);
 
-    const unpaidBills = bills.filter(b => b.status !== "paid");
-    const paidBillsTotal = bills.filter(b => b.status === "paid").reduce((s, b) => s + (Number(b.amount) || 0), 0);
-    const accountsPayable = unpaidBills.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+    const unpaidBills = bills.filter(b => !isPaid(b.status));
+    const paidBillsTotal = bills.filter(b => isPaid(b.status)).reduce((s, b) => s + (Number(b.amount ?? b.amount_total) || 0), 0);
+    const accountsPayable = unpaidBills.reduce((s, b) => s + (Number(b.amount ?? b.amount_total) || 0), 0);
     const lateBills = unpaidBills.filter(b => b.due_date && new Date(b.due_date) < new Date());
-    const lateBillsTotal = lateBills.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+    const lateBillsTotal = lateBills.reduce((s, b) => s + (Number(b.amount ?? b.amount_total) || 0), 0);
 
     const bankEntriesTotal = entries
         .filter(e => e.journal === "Bank" && !e.auto_gl)
@@ -146,10 +189,10 @@ export default function AccountingPage() {
     // Exclude equity/capital/MISC journals and auto-GL entries from Operating Revenue & Profit
     const operatingInvoicesTotal = invoices
         .filter(i => i.status !== "void")
-        .reduce((s, i) => s + (Number(i.amount) || 0), 0);
+        .reduce((s, i) => s + (Number(i.amount ?? i.amount_total) || 0), 0);
     const operatingBillsTotal = bills
         .filter(b => b.status !== "void")
-        .reduce((s, b) => s + (Number(b.amount) || 0), 0);
+        .reduce((s, b) => s + (Number(b.amount ?? b.amount_total) || 0), 0);
     const operatingIncomeEntries = entries
         .filter(e => !e.auto_gl && e.category === "income" && Number(e.amount) > 0)
         .reduce((s, e) => s + Number(e.amount), 0);
@@ -376,6 +419,77 @@ export default function AccountingPage() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Synced Customer Invoices & Vendor Bills Ledger */}
+                {(invoices.length > 0 || bills.length > 0) && (
+                    <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-[#1E293B] rounded-xl border border-gray-700 overflow-hidden">
+                            <div className="p-4 border-b border-gray-700 font-bold text-white text-sm">
+                                Synced Customer Invoices ({invoices.length})
+                            </div>
+                            <div className="divide-y divide-gray-800 max-h-72 overflow-y-auto text-xs">
+                                {invoices.slice(0, 15).map((inv: any) => (
+                                    <div key={inv.id} className="p-3.5 flex items-center justify-between">
+                                        <div>
+                                            <div className="font-bold text-white">{inv.name || inv.id}</div>
+                                            <div className="text-gray-400">{inv.customer_name || inv.customer} • {inv.date || ""}</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="font-bold text-emerald-400">
+                                                {currencySymbol}{Number(inv.amount_total ?? inv.amount ?? 0).toLocaleString()}
+                                            </div>
+                                            <span className="text-[10px] uppercase font-bold text-emerald-300">{inv.status || "Paid"}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="bg-[#1E293B] rounded-xl border border-gray-700 overflow-hidden">
+                            <div className="p-4 border-b border-gray-700 font-bold text-white text-sm">
+                                Synced Supplier &amp; Vendor Bills ({bills.length})
+                            </div>
+                            <div className="divide-y divide-gray-800 max-h-72 overflow-y-auto text-xs">
+                                {bills.slice(0, 15).map((bill: any) => (
+                                    <div key={bill.id} className="p-3.5 flex items-center justify-between gap-2">
+                                        <div>
+                                            <div className="font-bold text-white">{bill.name || bill.id}</div>
+                                            <div className="text-gray-400">{bill.vendor_name || bill.vendor} • {bill.sourcePo || bill.date || ""}</div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-right">
+                                                <div className="font-bold text-rose-400">
+                                                    {currencySymbol}{Number(bill.amount_total ?? bill.amount ?? 0).toLocaleString()}
+                                                </div>
+                                                <span className="text-[10px] uppercase font-bold text-amber-300">{bill.status || "Posted"}</span>
+                                            </div>
+                                            {!isPaid(bill.status) && (
+                                                <button
+                                                    onClick={async () => {
+                                                        let email = "";
+                                                        try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+                                                        const res = await fetch("/api/accounting", {
+                                                            method: "POST",
+                                                            headers: { "Content-Type": "application/json" },
+                                                            body: JSON.stringify({ action: "pay_bill", company_id: activeBranch?.id || "CMP-001", email, id: bill.id }),
+                                                        });
+                                                        if (res.ok) {
+                                                            const d = await res.json();
+                                                            if (Array.isArray(d.bills)) setBills(d.bills);
+                                                        }
+                                                    }}
+                                                    className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold cursor-pointer"
+                                                >
+                                                    Pay Bill
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

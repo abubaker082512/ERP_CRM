@@ -29,7 +29,7 @@ const DEFAULT_BOMS: BOM[] = [
 ];
 
 export default function BOMPage() {
-  const { activeBranch, getEntityStorageKey, currencySymbol } = useBranchContext();
+  const { activeBranch, userEmail, getEntityStorageKey, currencySymbol } = useBranchContext();
   const [boms, setBoms] = useState<BOM[]>(DEFAULT_BOMS);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,11 +40,32 @@ export default function BOMPage() {
       const saved = localStorage.getItem(getEntityStorageKey("mrp_boms"));
       if (saved) setBoms(JSON.parse(saved));
     } catch {}
-  }, [activeBranch?.id]);
+    if (activeBranch?.id || userEmail) {
+      const params = new URLSearchParams({ domain: "mrp_boms" });
+      if (activeBranch?.id) params.set("company_id", activeBranch.id);
+      if (userEmail) params.set("email", userEmail);
+      fetch(`/api/industry-ops?${params.toString()}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d && Array.isArray(d.items) && d.items.length > 0) {
+            setBoms(d.items);
+            try { localStorage.setItem(getEntityStorageKey("mrp_boms"), JSON.stringify(d.items)); } catch {}
+          }
+        })
+        .catch(() => {});
+    }
+  }, [activeBranch?.id, userEmail]);
 
   const persist = (next: BOM[]) => {
     setBoms(next);
     try { localStorage.setItem(getEntityStorageKey("mrp_boms"), JSON.stringify(next)); } catch {}
+    if (activeBranch?.id || userEmail) {
+      fetch("/api/industry-ops", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: "mrp_boms", company_id: activeBranch?.id, email: userEmail, records: next }),
+      }).catch(() => {});
+    }
   };
 
   const handleCreate = (e: React.FormEvent) => {

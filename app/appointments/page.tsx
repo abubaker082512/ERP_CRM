@@ -52,50 +52,64 @@ export type Appointment = {
     start_time: string;
     end_time: string;
     duration_min: number;
-    type: "erp_demo" | "architecture_review" | "client_checkin" | "onboarding";
+    type:
+        | "erp_demo"
+        | "architecture_review"
+        | "client_checkin"
+        | "onboarding"
+        | "medical_dental"
+        | "salon_spa"
+        | "property_visit";
     status: "confirmed" | "completed" | "cancelled" | "pending";
+    session_fee?: number;
+    room_or_chair?: string;
+    clinical_notes?: string;
     notes?: string;
 };
 
 const APPOINTMENT_TYPES = [
     {
+        id: "medical_dental",
+        slug: "clinic-consult",
+        label: "Medical / Dental Clinical Consultation",
+        duration: "30 Min",
+        defaultFee: 120,
+        badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+        description: "Patient vitals, clinical SOAP notes, practitioner chair assignment, and 1-click consultation billing."
+    },
+    {
+        id: "salon_spa",
+        slug: "salon-spa",
+        label: "Salon, Aesthetics & Spa Treatment",
+        duration: "45 Min",
+        defaultFee: 95,
+        badge: "bg-pink-500/20 text-pink-300 border-pink-500/30",
+        description: "Stylist / treatment room booking, service package notes, and instant session invoice checkout."
+    },
+    {
         id: "erp_demo",
         slug: "erp-demo",
-        label: "ERP & CRM Product Walkthrough",
+        label: "Advisory / Product Walkthrough",
         duration: "30 Min",
+        defaultFee: 150,
         badge: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-        description: "Live demonstration of unified accounting, live leads pool scraper, and sprint management."
+        description: "Client advisory session, legal/tax consultation, or live enterprise walkthrough with video room."
     },
     {
-        id: "architecture_review",
-        slug: "salim-ghauri",
-        label: "Technical Architecture & API Review",
-        duration: "45 Min",
-        badge: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-        description: "Deep dive into multi-tenant database isolation, JWT auth middleware, and webhook integrations."
-    },
-    {
-        id: "onboarding",
-        slug: "bilal-mahmood",
-        label: "Enterprise Customer Onboarding",
+        id: "property_visit",
+        slug: "site-viewing",
+        label: "Property Viewing / Site Inspection",
         duration: "60 Min",
-        badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-        description: "Hands-on staff training, user access setup, and custom workflow configuration."
-    },
-    {
-        id: "client_checkin",
-        slug: "sarah-vance",
-        label: "Executive Sprint Check-in",
-        duration: "15 Min",
-        badge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-        description: "Bi-weekly milestone progress review and sprint blocker resolution."
+        defaultFee: 0,
+        badge: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
+        description: "Scheduled on-site or virtual property tour, engineering inspection, and client follow-up log."
     }
 ];
 
 const INITIAL_APPOINTMENTS: Appointment[] = [];
 
 export default function AppointmentsPage() {
-    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -105,10 +119,12 @@ export default function AppointmentsPage() {
     const [clientEmail, setClientEmail] = useState("");
     const [clientPhone, setClientPhone] = useState("");
     const [companyName, setCompanyName] = useState("");
-    const [hostName, setHostName] = useState("Meeting Host");
-    const [apptType, setApptType] = useState<Appointment["type"]>("erp_demo");
-    const [apptDate, setApptDate] = useState("2026-03-12");
+    const [hostName, setHostName] = useState("Dr. Sarah Vance");
+    const [apptType, setApptType] = useState<Appointment["type"]>("medical_dental");
+    const [apptDate, setApptDate] = useState(new Date().toISOString().slice(0, 10));
     const [apptTime, setApptTime] = useState("11:00 AM");
+    const [sessionFee, setSessionFee] = useState<number>(120);
+    const [roomOrChair, setRoomOrChair] = useState("Clinic Room 1 / Chair A");
     const [notes, setNotes] = useState("");
 
     // Share Booking Link Modal
@@ -137,7 +153,18 @@ export default function AppointmentsPage() {
         } else {
             setAppointments([]);
         }
-    }, [activeBranch?.id]);
+        const params = new URLSearchParams({ domain: "appointments", company_id: activeBranch.id });
+        if (userEmail) params.set("email", userEmail);
+        fetch(`/api/industry-ops?${params.toString()}`, { cache: "no-store" })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d) => {
+                if (d && Array.isArray(d.items) && d.items.length > 0) {
+                    setAppointments(d.items);
+                    try { localStorage.setItem(key, JSON.stringify(d.items)); } catch {}
+                }
+            })
+            .catch(() => {});
+    }, [activeBranch?.id, userEmail]);
 
     const showToast = (msg: string) => {
         setToastMsg(msg);
@@ -150,6 +177,46 @@ export default function AppointmentsPage() {
             const key = getEntityStorageKey("appointments");
             localStorage.setItem(key, JSON.stringify(updated));
         } catch {}
+        if (activeBranch?.id || userEmail) {
+            fetch("/api/industry-ops", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    domain: "appointments",
+                    company_id: activeBranch?.id,
+                    email: userEmail,
+                    records: updated,
+                }),
+            }).catch(() => {});
+        }
+    };
+
+    const handleCompleteAndBill = async (appt: Appointment) => {
+        const fee = Number(appt.session_fee ?? 120);
+        try {
+            const res = await fetch("/api/industry-ops", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "complete_appointment_billing",
+                    company_id: activeBranch?.id,
+                    email: userEmail,
+                    appointmentId: appt.id,
+                    clientName: appt.client_name,
+                    serviceTitle: `${appt.title} (${appt.room_or_chair || "Main Suite"})`,
+                    fee: fee > 0 ? fee : 95,
+                    clinicalNotes: appt.notes || "Completed clinical / advisory session",
+                }),
+            });
+            const data = await res.json();
+            const next = appointments.map((a) => (a.id === appt.id ? { ...a, status: "completed" as const } : a));
+            persistAppointments(next);
+            if (data.success) {
+                showToast(`Completed session & posted Invoice ($${fee > 0 ? fee : 95}) to Sales & Accounting!`);
+            }
+        } catch {
+            toggleStatus(appt.id, "completed");
+        }
     };
 
     const handleCreateInstantMeeting = () => {
@@ -175,35 +242,37 @@ export default function AppointmentsPage() {
         const newAppt: Appointment = {
             id: `APT/2026/0${appointments.length + 1}`,
             meeting_code: meetingCode,
-            title: typeInfo?.label || "Meeting",
+            title: typeInfo?.label || "Consultation",
             client_name: clientName.trim(),
             client_email: clientEmail.trim(),
             client_phone: clientPhone.trim() || undefined,
-            company: companyName.trim() || "Independent Organization",
+            company: companyName.trim() || "Direct Patient / Client",
             host_name: hostName,
             host_slug: hostSlug,
-            host_role: hostName.includes("Salim") ? "Principal Architect" : hostName.includes("Sarah") ? "Lead UI/UX" : "ERP Specialist",
+            host_role: "Lead Specialist",
             date: apptDate,
             start_time: apptTime,
             end_time: "11:30 AM",
             duration_min: duration,
             type: apptType,
             status: "confirmed",
+            session_fee: Number(sessionFee) || 0,
+            room_or_chair: roomOrChair.trim() || "Suite 1",
             notes: notes.trim()
         };
 
-        setAppointments([newAppt, ...appointments]);
+        persistAppointments([newAppt, ...appointments]);
         setIsBookModalOpen(false);
         setClientName("");
         setClientEmail("");
         setClientPhone("");
         setCompanyName("");
         setNotes("");
-        showToast(`🎉 Appointment scheduled with ${newAppt.client_name}! In-system video room created.`);
+        showToast(`🎉 Appointment scheduled with ${newAppt.client_name}! Synced to cluster & video room ready.`);
     };
 
     const toggleStatus = (id: string, newStatus: Appointment["status"]) => {
-        setAppointments(appointments.map(a => a.id === id ? { ...a, status: newStatus } : a));
+        persistAppointments(appointments.map(a => a.id === id ? { ...a, status: newStatus } : a));
         showToast(`Status updated to ${newStatus.toUpperCase()}`);
     };
 
@@ -464,12 +533,20 @@ export default function AppointmentsPage() {
                                     </button>
                                 </div>
 
-                                <div className="flex items-center justify-between text-[11px]">
+                                <div className="flex items-center justify-between text-[11px] flex-wrap gap-2">
+                                    {appt.status !== "completed" && (
+                                        <button
+                                            onClick={() => handleCompleteAndBill(appt)}
+                                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer"
+                                        >
+                                            ✓ Complete &amp; Bill (${appt.session_fee ?? 120})
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => toggleStatus(appt.id, appt.status === "completed" ? "confirmed" : "completed")}
                                         className="text-emerald-400 hover:text-emerald-300 font-semibold cursor-pointer"
                                     >
-                                        {appt.status === "completed" ? "↺ Mark Active" : "✓ Mark Completed"}
+                                        {appt.status === "completed" ? "↺ Reopen" : "Mark Done"}
                                     </button>
                                     <button
                                         onClick={() => toggleStatus(appt.id, "cancelled")}
@@ -774,13 +851,36 @@ export default function AppointmentsPage() {
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Room / Clinic Chair / Bay</label>
+                                    <input
+                                        type="text"
+                                        value={roomOrChair}
+                                        onChange={(e) => setRoomOrChair(e.target.value)}
+                                        placeholder="e.g. Dental Chair 2 / Spa Suite B"
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-1">Session Fee ($)</label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        value={sessionFee}
+                                        onChange={(e) => setSessionFee(Number(e.target.value))}
+                                        className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                            </div>
+
                             <div>
-                                <label className="block text-gray-300 font-semibold mb-1">Meeting Agenda / Notes</label>
+                                <label className="block text-gray-300 font-semibold mb-1">Clinical SOAP Notes / Treatment Agenda</label>
                                 <textarea
                                     rows={2}
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    placeholder="Topics to discuss or specific requirements..."
+                                    placeholder="Chief complaint, SOAP assessment, treatment plan, or meeting agenda..."
                                     className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
                                 />
                             </div>

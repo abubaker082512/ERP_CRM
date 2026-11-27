@@ -27,21 +27,78 @@ const DEFAULT_OPS: Operation[] = [
 ];
 
 export default function InventoryOperationsPage() {
-  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
   const [operations, setOperations] = useState<Operation[]>(DEFAULT_OPS);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [toast, setToast] = useState("");
   const [form, setForm] = useState({ type: "receipt" as Operation["type"], product: "", quantity: 25 });
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(getEntityStorageKey("inventory_operations"));
-      if (saved) setOperations(JSON.parse(saved));
-    } catch {}
-  }, [activeBranch?.id]);
+    const loadOps = async () => {
+      try {
+        const saved = localStorage.getItem(getEntityStorageKey("inventory_operations"));
+        if (saved) setOperations(JSON.parse(saved));
+      } catch {}
+      if (!activeBranch?.id && !userEmail) return;
+      const params = new URLSearchParams({ domain: "inventory_operations" });
+      if (activeBranch?.id) params.set("company_id", activeBranch.id);
+      if (userEmail) params.set("email", userEmail);
+      try {
+        const res = await fetch(`/api/industry-ops?${params.toString()}`, { cache: "no-store" });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.records) && data.records.length > 0) {
+          setOperations(data.records);
+        }
+      } catch {}
+    };
+    loadOps();
+  }, [activeBranch?.id, userEmail]);
 
-  const persist = (next: Operation[]) => {
+  const persist = async (next: Operation[]) => {
     setOperations(next);
     try { localStorage.setItem(getEntityStorageKey("inventory_operations"), JSON.stringify(next)); } catch {}
+    if (activeBranch?.id || userEmail) {
+      try {
+        await fetch("/api/industry-ops", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            domain: "inventory_operations",
+            company_id: activeBranch?.id,
+            email: userEmail,
+            records: next,
+          }),
+        });
+      } catch {}
+    }
+  };
+
+  const handleValidate = async (op: Operation) => {
+    try {
+      const res = await fetch("/api/industry-ops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "validate_warehouse_operation",
+          company_id: activeBranch?.id,
+          email: userEmail,
+          operation_id: op.id,
+          type: op.type,
+          product: op.product,
+          quantity: op.quantity,
+        }),
+      });
+      const data = await res.json();
+      const next = operations.map((x) => (x.id === op.id ? { ...x, status: "done" as const } : x));
+      setOperations(next);
+      try { localStorage.setItem(getEntityStorageKey("inventory_operations"), JSON.stringify(next)); } catch {}
+      if (data.success) {
+        setToast(`Validated ${op.id}: ${op.type === "receipt" ? `+${op.quantity} added to` : op.type === "delivery" ? `-${op.quantity} picked from` : `${op.quantity} transferred in`} Inventory!`);
+        setTimeout(() => setToast(""), 4000);
+      }
+    } catch {
+      persist(operations.map((x) => (x.id === op.id ? { ...x, status: "done" } : x)));
+    }
   };
 
   const handleCreate = (e: React.FormEvent) => {
@@ -73,6 +130,11 @@ export default function InventoryOperationsPage() {
       />
 
       <div className="flex-1 overflow-auto p-6">
+        {toast && (
+          <div className="mb-4 px-4 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
+            {toast}
+          </div>
+        )}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-semibold text-gray-200">Receipts, Deliveries &amp; Internal Transfers</h2>
@@ -114,7 +176,7 @@ export default function InventoryOperationsPage() {
                   <td className="px-4 py-3 text-gray-400">{op.date}</td>
                   <td className="px-4 py-3 text-right space-x-2">
                     {op.status !== "done" && (
-                      <button onClick={() => persist(operations.map((x) => (x.id === op.id ? { ...x, status: "done" } : x)))} className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold inline-flex items-center gap-1 cursor-pointer"><CheckCircle2 size={12} /> Validate</button>
+                      <button onClick={() => handleValidate(op)} className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold inline-flex items-center gap-1 cursor-pointer"><CheckCircle2 size={12} /> Validate</button>
                     )}
                     <button onClick={() => persist(operations.filter((x) => x.id !== op.id))} className="text-rose-400 p-1 cursor-pointer"><Trash2 size={14} /></button>
                   </td>

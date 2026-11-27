@@ -29,7 +29,7 @@ type Ticket = {
 const mockTickets: Ticket[] = [];
 
 export default function HelpdeskPage() {
-    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
     const [tickets, setTickets] = useState<Ticket[]>(mockTickets);
     const [currentView, setCurrentView] = useState<ViewType>("kanban");
     const [showNewModal, setShowNewModal] = useState(false);
@@ -40,7 +40,33 @@ export default function HelpdeskPage() {
             const saved = localStorage.getItem(getEntityStorageKey("helpdesk_tickets"));
             if (saved) setTickets(JSON.parse(saved));
         } catch {}
-    }, [activeBranch, getEntityStorageKey]);
+        if (activeBranch?.id || userEmail) {
+            const params = new URLSearchParams({ domain: "helpdesk_tickets" });
+            if (activeBranch?.id) params.set("company_id", activeBranch.id);
+            if (userEmail) params.set("email", userEmail);
+            fetch(`/api/industry-ops?${params.toString()}`, { cache: "no-store" })
+                .then((r) => (r.ok ? r.json() : null))
+                .then((d) => {
+                    if (d && Array.isArray(d.items) && d.items.length > 0) {
+                        setTickets(d.items);
+                        try { localStorage.setItem(getEntityStorageKey("helpdesk_tickets"), JSON.stringify(d.items)); } catch {}
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [activeBranch, userEmail, getEntityStorageKey]);
+
+    const persistTickets = (next: Ticket[]) => {
+        setTickets(next);
+        try { localStorage.setItem(getEntityStorageKey("helpdesk_tickets"), JSON.stringify(next)); } catch {}
+        if (activeBranch?.id || userEmail) {
+            fetch("/api/industry-ops", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ domain: "helpdesk_tickets", company_id: activeBranch?.id, email: userEmail, records: next }),
+            }).catch(() => {});
+        }
+    };
 
     const handleCreateTicket = (e: React.FormEvent) => {
         e.preventDefault();
@@ -56,10 +82,13 @@ export default function HelpdeskPage() {
             assigned_to: ticketForm.assigned_to,
         };
         const next = [newTicket, ...tickets];
-        setTickets(next);
-        try { localStorage.setItem(getEntityStorageKey("helpdesk_tickets"), JSON.stringify(next)); } catch {}
+        persistTickets(next);
         setTicketForm({ subject: "", customer: "", team: "Support Tier 1", priority: "medium", assigned_to: "Support Agent" });
         setShowNewModal(false);
+    };
+
+    const handleResolveTicket = (id: string) => {
+        persistTickets(tickets.map((t) => (t.id === id ? { ...t, status: "solved" } : t)));
     };
 
     return (
@@ -134,7 +163,11 @@ export default function HelpdeskPage() {
                                         </td>
                                         <td className="px-4 py-3 text-gray-300">{ticket.assigned_to || "-"}</td>
                                         <td className="px-4 py-3">
-                                            <button className="text-blue-400 hover:text-blue-300 text-sm">View</button>
+                                            {ticket.status !== "solved" ? (
+                                                <button onClick={() => handleResolveTicket(ticket.id)} className="px-2.5 py-1 rounded bg-emerald-600 text-white text-xs font-bold cursor-pointer">Resolve</button>
+                                            ) : (
+                                                <span className="text-xs text-emerald-400 font-semibold">Solved</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

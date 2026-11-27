@@ -50,12 +50,13 @@ type JobCard = {
 const INITIAL_JOB_CARDS: JobCard[] = [];
 
 export default function AutomotiveWorkshopPage() {
-  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
   const [jobCards, setJobCards] = useState<JobCard[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedJob, setSelectedJob] = useState<JobCard | null>(null);
   const [isNewJobModalOpen, setIsNewJobModalOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
 
   // New Job Form State
   const [vehicle, setVehicle] = useState("");
@@ -178,6 +179,34 @@ export default function AutomotiveWorkshopPage() {
     }
   };
 
+  const handleCompleteAndInvoiceJob = async (job: JobCard) => {
+    try {
+      const res = await fetch("/api/industry-ops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "complete_job_card",
+          company_id: activeBranch?.id,
+          email: userEmail,
+          id: job.id,
+          vehicle: job.vehicle,
+          licensePlate: job.licensePlate,
+          vin: job.vin,
+          customer: job.customer,
+          serviceRequested: job.serviceRequested,
+          partsTotal: job.partsTotal,
+          laborTotal: job.laborTotal,
+        }),
+      });
+      const data = await res.json();
+      handleAdvanceStatus(job.id, "invoiced");
+      if (data.success) {
+        setToastMsg(`Invoiced Job Card ${job.id} ($${(job.partsTotal + job.laborTotal).toFixed(2)}) → Synced to Sales & Accounting!`);
+        setTimeout(() => setToastMsg(""), 5000);
+      }
+    } catch {}
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#07090f] text-white selection:bg-purple-500 selection:text-white">
       <StandardModuleHeader
@@ -188,6 +217,11 @@ export default function AutomotiveWorkshopPage() {
       />
 
       <div className="flex-1 overflow-auto p-4 sm:p-6 space-y-6">
+        {toastMsg && (
+          <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-2xl text-xs font-bold">
+            {toastMsg}
+          </div>
+        )}
         {/* KPI Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="galaxy-card p-4 rounded-2xl bg-[#101422] border border-blue-500/20 flex items-center justify-between">
@@ -407,8 +441,17 @@ export default function AutomotiveWorkshopPage() {
               </div>
 
               {/* Status Progression Workflow */}
-              <div className="space-y-2 pt-2 border-t border-gray-800">
-                <span className="font-bold uppercase tracking-wider text-gray-400 text-[10px]">Advance Job Card Workflow:</span>
+              <div className="space-y-3 pt-2 border-t border-gray-800">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="font-bold uppercase tracking-wider text-gray-400 text-[10px]">Advance Job Card Workflow:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCompleteAndInvoiceJob(selectedJob)}
+                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer"
+                  >
+                    ✓ Complete Job &amp; Post Invoice (${(selectedJob.partsTotal + selectedJob.laborTotal).toFixed(2)})
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {(["diagnosing", "waiting_parts", "in_repair", "qc_test", "ready_pickup", "invoiced"] as JobCardStatus[]).map(st => (
                     <button

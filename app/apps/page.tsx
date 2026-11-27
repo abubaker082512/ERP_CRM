@@ -537,15 +537,17 @@ export default function AppsDashboardPage() {
                 : "bg-transparent text-white"
         }`}>
             {/* Top Navigation Bar */}
-            <header className={`border-b backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-6 py-2 flex flex-wrap xl:flex-nowrap items-center justify-between gap-2 transition-colors ${
+            <header className={`border-b backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-6 py-2.5 flex flex-wrap xl:flex-nowrap items-center justify-between gap-3 transition-colors ${
                 isLight
                     ? "border-slate-200/90 bg-white/95 text-slate-900 shadow-sm"
                     : "border-white/10 bg-[#090d16]/90 text-white"
             }`}>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 pr-2">
                     <Link href="/apps" className="flex items-center gap-2 hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
-                        <img src="/logo2.png" alt="Beraxis Logo" className="h-7 w-auto" />
-                        <span className={`font-extrabold text-sm tracking-tight whitespace-nowrap ${isLight ? "text-slate-900" : "text-white"}`}>BERAXIS WORKSPACE</span>
+                        <img src="/logo2.png" alt="Beraxis Logo" className="h-7 w-auto shrink-0" />
+                        <span className={`font-extrabold text-sm tracking-tight whitespace-nowrap ${isLight ? "text-slate-900" : "text-white"}`}>
+                            BERAXIS<span className="hidden 2xl:inline"> WORKSPACE</span>
+                        </span>
                     </Link>
                     <span
                         className={`hidden 2xl:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border whitespace-nowrap ${

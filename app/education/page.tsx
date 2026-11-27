@@ -42,12 +42,13 @@ type Student = {
 const INITIAL_STUDENTS: Student[] = [];
 
 export default function EducationAcademyPage() {
-  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
   const [students, setStudents] = useState<Student[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
 
   // Form State
   const [name, setName] = useState("");
@@ -148,6 +149,40 @@ export default function EducationAcademyPage() {
     setPhone("");
   };
 
+  const handleAdjustAttendance = (student: Student, delta: number) => {
+    const nextRate = Math.max(0, Math.min(100, student.attendanceRate + delta));
+    const next = students.map((s) => (s.id === student.id ? { ...s, attendanceRate: nextRate } : s));
+    persistStudents(next);
+    setSelectedStudent({ ...student, attendanceRate: nextRate });
+  };
+
+  const handleIssueTuitionInvoice = async (student: Student) => {
+    try {
+      const res = await fetch("/api/industry-ops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "enroll_student",
+          company_id: activeBranch?.id,
+          email: userEmail,
+          id: student.id,
+          name: student.name,
+          course: student.course,
+          batch: student.batch,
+          tuitionFee: student.tuitionFee,
+        }),
+      });
+      const data = await res.json();
+      const next = students.map((s) => (s.id === student.id ? { ...s, paymentStatus: "paid" as const } : s));
+      persistStudents(next);
+      setSelectedStudent({ ...student, paymentStatus: "paid" });
+      if (data.success) {
+        setToastMsg(`Issued Term Tuition Invoice ($${student.tuitionFee.toLocaleString()}) for ${student.name} → Synced to Sales & Accounting!`);
+        setTimeout(() => setToastMsg(""), 5000);
+      }
+    } catch {}
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#07090f] text-white selection:bg-purple-500 selection:text-white">
       <StandardModuleHeader
@@ -158,6 +193,11 @@ export default function EducationAcademyPage() {
       />
 
       <div className="flex-1 overflow-auto p-4 sm:p-6 space-y-6">
+        {toastMsg && (
+          <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-2xl text-xs font-bold">
+            {toastMsg}
+          </div>
+        )}
         {/* KPI Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="galaxy-card p-4 rounded-2xl bg-[#101422] border border-blue-500/20 flex items-center justify-between">
@@ -345,6 +385,30 @@ export default function EducationAcademyPage() {
                   <span className="font-bold text-white text-lg">{selectedStudent.attendanceRate}% Present</span>
                   <span className="text-[10px] text-gray-400 block mt-1">Eligible for Graduation Diploma</span>
                 </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-800 text-xs">
+                <button
+                  type="button"
+                  onClick={() => handleIssueTuitionInvoice(selectedStudent)}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow cursor-pointer"
+                >
+                  ✓ Issue Tuition Invoice (${selectedStudent.tuitionFee.toLocaleString()}) → Accounting
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAdjustAttendance(selectedStudent, 2)}
+                  className="px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer"
+                >
+                  + Log Roll-Call Present
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAdjustAttendance(selectedStudent, -5)}
+                  className="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold cursor-pointer"
+                >
+                  Mark Absent (-5%)
+                </button>
               </div>
             </div>
           )}

@@ -3,6 +3,7 @@
 import { fetchAPI } from '@/lib/api';
 import { useState, useEffect, useRef } from 'react';
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import { useBranchContext } from "@/lib/branchContext";
 import {
     Plus,
     Clock,
@@ -82,6 +83,7 @@ const INITIAL_TIMESHEETS: Timesheet[] = [
 ];
 
 export default function TimesheetPage() {
+    const { activeBranch, userEmail } = useBranchContext();
     const [timesheets, setTimesheets] = useState<Timesheet[]>(INITIAL_TIMESHEETS);
     const [projects, setProjects] = useState<Project[]>([
         { id: "p1", name: "Enterprise Website & ERP Portal Redesign" },
@@ -113,6 +115,59 @@ export default function TimesheetPage() {
     const showToast = (msg: string) => {
         setToastMsg(msg);
         setTimeout(() => setToastMsg(""), 5000);
+    };
+
+    useEffect(() => {
+        if (!activeBranch?.id && !userEmail) return;
+        const params = new URLSearchParams({ domain: "timesheets" });
+        if (activeBranch?.id) params.set("company_id", activeBranch.id);
+        if (userEmail) params.set("email", userEmail);
+        fetch(`/api/industry-ops?${params.toString()}`, { cache: "no-store" })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d) => {
+                if (d && Array.isArray(d.items) && d.items.length > 0) setTimesheets(d.items);
+            })
+            .catch(() => {});
+    }, [activeBranch?.id, userEmail]);
+
+    const persistTimesheets = (next: Timesheet[]) => {
+        setTimesheets(next);
+        if (activeBranch?.id || userEmail) {
+            fetch("/api/industry-ops", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ domain: "timesheets", company_id: activeBranch?.id, email: userEmail, records: next }),
+            }).catch(() => {});
+        }
+    };
+
+    const handleBillApprovedHours = async () => {
+        const billableHours = Number(timesheets.reduce((acc, t) => acc + Number(t.unit_amount || 0), 0).toFixed(2));
+        if (billableHours <= 0) {
+            showToast("⚠️ Log billable hours first before generating a client invoice.");
+            return;
+        }
+        const hourlyRate = 95;
+        try {
+            const res = await fetch("/api/industry-ops", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "convert_timesheets_to_invoice",
+                    company_id: activeBranch?.id,
+                    email: userEmail,
+                    industryId: "professional_services",
+                    customerName: activeBranch?.name ? `${activeBranch.name} Retainer Client` : "Advisory Client",
+                    hours: billableHours,
+                    hourlyRate,
+                    description: `Professional Services Retainer (${billableHours} Billable Hours @ $${hourlyRate}/hr)`,
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(`💰 Converted ${billableHours}h ($${(billableHours * hourlyRate).toFixed(2)}) → Synced Sales & Accounting Invoice!`);
+            }
+        } catch {}
     };
 
     // Initialize real login time from localStorage/session
@@ -214,7 +269,7 @@ export default function TimesheetPage() {
             status: "submitted"
         };
 
-        setTimesheets([newEntry, ...timesheets]);
+        persistTimesheets([newEntry, ...timesheets]);
         setIsModalOpen(false);
         setHours("");
         setDescription("");
@@ -289,6 +344,12 @@ export default function TimesheetPage() {
                     </div>
 
                     <div className="flex items-center gap-2.5 flex-wrap">
+                        <button
+                            onClick={handleBillApprovedHours}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-md cursor-pointer"
+                        >
+                            <CheckCircle2 size={15} /> Bill Hours → Client Invoice ($95/hr)
+                        </button>
                         <button
                             onClick={handleExportCSV}
                             className="bg-gray-800/90 hover:bg-gray-700 text-gray-200 border border-gray-700 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"

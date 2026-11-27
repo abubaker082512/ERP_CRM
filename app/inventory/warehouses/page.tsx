@@ -27,21 +27,49 @@ const DEFAULT_WAREHOUSES: Warehouse[] = [
 ];
 
 export default function InventoryWarehousesPage() {
-  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
   const [warehouses, setWarehouses] = useState<Warehouse[]>(DEFAULT_WAREHOUSES);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState({ name: "", location: "", capacity: 10000, current: 2500, manager: "" });
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(getEntityStorageKey("inventory_warehouses"));
-      if (saved) setWarehouses(JSON.parse(saved));
-    } catch {}
-  }, [activeBranch?.id]);
+    const loadWarehouses = async () => {
+      try {
+        const saved = localStorage.getItem(getEntityStorageKey("inventory_warehouses"));
+        if (saved) setWarehouses(JSON.parse(saved));
+      } catch {}
+      if (!activeBranch?.id && !userEmail) return;
+      const params = new URLSearchParams({ domain: "inventory_warehouses" });
+      if (activeBranch?.id) params.set("company_id", activeBranch.id);
+      if (userEmail) params.set("email", userEmail);
+      try {
+        const res = await fetch(`/api/industry-ops?${params.toString()}`, { cache: "no-store" });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.records) && data.records.length > 0) {
+          setWarehouses(data.records);
+        }
+      } catch {}
+    };
+    loadWarehouses();
+  }, [activeBranch?.id, userEmail]);
 
-  const persist = (next: Warehouse[]) => {
+  const persist = async (next: Warehouse[]) => {
     setWarehouses(next);
     try { localStorage.setItem(getEntityStorageKey("inventory_warehouses"), JSON.stringify(next)); } catch {}
+    if (activeBranch?.id || userEmail) {
+      try {
+        await fetch("/api/industry-ops", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            domain: "inventory_warehouses",
+            company_id: activeBranch?.id,
+            email: userEmail,
+            records: next,
+          }),
+        });
+      } catch {}
+    }
   };
 
   const handleCreate = (e: React.FormEvent) => {

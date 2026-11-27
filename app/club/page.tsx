@@ -405,6 +405,25 @@ export default function ClubAndFitnessPage() {
     });
 
     saveCourts(updated);
+    if (activeBranch?.id) {
+      let email = "";
+      try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+      fetch("/api/industry-ops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "book_club_facility",
+          company_id: activeBranch.id,
+          email,
+          memberName: bookPlayerName,
+          tier: `${selectedCourtForBooking.type} Match Booking`,
+          courtName: selectedCourtForBooking.name,
+          amount: total,
+        }),
+      }).catch(() => {});
+    }
+    setRfidScanMessage(`Booked ${selectedCourtForBooking.name} ($${total}) & synced invoice to Sales & Accounting!`);
+    setTimeout(() => setRfidScanMessage(null), 4500);
     setBookPlayerName("");
     setIsBookingModalOpen(false);
     setSelectedCourtForBooking(null);

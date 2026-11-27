@@ -27,10 +27,12 @@ type ManufacturingOrder = {
 const mockOrders: ManufacturingOrder[] = [];
 
 export default function ManufacturingPage() {
-    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
     const [orders, setOrders] = useState<ManufacturingOrder[]>(mockOrders);
     const [currentView, setCurrentView] = useState<ViewType>("list");
     const [showNewModal, setShowNewModal] = useState(false);
+    const [toastMsg, setToastMsg] = useState("");
+    const [batchSector, setBatchSector] = useState<"manufacturing" | "agriculture_agritech">("manufacturing");
     const [moForm, setMoForm] = useState({ product: "", quantity: "10", deadline: new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0], source: "SO-001" });
 
     useEffect(() => {
@@ -82,6 +84,33 @@ export default function ManufacturingPage() {
         setShowNewModal(false);
     };
 
+    const handleCompleteMO = async (order: ManufacturingOrder) => {
+        try {
+            const res = await fetch("/api/industry-ops", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "complete_manufacturing_order",
+                    company_id: activeBranch?.id,
+                    email: userEmail,
+                    industryId: batchSector,
+                    id: order.id,
+                    product: order.product,
+                    quantity: order.quantity,
+                    source: order.source,
+                }),
+            });
+            const data = await res.json();
+            const next = orders.map((o) => (o.id === order.id ? { ...o, status: "done" } : o));
+            setOrders(next);
+            try { localStorage.setItem(getEntityStorageKey("mrp_orders"), JSON.stringify(next)); } catch {}
+            if (data.success) {
+                setToastMsg(`Completed ${order.id}: Consumed BOM raw inputs & stocked +${order.quantity} "${order.product}" into Live Inventory!`);
+                setTimeout(() => setToastMsg(""), 5000);
+            }
+        } catch {}
+    };
+
     return (
         <div className="flex flex-col h-screen bg-[#0F172A]">
             <StandardModuleHeader
@@ -94,11 +123,34 @@ export default function ManufacturingPage() {
             />
 
             <div className="flex-1 overflow-auto p-6">
+                {toastMsg && (
+                    <div className="mb-4 px-4 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
+                        {toastMsg}
+                    </div>
+                )}
                 <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 flex-wrap">
                         <div>
-                            <h2 className="text-2xl font-semibold text-gray-200">Manufacturing Orders</h2>
-                            <p className="text-sm text-gray-400 mt-1">{orders.length} active orders</p>
+                            <h2 className="text-2xl font-semibold text-gray-200">
+                                {batchSector === "agriculture_agritech" ? "AgriTech Harvest, Milling & Solar Batch Runs" : "Manufacturing & Assembly Orders"}
+                            </h2>
+                            <p className="text-sm text-gray-400 mt-1">{orders.length} active production batches</p>
+                        </div>
+                        <div className="flex bg-[#1E293B] p-1 rounded-lg border border-gray-700 text-xs font-bold">
+                            <button
+                                type="button"
+                                onClick={() => setBatchSector("manufacturing")}
+                                className={`px-3 py-1 rounded cursor-pointer ${batchSector === "manufacturing" ? "bg-purple-600 text-white" : "text-gray-400"}`}
+                            >
+                                Factory MRP
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setBatchSector("agriculture_agritech")}
+                                className={`px-3 py-1 rounded cursor-pointer ${batchSector === "agriculture_agritech" ? "bg-emerald-600 text-white" : "text-gray-400"}`}
+                            >
+                                AgriTech / Solar Batch
+                            </button>
                         </div>
                         <ViewSwitcher
                             currentView={currentView}
@@ -144,8 +196,17 @@ export default function ManufacturingPage() {
                                                 {order.status.replace('_', ' ')}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <button className="text-blue-400 hover:text-blue-300 text-sm">View</button>
+                                        <td className="px-4 py-3 space-x-2">
+                                            {order.status !== "done" ? (
+                                                <button
+                                                    onClick={() => handleCompleteMO(order)}
+                                                    className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer"
+                                                >
+                                                    ✓ Complete &amp; Stock FG
+                                                </button>
+                                            ) : (
+                                                <span className="text-xs text-emerald-400 font-semibold">Stocked in Inventory</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

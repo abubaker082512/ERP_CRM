@@ -10,6 +10,10 @@ export const dynamic = "force-dynamic";
 
 const COLLECTION_MAP: Record<string, string> = {
   manufacturing: "mrp_orders",
+  mrp_boms: "mrp_boms",
+  mrp_work_orders: "mrp_work_orders",
+  inventory_operations: "inventory_operations",
+  inventory_warehouses: "inventory_warehouses",
   automotive: "automotive_jobs",
   real_estate: "real_estate_units",
   education: "education_students",
@@ -18,6 +22,8 @@ const COLLECTION_MAP: Record<string, string> = {
   ngos: "ngo_programs",
   appointments: "appointments",
   projects: "project_milestones",
+  timesheets: "timesheets",
+  helpdesk_tickets: "helpdesk_tickets",
 };
 
 export async function GET(req: NextRequest) {
@@ -38,7 +44,7 @@ export async function GET(req: NextRequest) {
 
   if (domain && COLLECTION_MAP[domain]) {
     const items = await readClusterCollection<any[]>(clusterId, COLLECTION_MAP[domain], []);
-    return NextResponse.json({ success: true, clusterId, domain, items }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ success: true, clusterId, domain, items, records: items }, { headers: { "Cache-Control": "no-store" } });
   }
 
   const [mrpOrders, autoJobs, reUnits, eduStudents, clubCourts, clubMembers, ngoPrograms, appointments, projects] =
@@ -317,11 +323,20 @@ export async function POST(req: NextRequest) {
         propertyName: body.propertyName || "Skyline Executive Tower",
         unitNumber: body.unitNumber || "Suite 1402",
         unitType: body.unitType || "Commercial Office",
+        sqft: Number(body.sqft || 650),
         monthlyRent: Number(body.amount || 4500),
+        housekeeping: body.housekeeping || "Clean",
         status: "occupied",
         tenantName: body.tenantName || "Horizon Capital Partners",
+        leaseStart: body.leaseStart || new Date().toISOString().slice(0, 10),
+        leaseEnd: body.leaseEnd || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
       };
-      await writeClusterCollection(clusterId, "real_estate_units", [unitRecord, ...units], { ownerEmail: email });
+      await writeClusterCollection(
+        clusterId,
+        "real_estate_units",
+        [unitRecord, ...units.filter((u) => u.id !== unitRecord.id)],
+        { ownerEmail: email }
+      );
 
       const synced = await appendSyncedOrderAndInvoice(clusterId, email, {
         prefix: body.industryId === "hospitality_travel" ? "FOLIO" : "LEASE",
@@ -441,11 +456,133 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, clusterId, industryId, salesOrder: synced.orderDoc });
     }
 
+    // 8. Logistics / Warehouse Stock Operation Validation (WH-IN Receipt / WH-OUT Delivery / WH-INT Transfer)
+    if (action === "validate_warehouse_operation") {
+      const ops = await readClusterCollection<any[]>(clusterId, "inventory_operations", []);
+      const inv = await readClusterCollection<any[]>(clusterId, "inventory", []);
+      const opType = body.opType || body.type || "receipt"; // receipt | delivery | transfer
+      const productName = String(body.product || "Warehouse Stock").trim();
+      const sku = String(body.sku || `WH-${Date.now().toString().slice(-4)}`).trim();
+      const qty = Math.max(0.01, Number(body.quantity || 1));
+
+      let nextInv = [...inv];
+      if (opType === "receipt" || opType === "delivery") {
+        const mult = opType === "receipt" ? 1 : -1;
+        const idx = nextInv.findIndex(
+          (x) =>
+            (sku && x.sku && String(x.sku).toLowerCase() === sku.toLowerCase()) ||
+            String(x.name || "").toLowerCase() === productName.toLowerCase()
+        );
+        if (idx !== -1) {
+          const cur = Number(nextInv[idx].quantity ?? nextInv[idx].stock ?? nextInv[idx].onHand ?? 0);
+          const updatedQ = Math.max(0, Number((cur + mult * qty).toFixed(3)));
+          nextInv[idx] = { ...nextInv[idx], quantity: updatedQ, stock: updatedQ, onHand: updatedQ, qty: updatedQ };
+        } else if (opType === "receipt") {
+          nextInv = [
+            {
+              id: `wh_inv_${Date.now()}`,
+              name: productName,
+              sku,
+              stock: qty,
+              quantity: qty,
+              onHand: qty,
+              uom: body.uom || "Units",
+              min_quantity: 5,
+              price: Number(body.unitPrice || 25),
+              unit_price: Number(body.unitPrice || 25),
+              cost_price: Number(body.costPrice || 15),
+              category: "Warehouse Stock",
+              warehouse: body.warehouse || "Primary Distribution Hub",
+              status: "in_stock",
+              created_at: new Date().toISOString(),
+            },
+            ...nextInv,
+          ];
+        }
+        await writeClusterCollection(clusterId, "inventory", nextInv, { ownerEmail: email });
+      }
+
+      const opRecord = {
+        id: body.id || body.operation_id || `${opType === "receipt" ? "WH-IN" : opType === "delivery" ? "WH-OUT" : "WH-INT"}-${Date.now().toString().slice(-4)}`,
+        type: opType,
+        product: productName,
+        sku,
+        quantity: qty,
+        status: "done",
+        date: new Date().toISOString().slice(0, 10),
+      };
+      const nextOps = [opRecord, ...ops.filter((o) => o.id !== opRecord.id)];
+      await writeClusterCollection(clusterId, "inventory_operations", nextOps, { ownerEmail: email });
+
+      return NextResponse.json({ success: true, clusterId, operation: opRecord, operations: nextOps });
+    }
+
+    // 9. Professional Services & Construction: Convert Billable Timesheets / Project Milestone -> Invoice
+    if (action === "convert_timesheets_to_invoice") {
+      const hours = Math.max(0.25, Number(body.hours || 1));
+      const hourlyRate = Math.max(1, Number(body.hourlyRate || 95));
+      const amount = Number(body.amount ?? (hours * hourlyRate).toFixed(2));
+      const synced = await appendSyncedOrderAndInvoice(clusterId, email, {
+        prefix: body.industryId === "construction_contracting" ? "AIA" : "TS-INV",
+        industryId: body.industryId || "professional_services",
+        customerName: String(body.customerName || "Client Engagement"),
+        itemName: String(body.description || `${hours} Billable Hours @ $${hourlyRate}/hr`),
+        amount,
+        uom: body.industryId === "construction_contracting" ? "Milestone" : "Hours",
+      });
+      return NextResponse.json({ success: true, clusterId, salesOrder: synced.orderDoc });
+    }
+
+    // 10. Healthcare, Dental, Salon & Advisory: Complete Appointment & Bill Session
+    if (action === "complete_appointment_billing") {
+      const appointments = await readClusterCollection<any[]>(clusterId, "appointments", []);
+      const nextAppts = appointments.map((a) =>
+        a.id === body.appointmentId ? { ...a, status: "completed", clinicalNotes: body.clinicalNotes || a.notes } : a
+      );
+      if (appointments.length > 0) {
+        await writeClusterCollection(clusterId, "appointments", nextAppts, { ownerEmail: email });
+      }
+      const synced = await appendSyncedOrderAndInvoice(clusterId, email, {
+        prefix: "APPT",
+        industryId: body.industryId || "healthcare_wellness",
+        customerName: String(body.clientName || "Patient / Client"),
+        itemName: String(body.serviceTitle || "Clinical / Advisory Session"),
+        amount: Number(body.fee || 95),
+        uom: "Session",
+      });
+      return NextResponse.json({ success: true, clusterId, salesOrder: synced.orderDoc, appointments: nextAppts });
+    }
+
     return NextResponse.json({ success: false, error: "Unsupported industry action" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json(
       { success: false, error: err?.message || "Industry operations error" },
       { status: 400 }
     );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const email = String(body.owner_email || body.email || "").trim().toLowerCase() || undefined;
+    const clusterId = resolveSafeClusterId(
+      body.company_id || body.companyId || body.cluster_id || body.clusterId,
+      email
+    );
+    const access = await verifyClusterAccess(clusterId, email);
+    if (!access.allowed) {
+      return NextResponse.json({ success: false, error: access.reason || "Access denied" }, { status: 403 });
+    }
+    const domain = String(body.domain || "");
+    const col = COLLECTION_MAP[domain];
+    if (!col) {
+      return NextResponse.json({ success: false, error: "Invalid industry domain" }, { status: 400 });
+    }
+    const items = Array.isArray(body.records) ? body.records : Array.isArray(body.items) ? body.items : [];
+    await writeClusterCollection(clusterId, col, items, { ownerEmail: email });
+    return NextResponse.json({ success: true, clusterId, domain, count: items.length });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err?.message || "Failed to save domain collection" }, { status: 400 });
   }
 }

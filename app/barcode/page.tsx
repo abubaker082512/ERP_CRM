@@ -26,6 +26,7 @@ import {
 import { fetchAPI } from "@/lib/api";
 import BarcodeAndQRCanvas from "@/components/shared/BarcodeAndQRCanvas";
 import { Link as LinkIcon, Globe, FileText, Calendar } from "lucide-react";
+import { useBranchContext } from "@/lib/branchContext";
 
 const MENU_ITEMS = [
     { name: "Barcode Scanner", href: "/barcode" },
@@ -58,8 +59,12 @@ const PRODUCT_LOOKUP_DB: Record<string, { name: string; sku: string; price: numb
 };
 
 export default function BarcodePage() {
+    const { activeBranch, userEmail } = useBranchContext();
     const [logs, setLogs] = useState<ScannedLog[]>([]);
     const [barcodeInput, setBarcodeInput] = useState("");
+    const [scanMode, setScanMode] = useState<"inventory_check" | "receiving" | "pos_scan">("inventory_check");
+    const [scanQty, setScanQty] = useState<number>(1);
+    const [liveCatalog, setLiveCatalog] = useState<any[]>([]);
     const [isScanningMode, setIsScanningMode] = useState(true);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [isCameraActive, setIsCameraActive] = useState(false);
@@ -78,7 +83,31 @@ export default function BarcodePage() {
         setTimeout(() => setToastMsg(""), 5000);
     };
 
+    const loadWorkspaceCatalog = async () => {
+        if (!activeBranch?.id && !userEmail) return;
+        const params = new URLSearchParams();
+        if (activeBranch?.id) params.set("company_id", activeBranch.id);
+        if (userEmail) params.set("email", userEmail);
+        try {
+            const [invRes, posRes] = await Promise.all([
+                fetch(`/api/inventory?${params.toString()}`, { cache: "no-store" }),
+                fetch(`/api/pos?${params.toString()}`, { cache: "no-store" }),
+            ]);
+            const invJson = await invRes.json();
+            const posJson = await posRes.json();
+            const invItems = Array.isArray(invJson.products) ? invJson.products : [];
+            const posItems = Array.isArray(posJson.products) ? posJson.products : [];
+            const mergedMap = new Map<string, any>();
+            for (const p of [...posItems, ...invItems]) {
+                const key = String(p.barcode || p.sku || p.id || p.name || "").trim();
+                if (key) mergedMap.set(key, p);
+            }
+            setLiveCatalog(Array.from(mergedMap.values()));
+        } catch {}
+    };
+
     useEffect(() => {
+        loadWorkspaceCatalog();
         // Load default initial logs
         setLogs([
             {
@@ -104,7 +133,7 @@ export default function BarcodePage() {
                 type: "receiving"
             }
         ]);
-    }, []);
+    }, [activeBranch?.id, userEmail]);
 
     const playBeep = () => {
         if (!soundEnabled || typeof window === "undefined") return;
@@ -123,53 +152,120 @@ export default function BarcodePage() {
         } catch {}
     };
 
-    const handleScan = (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        const code = barcodeInput.trim();
-        if (!code) return;
+    const resolveBarcodeMatch = (code: string) => {
+        const q = code.trim().toLowerCase();
+        const liveHit = liveCatalog.find(
+            (p) =>
+                String(p.barcode || "").toLowerCase() === q ||
+                String(p.sku || "").toLowerCase() === q ||
+                String(p.name || "").toLowerCase() === q
+        );
+        if (liveHit) {
+            return {
+                name: liveHit.name,
+                sku: liveHit.sku || code,
+                price: Number(liveHit.price || liveHit.sale_price || 0),
+                category: liveHit.category || "Workspace Stock",
+                stock: Number(liveHit.stock ?? liveHit.quantity ?? 0),
+                isLive: true,
+            };
+        }
+        const preset = PRODUCT_LOOKUP_DB[code];
+        if (preset) return { ...preset, stock: 0, isLive: false };
+        return null;
+    };
 
+    const executeScanCode = async (rawCode: string) => {
+        const code = rawCode.trim();
+        if (!code) return;
         playBeep();
 
-        const match = PRODUCT_LOOKUP_DB[code];
+        const qty = Math.max(1, Number(scanQty) || 1);
+        const match = resolveBarcodeMatch(code);
         const newLog: ScannedLog = {
             id: `scan_${Date.now()}`,
             barcode: code,
-            product_name: match ? match.name : "Custom / External Barcode SKU",
+            product_name: match ? match.name : `Custom Scanned SKU (${code})`,
             sku: match ? match.sku : `SKU-${code.slice(-6)}`,
             category: match ? match.category : "General Stock",
             price: match ? match.price : 49.99,
-            qty_scanned: 1,
+            qty_scanned: qty,
             scanned_at: new Date().toISOString(),
-            type: "inventory_check"
+            type: scanMode,
         };
 
-        setLogs([newLog, ...logs]);
+        setLogs((prev) => [newLog, ...prev]);
         setBarcodeInput("");
-        showToast(`⚡ Scanned ${match ? `"${match.name}"` : code}!`);
+
+        if (scanMode === "receiving" && (activeBranch?.id || userEmail)) {
+            try {
+                const params = new URLSearchParams();
+                if (activeBranch?.id) params.set("company_id", activeBranch.id);
+                if (userEmail) params.set("email", userEmail);
+                const invRes = await fetch(`/api/inventory?${params.toString()}`, { cache: "no-store" });
+                const invJson = await invRes.json();
+                const currentProducts = Array.isArray(invJson.products) ? [...invJson.products] : [];
+                const idx = currentProducts.findIndex(
+                    (p: any) =>
+                        String(p.barcode || "").toLowerCase() === code.toLowerCase() ||
+                        String(p.sku || "").toLowerCase() === (match?.sku || code).toLowerCase() ||
+                        String(p.name || "").toLowerCase() === (match?.name || code).toLowerCase()
+                );
+                if (idx >= 0) {
+                    const prevStock = Number(currentProducts[idx].stock ?? currentProducts[idx].quantity ?? 0);
+                    currentProducts[idx] = {
+                        ...currentProducts[idx],
+                        stock: prevStock + qty,
+                        quantity: prevStock + qty,
+                        status: "in_stock",
+                    };
+                } else {
+                    currentProducts.unshift({
+                        id: `PROD-${Date.now()}`,
+                        barcode: code,
+                        sku: newLog.sku,
+                        name: newLog.product_name,
+                        category: newLog.category,
+                        price: newLog.price,
+                        cost: Number(((newLog.price || 10) * 0.65).toFixed(2)),
+                        stock: qty,
+                        quantity: qty,
+                        reorder_level: 10,
+                        status: "in_stock",
+                    });
+                }
+                await fetch("/api/inventory", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        company_id: activeBranch?.id,
+                        email: userEmail,
+                        products: currentProducts,
+                    }),
+                });
+                loadWorkspaceCatalog();
+                showToast(`📦 Received +${qty} into Live Inventory: ${newLog.product_name}`);
+            } catch {
+                showToast(`⚡ Scanned ${newLog.product_name}`);
+            }
+        } else {
+            showToast(
+                `⚡ Scanned ${match ? `"${match.name}"` : code} (${
+                    scanMode === "pos_scan" ? "POS Price Lookup" : "Stock Audit"
+                })!`
+            );
+        }
 
         if (inputRef.current) inputRef.current.focus();
     };
 
+    const handleScan = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        executeScanCode(barcodeInput);
+    };
+
     const handleQuickSampleScan = (code: string) => {
-        setBarcodeInput(code);
-        setTimeout(() => {
-            const match = PRODUCT_LOOKUP_DB[code];
-            playBeep();
-            const newLog: ScannedLog = {
-                id: `scan_${Date.now()}`,
-                barcode: code,
-                product_name: match ? match.name : "Sample Item",
-                sku: match ? match.sku : `SKU-${code}`,
-                category: match ? match.category : "General",
-                price: match ? match.price : 99.00,
-                qty_scanned: 1,
-                scanned_at: new Date().toISOString(),
-                type: "inventory_check"
-            };
-            setLogs(prev => [newLog, ...prev]);
-            setBarcodeInput("");
-            showToast(`📦 Scanned: ${match.name}`);
-        }, 100);
+        executeScanCode(code);
     };
 
     const handleExportCSV = () => {
@@ -276,8 +372,40 @@ export default function BarcodePage() {
                         <div>
                             <h3 className="text-2xl font-black text-white">Scan Barcode / Enter SKU</h3>
                             <p className="text-xs text-gray-400 mt-1">
-                                Point your physical USB / Bluetooth scanner or type below. Press Enter to commit.
+                                Point your physical USB / Bluetooth scanner or type below. Synced with {liveCatalog.length} live workspace SKUs.
                             </p>
+                        </div>
+
+                        {/* Scan Mode Selector */}
+                        <div className="flex items-center justify-center gap-2 flex-wrap">
+                            {([
+                                { id: "inventory_check", label: "Stock Audit / Price Check" },
+                                { id: "receiving", label: "Receive Stock into Inventory (+Qty)" },
+                                { id: "pos_scan", label: "POS Barcode Verification" },
+                            ] as const).map((m) => (
+                                <button
+                                    key={m.id}
+                                    type="button"
+                                    onClick={() => setScanMode(m.id)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                                        scanMode === m.id
+                                            ? "bg-pink-600 text-white border-pink-400 shadow-lg shadow-pink-600/25"
+                                            : "bg-gray-900/80 text-gray-300 border-gray-700 hover:border-pink-500/40"
+                                    }`}
+                                >
+                                    {m.label}
+                                </button>
+                            ))}
+                            <div className="flex items-center gap-1.5 bg-gray-900/90 border border-gray-700 rounded-xl px-2.5 py-1 text-xs">
+                                <span className="text-gray-400 font-semibold">Qty:</span>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    value={scanQty}
+                                    onChange={(e) => setScanQty(Math.max(1, Number(e.target.value) || 1))}
+                                    className="w-14 bg-transparent text-white font-bold text-center focus:outline-none"
+                                />
+                            </div>
                         </div>
 
                         <form onSubmit={handleScan} className="relative max-w-lg mx-auto">
@@ -286,7 +414,7 @@ export default function BarcodePage() {
                                 type="text"
                                 value={barcodeInput}
                                 onChange={(e) => setBarcodeInput(e.target.value)}
-                                placeholder="Scan or type barcode (e.g. 893450012984)..."
+                                placeholder="Scan or type barcode / workspace SKU..."
                                 className="w-full bg-gray-950/90 border-2 border-pink-500/60 rounded-2xl px-5 py-3.5 text-white focus:border-pink-400 focus:outline-none text-center text-lg tracking-widest font-mono shadow-inner font-bold"
                                 autoFocus
                             />
@@ -300,14 +428,30 @@ export default function BarcodePage() {
 
                         {/* Quick Sample Click Triggers */}
                         <div className="pt-2">
-                            <span className="text-[11px] uppercase font-bold text-gray-400 block mb-2">Quick Test Barcode Presets:</span>
+                            <span className="text-[11px] uppercase font-bold text-gray-400 block mb-2">
+                                {liveCatalog.length > 0 ? "Live Workspace Inventory & Hardware Barcodes:" : "Quick Test Barcode Presets:"}
+                            </span>
                             <div className="flex items-center justify-center gap-2 flex-wrap">
-                                {Object.entries(PRODUCT_LOOKUP_DB).slice(0, 4).map(([code, item]) => (
+                                {liveCatalog.slice(0, 4).map((item) => {
+                                    const code = String(item.barcode || item.sku || item.name);
+                                    return (
+                                        <button
+                                            key={code}
+                                            type="button"
+                                            onClick={() => handleQuickSampleScan(code)}
+                                            className="px-2.5 py-1 bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/40 rounded-lg text-[11px] text-emerald-300 font-mono transition flex items-center gap-1.5 cursor-pointer"
+                                        >
+                                            <BarcodeIcon size={12} className="text-emerald-400" />
+                                            <span>{item.sku || item.name} ({item.stock ?? item.quantity ?? 0})</span>
+                                        </button>
+                                    );
+                                })}
+                                {Object.entries(PRODUCT_LOOKUP_DB).slice(0, 3).map(([code, item]) => (
                                     <button
                                         key={code}
                                         type="button"
                                         onClick={() => handleQuickSampleScan(code)}
-                                        className="px-2.5 py-1 bg-gray-950 hover:bg-gray-800 border border-gray-700/80 rounded-lg text-[11px] text-gray-300 font-mono transition flex items-center gap-1.5"
+                                        className="px-2.5 py-1 bg-gray-950 hover:bg-gray-800 border border-gray-700/80 rounded-lg text-[11px] text-gray-300 font-mono transition flex items-center gap-1.5 cursor-pointer"
                                     >
                                         <BarcodeIcon size={12} className="text-pink-400" />
                                         <span>{item.sku}</span>

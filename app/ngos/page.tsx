@@ -40,12 +40,13 @@ type NGOProgram = {
 };
 
 export default function NGOsHubPage() {
-  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
   const [programs, setPrograms] = useState<NGOProgram[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [fundFilter, setFundFilter] = useState<string>("ALL");
   const [selectedProgram, setSelectedProgram] = useState<NGOProgram | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
 
   // Form State
   const [programTitle, setProgramTitle] = useState("");
@@ -147,6 +148,59 @@ export default function NGOsHubPage() {
     setDonorEmail("");
   };
 
+  const handleDisburseAndSyncGrant = async (prog: NGOProgram) => {
+    const nextDisbursed = Math.min(prog.grantAmount, prog.disbursedAmount + 5000);
+    const nextBeneficiaries = prog.beneficiariesReached + 150;
+    const updatedProg = { ...prog, disbursedAmount: nextDisbursed, beneficiariesReached: nextBeneficiaries };
+    const next = programs.map((p) => (p.id === prog.id ? updatedProg : p));
+    persistPrograms(next);
+    setSelectedProgram(updatedProg);
+    try {
+      const res = await fetch("/api/industry-ops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "record_ngo_grant",
+          company_id: activeBranch?.id,
+          email: userEmail,
+          programTitle: prog.programTitle,
+          donorName: prog.donorName,
+          fundType: prog.fundType,
+          grantAmount: prog.grantAmount,
+          disbursedAmount: nextDisbursed,
+          beneficiariesReached: nextBeneficiaries,
+          region: prog.region,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToastMsg(`Disbursed +$5,000 field tranche & synced ${prog.fundType.toUpperCase()} grant pledge ($${prog.grantAmount.toLocaleString()}) to Fund Accounting!`);
+        setTimeout(() => setToastMsg(""), 5000);
+      }
+    } catch {}
+  };
+
+  const handlePrintDonorReceipt = (prog: NGOProgram) => {
+    if (typeof window === "undefined") return;
+    const w = window.open("", "_blank", "width=760,height=640");
+    if (!w) return;
+    w.document.write(`
+      <html><head><title>Donor Tax Receipt - ${prog.id}</title>
+      <style>body{font-family:Arial,sans-serif;padding:40px;color:#0f172a} .box{border:2px solid #e11d48;border-radius:16px;padding:28px}</style></head>
+      <body><div class="box">
+        <h2 style="margin:0;color:#e11d48">OFFICIAL DONOR TAX-EXEMPT GRANT RECEIPT</h2>
+        <p style="color:#475569;font-size:13px">Organization: <strong>${activeBranch?.name || "Beraxis Humanitarian Foundation"}</strong> • Receipt Ref: <strong>${prog.id}</strong></p>
+        <hr style="border:none;border-top:1px solid #cbd5e1;margin:16px 0"/>
+        <p><strong>Donor / Institution:</strong> ${prog.donorName} (${prog.donorEmail})</p>
+        <p><strong>Program Allocation:</strong> ${prog.programTitle} (${prog.fundType.toUpperCase()} FUND)</p>
+        <p><strong>Committed Contribution:</strong> $${prog.grantAmount.toLocaleString()} USD</p>
+        <p><strong>Field Disbursement To Date:</strong> $${prog.disbursedAmount.toLocaleString()} USD • Beneficiaries: ${prog.beneficiariesReached.toLocaleString()}</p>
+        <p style="margin-top:28px;font-size:12px;color:#64748b">Certified compliant with Restricted/Unrestricted NGO Fund Accounting Standards. Date: ${new Date().toLocaleDateString()}</p>
+      </div><script>window.print();</script></body></html>
+    `);
+    w.document.close();
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#07090f] text-white selection:bg-rose-500 selection:text-white">
       <StandardModuleHeader
@@ -157,6 +211,11 @@ export default function NGOsHubPage() {
       />
 
       <div className="flex-1 overflow-auto p-4 sm:p-6 space-y-6">
+        {toastMsg && (
+          <div className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-2xl text-xs font-bold">
+            {toastMsg}
+          </div>
+        )}
         {/* KPI Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="galaxy-card p-4 rounded-2xl bg-[#101422] border border-rose-500/20 flex items-center justify-between">
@@ -360,6 +419,23 @@ export default function NGOsHubPage() {
                       Disbursed: ${selectedProgram.disbursedAmount.toLocaleString()} USD
                     </span>
                   </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-800 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => handleDisburseAndSyncGrant(selectedProgram)}
+                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow cursor-pointer"
+                  >
+                    ✓ Disburse Tranche (+$5,000) &amp; Sync Fund Accounting
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handlePrintDonorReceipt(selectedProgram)}
+                    className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <FileText size={14} /> Print Donor Tax Receipt PDF
+                  </button>
                 </div>
               </div>
             )}

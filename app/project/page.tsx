@@ -22,24 +22,52 @@ type Project = {
     status: string;
     tasks: number;
     progress: number;
+    budget?: number;
     deadline: string;
 };
 
 const mockProjects: Project[] = [];
 
 export default function ProjectPage() {
-    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
     const [projects, setProjects] = useState<Project[]>(mockProjects);
     const [currentView, setCurrentView] = useState<ViewType>("kanban");
     const [showNewModal, setShowNewModal] = useState(false);
-    const [projForm, setProjForm] = useState({ name: "", manager: "Workspace Owner", customer: "Internal", deadline: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0] });
+    const [toastMsg, setToastMsg] = useState("");
+    const [projForm, setProjForm] = useState({ name: "", manager: "Workspace Owner", customer: "Enterprise Client", budget: "12500", deadline: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0] });
 
     useEffect(() => {
         try {
             const saved = localStorage.getItem(getEntityStorageKey("projects_list"));
             if (saved) setProjects(JSON.parse(saved));
         } catch {}
-    }, [activeBranch, getEntityStorageKey]);
+        if (activeBranch?.id || userEmail) {
+            const params = new URLSearchParams({ domain: "projects" });
+            if (activeBranch?.id) params.set("company_id", activeBranch.id);
+            if (userEmail) params.set("email", userEmail);
+            fetch(`/api/industry-ops?${params.toString()}`, { cache: "no-store" })
+                .then((r) => (r.ok ? r.json() : null))
+                .then((d) => {
+                    if (d && Array.isArray(d.items) && d.items.length > 0) {
+                        setProjects(d.items);
+                        try { localStorage.setItem(getEntityStorageKey("projects_list"), JSON.stringify(d.items)); } catch {}
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [activeBranch, userEmail, getEntityStorageKey]);
+
+    const persistProjects = (next: Project[]) => {
+        setProjects(next);
+        try { localStorage.setItem(getEntityStorageKey("projects_list"), JSON.stringify(next)); } catch {}
+        if (activeBranch?.id || userEmail) {
+            fetch("/api/industry-ops", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ domain: "projects", company_id: activeBranch?.id, email: userEmail, records: next }),
+            }).catch(() => {});
+        }
+    };
 
     const handleCreateProject = (e: React.FormEvent) => {
         e.preventDefault();
@@ -48,17 +76,46 @@ export default function ProjectPage() {
             id: `PRJ-${String(projects.length + 1).padStart(3, "0")}`,
             name: projForm.name.trim(),
             manager: projForm.manager.trim() || "Workspace Owner",
-            customer: projForm.customer.trim() || "Internal",
+            customer: projForm.customer.trim() || "Enterprise Client",
             status: "in_progress",
-            tasks: 1,
-            progress: 10,
+            tasks: 4,
+            progress: 25,
+            budget: Number(projForm.budget) || 12500,
             deadline: projForm.deadline,
         };
         const next = [newProj, ...projects];
-        setProjects(next);
-        try { localStorage.setItem(getEntityStorageKey("projects_list"), JSON.stringify(next)); } catch {}
-        setProjForm({ name: "", manager: "Workspace Owner", customer: "Internal", deadline: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0] });
+        persistProjects(next);
+        setProjForm({ name: "", manager: "Workspace Owner", customer: "Enterprise Client", budget: "12500", deadline: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0] });
         setShowNewModal(false);
+    };
+
+    const handleBillMilestone = async (project: Project) => {
+        const milestoneAmount = Math.round(((project.budget || 12500) * 0.25));
+        try {
+            const res = await fetch("/api/industry-ops", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "convert_timesheets_to_invoice",
+                    company_id: activeBranch?.id,
+                    email: userEmail,
+                    industryId: "construction_contracting",
+                    customerName: project.customer,
+                    description: `${project.name} — Progress Milestone / AIA Draw (25%)`,
+                    amount: milestoneAmount,
+                }),
+            });
+            const data = await res.json();
+            const nextProg = Math.min(100, (project.progress || 0) + 25);
+            const next = projects.map((p) =>
+                p.id === project.id ? { ...p, progress: nextProg, status: nextProg >= 100 ? "done" : "in_progress" } : p
+            );
+            persistProjects(next);
+            if (data.success) {
+                setToastMsg(`Billed Milestone ($${milestoneAmount.toLocaleString()}) for "${project.name}" → Posted to Sales & Accounting!`);
+                setTimeout(() => setToastMsg(""), 5000);
+            }
+        } catch {}
     };
 
     return (
@@ -73,6 +130,11 @@ export default function ProjectPage() {
             />
 
             <div className="flex-1 overflow-auto p-6">
+                {toastMsg && (
+                    <div className="mb-4 px-4 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
+                        {toastMsg}
+                    </div>
+                )}
                 <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                     <div className="flex items-center gap-4">
                         <div>
@@ -131,7 +193,9 @@ export default function ProjectPage() {
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <button className="text-blue-400 hover:text-blue-300 text-sm">View</button>
+                                            <button onClick={() => handleBillMilestone(project)} className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer">
+                                                Bill 25% Milestone
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -170,14 +234,22 @@ export default function ProjectPage() {
                                     </div>
                                 </div>
 
-                                <div className="pt-4 border-t border-gray-700">
-                                    <div className="flex justify-between text-xs text-gray-400 mb-1">
-                                        <span>Progress</span>
-                                        <span>{project.progress}%</span>
+                                <div className="pt-4 border-t border-gray-700 space-y-3">
+                                    <div>
+                                        <div className="flex justify-between text-xs text-gray-400 mb-1">
+                                            <span>Progress • Budget ${(project.budget || 12500).toLocaleString()}</span>
+                                            <span>{project.progress}%</span>
+                                        </div>
+                                        <div className="w-full bg-gray-700 rounded-full h-2">
+                                            <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${project.progress}%` }}></div>
+                                        </div>
                                     </div>
-                                    <div className="w-full bg-gray-700 rounded-full h-2">
-                                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${project.progress}%` }}></div>
-                                    </div>
+                                    <button
+                                        onClick={() => handleBillMilestone(project)}
+                                        className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer"
+                                    >
+                                        ✓ Bill 25% Milestone / AIA Draw → Accounting
+                                    </button>
                                 </div>
                             </div>
                         ))}
