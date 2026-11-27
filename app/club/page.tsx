@@ -276,13 +276,38 @@ export default function ClubAndFitnessPage() {
       setClasses(defaultClasses);
       localStorage.setItem(classesKey, JSON.stringify(defaultClasses));
     }
-  }, [activeBranch?.id]);
+
+    let email = "";
+    try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+    fetch(`/api/industry-ops?company_id=${encodeURIComponent(activeBranch.id)}&email=${encodeURIComponent(email)}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) {
+          if (Array.isArray(d.clubCourts) && d.clubCourts.length > 0) {
+            setCourts(d.clubCourts);
+            localStorage.setItem(courtsKey, JSON.stringify(d.clubCourts));
+          }
+          if (Array.isArray(d.clubMembers) && d.clubMembers.length > 0) {
+            setMembers(d.clubMembers);
+            localStorage.setItem(membersKey, JSON.stringify(d.clubMembers));
+          }
+        }
+      })
+      .catch(() => {});
+  }, [activeBranch?.id, getEntityStorageKey]);
 
   // Save helpers
   const saveCourts = (data: FacilityCourt[]) => {
     setCourts(data);
     if (activeBranch) {
       localStorage.setItem(getEntityStorageKey("club_courts"), JSON.stringify(data));
+      let email = "";
+      try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+      fetch("/api/industry-ops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save_collection", company_id: activeBranch.id, email, domain: "club_courts", items: data }),
+      }).catch(() => {});
     }
   };
 
@@ -290,6 +315,13 @@ export default function ClubAndFitnessPage() {
     setMembers(data);
     if (activeBranch) {
       localStorage.setItem(getEntityStorageKey("club_members"), JSON.stringify(data));
+      let email = "";
+      try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+      fetch("/api/industry-ops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save_collection", company_id: activeBranch.id, email, domain: "club_members", items: data }),
+      }).catch(() => {});
     }
   };
 

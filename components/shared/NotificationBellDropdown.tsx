@@ -52,7 +52,7 @@ export default function NotificationBellDropdown() {
       >
         <Bell size={16} />
         {totalUnread > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center shadow-md ring-2 ring-[#0B101E]">
+          <span className={`absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center shadow-md ring-2 ${isLight ? "ring-white" : "ring-[#0B101E]"}`}>
             {totalUnread > 99 ? "99+" : totalUnread}
           </span>
         )}

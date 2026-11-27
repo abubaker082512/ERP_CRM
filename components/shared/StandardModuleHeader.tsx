@@ -73,17 +73,23 @@ export default function StandardModuleHeader({
                     <Link
                         href="/apps"
                         title="Beraxis Workspace"
-                        className="flex items-center gap-2 pr-2 border-r border-gray-700/80 shrink-0 hover:opacity-90 transition-opacity"
+                        className={`flex items-center gap-2 pr-2 border-r shrink-0 hover:opacity-90 transition-opacity ${
+                            isLight ? "border-slate-200" : "border-gray-700/80"
+                        }`}
                     >
                         <img src="/logo2.png" alt="Beraxis Logo" className="h-6 w-auto" />
-                        <span className="font-extrabold text-sm tracking-tight text-white hidden xl:inline">BERAXIS</span>
+                        <span className={`font-extrabold text-sm tracking-tight hidden xl:inline ${isLight ? "text-slate-900" : "text-white"}`}>BERAXIS</span>
                     </Link>
 
                     {/* Back to Apps Button */}
                     <Link
                         href="/apps"
                         title="Back to Apps Dashboard"
-                        className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold cursor-pointer shrink-0"
+                        className={`flex items-center gap-1 transition-colors px-2 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer shrink-0 ${
+                            isLight
+                                ? "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700 hover:text-slate-900"
+                                : "text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border-white/5"
+                        }`}
                     >
                         <ArrowLeft size={15} />
                         <span className="hidden sm:inline">Back</span>
@@ -93,7 +99,9 @@ export default function StandardModuleHeader({
                     <Link
                         href="/apps"
                         title="Workspace Apps Dashboard"
-                        className="flex items-center gap-1 text-gray-400 hover:text-purple-300 transition-colors p-1.5 rounded-lg hover:bg-purple-600/20 shrink-0"
+                        className={`flex items-center gap-1 transition-colors p-1.5 rounded-lg shrink-0 ${
+                            isLight ? "text-slate-600 hover:text-purple-700 hover:bg-purple-50" : "text-gray-400 hover:text-purple-300 hover:bg-purple-600/20"
+                        }`}
                     >
                         <LayoutGrid size={17} />
                     </Link>
@@ -102,7 +110,9 @@ export default function StandardModuleHeader({
                     <Link
                         href="/"
                         title="Public Website"
-                        className="flex items-center gap-1 text-gray-400 hover:text-cyan-300 transition-colors p-1.5 rounded-lg hover:bg-cyan-600/20 shrink-0"
+                        className={`flex items-center gap-1 transition-colors p-1.5 rounded-lg shrink-0 ${
+                            isLight ? "text-slate-600 hover:text-cyan-700 hover:bg-cyan-50" : "text-gray-400 hover:text-cyan-300 hover:bg-cyan-600/20"
+                        }`}
                     >
                         <Globe size={17} />
                     </Link>
@@ -110,9 +120,13 @@ export default function StandardModuleHeader({
                     {/* Module Name & Icon */}
                     <Link
                         href={menuItems[0]?.href || "/apps"}
-                        className="flex items-center gap-2 text-sm sm:text-base font-bold text-gray-100 hover:text-white transition-colors ml-0.5"
+                        className={`flex items-center gap-2 text-sm sm:text-base font-bold transition-colors ml-0.5 ${
+                            isLight ? "text-slate-900 hover:text-purple-700" : "text-gray-100 hover:text-white"
+                        }`}
                     >
-                        <div className="bg-purple-600/30 text-purple-400 border border-purple-500/30 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg shadow-sm shrink-0">
+                        <div className={`border w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg shadow-sm shrink-0 ${
+                            isLight ? "bg-purple-100 text-purple-700 border-purple-200" : "bg-purple-600/30 text-purple-400 border-purple-500/30"
+                        }`}>
                             {moduleIcon}
                         </div>
                         <span className="font-bold tracking-tight">{moduleName}</span>
@@ -143,7 +157,11 @@ export default function StandardModuleHeader({
                                         href={item.href}
                                         className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap inline-flex items-center gap-1.5 ${
                                             isActive
-                                                ? "text-white bg-white/15 border border-white/10 shadow-inner"
+                                                ? isLight
+                                                    ? "text-purple-800 bg-purple-100 border border-purple-200 shadow-sm"
+                                                    : "text-white bg-white/15 border border-white/10 shadow-inner"
+                                                : isLight
+                                                ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                                                 : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
                                         }`}
                                     >
@@ -227,7 +245,9 @@ export default function StandardModuleHeader({
 
             {/* Mobile / Tablet Horizontal Navigation Scrollbar for smaller viewports */}
             {menuItems && menuItems.length > 0 && (
-                <div className="2xl:hidden flex items-center px-3 py-1.5 gap-1.5 text-xs overflow-x-auto bg-[#1E293B]/90 border-t border-gray-700/50 scrollbar-none">
+                <div className={`2xl:hidden flex items-center px-3 py-1.5 gap-1.5 text-xs overflow-x-auto border-t scrollbar-none ${
+                    isLight ? "bg-slate-50/95 border-slate-200" : "bg-[#1E293B]/90 border-gray-700/50"
+                }`}>
                     {menuItems.map((item) => {
                         const isActive = pathname === item.href || (item.href !== "/" && item.href !== "/apps" && pathname.startsWith(item.href));
                         const itemBadge = item.href !== pathname ? getBadgeForHref(item.href) : 0;
@@ -237,7 +257,11 @@ export default function StandardModuleHeader({
                                 href={item.href}
                                 className={`font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md transition-colors whitespace-nowrap inline-flex items-center gap-1.5 ${
                                     isActive
-                                        ? "text-white bg-white/10"
+                                        ? isLight
+                                            ? "text-purple-800 bg-purple-100 border border-purple-200"
+                                            : "text-white bg-white/10"
+                                        : isLight
+                                        ? "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
                                         : "text-gray-400 hover:text-gray-200"
                                 }`}
                             >

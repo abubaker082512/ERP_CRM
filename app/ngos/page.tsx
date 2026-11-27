@@ -76,13 +76,34 @@ export default function NGOsHubPage() {
       setPrograms([]);
       setSelectedProgram(null);
     }
-  }, [activeBranch?.id]);
+    let email = "";
+    try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+    fetch(`/api/industry-ops?company_id=${encodeURIComponent(activeBranch.id)}&email=${encodeURIComponent(email)}&domain=ngos`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && Array.isArray(d.items) && d.items.length > 0) {
+          setPrograms(d.items);
+          setSelectedProgram(d.items[0]);
+          try { localStorage.setItem(key, JSON.stringify(d.items)); } catch {}
+        }
+      })
+      .catch(() => {});
+  }, [activeBranch?.id, getEntityStorageKey]);
 
   const persistPrograms = (updated: NGOProgram[]) => {
     setPrograms(updated);
     try {
       const key = getEntityStorageKey("ngo_programs");
       localStorage.setItem(key, JSON.stringify(updated));
+      if (activeBranch?.id) {
+        let email = "";
+        try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+        fetch("/api/industry-ops", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "save_collection", company_id: activeBranch.id, email, domain: "ngos", items: updated }),
+        }).catch(() => {});
+      }
     } catch {}
   };
 

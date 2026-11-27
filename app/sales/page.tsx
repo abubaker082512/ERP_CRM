@@ -210,6 +210,383 @@ function getIndustrySalesBlueprint(industryId: string): IndustrySalesBlueprint {
         ],
       };
 
+    case "professional_services":
+      return {
+        quoteLabel: "SOW / Retainer Proposal",
+        orderLabel: "Signed Client Engagement",
+        fulfillLabel: "Deliver Milestone",
+        channelDefault: "Direct Sales",
+        metaFields: [
+          { key: "projectCode", label: "Project / Matter Code", placeholder: "PRJ-2026-88" },
+          { key: "billableHours", label: "Estimated Billable Hours", placeholder: "120 hrs @ $125/hr" },
+        ],
+        sampleOrders: [
+          {
+            name: "SOW-2026-PS01",
+            industryId: "professional_services",
+            channel: "Direct Sales",
+            customer_name: "Vanguard FinTech Holdings",
+            pricelistName: "Corporate & VIP Contract Tier",
+            paymentTerms: "50% Mobilization / 50% Go-Live",
+            state: "sale",
+            lines: [
+              { id: "L1", sku: "ENG-CLOUD", name: "Cloud Security Audit & Architecture Sprint", quantity: 80, uom: "Hours", unitPrice: 125, subtotal: 10000 },
+            ],
+            subtotal: 10000,
+            discountTotal: 0,
+            taxRate: 0,
+            taxAmount: 0,
+            amount_total: 10000,
+            amountPaid: 5000,
+            industryMeta: { projectCode: "SOW-FIN-09", billableHours: "80 Billable Hours" },
+            date_order: new Date().toISOString(),
+          },
+        ],
+      };
+
+    case "manufacturing":
+      return {
+        quoteLabel: "Factory MTO Quotation",
+        orderLabel: "Production Sales Order",
+        fulfillLabel: "QC Pass & Ship Lot",
+        channelDefault: "Wholesale B2B",
+        metaFields: [
+          { key: "bomRef", label: "BOM / Work Center", placeholder: "BOM-CNC-04 • Line B" },
+          { key: "lotNumber", label: "Batch / Lot Tracking #", placeholder: "LOT-2026-11A" },
+        ],
+        sampleOrders: [
+          {
+            name: "MTO-2026-MF01",
+            industryId: "manufacturing",
+            channel: "Wholesale B2B",
+            customer_name: "Atlas Industrial Robotics",
+            pricelistName: "Supermarket / B2B Case Wholesale",
+            paymentTerms: "Net 30",
+            state: "sale",
+            lines: [
+              { id: "L1", sku: "CNC-HSG-09", name: "Precision Machined Aluminum Housing", quantity: 200, uom: "Units", unitPrice: 48, subtotal: 9600 },
+            ],
+            subtotal: 9600,
+            discountTotal: 0,
+            taxRate: 5,
+            taxAmount: 480,
+            amount_total: 10080,
+            amountPaid: 0,
+            industryMeta: { bomRef: "BOM-AL6061", lotNumber: "LOT-26-901" },
+            date_order: new Date().toISOString(),
+          },
+        ],
+      };
+
+    case "healthcare_wellness":
+      return {
+        quoteLabel: "Treatment Plan Estimate",
+        orderLabel: "Approved Patient Care Plan",
+        fulfillLabel: "Complete Procedure",
+        channelDefault: "Direct Sales",
+        metaFields: [
+          { key: "practitioner", label: "Attending Doctor / Specialist", placeholder: "Dr. Sara Malik" },
+          { key: "patientChart", label: "Patient File / Insurance Ref", placeholder: "PAT-40912" },
+        ],
+        sampleOrders: [
+          {
+            name: "CLN-2026-HC01",
+            industryId: "healthcare_wellness",
+            channel: "Direct Sales",
+            customer_name: "Nadia Al-Farsi",
+            pricelistName: "Standard Retail Tariff",
+            paymentTerms: "Immediate",
+            state: "sale",
+            lines: [
+              { id: "L1", sku: "HC-IMP-01", name: "Ceramic Dental Crown & 3D Scan Package", quantity: 1, uom: "Package", unitPrice: 950, subtotal: 950 },
+            ],
+            subtotal: 950,
+            discountTotal: 0,
+            taxRate: 0,
+            taxAmount: 0,
+            amount_total: 950,
+            amountPaid: 950,
+            industryMeta: { practitioner: "Dr. H. Siddiqui", patientChart: "CLN-8821" },
+            date_order: new Date().toISOString(),
+          },
+        ],
+      };
+
+    case "automotive_workshop":
+      return {
+        quoteLabel: "Vehicle Repair Estimate",
+        orderLabel: "Approved Service Job Card",
+        fulfillLabel: "Release Vehicle",
+        channelDefault: "Direct Sales",
+        metaFields: [
+          { key: "vinPlate", label: "Vehicle Plate & VIN", placeholder: "ABC-4921 • WBA33..." },
+          { key: "serviceBay", label: "Assigned Mechanic & Bay", placeholder: "Bay 02 — Master Tech" },
+        ],
+        sampleOrders: [
+          {
+            name: "JOB-2026-AW01",
+            industryId: "automotive_workshop",
+            channel: "Direct Sales",
+            customer_name: " Tariq Logistics Fleet",
+            pricelistName: "Corporate & VIP Contract Tier",
+            paymentTerms: "Immediate",
+            state: "sale",
+            lines: [
+              { id: "L1", sku: "AW-302", name: "Ceramic Brake Pads + Rotor Machining", quantity: 2, uom: "Axles", unitPrice: 220, subtotal: 440 },
+              { id: "L2", sku: "AW-LAB", name: "Master Technician Labor", quantity: 3, uom: "Hours", unitPrice: 65, subtotal: 195 },
+            ],
+            subtotal: 635,
+            discountTotal: 0,
+            taxRate: 5,
+            taxAmount: 31.75,
+            amount_total: 666.75,
+            amountPaid: 0,
+            industryMeta: { vinPlate: "FLT-9021", serviceBay: "Bay 01" },
+            date_order: new Date().toISOString(),
+          },
+        ],
+      };
+
+    case "real_estate":
+      return {
+        quoteLabel: "Lease / Purchase Offer",
+        orderLabel: "Executed Lease / Escrow",
+        fulfillLabel: "Hand Over Keys",
+        channelDefault: "Direct Sales",
+        metaFields: [
+          { key: "propertyUnit", label: "Property & Unit #", placeholder: "Crescent Tower — Suite 12B" },
+          { key: "leaseDuration", label: "Lease Term / Escrow Date", placeholder: "12 Months Annual" },
+        ],
+        sampleOrders: [
+          {
+            name: "LSE-2026-RE01",
+            industryId: "real_estate",
+            channel: "Direct Sales",
+            customer_name: "BlueWave Consulting LLC",
+            pricelistName: "Corporate & VIP Contract Tier",
+            paymentTerms: "Quarterly Cheques",
+            state: "sale",
+            lines: [
+              { id: "L1", sku: "UNIT-12B", name: "Commercial Office Lease — Suite 12B (2,400 sqft)", quantity: 12, uom: "Months", unitPrice: 3800, subtotal: 45600 },
+            ],
+            subtotal: 45600,
+            discountTotal: 0,
+            taxRate: 0,
+            taxAmount: 0,
+            amount_total: 45600,
+            amountPaid: 11400,
+            industryMeta: { propertyUnit: "Crescent Tower 12B", leaseDuration: "Jan–Dec 2026" },
+            date_order: new Date().toISOString(),
+          },
+        ],
+      };
+
+    case "education_academies":
+      return {
+        quoteLabel: "Admission & Fee Offer",
+        orderLabel: "Student Tuition Order",
+        fulfillLabel: "Activate Enrollment",
+        channelDefault: "Direct Sales",
+        metaFields: [
+          { key: "cohortBatch", label: "Program & Cohort", placeholder: "Fall 2026 — Full-Stack AI" },
+          { key: "studentId", label: "Student Roll #", placeholder: "STU-2026-412" },
+        ],
+        sampleOrders: [
+          {
+            name: "TUI-2026-ED01",
+            industryId: "education_academies",
+            channel: "Direct Sales",
+            customer_name: "Bilal Ahmed",
+            pricelistName: "Standard Retail Tariff",
+            paymentTerms: "Term Installment",
+            state: "invoiced",
+            lines: [
+              { id: "L1", sku: "BOOT-AI", name: "16-Week Cloud & AI Engineering Bootcamp Tuition", quantity: 1, uom: "Term", unitPrice: 2400, subtotal: 2400 },
+            ],
+            subtotal: 2400,
+            discountTotal: 0,
+            taxRate: 0,
+            taxAmount: 0,
+            amount_total: 2400,
+            amountPaid: 2400,
+            invoiceRef: "INV/2026/ED01",
+            industryMeta: { cohortBatch: "Cohort 2026-B", studentId: "STU-412" },
+            date_order: new Date().toISOString(),
+          },
+        ],
+      };
+
+    case "logistics_wholesale":
+      return {
+        quoteLabel: "Freight & Wholesale Quote",
+        orderLabel: "3PL / Pallet Shipment Order",
+        fulfillLabel: "Dispatch Fleet / BOL",
+        channelDefault: "Wholesale B2B",
+        metaFields: [
+          { key: "bolNumber", label: "Bill of Lading / Truck #", placeholder: "BOL-88921 • TRK-14" },
+          { key: "routeZone", label: "Origin → Destination Hub", placeholder: "Port Warehouse → North DC" },
+        ],
+        sampleOrders: [
+          {
+            name: "BOL-2026-LG01",
+            industryId: "logistics_wholesale",
+            channel: "Wholesale B2B",
+            customer_name: "Continental Retail Group",
+            pricelistName: "Supermarket / B2B Case Wholesale",
+            paymentTerms: "Net 30",
+            state: "sale",
+            lines: [
+              { id: "L1", sku: "PLT-FMCG", name: "Mixed FMCG Pallet Distribution (22 Pallets)", quantity: 22, uom: "Pallets", unitPrice: 310, subtotal: 6820 },
+            ],
+            subtotal: 6820,
+            discountTotal: 0,
+            taxRate: 0,
+            taxAmount: 0,
+            amount_total: 6820,
+            amountPaid: 0,
+            industryMeta: { bolNumber: "BOL-2026-771", routeZone: "Central Hub → Metro Stores" },
+            date_order: new Date().toISOString(),
+          },
+        ],
+      };
+
+    case "construction_contracting":
+      return {
+        quoteLabel: "BOQ / Tender Bid",
+        orderLabel: "Progress Billing Contract",
+        fulfillLabel: "Certify Site Milestone",
+        channelDefault: "Direct Sales",
+        metaFields: [
+          { key: "siteName", label: "Project Site & Zone", placeholder: "Marina Commercial Fitout" },
+          { key: "retentionPct", label: "Retention & Cert #", placeholder: "10% Retention • IPC #2" },
+        ],
+        sampleOrders: [
+          {
+            name: "IPC-2026-CN01",
+            industryId: "construction_contracting",
+            channel: "Direct Sales",
+            customer_name: "Emaar MEP Developments",
+            pricelistName: "Corporate & VIP Contract Tier",
+            paymentTerms: "Net 30 Upon QS Cert",
+            state: "sale",
+            lines: [
+              { id: "L1", sku: "MEP-PH2", name: "HVAC & Electrical Rough-In — Phase 2", quantity: 1, uom: "Milestone", unitPrice: 28500, subtotal: 28500 },
+            ],
+            subtotal: 28500,
+            discountTotal: 0,
+            taxRate: 5,
+            taxAmount: 1425,
+            amount_total: 29925,
+            amountPaid: 0,
+            industryMeta: { siteName: "Plot 14 Tower B", retentionPct: "10% Retention" },
+            date_order: new Date().toISOString(),
+          },
+        ],
+      };
+
+    case "fitness_sports_club":
+      return {
+        quoteLabel: "Corporate / Club Proposal",
+        orderLabel: "Membership & Court Package",
+        fulfillLabel: "Issue RFID & Activate",
+        channelDefault: "Direct Sales",
+        metaFields: [
+          { key: "courtOrTier", label: "Membership Tier / Court", placeholder: "Unlimited Padel VIP" },
+          { key: "rfidTag", label: "RFID Turnstile Card #", placeholder: "RFID-99204" },
+        ],
+        sampleOrders: [
+          {
+            name: "CLB-2026-SP01",
+            industryId: "fitness_sports_club",
+            channel: "Direct Sales",
+            customer_name: "Corporate Padel League (16 Players)",
+            pricelistName: "Corporate & VIP Contract Tier",
+            paymentTerms: "Immediate",
+            state: "sale",
+            lines: [
+              { id: "L1", sku: "PAD-TOURN", name: "Weekend Panoramic Courts #1-#4 Tournament Block", quantity: 8, uom: "Hours", unitPrice: 160, subtotal: 1280 },
+            ],
+            subtotal: 1280,
+            discountTotal: 0,
+            taxRate: 0,
+            taxAmount: 0,
+            amount_total: 1280,
+            amountPaid: 1280,
+            industryMeta: { courtOrTier: "Courts 1–4", rfidTag: "EVENT-PASS" },
+            date_order: new Date().toISOString(),
+          },
+        ],
+      };
+
+    case "ngos":
+      return {
+        quoteLabel: "Grant / Donor Concept Note",
+        orderLabel: "Committed Donor Grant",
+        fulfillLabel: "Disburse Field Aid",
+        channelDefault: "Direct Sales",
+        metaFields: [
+          { key: "fundType", label: "Fund Restriction", placeholder: "Restricted — Clean Water" },
+          { key: "beneficiaries", label: "Target Beneficiaries", placeholder: "1,500 Households" },
+        ],
+        sampleOrders: [
+          {
+            name: "GRT-2026-NG01",
+            industryId: "ngos",
+            channel: "Direct Sales",
+            customer_name: "Nordic Humanitarian Endowment",
+            pricelistName: "Corporate & VIP Contract Tier",
+            paymentTerms: "Tranche Release",
+            state: "invoiced",
+            lines: [
+              { id: "L1", sku: "WASH-26", name: "Solar Water Filtration & Rural School Kits", quantity: 1, uom: "Grant", unitPrice: 35000, subtotal: 35000 },
+            ],
+            subtotal: 35000,
+            discountTotal: 0,
+            taxRate: 0,
+            taxAmount: 0,
+            amount_total: 35000,
+            amountPaid: 35000,
+            invoiceRef: "RCPT/NGO/2601",
+            industryMeta: { fundType: "Restricted WASH Fund", beneficiaries: "1,800 Beneficiaries" },
+            date_order: new Date().toISOString(),
+          },
+        ],
+      };
+
+    case "agriculture_agritech":
+      return {
+        quoteLabel: "Harvest / Solar EPC Quote",
+        orderLabel: "Agri-Supply / Solar Contract",
+        fulfillLabel: "Deliver Harvest / Commission",
+        channelDefault: "Wholesale B2B",
+        metaFields: [
+          { key: "harvestOrKw", label: "Harvest Lot / Solar Capacity", placeholder: "Lot #A14 (12 Tons) or 50kW Hybrid" },
+          { key: "coldChainSite", label: "Cold-Chain / Field GPS", placeholder: "Reefer +4°C • Sector 7" },
+        ],
+        sampleOrders: [
+          {
+            name: "AGR-2026-AG01",
+            industryId: "agriculture_agritech",
+            channel: "Wholesale B2B",
+            customer_name: "SunValley Cold-Storage Exports",
+            pricelistName: "Supermarket / B2B Case Wholesale",
+            paymentTerms: "50% Dispatch / 50% Arrival",
+            state: "sale",
+            lines: [
+              { id: "L1", sku: "CROP-ORG", name: "Grade-A Greenhouse Hydroponic Produce", quantity: 4000, uom: "Kg", unitPrice: 2.15, subtotal: 8600 },
+            ],
+            subtotal: 8600,
+            discountTotal: 0,
+            taxRate: 0,
+            taxAmount: 0,
+            amount_total: 8600,
+            amountPaid: 4300,
+            industryMeta: { harvestOrKw: "Batch H-2026-09", coldChainSite: "Reefer Van #3 (+4°C)" },
+            date_order: new Date().toISOString(),
+          },
+        ],
+      };
+
     default:
       return {
         quoteLabel: "Quotation / Proposal",

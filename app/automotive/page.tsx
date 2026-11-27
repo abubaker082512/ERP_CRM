@@ -89,13 +89,34 @@ export default function AutomotiveWorkshopPage() {
       setJobCards([]);
       setSelectedJob(null);
     }
-  }, [activeBranch?.id]);
+    let email = "";
+    try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+    fetch(`/api/industry-ops?company_id=${encodeURIComponent(activeBranch.id)}&email=${encodeURIComponent(email)}&domain=automotive`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && Array.isArray(d.items) && d.items.length > 0) {
+          setJobCards(d.items);
+          setSelectedJob(d.items[0]);
+          try { localStorage.setItem(key, JSON.stringify(d.items)); } catch {}
+        }
+      })
+      .catch(() => {});
+  }, [activeBranch?.id, getEntityStorageKey]);
 
   const persistJobCards = (updated: JobCard[]) => {
     setJobCards(updated);
     try {
       const key = getEntityStorageKey("automotive_jobs");
       localStorage.setItem(key, JSON.stringify(updated));
+      if (activeBranch?.id) {
+        let email = "";
+        try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+        fetch("/api/industry-ops", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "save_collection", company_id: activeBranch.id, email, domain: "automotive", items: updated }),
+        }).catch(() => {});
+      }
     } catch {}
   };
 

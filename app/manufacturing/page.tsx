@@ -38,6 +38,19 @@ export default function ManufacturingPage() {
             const saved = localStorage.getItem(getEntityStorageKey("mrp_orders"));
             if (saved) setOrders(JSON.parse(saved));
         } catch {}
+        if (activeBranch?.id) {
+            let email = "";
+            try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+            fetch(`/api/industry-ops?company_id=${encodeURIComponent(activeBranch.id)}&email=${encodeURIComponent(email)}&domain=manufacturing`, { cache: "no-store" })
+                .then((r) => (r.ok ? r.json() : null))
+                .then((d) => {
+                    if (d && Array.isArray(d.items) && d.items.length > 0) {
+                        setOrders(d.items);
+                        try { localStorage.setItem(getEntityStorageKey("mrp_orders"), JSON.stringify(d.items)); } catch {}
+                    }
+                })
+                .catch(() => {});
+        }
     }, [activeBranch, getEntityStorageKey]);
 
     const handleCreateMO = (e: React.FormEvent) => {
@@ -53,7 +66,18 @@ export default function ManufacturingPage() {
         };
         const next = [newMO, ...orders];
         setOrders(next);
-        try { localStorage.setItem(getEntityStorageKey("mrp_orders"), JSON.stringify(next)); } catch {}
+        try {
+            localStorage.setItem(getEntityStorageKey("mrp_orders"), JSON.stringify(next));
+            if (activeBranch?.id) {
+                let email = "";
+                try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+                fetch("/api/industry-ops", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "save_collection", company_id: activeBranch.id, email, domain: "manufacturing", items: next }),
+                }).catch(() => {});
+            }
+        } catch {}
         setMoForm({ product: "", quantity: "10", deadline: new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0], source: "SO-001" });
         setShowNewModal(false);
     };

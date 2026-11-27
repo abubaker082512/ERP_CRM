@@ -104,9 +104,13 @@ export default function UniversalBranchSwitcher() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 mt-2 w-80 sm:w-96 rounded-2xl bg-[#0e1320] border border-gray-700/90 shadow-2xl z-50 overflow-hidden text-xs text-white divide-y divide-gray-800 animate-in fade-in zoom-in-95 duration-150">
+        <div className={`absolute left-0 mt-2 w-80 sm:w-96 rounded-2xl border shadow-2xl z-50 overflow-hidden text-xs animate-in fade-in zoom-in-95 duration-150 ${
+          isLight
+            ? "bg-white border-slate-200 text-slate-900 divide-y divide-slate-200"
+            : "bg-[#0e1320] border-gray-700/90 text-white divide-y divide-gray-800"
+        }`}>
           {/* Header */}
-          <div className="p-3.5 bg-[#141b2c] flex items-center justify-between">
+          <div className={`p-3.5 flex items-center justify-between ${isLight ? "bg-slate-50" : "bg-[#141b2c]"}`}>
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 block">
                 Multi-Entity & Branch Manager

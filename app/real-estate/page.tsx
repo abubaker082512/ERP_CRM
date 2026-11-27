@@ -83,13 +83,34 @@ export default function RealEstatePropertyPage() {
       setUnits([]);
       setSelectedUnit(null);
     }
-  }, [activeBranch?.id]);
+    let email = "";
+    try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+    fetch(`/api/industry-ops?company_id=${encodeURIComponent(activeBranch.id)}&email=${encodeURIComponent(email)}&domain=real_estate`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && Array.isArray(d.items) && d.items.length > 0) {
+          setUnits(d.items);
+          setSelectedUnit(d.items[0]);
+          try { localStorage.setItem(key, JSON.stringify(d.items)); } catch {}
+        }
+      })
+      .catch(() => {});
+  }, [activeBranch?.id, getEntityStorageKey]);
 
   const persistUnits = (updated: PropertyUnit[]) => {
     setUnits(updated);
     try {
       const key = getEntityStorageKey("real_estate_units");
       localStorage.setItem(key, JSON.stringify(updated));
+      if (activeBranch?.id) {
+        let email = "";
+        try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+        fetch("/api/industry-ops", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "save_collection", company_id: activeBranch.id, email, domain: "real_estate", items: updated }),
+        }).catch(() => {});
+      }
     } catch {}
   };
 

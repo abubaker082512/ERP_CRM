@@ -16,6 +16,7 @@ import InactivitySessionTracker from '../auth/InactivitySessionTracker';
 import DonationMilestoneToast from '../common/DonationMilestoneToast';
 import { BranchProvider, useBranchContext } from '@/lib/branchContext';
 import { NotificationProvider, useNotifications } from '@/lib/notificationContext';
+import { useTheme } from '@/lib/themeContext';
 
 const navItems = [
     { name: 'All Apps', icon: Sparkles, href: '/apps' },
@@ -44,6 +45,7 @@ function SidebarNavItems({
     isAdmin: boolean;
 }) {
     const { getBadgeForHref, totalUnread } = useNotifications();
+    const { isLight } = useTheme();
     return (
         <nav className="px-2.5 space-y-1.5 flex-1 overflow-y-auto scrollbar-none pb-28">
             {navItems
@@ -65,6 +67,8 @@ function SidebarNavItems({
                             } py-2.5 rounded-2xl transition-all duration-200 relative group ${
                                 isActive
                                     ? 'beraxis-glow-pill text-white'
+                                    : isLight
+                                    ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                         >
@@ -74,8 +78,8 @@ function SidebarNavItems({
                                         size={19}
                                         className={`shrink-0 transition-colors duration-200 ${
                                             isActive
-                                                ? 'text-[#38BDF8]'
-                                                : 'text-gray-500 group-hover:text-gray-200'
+                                                ? isLight ? 'text-white' : 'text-[#38BDF8]'
+                                                : isLight ? 'text-slate-500 group-hover:text-purple-700' : 'text-gray-500 group-hover:text-gray-200'
                                         }`}
                                     />
                                     {!isSidebarOpen && badge > 0 && (

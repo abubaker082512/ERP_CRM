@@ -40,6 +40,39 @@ export interface RestaurantTableRecord {
   waiter?: string;
 }
 
+export interface CashDrawerMovement {
+  id: string;
+  type: "pay_in" | "safe_drop" | "petty_cash" | "no_sale_open";
+  amount: number;
+  reason: string;
+  recordedBy: string;
+  createdAt: string;
+}
+
+export interface POSShiftRecord {
+  id: string;
+  shiftNumber: string;
+  terminalName: string;
+  cashierName: string;
+  cashierEmail?: string;
+  status: "open" | "closed";
+  openingFloat: number;
+  cashSalesNet: number;
+  cardSalesTotal: number;
+  qrWalletSalesTotal: number;
+  cashRefundsTotal: number;
+  payInsTotal: number;
+  cashOutsTotal: number;
+  expectedDrawerCash: number;
+  countedClosingCash?: number;
+  varianceAmount?: number;
+  ordersCount: number;
+  cashMovements: CashDrawerMovement[];
+  notes?: string;
+  openedAt: string;
+  closedAt?: string;
+}
+
 export const DEFAULT_RESTAURANT_TABLES: RestaurantTableRecord[] = [
   { id: "TBL-1", number: "Table 1", zone: "Main Hall", seats: 2, status: "available", waiter: "Alex" },
   { id: "TBL-2", number: "Table 2", zone: "Main Hall", seats: 4, status: "available", waiter: "Alex" },
@@ -50,6 +83,24 @@ export const DEFAULT_RESTAURANT_TABLES: RestaurantTableRecord[] = [
   { id: "TBL-7", number: "Table 7", zone: "Outdoor Patio", seats: 6, status: "reserved", guestName: "Dinner Party", seatedAt: "19:30", waiter: "Omar" },
   { id: "TBL-8", number: "Table 8", zone: "VIP Lounge", seats: 8, status: "available", waiter: "Elena" },
 ];
+
+function computeExpectedCash(s: {
+  openingFloat: number;
+  cashSalesNet: number;
+  payInsTotal: number;
+  cashRefundsTotal: number;
+  cashOutsTotal: number;
+}): number {
+  return Number(
+    (
+      Number(s.openingFloat || 0) +
+      Number(s.cashSalesNet || 0) +
+      Number(s.payInsTotal || 0) -
+      Number(s.cashRefundsTotal || 0) -
+      Number(s.cashOutsTotal || 0)
+    ).toFixed(2)
+  );
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -65,6 +116,8 @@ export async function GET(req: NextRequest) {
       tables: DEFAULT_RESTAURANT_TABLES,
       recipes: [],
       heldCarts: [],
+      shifts: [],
+      activeShift: null,
     });
   }
 
@@ -74,24 +127,30 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, error: access.reason || "Access denied" }, { status: 403 });
   }
 
-  const [products, orders, kdsTickets, tablesRaw, recipes, heldCarts, wasteLogs] = await Promise.all([
-    readClusterCollection<any[]>(clusterId, "pos_products", []),
-    readClusterCollection<any[]>(clusterId, "pos_orders", []),
-    readClusterCollection<KDSTicketRecord[]>(clusterId, "kds_tickets", []),
-    readClusterCollection<RestaurantTableRecord[] | null>(clusterId, "pos_tables", null),
-    readClusterCollection<any[]>(clusterId, "pos_recipes", []),
-    readClusterCollection<any[]>(clusterId, "pos_held_carts", []),
-    readClusterCollection<any[]>(clusterId, "pos_waste_logs", []),
-  ]);
+  const [products, orders, kdsTickets, tablesRaw, recipes, heldCarts, wasteLogs, shifts] =
+    await Promise.all([
+      readClusterCollection<any[]>(clusterId, "pos_products", []),
+      readClusterCollection<any[]>(clusterId, "pos_orders", []),
+      readClusterCollection<KDSTicketRecord[]>(clusterId, "kds_tickets", []),
+      readClusterCollection<RestaurantTableRecord[] | null>(clusterId, "pos_tables", null),
+      readClusterCollection<any[]>(clusterId, "pos_recipes", []),
+      readClusterCollection<any[]>(clusterId, "pos_held_carts", []),
+      readClusterCollection<any[]>(clusterId, "pos_waste_logs", []),
+      readClusterCollection<POSShiftRecord[]>(clusterId, "pos_shifts", []),
+    ]);
 
   const nowMs = Date.now();
   const computedTickets = (Array.isArray(kdsTickets) ? kdsTickets : []).map((t) => {
     const createdMs = t.createdAt ? new Date(t.createdAt).getTime() : nowMs;
-    const mins = Number.isFinite(createdMs) ? Math.max(0, Math.floor((nowMs - createdMs) / 60000)) : t.elapsedMinutes || 0;
+    const mins = Number.isFinite(createdMs)
+      ? Math.max(0, Math.floor((nowMs - createdMs) / 60000))
+      : t.elapsedMinutes || 0;
     return { ...t, elapsedMinutes: mins };
   });
 
   const tables = Array.isArray(tablesRaw) && tablesRaw.length > 0 ? tablesRaw : DEFAULT_RESTAURANT_TABLES;
+  const shiftList = Array.isArray(shifts) ? shifts : [];
+  const activeShift = shiftList.find((s) => s.status === "open") || null;
 
   return NextResponse.json(
     {
@@ -104,6 +163,8 @@ export async function GET(req: NextRequest) {
       recipes,
       heldCarts,
       wasteLogs,
+      shifts: shiftList,
+      activeShift,
     },
     { headers: { "Cache-Control": "no-store" } }
   );
@@ -124,6 +185,137 @@ export async function POST(req: NextRequest) {
     }
 
     const action = body.action || "checkout";
+
+    // =========================================================================
+    // SHIFT & CASH DRAWER MANAGEMENT (open_shift, cash_movement, close_shift)
+    // =========================================================================
+    if (action === "open_shift") {
+      const shifts = await readClusterCollection<POSShiftRecord[]>(clusterId, "pos_shifts", []);
+      const terminalName = String(body.terminalName || "Register #1 — Main Counter").trim();
+      const existingOpen = shifts.find(
+        (s) => s.status === "open" && s.terminalName.toLowerCase() === terminalName.toLowerCase()
+      );
+      if (existingOpen) {
+        return NextResponse.json({
+          success: true,
+          clusterId,
+          activeShift: existingOpen,
+          shifts,
+          alreadyOpen: true,
+        });
+      }
+
+      const seq = Date.now().toString().slice(-5);
+      const openingFloat = Math.max(0, Number(Number(body.openingFloat ?? 200).toFixed(2)));
+      const newShift: POSShiftRecord = {
+        id: `shf_${Date.now()}`,
+        shiftNumber: `SHF-${new Date().getFullYear()}-${seq}`,
+        terminalName,
+        cashierName: String(body.cashierName || email || "Cashier").trim(),
+        cashierEmail: email,
+        status: "open",
+        openingFloat,
+        cashSalesNet: 0,
+        cardSalesTotal: 0,
+        qrWalletSalesTotal: 0,
+        cashRefundsTotal: 0,
+        payInsTotal: 0,
+        cashOutsTotal: 0,
+        expectedDrawerCash: openingFloat,
+        ordersCount: 0,
+        cashMovements: [],
+        notes: body.notes || "",
+        openedAt: new Date().toISOString(),
+      };
+
+      const nextShifts = [newShift, ...shifts];
+      await writeClusterCollection(clusterId, "pos_shifts", nextShifts, { ownerEmail: email });
+      return NextResponse.json({ success: true, clusterId, activeShift: newShift, shifts: nextShifts });
+    }
+
+    if (action === "cash_movement") {
+      const shifts = await readClusterCollection<POSShiftRecord[]>(clusterId, "pos_shifts", []);
+      const targetIdx = shifts.findIndex(
+        (s) => (body.shiftId ? s.id === body.shiftId : s.status === "open")
+      );
+      if (targetIdx === -1) {
+        return NextResponse.json(
+          { success: false, error: "No open POS shift found. Open a register shift first." },
+          { status: 400 }
+        );
+      }
+
+      const shift = { ...shifts[targetIdx] };
+      const moveType: CashDrawerMovement["type"] = body.type || "pay_in";
+      const amount =
+        moveType === "no_sale_open"
+          ? 0
+          : Math.max(0, Number(Number(body.amount || 0).toFixed(2)));
+
+      const movement: CashDrawerMovement = {
+        id: `CM-${Date.now().toString().slice(-5)}`,
+        type: moveType,
+        amount,
+        reason: String(body.reason || (moveType === "safe_drop" ? "Excess cash drop to safe" : "Drawer adjustment")).trim(),
+        recordedBy: String(body.recordedBy || email || shift.cashierName),
+        createdAt: new Date().toISOString(),
+      };
+
+      if (moveType === "pay_in") {
+        shift.payInsTotal = Number((shift.payInsTotal + amount).toFixed(2));
+      } else if (moveType === "safe_drop" || moveType === "petty_cash") {
+        shift.cashOutsTotal = Number((shift.cashOutsTotal + amount).toFixed(2));
+      }
+      shift.cashMovements = [movement, ...(shift.cashMovements || [])];
+      shift.expectedDrawerCash = computeExpectedCash(shift);
+
+      const nextShifts = [...shifts];
+      nextShifts[targetIdx] = shift;
+      await writeClusterCollection(clusterId, "pos_shifts", nextShifts, { ownerEmail: email });
+      return NextResponse.json({
+        success: true,
+        clusterId,
+        movement,
+        activeShift: shift,
+        shifts: nextShifts,
+      });
+    }
+
+    if (action === "close_shift") {
+      const shifts = await readClusterCollection<POSShiftRecord[]>(clusterId, "pos_shifts", []);
+      const targetIdx = shifts.findIndex(
+        (s) => (body.shiftId ? s.id === body.shiftId : s.status === "open")
+      );
+      if (targetIdx === -1) {
+        return NextResponse.json({ success: false, error: "Shift not found" }, { status: 404 });
+      }
+
+      const shift = { ...shifts[targetIdx] };
+      shift.expectedDrawerCash = computeExpectedCash(shift);
+      const counted = Number(
+        Number(body.countedClosingCash ?? shift.expectedDrawerCash).toFixed(2)
+      );
+      const variance = Number((counted - shift.expectedDrawerCash).toFixed(2));
+
+      shift.status = "closed";
+      shift.countedClosingCash = counted;
+      shift.varianceAmount = variance;
+      shift.notes = String(body.notes ?? shift.notes ?? "").trim();
+      shift.closedAt = new Date().toISOString();
+
+      const nextShifts = [...shifts];
+      nextShifts[targetIdx] = shift;
+      await writeClusterCollection(clusterId, "pos_shifts", nextShifts, { ownerEmail: email });
+
+      const nextActive = nextShifts.find((s) => s.status === "open") || null;
+      return NextResponse.json({
+        success: true,
+        clusterId,
+        closedShift: shift,
+        activeShift: nextActive,
+        shifts: nextShifts,
+      });
+    }
 
     // 1. Save POS Catalog (+ optional Inventory Stock seeding)
     if (action === "save_products") {
@@ -193,10 +385,14 @@ export async function POST(req: NextRequest) {
       const updatedTickets = [ticket, ...existing.filter((t) => t.id !== ticket.id)];
       await writeClusterCollection(clusterId, "kds_tickets", updatedTickets, { ownerEmail: email });
 
-      // Mark Dine-In table occupied
       if (ticket.orderType === "Dine-In" && ticket.tableNumber) {
-        const tablesRaw = await readClusterCollection<RestaurantTableRecord[] | null>(clusterId, "pos_tables", null);
-        const tables = Array.isArray(tablesRaw) && tablesRaw.length > 0 ? tablesRaw : DEFAULT_RESTAURANT_TABLES;
+        const tablesRaw = await readClusterCollection<RestaurantTableRecord[] | null>(
+          clusterId,
+          "pos_tables",
+          null
+        );
+        const tables =
+          Array.isArray(tablesRaw) && tablesRaw.length > 0 ? tablesRaw : DEFAULT_RESTAURANT_TABLES;
         const nextTables = tables.map((t) =>
           t.number.toLowerCase() === ticket.tableNumber.toLowerCase()
             ? {
@@ -214,7 +410,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, clusterId, ticket, kdsTickets: updatedTickets });
     }
 
-    // 3. Update KDS Ticket Status (queued -> preparing -> ready -> served)
+    // 3. Update KDS Ticket Status
     if (action === "update_kds") {
       const existing = await readClusterCollection<KDSTicketRecord[]>(clusterId, "kds_tickets", []);
       if (Array.isArray(body.tickets)) {
@@ -230,12 +426,15 @@ export async function POST(req: NextRequest) {
 
     // 4. Save / Update Floor Plan Tables
     if (action === "save_tables") {
-      const tables = Array.isArray(body.tables) && body.tables.length > 0 ? body.tables : DEFAULT_RESTAURANT_TABLES;
+      const tables =
+        Array.isArray(body.tables) && body.tables.length > 0
+          ? body.tables
+          : DEFAULT_RESTAURANT_TABLES;
       await writeClusterCollection(clusterId, "pos_tables", tables, { ownerEmail: email });
       return NextResponse.json({ success: true, clusterId, tables });
     }
 
-    // 5. Hold / Recall Cart (Supermarket & Restaurant)
+    // 5. Hold / Recall Cart
     if (action === "hold_cart") {
       const held = await readClusterCollection<any[]>(clusterId, "pos_held_carts", []);
       const entry = {
@@ -271,16 +470,58 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, clusterId });
     }
 
-    // 7. Complete POS Sale OR POS Return / Refund -> Sync Inventory, Sales & Accounting!
+    // 7. Complete POS Sale OR POS Return / Refund -> Sync Shift Cash Drawer, Inventory, Sales & Accounting!
     const isRefund = Boolean(body.isRefund || action === "refund");
     const items: any[] = Array.isArray(body.items) ? body.items : [];
     const now = new Date().toISOString();
     const seq = Date.now().toString().slice(-6);
-    const total = Number(body.total ?? body.amount_total ?? 0);
+    const total = Math.abs(Number(body.total ?? body.amount_total ?? 0));
+    const paymentMethod = String(body.paymentMethod || "Card / Terminal");
+
+    // Load shifts so we can attach & update the active register shift automatically!
+    const shifts = await readClusterCollection<POSShiftRecord[]>(clusterId, "pos_shifts", []);
+    const activeShiftIdx = shifts.findIndex((s) =>
+      body.shiftId ? s.id === body.shiftId && s.status === "open" : s.status === "open"
+    );
+    let updatedActiveShift: POSShiftRecord | null = null;
+
+    if (activeShiftIdx !== -1) {
+      const shf = { ...shifts[activeShiftIdx] };
+      if (isRefund) {
+        if (paymentMethod === "Cash") {
+          shf.cashRefundsTotal = Number((shf.cashRefundsTotal + total).toFixed(2));
+        } else if (paymentMethod === "Split") {
+          const cashRef = Number(body.splitCash ?? total / 2);
+          shf.cashRefundsTotal = Number((shf.cashRefundsTotal + cashRef).toFixed(2));
+        }
+      } else {
+        shf.ordersCount = (shf.ordersCount || 0) + 1;
+        if (paymentMethod === "Cash") {
+          // Net cash retained in drawer = sale total (paid - changeDue)
+          shf.cashSalesNet = Number((shf.cashSalesNet + total).toFixed(2));
+        } else if (paymentMethod === "Card / Terminal") {
+          shf.cardSalesTotal = Number((shf.cardSalesTotal + total).toFixed(2));
+        } else if (paymentMethod === "QR / Wallet") {
+          shf.qrWalletSalesTotal = Number((shf.qrWalletSalesTotal + total).toFixed(2));
+        } else if (paymentMethod === "Split") {
+          const splitCashNet = Math.min(total, Math.max(0, Number(body.splitCash || 0)));
+          const splitCardPart = Math.max(0, Number((total - splitCashNet).toFixed(2)));
+          shf.cashSalesNet = Number((shf.cashSalesNet + splitCashNet).toFixed(2));
+          shf.cardSalesTotal = Number((shf.cardSalesTotal + splitCardPart).toFixed(2));
+        }
+      }
+      shf.expectedDrawerCash = computeExpectedCash(shf);
+      shifts[activeShiftIdx] = shf;
+      updatedActiveShift = shf;
+      await writeClusterCollection(clusterId, "pos_shifts", shifts, { ownerEmail: email });
+    }
 
     const txRecord = {
       id: body.id || `${isRefund ? "pos_ret" : "tx"}_${Date.now()}`,
       name: body.name || `${isRefund ? "POS-RET" : "POS"}/${seq}`,
+      shiftNumber: updatedActiveShift?.shiftNumber || body.shiftNumber || "AUTO-SHIFT",
+      terminalName: updatedActiveShift?.terminalName || body.terminalName || "Register #1",
+      cashierName: updatedActiveShift?.cashierName || body.cashierName || "Cashier",
       posMode: body.posMode || "retail_supermarket",
       isRefund,
       customerName: body.customerName || "Walk-In Customer",
@@ -291,15 +532,15 @@ export async function POST(req: NextRequest) {
       discountAmount: Number(body.discountAmount ?? 0),
       serviceChargeAmount: Number(body.serviceChargeAmount ?? 0),
       taxAmount: Number(body.taxAmount ?? 0),
-      total: isRefund ? -Math.abs(total) : total,
-      amount_total: isRefund ? -Math.abs(total) : total,
+      total: isRefund ? -total : total,
+      amount_total: isRefund ? -total : total,
       amountPaid: Number(body.amountPaid ?? total),
       splitCash: Number(body.splitCash ?? 0),
       splitCard: Number(body.splitCard ?? 0),
       changeDue: Number(body.changeDue ?? 0),
       status: isRefund ? "REFUNDED" : body.status || "APPROVED",
       state: isRefund ? "returned" : "invoiced",
-      paymentMethod: body.paymentMethod || "Card / Terminal",
+      paymentMethod,
       orderType: body.orderType || "Counter",
       tableNumber: body.tableNumber || "",
       date: new Date().toLocaleString(),
@@ -328,7 +569,6 @@ export async function POST(req: NextRequest) {
           if (directMatch) {
             delta += mult * soldQty;
           }
-          // Check Restaurant Recipe BOM ingredient deduction
           if (Array.isArray(recipes) && recipes.length > 0) {
             const matchedRecipe = recipes.find(
               (r: any) => String(r.name || "").toLowerCase() === String(sold.name || "").toLowerCase()
@@ -358,7 +598,7 @@ export async function POST(req: NextRequest) {
       await writeClusterCollection(clusterId, "inventory", updatedInv, { ownerEmail: email });
     }
 
-    // Sync POS Sale / Refund to Sales Hub (`sales_orders` / `sales_returns`) & Accounting (`accounting_invoices`)
+    // Sync POS Sale / Refund to Sales Hub & Accounting
     if (isRefund) {
       const returns = await readClusterCollection<any[]>(clusterId, "sales_returns", []);
       await writeClusterCollection(
@@ -372,7 +612,7 @@ export async function POST(req: NextRequest) {
             orderName: txRecord.name,
             customer_name: txRecord.customerName,
             reason: body.refundReason || "POS Counter Return & Refund",
-            refundAmount: Math.abs(total),
+            refundAmount: total,
             restocked: true,
             createdAt: now,
           },
@@ -447,7 +687,11 @@ export async function POST(req: NextRequest) {
 
     // Free up Dine-In table once bill is settled
     if (body.posMode === "food_beverage" && body.tableNumber && !isRefund) {
-      const tablesRaw = await readClusterCollection<RestaurantTableRecord[] | null>(clusterId, "pos_tables", null);
+      const tablesRaw = await readClusterCollection<RestaurantTableRecord[] | null>(
+        clusterId,
+        "pos_tables",
+        null
+      );
       if (Array.isArray(tablesRaw) && tablesRaw.length > 0) {
         const nextTables = tablesRaw.map((t) =>
           t.number.toLowerCase() === String(body.tableNumber).toLowerCase()
@@ -458,7 +702,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, clusterId, transaction: txRecord });
+    return NextResponse.json({
+      success: true,
+      clusterId,
+      transaction: txRecord,
+      activeShift: updatedActiveShift,
+    });
   } catch (err: any) {
     return NextResponse.json(
       { success: false, error: err?.message || "POS API failure" },

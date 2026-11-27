@@ -24,15 +24,26 @@ import {
   UserCheck,
   History,
   Users,
+  Wallet,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Lock,
+  Unlock,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useBranchContext } from "@/lib/branchContext";
+import { useTheme } from "@/lib/themeContext";
 
 type PosIndustryMode =
   | "food_beverage"
   | "retail_supermarket"
   | "healthcare_wellness"
   | "automotive_workshop"
-  | "fitness_sports_club";
+  | "fitness_sports_club"
+  | "hospitality_travel"
+  | "logistics_wholesale"
+  | "education_academies";
 
 const INDUSTRY_STARTER_CATALOGS: Record<
   PosIndustryMode,
@@ -65,10 +76,10 @@ const INDUSTRY_STARTER_CATALOGS: Record<
     { name: "Aged Deli Cheddar (per kg)", list_price: 19.0, cost_price: 11.2, sku: "8901008", category: "Deli (Weighed)", icon: "🧀", weighed: true, uom: "Kg" },
   ],
   healthcare_wellness: [
-    { name: "General Consultation", list_price: 75.0, cost_price: 20.0, sku: "HC-201", category: "Consultation", icon: "🩺" },
+    { name: "General Medical Consultation", list_price: 75.0, cost_price: 20.0, sku: "HC-201", category: "Consultation", icon: "🩺" },
     { name: "Ultrasonic Dental Scaling", list_price: 120.0, cost_price: 35.0, sku: "HC-202", category: "Dental", icon: "🦷" },
     { name: "Deep Tissue Therapy 60m", list_price: 95.0, cost_price: 30.0, sku: "HC-203", category: "Therapy", icon: "💆" },
-    { name: "Vitamin IV Hydration Drip", list_price: 150.0, cost_price: 45.0, sku: "HC-204", category: "Wellness", icon: "💧" },
+    { name: "Vitamin D3 + Immune Pack", list_price: 32.0, cost_price: 14.0, sku: "HC-205", category: "Pharmacy OTC", icon: "💊" },
   ],
   automotive_workshop: [
     { name: "Full Synthetic Oil Change", list_price: 89.0, cost_price: 38.0, sku: "AW-301", category: "Service", icon: "🛢️" },
@@ -82,12 +93,35 @@ const INDUSTRY_STARTER_CATALOGS: Record<
     { name: "Pro Padel Balls Tube (3x)", list_price: 9.5, cost_price: 4.5, sku: "SP-403", category: "Pro Shop", icon: "🟡" },
     { name: "Whey Protein Shake", list_price: 6.5, cost_price: 2.2, sku: "SP-404", category: "Cafe", icon: "🥤" },
   ],
+  hospitality_travel: [
+    { name: "Deluxe King Suite Nightly Stay", list_price: 185.0, cost_price: 55.0, sku: "HT-501", category: "Room Stay", icon: "🏨" },
+    { name: "Executive Airport Chauffeur", list_price: 45.0, cost_price: 18.0, sku: "HT-502", category: "Concierge", icon: "🚘" },
+    { name: "Room Service Breakfast Tray", list_price: 28.0, cost_price: 9.0, sku: "HT-503", category: "Room Service", icon: "🥐" },
+    { name: "Full-Day Spa & Thermal Pass", list_price: 65.0, cost_price: 15.0, sku: "HT-504", category: "Resort Spa", icon: "🧖" },
+  ],
+  logistics_wholesale: [
+    { name: "Beverage Carton Pack (24x330ml)", list_price: 22.0, cost_price: 14.5, sku: "WH-601", category: "Wholesale Case", icon: "📦" },
+    { name: "Stretch Pallet Wrap Roll (6-Pack)", list_price: 54.0, cost_price: 31.0, sku: "WH-602", category: "Packaging", icon: "🧻" },
+    { name: "Same-Day Metro Courier Express", list_price: 18.0, cost_price: 8.0, sku: "WH-603", category: "Freight Counter", icon: "🚚" },
+  ],
+  education_academies: [
+    { name: "STEM Lab Workbook & Kit", list_price: 42.0, cost_price: 19.0, sku: "ED-701", category: "Bookstore", icon: "📚" },
+    { name: "Academy Uniform Blazer", list_price: 55.0, cost_price: 28.0, sku: "ED-702", category: "Uniforms", icon: "🎓" },
+    { name: "Exam Registration Fee", list_price: 75.0, cost_price: 10.0, sku: "ED-703", category: "Student Desk", icon: "📝" },
+  ],
 };
+
+const TERMINAL_REGISTERS = [
+  "Register #1 — Main Counter",
+  "Register #2 — Express Barcode Lane",
+  "Register #3 — Bar / Drive-Thru / Desk",
+];
 
 const QUICK_MODIFIERS = ["No Onions", "Extra Spicy", "Gluten-Free", "No Ice", "Well Done", "Sauce on Side"];
 
 export default function POSPage() {
   const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { isLight, toggleTheme } = useTheme();
   const [products, setProducts] = useState<any[]>([]);
   const [posTransactions, setPosTransactions] = useState<any[]>([]);
   const [heldCarts, setHeldCarts] = useState<any[]>([]);
@@ -108,13 +142,26 @@ export default function POSPage() {
   const [processing, setProcessing] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
 
+  // POS Shift & Cash Drawer State
+  const [activeShift, setActiveShift] = useState<any | null>(null);
+  const [allShifts, setAllShifts] = useState<any[]>([]);
+  const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
+  const [shiftModalTab, setShiftModalTab] = useState<"drawer" | "cash_ops" | "close_z">("drawer");
+  const [selectedTerminal, setSelectedTerminal] = useState(TERMINAL_REGISTERS[0]);
+  const [cashierName, setCashierName] = useState("Lead Cashier");
+  const [openingFloatInput, setOpeningFloatInput] = useState("200");
+  const [cashMoveType, setCashMoveType] = useState<"pay_in" | "safe_drop" | "petty_cash" | "no_sale_open">("safe_drop");
+  const [cashMoveAmount, setCashMoveAmount] = useState("100");
+  const [cashMoveReason, setCashMoveReason] = useState("Mid-shift safe drop");
+  const [countedCashInput, setCountedCashInput] = useState("");
+  const [closingNotes, setClosingNotes] = useState("");
+
   // Customer Loyalty / Lookup
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
 
   // Industry-Adaptive Mode
   const [posMode, setPosMode] = useState<PosIndustryMode>("retail_supermarket");
-  // Restaurant F&B Controls
   const [orderType, setOrderType] = useState<"Dine-In" | "Takeaway" | "Delivery">("Dine-In");
   const [tableNumber, setTableNumber] = useState("Table 1");
   const [kitchenNotes, setKitchenNotes] = useState("");
@@ -137,17 +184,20 @@ export default function POSPage() {
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(""), 3500);
+    setTimeout(() => setToastMsg(""), 3800);
   };
 
   const getAuthMeta = useCallback(() => {
-    if (typeof window === "undefined") return { companyId: "CMP-001", email: "" };
+    if (typeof window === "undefined") return { companyId: "CMP-001", email: "", userName: "Cashier" };
     const companyId = activeBranch?.id || localStorage.getItem("beraxis_active_branch_id") || "CMP-001";
     let email = "";
+    let userName = "Cashier";
     try {
-      email = JSON.parse(localStorage.getItem("user") || "{}").email || "";
+      const u = JSON.parse(localStorage.getItem("user") || "{}");
+      email = u.email || "";
+      userName = u.name || u.full_name || (email ? email.split("@")[0] : "Cashier");
     } catch {}
-    return { companyId, email };
+    return { companyId, email, userName };
   }, [activeBranch?.id]);
 
   const getCurrencySymbol = () => {
@@ -164,7 +214,8 @@ export default function POSPage() {
 
   const loadData = useCallback(async () => {
     try {
-      const { companyId, email } = getAuthMeta();
+      const { companyId, email, userName } = getAuthMeta();
+      setCashierName(userName);
       const prodKey = getEntityStorageKey("pos_products");
       const txKey = getEntityStorageKey("pos_transactions");
       const savedProds = localStorage.getItem(prodKey);
@@ -189,6 +240,13 @@ export default function POSPage() {
           if (Array.isArray(data.heldCarts)) {
             setHeldCarts(data.heldCarts);
           }
+          if (Array.isArray(data.shifts)) {
+            setAllShifts(data.shifts);
+          }
+          setActiveShift(data.activeShift || null);
+          if (data.activeShift) {
+            setCountedCashInput(String(data.activeShift.expectedDrawerCash ?? 0));
+          }
         }
       } catch {}
 
@@ -204,26 +262,104 @@ export default function POSPage() {
       const sp = new URLSearchParams(window.location.search);
       const qTable = sp.get("table");
       const qMode = sp.get("mode") as PosIndustryMode | null;
-      if (qMode) setPosMode(qMode);
+      if (qMode && qMode in INDUSTRY_STARTER_CATALOGS) setPosMode(qMode);
       if (qTable) {
         setPosMode("food_beverage");
         setOrderType("Dine-In");
         setTableNumber(qTable);
-      } else if (activeBranch?.industryId) {
-        const ind = activeBranch.industryId;
-        if (
-          ind === "food_beverage" ||
-          ind === "retail_supermarket" ||
-          ind === "healthcare_wellness" ||
-          ind === "automotive_workshop" ||
-          ind === "fitness_sports_club"
-        ) {
-          setPosMode(ind);
-        }
+      } else if (activeBranch?.industryId && activeBranch.industryId in INDUSTRY_STARTER_CATALOGS) {
+        setPosMode(activeBranch.industryId as PosIndustryMode);
       }
     }
     loadData();
   }, [activeBranch?.id, activeBranch?.industryId, loadData]);
+
+  // POS Shift Handlers
+  const handleOpenShift = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { companyId, email } = getAuthMeta();
+    const res = await fetch("/api/pos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "open_shift",
+        company_id: companyId,
+        email,
+        terminalName: selectedTerminal,
+        cashierName,
+        openingFloat: parseFloat(openingFloatInput) || 0,
+      }),
+    });
+    const data = await res.json();
+    if (data.success && data.activeShift) {
+      setActiveShift(data.activeShift);
+      setAllShifts(data.shifts || []);
+      setCountedCashInput(String(data.activeShift.expectedDrawerCash));
+      showToast(
+        `Opened ${data.activeShift.shiftNumber} on ${data.activeShift.terminalName} with ${getCurrencySymbol()}${data.activeShift.openingFloat.toFixed(2)} float!`
+      );
+    }
+  };
+
+  const handleRecordCashMovement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeShift) {
+      showToast("Open a Register Shift first before recording drawer movements.");
+      return;
+    }
+    const { companyId, email } = getAuthMeta();
+    const res = await fetch("/api/pos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "cash_movement",
+        company_id: companyId,
+        email,
+        shiftId: activeShift.id,
+        type: cashMoveType,
+        amount: cashMoveType === "no_sale_open" ? 0 : parseFloat(cashMoveAmount) || 0,
+        reason: cashMoveReason,
+        recordedBy: cashierName,
+      }),
+    });
+    const data = await res.json();
+    if (data.success && data.activeShift) {
+      setActiveShift(data.activeShift);
+      setAllShifts(data.shifts || []);
+      setCountedCashInput(String(data.activeShift.expectedDrawerCash));
+      showToast(
+        `Recorded ${cashMoveType.replace(/_/g, " ").toUpperCase()} — Expected Drawer: ${getCurrencySymbol()}${data.activeShift.expectedDrawerCash.toFixed(2)}`
+      );
+    }
+  };
+
+  const handleCloseShiftZReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeShift) return;
+    const { companyId, email } = getAuthMeta();
+    const res = await fetch("/api/pos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "close_shift",
+        company_id: companyId,
+        email,
+        shiftId: activeShift.id,
+        countedClosingCash: parseFloat(countedCashInput || String(activeShift.expectedDrawerCash)),
+        notes: closingNotes,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const closed = data.closedShift;
+      setActiveShift(data.activeShift || null);
+      setAllShifts(data.shifts || []);
+      setClosingNotes("");
+      showToast(
+        `Closed ${closed.shiftNumber} (Z-Report Posted • Variance: ${getCurrencySymbol()}${Number(closed.varianceAmount || 0).toFixed(2)})`
+      );
+    }
+  };
 
   const handleLoadStarterCatalog = async (modeOverride?: PosIndustryMode) => {
     const targetMode = modeOverride || posMode;
@@ -251,7 +387,7 @@ export default function POSPage() {
         }),
       });
     } catch {}
-    showToast(`Loaded ${starter.length} ${targetMode === "food_beverage" ? "Restaurant Menu" : "Supermarket & POS"} items + synced Inventory!`);
+    showToast(`Loaded ${starter.length} items for ${targetMode.replace(/_/g, " ")} & synced Inventory!`);
   };
 
   const addToCart = (product: any) => {
@@ -338,7 +474,6 @@ export default function POSPage() {
   const taxAmount = taxable * (Math.max(0, taxPct) / 100);
   const total = Number((taxable + taxAmount).toFixed(2));
 
-  // Park / Hold Cart
   const handleHoldCart = async () => {
     if (cart.length === 0) return;
     const { companyId, email } = getAuthMeta();
@@ -391,7 +526,6 @@ export default function POSPage() {
     showToast(`Recalled "${held.label}"!`);
   };
 
-  // Send Order to Restaurant Kitchen Display (KDS) — Fixed unified schema!
   const handleSendToKDS = async () => {
     if (cart.length === 0) return;
     const now = new Date();
@@ -404,7 +538,7 @@ export default function POSPage() {
       orderNumber,
       tableNumber: targetTable,
       orderType,
-      server: "POS Cashier",
+      server: cashierName,
       placedAt,
       createdAt: now.toISOString(),
       elapsedMinutes: 0,
@@ -422,13 +556,11 @@ export default function POSPage() {
       })),
     };
 
-    // 1. Save to unified localStorage key read by /pos/kds
     try {
       const kdsKey = getEntityStorageKey("kds_tickets");
       const existing = JSON.parse(localStorage.getItem(kdsKey) || "[]");
       localStorage.setItem(kdsKey, JSON.stringify([ticket, ...(Array.isArray(existing) ? existing : [])]));
 
-      // Update local Floor Plan table status if Dine-In
       if (orderType === "Dine-In") {
         const tblKey = getEntityStorageKey("pos_tables");
         const existingTables = JSON.parse(localStorage.getItem(tblKey) || "[]");
@@ -443,7 +575,6 @@ export default function POSPage() {
       }
     } catch {}
 
-    // 2. Sync to isolated cluster API (/api/pos)
     try {
       const { companyId, email } = getAuthMeta();
       await fetch("/api/pos", {
@@ -491,6 +622,10 @@ export default function POSPage() {
           isRefund: isRefundMode,
           company_id: companyId,
           email,
+          shiftId: activeShift?.id,
+          shiftNumber: activeShift?.shiftNumber,
+          terminalName: activeShift?.terminalName || selectedTerminal,
+          cashierName,
           posMode,
           customerName: customerName.trim() || "Walk-In Customer",
           customerPhone: customerPhone.trim(),
@@ -511,6 +646,11 @@ export default function POSPage() {
       });
 
       const data = await res.json();
+      if (data.activeShift) {
+        setActiveShift(data.activeShift);
+        setCountedCashInput(String(data.activeShift.expectedDrawerCash));
+      }
+
       const txRecord = data.transaction || {
         id: `tx_${Date.now()}`,
         name: `${isRefundMode ? "POS-RET" : "POS"}/${Date.now().toString().slice(-6)}`,
@@ -611,6 +751,10 @@ export default function POSPage() {
     return true;
   });
 
+  const liveVariance = activeShift
+    ? Number(((parseFloat(countedCashInput || "0") || 0) - Number(activeShift.expectedDrawerCash || 0)).toFixed(2))
+    : 0;
+
   if (loading) {
     return (
       <div className="flex flex-col h-screen bg-[#0B101E]">
@@ -630,7 +774,7 @@ export default function POSPage() {
         </div>
       )}
 
-      {/* POS Top Bar */}
+      {/* POS Top Bar with Industry Mode, Live Shift & Cash Drawer Pill, Theme Switcher */}
       <div className="border-b border-gray-800 bg-[#141A28] px-5 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0 no-print">
         <div className="flex flex-wrap items-center gap-2.5">
           <Calculator className="text-emerald-400" size={20} />
@@ -649,10 +793,29 @@ export default function POSPage() {
             <option value="healthcare_wellness">🩺 Clinic, Pharmacy &amp; Salon POS</option>
             <option value="automotive_workshop">🔧 Auto Workshop &amp; Parts POS</option>
             <option value="fitness_sports_club">🎾 Gym, Padel &amp; Club POS</option>
+            <option value="hospitality_travel">🏨 Hotel Front-Desk &amp; Room Service POS</option>
+            <option value="logistics_wholesale">📦 Wholesale &amp; Trade Counter POS</option>
+            <option value="education_academies">🎓 Campus Bookstore &amp; Fee Desk POS</option>
           </select>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
+          {/* LIVE SHIFT & CASH DRAWER CONTROL BUTTON */}
+          <button
+            type="button"
+            onClick={() => setIsShiftModalOpen(true)}
+            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 border cursor-pointer transition ${
+              activeShift
+                ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-300"
+                : "bg-amber-600/20 border-amber-500/40 text-amber-300"
+            }`}
+          >
+            <Wallet size={13} />
+            {activeShift
+              ? `${activeShift.shiftNumber} · Drawer: ${getCurrencySymbol()}${Number(activeShift.expectedDrawerCash || 0).toFixed(2)}`
+              : "Open Shift & Cash Float"}
+          </button>
+
           {posMode === "food_beverage" && (
             <>
               <Link href="/pos/tables" className="px-3 py-1.5 rounded-xl bg-amber-600/20 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-1">
@@ -685,9 +848,17 @@ export default function POSPage() {
           </button>
           <button
             onClick={() => handleLoadStarterCatalog()}
-            className="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 font-bold cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer"
           >
-            + Load {posMode === "food_beverage" ? "Restaurant Menu" : "Supermarket Catalog"}
+            + Load Starter Catalog
+          </button>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title={isLight ? "Switch to Dark Theme" : "Switch to Light Theme"}
+            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-amber-300 cursor-pointer"
+          >
+            {isLight ? <Moon size={15} /> : <Sun size={15} />}
           </button>
         </div>
       </div>
@@ -749,7 +920,7 @@ export default function POSPage() {
                 placeholder={
                   posMode === "retail_supermarket"
                     ? "Scan Barcode / SKU (e.g. 8901001) & press Enter, or search grocery / weighed item..."
-                    : "Search dishes, beverages, or SKU..."
+                    : "Search items, services, rooms, or SKU..."
                 }
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -765,7 +936,6 @@ export default function POSPage() {
             </button>
           </div>
 
-          {/* Category Tabs */}
           <div className="flex flex-wrap gap-1.5 shrink-0">
             {categories.map((cat) => (
               <button
@@ -780,7 +950,6 @@ export default function POSPage() {
             ))}
           </div>
 
-          {/* Product Grid */}
           <div className="flex-1 overflow-y-auto pr-1">
             {filteredProducts.length === 0 ? (
               <div className="h-56 border border-dashed border-gray-800 rounded-2xl flex flex-col items-center justify-center text-center p-6 space-y-3">
@@ -788,14 +957,14 @@ export default function POSPage() {
                   No items in {activeBranch?.name || "your workspace"} POS catalog yet
                 </p>
                 <p className="text-xs text-gray-400 max-w-md">
-                  Load a ready-made starter catalog for {posMode === "food_beverage" ? "Restaurants & Cafes" : "Supermarkets & Retail"} in one click, or add custom items.
+                  Load a ready-made starter catalog for your selected industry in one click, or add custom items.
                 </p>
                 <div className="flex flex-wrap gap-2 justify-center">
                   <button
                     onClick={() => handleLoadStarterCatalog()}
                     className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer"
                   >
-                    + Load {posMode === "food_beverage" ? "Restaurant Menu" : "Supermarket & Weighed Items"}
+                    + Load {posMode.replace(/_/g, " ").toUpperCase()} Catalog
                   </button>
                   <button
                     onClick={() => setIsAddProductOpen(true)}
@@ -814,7 +983,7 @@ export default function POSPage() {
                     className="bg-[#1E293B] border border-gray-700 hover:border-emerald-500 rounded-2xl p-4 cursor-pointer flex flex-col justify-between transition-all active:scale-95"
                   >
                     <div className="flex items-center justify-between text-xs text-gray-400">
-                      <span className="text-2xl">{p.icon || (posMode === "food_beverage" ? "🍽️" : "📦")}</span>
+                      <span className="text-2xl">{p.icon || "📦"}</span>
                       <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-black/30">{p.sku || "SKU"}</span>
                     </div>
                     <div className="mt-3">
@@ -841,7 +1010,6 @@ export default function POSPage() {
 
         {/* Right: Order Cart, Scale/Modifiers, Loyalty & Checkout */}
         <div className="w-full lg:w-[430px] border-t lg:border-t-0 lg:border-l border-gray-800 bg-[#141A28] flex flex-col shrink-0">
-          {/* Register Mode Header + Sale vs Refund Switch */}
           <div className="p-3.5 border-b border-gray-800 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <ShoppingCart size={16} className={isRefundMode ? "text-amber-400" : "text-emerald-400"} />
@@ -859,7 +1027,7 @@ export default function POSPage() {
                 onClick={() => setIsRefundMode(!isRefundMode)}
                 className={`px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer border ${
                   isRefundMode
-                    ? "bg-amber-500/20 border-amber-500 text-amber-300"
+                    ? "bg-amber-600 text-white border-amber-500"
                     : "bg-[#0B101E] border-gray-800 text-gray-400 hover:text-white"
                 }`}
               >
@@ -882,7 +1050,6 @@ export default function POSPage() {
             </div>
           </div>
 
-          {/* Customer / Loyalty Bar */}
           <div className="px-3.5 py-2 bg-[#0F1523] border-b border-gray-800 grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-center gap-1.5 bg-[#141A28] border border-gray-800 rounded-lg px-2.5 py-1">
               <UserCheck size={12} className="text-emerald-400 shrink-0" />
@@ -901,7 +1068,6 @@ export default function POSPage() {
             />
           </div>
 
-          {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-3.5 space-y-2 max-h-64 lg:max-h-none">
             {cart.length === 0 ? (
               <div className="h-36 flex flex-col items-center justify-center text-gray-500 text-xs">
@@ -963,7 +1129,6 @@ export default function POSPage() {
                       </div>
                     </div>
 
-                    {/* Supermarket Quick Scale Weight Presets */}
                     {item.weighed && (
                       <div className="flex items-center gap-1 pt-1 border-t border-gray-800 text-[10px]">
                         <span className="text-amber-300 font-bold flex items-center gap-0.5 mr-1">
@@ -984,7 +1149,6 @@ export default function POSPage() {
                       </div>
                     )}
 
-                    {/* Restaurant Course & Modifier Drawer */}
                     {posMode === "food_beverage" && isExpanded && (
                       <div className="pt-2 border-t border-gray-800 space-y-1.5 text-[10px]">
                         <div className="flex gap-1">
@@ -1026,7 +1190,6 @@ export default function POSPage() {
             )}
           </div>
 
-          {/* Discount, Service Charge, Tax & Payment Controls */}
           <div className="p-3.5 bg-[#0B101E] border-t border-gray-800 space-y-2.5 text-xs">
             <div className={`grid ${posMode === "food_beverage" ? "grid-cols-3" : "grid-cols-2"} gap-2`}>
               <div className="flex items-center justify-between bg-[#141A28] border border-gray-800 rounded-xl px-2.5 py-1.5">
@@ -1226,6 +1389,363 @@ export default function POSPage() {
         </div>
       </div>
 
+      {/* =========================================================================
+          POS TERMINAL SHIFT, CASH DRAWER & X/Z-REPORT MODAL
+         ========================================================================= */}
+      {isShiftModalOpen && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1A2236] rounded-3xl p-6 w-full max-w-2xl border border-white/15 space-y-5 text-xs max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+              <div>
+                <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                  <Wallet size={18} className="text-emerald-400" /> POS Terminal Shift, Cash Drawer &amp; Z-Reports
+                </h3>
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  Manage opening cash floats, mid-shift Pay-Ins &amp; Safe Drops, live expected drawer balances, and blind/counted Z-Report shift closing.
+                </p>
+              </div>
+              <button onClick={() => setIsShiftModalOpen(false)} className="text-gray-400 hover:text-white cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex gap-1.5 bg-[#0F172A] p-1 rounded-xl border border-gray-800 font-bold">
+              <button
+                type="button"
+                onClick={() => setShiftModalTab("drawer")}
+                className={`flex-1 py-2 rounded-lg cursor-pointer ${
+                  shiftModalTab === "drawer" ? "bg-purple-600 text-white" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                1. Shift &amp; Live Cash Drawer
+              </button>
+              <button
+                type="button"
+                onClick={() => setShiftModalTab("cash_ops")}
+                className={`flex-1 py-2 rounded-lg cursor-pointer ${
+                  shiftModalTab === "cash_ops" ? "bg-purple-600 text-white" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                2. Pay In / Safe Drop / Petty Cash
+              </button>
+              <button
+                type="button"
+                onClick={() => setShiftModalTab("close_z")}
+                className={`flex-1 py-2 rounded-lg cursor-pointer ${
+                  shiftModalTab === "close_z" ? "bg-purple-600 text-white" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                3. Close Shift &amp; Z-Reports ({allShifts.length})
+              </button>
+            </div>
+
+            {/* TAB 1: OPEN SHIFT OR LIVE DRAWER TELEMETRY */}
+            {shiftModalTab === "drawer" && (
+              !activeShift ? (
+                <form onSubmit={handleOpenShift} className="space-y-4 bg-[#0F172A] border border-gray-800 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 text-amber-300 font-bold">
+                    <Unlock size={15} /> No Active Shift Open — Count Opening Float to Start Register
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-gray-300 mb-1">POS Register / Terminal</label>
+                      <select
+                        value={selectedTerminal}
+                        onChange={(e) => setSelectedTerminal(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-[#1E293B] border border-gray-700 text-white"
+                      >
+                        {TERMINAL_REGISTERS.map((r) => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-bold text-gray-300 mb-1">Cashier on Duty</label>
+                      <input
+                        value={cashierName}
+                        onChange={(e) => setCashierName(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-[#1E293B] border border-gray-700 text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-300 mb-1">
+                      Opening Cash Float in Drawer ({getCurrencySymbol()})
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        required
+                        value={openingFloatInput}
+                        onChange={(e) => setOpeningFloatInput(e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-xl bg-[#1E293B] border border-emerald-500/40 text-white font-bold text-sm"
+                      />
+                      {["100", "200", "500", "1000"].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setOpeningFloatInput(preset)}
+                          className="px-3 py-2 rounded-xl bg-gray-800 text-gray-200 font-bold cursor-pointer"
+                        >
+                          {getCurrencySymbol()}{preset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm cursor-pointer"
+                  >
+                    Open Register Shift &amp; Initialize Cash Drawer
+                  </button>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-[#0F172A] border border-emerald-500/30 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-emerald-400">
+                        Active Shift · {activeShift.terminalName}
+                      </span>
+                      <h4 className="text-base font-black text-white">
+                        {activeShift.shiftNumber} • Cashier: {activeShift.cashierName}
+                      </h4>
+                      <p className="text-[11px] text-gray-400">
+                        Opened: {new Date(activeShift.openedAt).toLocaleString()} • {activeShift.ordersCount || 0} Sales Rung Up
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Printer size={14} /> Print Mid-Shift X-Report
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="p-3.5 rounded-xl bg-[#0F172A] border border-gray-800">
+                      <span className="text-gray-400 text-[10px] uppercase block">Opening Cash Float</span>
+                      <span className="text-base font-bold text-white">
+                        {getCurrencySymbol()}{Number(activeShift.openingFloat || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-[#0F172A] border border-gray-800">
+                      <span className="text-gray-400 text-[10px] uppercase block">+ Cash Sales (Net)</span>
+                      <span className="text-base font-bold text-emerald-400">
+                        +{getCurrencySymbol()}{Number(activeShift.cashSalesNet || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-[#0F172A] border border-gray-800">
+                      <span className="text-gray-400 text-[10px] uppercase block">+ Pay-Ins / - Safe Drops</span>
+                      <span className="text-base font-bold text-cyan-300">
+                        +{getCurrencySymbol()}{Number(activeShift.payInsTotal || 0).toFixed(2)} / -{getCurrencySymbol()}{Number(activeShift.cashOutsTotal || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-[#0F172A] border border-gray-800">
+                      <span className="text-gray-400 text-[10px] uppercase block">- Cash Refunds</span>
+                      <span className="text-base font-bold text-amber-400">
+                        -{getCurrencySymbol()}{Number(activeShift.cashRefundsTotal || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-[#0F172A] border border-gray-800">
+                      <span className="text-gray-400 text-[10px] uppercase block">Card &amp; QR Non-Cash</span>
+                      <span className="text-base font-bold text-purple-300">
+                        {getCurrencySymbol()}{(Number(activeShift.cardSalesTotal || 0) + Number(activeShift.qrWalletSalesTotal || 0)).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-[#0F172A] border border-emerald-500/40">
+                      <span className="text-emerald-400 text-[10px] uppercase font-bold block">Expected Drawer Cash</span>
+                      <span className="text-lg font-black text-emerald-400">
+                        {getCurrencySymbol()}{Number(activeShift.expectedDrawerCash || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
+
+            {/* TAB 2: CASH IN / SAFE DROP / PETTY CASH / NO-SALE */}
+            {shiftModalTab === "cash_ops" && (
+              <div className="space-y-4">
+                <form onSubmit={handleRecordCashMovement} className="bg-[#0F172A] border border-gray-800 rounded-2xl p-4 space-y-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { id: "safe_drop", label: "Safe Drop (Out)", icon: ArrowDownCircle },
+                      { id: "petty_cash", label: "Petty Cash (Out)", icon: ArrowDownCircle },
+                      { id: "pay_in", label: "Pay In / Float (In)", icon: ArrowUpCircle },
+                      { id: "no_sale_open", label: "No-Sale Pop", icon: Unlock },
+                    ].map((op) => {
+                      const Icon = op.icon;
+                      return (
+                        <button
+                          key={op.id}
+                          type="button"
+                          onClick={() => setCashMoveType(op.id as any)}
+                          className={`p-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 border cursor-pointer ${
+                            cashMoveType === op.id
+                              ? "bg-purple-600 text-white border-purple-500"
+                              : "bg-[#1E293B] text-gray-300 border-gray-700"
+                          }`}
+                        >
+                          <Icon size={13} /> {op.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {cashMoveType !== "no_sale_open" && (
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        required
+                        value={cashMoveAmount}
+                        onChange={(e) => setCashMoveAmount(e.target.value)}
+                        placeholder="Cash Amount *"
+                        className="px-3 py-2 rounded-xl bg-[#1E293B] border border-gray-700 text-white font-bold"
+                      />
+                    )}
+                    <input
+                      required
+                      value={cashMoveReason}
+                      onChange={(e) => setCashMoveReason(e.target.value)}
+                      placeholder="Reason (e.g. Safe envelope drop #2, supplier ice delivery)..."
+                      className="px-3 py-2 rounded-xl bg-[#1E293B] border border-gray-700 text-white"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer"
+                  >
+                    Record Cash Drawer Operation
+                  </button>
+                </form>
+
+                <div className="space-y-2">
+                  <h4 className="font-bold text-gray-300">Drawer Audit Trail ({(activeShift?.cashMovements || []).length})</h4>
+                  {(activeShift?.cashMovements || []).length === 0 ? (
+                    <p className="text-gray-500 py-4 text-center">No cash drawer movements logged in this shift yet.</p>
+                  ) : (
+                    (activeShift.cashMovements || []).map((m: any) => (
+                      <div key={m.id} className="p-3 rounded-xl bg-[#0F172A] border border-gray-800 flex items-center justify-between">
+                        <div>
+                          <div className="font-bold text-white uppercase">{m.type.replace(/_/g, " ")} — {m.reason}</div>
+                          <div className="text-[10px] text-gray-400">{new Date(m.createdAt).toLocaleTimeString()} • by {m.recordedBy}</div>
+                        </div>
+                        <span className={`font-black ${m.type === "pay_in" ? "text-emerald-400" : "text-amber-400"}`}>
+                          {m.type === "pay_in" ? "+" : "-"}{getCurrencySymbol()}{Number(m.amount || 0).toFixed(2)}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: CLOSE SHIFT & Z-REPORT HISTORY */}
+            {shiftModalTab === "close_z" && (
+              <div className="space-y-4">
+                {activeShift && (
+                  <form onSubmit={handleCloseShiftZReport} className="bg-[#0F172A] border border-gray-800 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white flex items-center gap-1.5">
+                        <Lock size={14} className="text-rose-400" /> End-of-Shift Counted Cash Reconciliation ({activeShift.shiftNumber})
+                      </span>
+                      <span className="font-bold text-emerald-400">
+                        Expected: {getCurrencySymbol()}{Number(activeShift.expectedDrawerCash || 0).toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-gray-400 mb-1">Actual Physical Cash Counted in Drawer *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          required
+                          value={countedCashInput}
+                          onChange={(e) => setCountedCashInput(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-[#1E293B] border border-gray-700 text-white font-bold"
+                        />
+                      </div>
+                      <div className="p-3 rounded-xl bg-[#1E293B] border border-gray-700 flex flex-col justify-center">
+                        <span className="text-[10px] text-gray-400 uppercase">Over / Short Variance</span>
+                        <span
+                          className={`text-base font-black ${
+                            Math.abs(liveVariance) < 0.01
+                              ? "text-emerald-400"
+                              : liveVariance > 0
+                              ? "text-cyan-300"
+                              : "text-rose-400"
+                          }`}
+                        >
+                          {Math.abs(liveVariance) < 0.01
+                            ? "EXACT MATCH ($0.00)"
+                            : `${liveVariance > 0 ? "+" : ""}${getCurrencySymbol()}${liveVariance.toFixed(2)} (${
+                                liveVariance > 0 ? "OVER" : "SHORT"
+                              })`}
+                        </span>
+                      </div>
+                    </div>
+
+                    <input
+                      value={closingNotes}
+                      onChange={(e) => setClosingNotes(e.target.value)}
+                      placeholder="Shift handover notes (optional)..."
+                      className="w-full px-3 py-2 rounded-xl bg-[#1E293B] border border-gray-700 text-white"
+                    />
+
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer"
+                    >
+                      Close Register Shift &amp; Post Official Z-Report
+                    </button>
+                  </form>
+                )}
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-gray-300">Shift &amp; Z-Report Archive ({allShifts.length})</h4>
+                    <Link href="/pos/orders" className="text-purple-400 underline font-bold">
+                      Open Full POS Orders &amp; Shifts Audit →
+                    </Link>
+                  </div>
+                  {allShifts.map((sh) => (
+                    <div key={sh.id} className="p-3 rounded-xl bg-[#0F172A] border border-gray-800 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-white">
+                          {sh.shiftNumber} • {sh.terminalName} ({sh.status.toUpperCase()})
+                        </div>
+                        <div className="text-[11px] text-gray-400">
+                          Cashier: {sh.cashierName} • Float: {getCurrencySymbol()}{Number(sh.openingFloat || 0).toFixed(2)} • Orders: {sh.ordersCount || 0}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-emerald-400">
+                          Expected: {getCurrencySymbol()}{Number(sh.expectedDrawerCash || 0).toFixed(2)}
+                        </div>
+                        {sh.status === "closed" && (
+                          <div className="text-[10px] text-gray-400">
+                            Counted: {getCurrencySymbol()}{Number(sh.countedClosingCash || 0).toFixed(2)} (Var: {getCurrencySymbol()}{Number(sh.varianceAmount || 0).toFixed(2)})
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Parked / Held Carts Modal */}
       {isHeldDrawerOpen && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -1280,7 +1800,9 @@ export default function POSPage() {
                   <div key={tx.id} className="bg-[#0F172A] border border-gray-800 rounded-xl p-3 flex items-center justify-between text-xs">
                     <div>
                       <div className="font-bold text-white">{tx.name} • {tx.customerName || "Walk-In"}</div>
-                      <div className="text-[11px] text-gray-400">{tx.paymentMethod} • {tx.date}</div>
+                      <div className="text-[11px] text-gray-400">
+                        {tx.shiftNumber || "POS"} • {tx.paymentMethod} • {tx.date}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className={`font-black ${tx.isRefund ? "text-amber-400" : "text-emerald-400"}`}>
@@ -1314,31 +1836,30 @@ export default function POSPage() {
                 <X size={16} />
               </button>
             </div>
-            <div className="bg-white text-black rounded-xl p-4 font-mono text-xs space-y-2">
+            <div className="bg-white text-black rounded-xl p-4 font-mono text-xs space-y-2 border border-slate-200">
               <div className="text-center border-b border-dashed border-gray-400 pb-2">
-                <div className="font-bold text-sm">{activeBranch?.name || "BERAXIS POS"}</div>
-                <div className="text-[10px] text-gray-500">{receiptOrder.orderType} · {receiptOrder.date}</div>
-                {receiptOrder.customerName && (
-                  <div className="text-[10px] text-gray-700 font-semibold">
-                    Customer: {receiptOrder.customerName}
-                    {receiptOrder.loyaltyPointsEarned ? ` (+${receiptOrder.loyaltyPointsEarned} pts)` : ""}
+                <div className="font-bold text-sm text-black">{activeBranch?.name || "BERAXIS POS"}</div>
+                <div className="text-[10px] text-gray-600">{receiptOrder.orderType} · {receiptOrder.date}</div>
+                {receiptOrder.shiftNumber && (
+                  <div className="text-[10px] text-gray-600">
+                    Shift: {receiptOrder.shiftNumber} ({receiptOrder.terminalName || "Register #1"})
                   </div>
                 )}
               </div>
               {(receiptOrder.items || []).map((it: any, idx: number) => (
-                <div key={idx} className="flex justify-between">
+                <div key={idx} className="flex justify-between text-black">
                   <span>
                     {it.qty}{it.weighed ? "kg" : "x"} {it.name}
                   </span>
                   <span>{getCurrencySymbol()}{(it.list_price * it.qty).toFixed(2)}</span>
                 </div>
               ))}
-              <div className="border-t border-dashed border-gray-400 pt-2 font-bold flex justify-between">
+              <div className="border-t border-dashed border-gray-400 pt-2 font-bold flex justify-between text-black">
                 <span>TOTAL ({receiptOrder.paymentMethod})</span>
                 <span>{getCurrencySymbol()}{Number(receiptOrder.total || 0).toFixed(2)}</span>
               </div>
               {receiptOrder.changeDue > 0 && (
-                <div className="flex justify-between text-[11px]">
+                <div className="flex justify-between text-[11px] text-black">
                   <span>CHANGE DUE</span>
                   <span>{getCurrencySymbol()}{Number(receiptOrder.changeDue).toFixed(2)}</span>
                 </div>
@@ -1367,7 +1888,7 @@ export default function POSPage() {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#1A2236] rounded-2xl p-6 w-full max-w-md border border-white/10 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white">Add POS Item / Weighed Produce / Dish</h3>
+              <h3 className="text-base font-bold text-white">Add POS Item / Weighed Produce / Service</h3>
               <button onClick={() => setIsAddProductOpen(false)} className="text-gray-400 hover:text-white cursor-pointer">
                 <X size={18} />
               </button>
