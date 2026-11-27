@@ -231,7 +231,7 @@ export default function InventoryPage() {
     const [rawCsvText, setRawCsvText] = useState("");
     const [parsedCsvProducts, setParsedCsvProducts] = useState<Partial<Product>[]>([]);
 
-    // Entity-scoped data loading
+    // Entity-scoped + Isolated Cluster DB loading (synced live with POS & Sales deductions!)
     useEffect(() => {
         if (!activeBranch) return;
         const key = getEntityStorageKey("inventory_products");
@@ -245,10 +245,29 @@ export default function InventoryPage() {
                 setProducts([]);
             }
         } else {
-            // Fresh isolated company starts empty
             setProducts([]);
         }
-    }, [activeBranch?.id]);
+
+        let email = "";
+        try {
+            email = JSON.parse(localStorage.getItem("user") || "{}").email || "";
+        } catch {}
+        fetch(
+            `/api/workspace/state?company_id=${encodeURIComponent(activeBranch.id)}&email=${encodeURIComponent(email)}&key=inventory`,
+            { cache: "no-store" }
+        )
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d) => {
+                if (d && Array.isArray(d.value) && d.value.length > 0) {
+                    setProducts(d.value);
+                    if (d.value[0]?.id) setAdjustProdId(d.value[0].id);
+                    try {
+                        localStorage.setItem(key, JSON.stringify(d.value));
+                    } catch {}
+                }
+            })
+            .catch(() => {});
+    }, [activeBranch?.id, getEntityStorageKey]);
 
     const showToast = (msg: string) => {
         setToastMsg(msg);
@@ -260,6 +279,22 @@ export default function InventoryPage() {
         try {
             const key = getEntityStorageKey("inventory_products");
             localStorage.setItem(key, JSON.stringify(updated));
+            if (activeBranch?.id) {
+                let email = "";
+                try {
+                    email = JSON.parse(localStorage.getItem("user") || "{}").email || "";
+                } catch {}
+                fetch("/api/workspace/state", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        company_id: activeBranch.id,
+                        email,
+                        key: "inventory",
+                        value: updated,
+                    }),
+                }).catch(() => {});
+            }
         } catch {}
     };
 

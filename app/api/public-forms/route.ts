@@ -69,6 +69,8 @@ export interface PublicFormDef {
   companyId: string;
   companyName: string;
   ownerEmail?: string;
+  visibility?: "public" | "private";
+  accessPin?: string;
   title: string;
   description: string;
   campaign: string;
@@ -221,7 +223,55 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Public form not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, form }, { headers: { "Cache-Control": "no-store" } });
+    // Enforce Private Form Access Control!
+    if (form.visibility === "private") {
+      const viewerEmail = (searchParams.get("viewer_email") || "").trim().toLowerCase();
+      const accessPin = (searchParams.get("access_pin") || "").trim();
+
+      let isUnlocked = false;
+      if (form.accessPin && accessPin && accessPin === form.accessPin) {
+        isUnlocked = true;
+      } else if (viewerEmail) {
+        // Must belong to this specific isolated cluster (owner or invited company member)
+        if (form.ownerEmail && viewerEmail === form.ownerEmail.toLowerCase()) {
+          isUnlocked = true;
+        } else {
+          const access = await verifyClusterAccess(targetCluster, viewerEmail);
+          if (access.allowed && access.manifest?.ownerEmail) {
+            isUnlocked = true;
+          }
+        }
+      }
+
+      if (!isUnlocked) {
+        return NextResponse.json(
+          {
+            success: true,
+            locked: true,
+            form: {
+              id: form.id,
+              companyId: form.companyId,
+              companyName: form.companyName,
+              visibility: "private",
+              hasPin: Boolean(form.accessPin),
+              title: form.title,
+              description: "This is a private internal workspace form. Sign in as an authorized company member or enter the form Access PIN.",
+              campaign: form.campaign,
+              submitLabel: form.submitLabel,
+              fields: [],
+              submissionsCount: form.submissionsCount || 0,
+              createdAt: form.createdAt,
+            },
+          },
+          { headers: { "Cache-Control": "no-store" } }
+        );
+      }
+    }
+
+    return NextResponse.json(
+      { success: true, locked: false, form },
+      { headers: { "Cache-Control": "no-store" } }
+    );
   }
 
   // 2. Authenticated Dashboard Query -> Reads ONLY from the user's own isolated company cluster(s)!
@@ -312,6 +362,8 @@ export async function POST(req: NextRequest) {
       companyId: clusterId,
       companyName: body.companyName || "Isolated Workspace",
       ownerEmail: ownerEmail || undefined,
+      visibility: body.visibility === "private" ? "private" : "public",
+      accessPin: body.accessPin ? String(body.accessPin).trim() : undefined,
       title: body.title || "Public Lead Form",
       description: body.description || "Fill out this form and our team will contact you shortly.",
       campaign: body.campaign || "Public Web Form",
@@ -370,6 +422,33 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
     }
 
+    // Strictly enforce authorization before accepting submissions on Private forms!
+    if (targetForm.visibility === "private") {
+      const viewerEmail = String(body.viewerEmail || body.viewer_email || "").trim().toLowerCase();
+      const accessPin = String(body.accessPin || body.access_pin || "").trim();
+      let authorized = false;
+
+      if (targetForm.accessPin && accessPin && accessPin === targetForm.accessPin) {
+        authorized = true;
+      } else if (viewerEmail) {
+        if (targetForm.ownerEmail && viewerEmail === targetForm.ownerEmail.toLowerCase()) {
+          authorized = true;
+        } else {
+          const access = await verifyClusterAccess(targetCluster, viewerEmail);
+          if (access.allowed && access.manifest?.ownerEmail) {
+            authorized = true;
+          }
+        }
+      }
+
+      if (!authorized) {
+        return NextResponse.json(
+          { error: "PRIVATE_FORM_LOCKED: Sign in to this company workspace or provide a valid Access PIN to submit this private form." },
+          { status: 403 }
+        );
+      }
+    }
+
     const lead = {
       id: `FORM-${Date.now().toString().slice(-6)}`,
       formId: targetForm.id,
@@ -410,6 +489,56 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: true, clusterId: targetCluster, lead });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || "Submission failed" }, { status: 400 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    await ensureLegacyFormsMigratedToIsolatedClusters();
+    const body = await req.json();
+    const id = String(body.id || body.formId || "").trim();
+    const ownerEmail = String(body.ownerEmail || body.owner_email || "").trim().toLowerCase();
+    if (!id) {
+      return NextResponse.json({ error: "Form id is required" }, { status: 400 });
+    }
+
+    const targetCluster =
+      (await resolvePublicFormCluster(id)) || resolveSafeClusterId(body.companyId, ownerEmail);
+
+    const access = await verifyClusterAccess(targetCluster, ownerEmail || null);
+    if (!access.allowed) {
+      return NextResponse.json({ error: access.reason || "Forbidden" }, { status: 403 });
+    }
+
+    const existingForms = await readClusterCollection<PublicFormDef[]>(
+      targetCluster,
+      "public_forms",
+      []
+    );
+    const idx = existingForms.findIndex((f) => f.id === id);
+    if (idx === -1) {
+      return NextResponse.json({ error: "Form not found" }, { status: 404 });
+    }
+
+    const updated: PublicFormDef = {
+      ...existingForms[idx],
+      visibility:
+        body.visibility === "private" || body.visibility === "public"
+          ? body.visibility
+          : existingForms[idx].visibility || "public",
+      accessPin:
+        body.accessPin !== undefined
+          ? String(body.accessPin || "").trim() || undefined
+          : existingForms[idx].accessPin,
+    };
+
+    const next = [...existingForms];
+    next[idx] = updated;
+    await writeClusterCollection(targetCluster, "public_forms", next);
+
+    return NextResponse.json({ success: true, clusterId: targetCluster, form: updated });
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message || "Failed to update form" }, { status: 400 });
   }
 }
 

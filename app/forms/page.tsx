@@ -20,6 +20,9 @@ import {
   Download,
   Search,
   Building2,
+  Lock,
+  Globe,
+  KeyRound,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useBranchContext } from "@/lib/branchContext";
@@ -63,6 +66,9 @@ export default function PublicFormsPage() {
   const [description, setDescription] = useState("Leave your details and our team will call you back shortly.");
   const [campaign, setCampaign] = useState("Inbound Web Form");
   const [submitLabel, setSubmitLabel] = useState("Submit Request");
+  const [visibility, setVisibility] = useState<"public" | "private">("public");
+  const [accessPin, setAccessPin] = useState("");
+  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "public" | "private">("all");
   const [saving, setSaving] = useState(false);
   const [fields, setFields] = useState<PublicFormField[]>([
     { id: "name", label: "Full Name", type: "text", required: true, placeholder: "Your full name" },
@@ -224,6 +230,8 @@ export default function PublicFormsPage() {
           companyId,
           companyName,
           ownerEmail,
+          visibility,
+          accessPin: visibility === "private" ? accessPin.trim() : "",
           title: title.trim(),
           description: description.trim(),
           campaign: campaign.trim(),
@@ -242,11 +250,39 @@ export default function PublicFormsPage() {
           localStorage.setItem(`beraxis_public_form_${data.form.id}`, JSON.stringify(data.form));
         } catch {}
         setTitle("");
+        setAccessPin("");
+        setVisibility("public");
         setIsBuilderOpen(false);
       }
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleToggleVisibility = async (formItem: PublicFormDef) => {
+    const nextVis: "public" | "private" =
+      formItem.visibility === "private" ? "public" : "private";
+    const updatedList = forms.map((f) =>
+      f.id === formItem.id ? { ...f, visibility: nextVis } : f
+    );
+    setForms(updatedList);
+    try {
+      localStorage.setItem(getEntityStorageKey("public_forms_list"), JSON.stringify(updatedList));
+      localStorage.setItem(
+        `beraxis_public_form_${formItem.id}`,
+        JSON.stringify({ ...formItem, visibility: nextVis })
+      );
+    } catch {}
+    await fetch("/api/public-forms", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: formItem.id,
+        companyId: formItem.companyId || companyId,
+        ownerEmail,
+        visibility: nextVis,
+      }),
+    }).catch(() => {});
   };
 
   const handleDeleteForm = async (id: string) => {
@@ -367,11 +403,11 @@ export default function PublicFormsPage() {
       <div className="beraxis-glass-hero p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-purple-300 mb-1">
-            <ClipboardList size={14} /> Public Lead-Capture Forms · {companyName}
+            <ClipboardList size={14} /> Public &amp; Private Intake Forms · {companyName}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Public Forms, Carriers &amp; Team Intake</h1>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Forms Builder, Carriers &amp; Team Intake</h1>
           <p className="text-xs text-gray-300 mt-1">
-            Customize forms with FreeFex Call Center Carriers, Team Member dropdowns, and moveable fields. Submissions route straight to your Lead Sheet.
+            Build <strong>Public</strong> client-facing web forms or <strong>Private</strong> internal floor/team intake forms with optional PIN lock.
           </p>
         </div>
 
@@ -388,7 +424,7 @@ export default function PublicFormsPage() {
             onClick={() => setIsBuilderOpen(true)}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-95 text-xs font-bold flex items-center gap-1.5 shadow-lg cursor-pointer"
           >
-            <Plus size={14} /> Create Public Form
+            <Plus size={14} /> Create Form
           </button>
         </div>
       </div>
@@ -416,6 +452,29 @@ export default function PublicFormsPage() {
               <Eye size={13} /> View Submissions ({submissions.length})
             </button>
           </div>
+
+          {activeView === "forms" && (
+            <div className="inline-flex p-1 rounded-2xl bg-white/5 border border-white/10 gap-1 text-xs font-bold">
+              {(["all", "public", "private"] as const).map((vf) => (
+                <button
+                  key={vf}
+                  type="button"
+                  onClick={() => setVisibilityFilter(vf)}
+                  className={`px-3 py-1.5 rounded-xl capitalize cursor-pointer transition-all flex items-center gap-1 ${
+                    visibilityFilter === vf
+                      ? vf === "private"
+                        ? "bg-amber-500 text-slate-950 shadow"
+                        : "bg-indigo-600 text-white shadow"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {vf === "public" && <Globe size={11} />}
+                  {vf === "private" && <Lock size={11} />}
+                  <span>{vf}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {branches.length > 1 && (
             <div className="inline-flex p-1 rounded-2xl bg-white/5 border border-white/10 gap-1 text-xs font-bold">
@@ -540,13 +599,42 @@ export default function PublicFormsPage() {
       ) : (
       /* Forms Dashboard Grid */
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {forms.map((f) => (
+        {forms
+          .filter((f) => {
+            const v = f.visibility || "public";
+            if (visibilityFilter === "all") return true;
+            return v === visibilityFilter;
+          })
+          .map((f) => {
+            const isPrivate = f.visibility === "private";
+            return (
           <div key={f.id} className="beraxis-glass-dock p-6 space-y-4 flex flex-col justify-between">
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                  {f.campaign}
-                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    {f.campaign}
+                  </span>
+                  {f.id !== "beraxis-callback" ? (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleVisibility(f)}
+                      title="Click to switch between Public and Private"
+                      className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border inline-flex items-center gap-1 cursor-pointer transition-all ${
+                        isPrivate
+                          ? "bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40"
+                          : "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/35"
+                      }`}
+                    >
+                      {isPrivate ? <Lock size={10} /> : <Globe size={10} />}
+                      <span>{isPrivate ? "Private" : "Public"}</span>
+                    </button>
+                  ) : (
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/35 inline-flex items-center gap-1">
+                      <Globe size={10} /> Public Template
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-emerald-400">{f.submissionsCount || 0} Submissions</span>
                   {f.id !== "beraxis-callback" && (
@@ -609,7 +697,8 @@ export default function PublicFormsPage() {
               </Link>
             </div>
           </div>
-        ))}
+            );
+          })}
       </div>
       )}
 
@@ -625,6 +714,63 @@ export default function PublicFormsPage() {
             </div>
 
             <form onSubmit={handleCreateForm} className="space-y-5">
+              {/* Public vs Private Access Mode Toggle */}
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-white/10 space-y-3">
+                <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-300">
+                  Form Access &amp; Visibility
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setVisibility("public")}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      visibility === "public"
+                        ? "bg-emerald-500/15 border-emerald-500 text-white"
+                        : "bg-white/[0.03] border-white/10 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <div className="text-xs font-extrabold flex items-center gap-1.5 text-emerald-300">
+                      <Globe size={14} /> Public Form
+                    </div>
+                    <div className="text-[10px] text-gray-300 mt-0.5">
+                      Anyone with the shareable link can view &amp; submit (clients, ads, website).
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setVisibility("private")}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      visibility === "private"
+                        ? "bg-amber-500/15 border-amber-500 text-white"
+                        : "bg-white/[0.03] border-white/10 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <div className="text-xs font-extrabold flex items-center gap-1.5 text-amber-300">
+                      <Lock size={14} /> Private Workspace Form
+                    </div>
+                    <div className="text-[10px] text-gray-300 mt-0.5">
+                      Restricted to logged-in company members or internal agents with PIN.
+                    </div>
+                  </button>
+                </div>
+
+                {visibility === "private" && (
+                  <div className="pt-1">
+                    <label className="block text-[11px] font-bold text-amber-300 mb-1 flex items-center gap-1.5">
+                      <KeyRound size={12} /> Optional Internal Agent Access PIN
+                    </label>
+                    <input
+                      type="text"
+                      value={accessPin}
+                      onChange={(e) => setAccessPin(e.target.value)}
+                      placeholder="e.g. 4820 (allows floor agents without login to unlock /f/link)"
+                      className="w-full px-3 py-2 rounded-xl bg-black/40 border border-amber-500/35 text-xs text-white outline-none focus:border-amber-400"
+                    />
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-gray-300 mb-1">Form Title *</label>
