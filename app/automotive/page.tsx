@@ -315,7 +315,7 @@ export default function AutomotiveWorkshopPage() {
             onClick={() => setIsNewJobModalOpen(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-red-600/30 transition-all active:scale-95"
           >
-            <Plus size={14} /> + Open Vehicle Job Card
+            <Plus size={14} /> Open Vehicle Job Card
           </button>
         </div>
 
@@ -335,7 +335,7 @@ export default function AutomotiveWorkshopPage() {
               onClick={() => setIsNewJobModalOpen(true)}
               className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-red-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
             >
-              <Plus size={16} /> + Open First Vehicle Job Card
+              <Plus size={16} /> Open First Vehicle Job Card
             </button>
           </div>
         ) : (

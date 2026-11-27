@@ -141,7 +141,7 @@ export default function InventoryOperationsPage() {
             <p className="text-sm text-gray-400 mt-1">{operations.length} warehouse movement(s)</p>
           </div>
           <button onClick={() => setIsModalOpen(true)} className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer">
-            <Plus size={15} /> + New Operation
+            <Plus size={15} /> New Operation
           </button>
         </div>
 

@@ -414,8 +414,8 @@ export default function BarcodePage() {
                                 type="text"
                                 value={barcodeInput}
                                 onChange={(e) => setBarcodeInput(e.target.value)}
-                                placeholder="Scan or type barcode / workspace SKU..."
-                                className="w-full bg-gray-950/90 border-2 border-pink-500/60 rounded-2xl px-5 py-3.5 text-white focus:border-pink-400 focus:outline-none text-center text-lg tracking-widest font-mono shadow-inner font-bold"
+                                placeholder="Scan or type barcode / SKU..."
+                                className="w-full bg-gray-950/90 border-2 border-pink-500/60 rounded-2xl pl-5 pr-20 py-3.5 text-white focus:border-pink-400 focus:outline-none text-center text-base sm:text-lg tracking-wider font-mono shadow-inner font-bold"
                                 autoFocus
                             />
                             <button

@@ -78,7 +78,7 @@ export default function StandardModuleHeader({
                         }`}
                     >
                         <img src="/logo2.png" alt="Beraxis Logo" className="h-6 w-auto" />
-                        <span className={`font-extrabold text-sm tracking-tight hidden xl:inline ${isLight ? "text-slate-900" : "text-white"}`}>BERAXIS</span>
+                        <span className={`font-extrabold text-sm tracking-tight hidden 2xl:inline ${isLight ? "text-slate-900" : "text-white"}`}>BERAXIS</span>
                     </Link>
 
                     {/* Back to Apps Button */}
@@ -92,7 +92,7 @@ export default function StandardModuleHeader({
                         }`}
                     >
                         <ArrowLeft size={15} />
-                        <span className="hidden sm:inline">Back</span>
+                        <span className="hidden 2xl:inline">Back</span>
                     </Link>
 
                     {/* Apps Dashboard Launcher Button */}
@@ -129,7 +129,7 @@ export default function StandardModuleHeader({
                         }`}>
                             {moduleIcon}
                         </div>
-                        <span className="font-bold tracking-tight">{moduleName}</span>
+                        <span className="font-bold tracking-tight truncate max-w-[180px] 2xl:max-w-none">{moduleName}</span>
                     </Link>
 
                     {/* Optional New Action Button */}

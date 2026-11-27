@@ -397,7 +397,7 @@ export default function RealEstatePropertyPage() {
             onClick={() => setIsNewUnitModalOpen(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all active:scale-95"
           >
-            <Plus size={14} /> + Add Property Unit / Lease
+            <Plus size={14} /> {operatingMode === "hospitality" ? "Add Suite / Room" : "Add Property Unit / Lease"}
           </button>
         </div>
 
@@ -417,7 +417,7 @@ export default function RealEstatePropertyPage() {
               onClick={() => setIsNewUnitModalOpen(true)}
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
             >
-              <Plus size={16} /> + Add First Property Unit
+              <Plus size={16} /> {operatingMode === "hospitality" ? "Add First Hotel Suite" : "Add First Property Unit"}
             </button>
           </div>
         ) : (

@@ -309,7 +309,7 @@ export default function NGOsHubPage() {
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-rose-600/30 transition-all active:scale-95 cursor-pointer"
           >
-            <Plus size={14} /> + New Grant / Aid Program
+            <Plus size={14} /> New Grant / Aid Program
           </button>
         </div>
 
@@ -331,7 +331,7 @@ export default function NGOsHubPage() {
               onClick={() => setIsModalOpen(true)}
               className="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-rose-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
             >
-              <Plus size={16} /> + Register First Grant / Program
+              <Plus size={16} /> Register First Grant / Program
             </button>
           </div>
         ) : (

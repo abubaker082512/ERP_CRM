@@ -283,7 +283,7 @@ export default function EducationAcademyPage() {
             onClick={() => setIsEnrollModalOpen(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-teal-600/30 transition-all active:scale-95"
           >
-            <Plus size={14} /> + Enroll New Student
+            <Plus size={14} /> Enroll New Student
           </button>
         </div>
 
@@ -303,7 +303,7 @@ export default function EducationAcademyPage() {
               onClick={() => setIsEnrollModalOpen(true)}
               className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-teal-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
             >
-              <Plus size={16} /> + Enroll First Student
+              <Plus size={16} /> Enroll First Student
             </button>
           </div>
         ) : (
