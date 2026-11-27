@@ -253,16 +253,16 @@ export default function InventoryPage() {
             email = JSON.parse(localStorage.getItem("user") || "{}").email || "";
         } catch {}
         fetch(
-            `/api/workspace/state?company_id=${encodeURIComponent(activeBranch.id)}&email=${encodeURIComponent(email)}&key=inventory`,
+            `/api/inventory?company_id=${encodeURIComponent(activeBranch.id)}&email=${encodeURIComponent(email)}`,
             { cache: "no-store" }
         )
             .then((r) => (r.ok ? r.json() : null))
             .then((d) => {
-                if (d && Array.isArray(d.value) && d.value.length > 0) {
-                    setProducts(d.value);
-                    if (d.value[0]?.id) setAdjustProdId(d.value[0].id);
+                if (d && Array.isArray(d.products) && d.products.length > 0) {
+                    setProducts(d.products);
+                    if (d.products[0]?.id) setAdjustProdId(d.products[0].id);
                     try {
-                        localStorage.setItem(key, JSON.stringify(d.value));
+                        localStorage.setItem(key, JSON.stringify(d.products));
                     } catch {}
                 }
             })
@@ -284,14 +284,13 @@ export default function InventoryPage() {
                 try {
                     email = JSON.parse(localStorage.getItem("user") || "{}").email || "";
                 } catch {}
-                fetch("/api/workspace/state", {
+                fetch("/api/inventory", {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         company_id: activeBranch.id,
                         email,
-                        key: "inventory",
-                        value: updated,
+                        products: updated,
                     }),
                 }).catch(() => {});
             }
