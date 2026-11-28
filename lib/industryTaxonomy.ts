@@ -155,6 +155,8 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
     defaultModules: [
       "/project",
       "/timesheets",
+      "/calendar",
+      "/appointments",
       "/crm",
       "/crm/leads-pool",
       "/sales",
@@ -171,6 +173,7 @@ export const GLOBAL_INDUSTRIES: IndustryArchetype[] = [
     specializedRoutes: [
       { name: "Project Timesheets", href: "/timesheets", icon: "Clock" },
       { name: "Project Milestones", href: "/project", icon: "CheckSquare" },
+      { name: "Client Booking Calendar", href: "/appointments", icon: "Calendar" },
       { name: "Client Document Vault", href: "/documents", icon: "FileText" }
     ],
     defaultDepartments: ["Client Strategy", "Engineering & Dev", "Creative Design", "Finance & Billing", "Human Resources"],

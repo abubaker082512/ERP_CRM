@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useBranchContext } from '@/lib/branchContext';
 import { triggerNotificationRefresh } from '@/lib/notificationContext';
+import ShareBookingCalendarModal from '@/components/shared/ShareBookingCalendarModal';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -40,7 +41,8 @@ const EVENT_TYPE_META: Record<EventType, { label: string; color: string; bg: str
 function generateMeetLink(): string {
     const chars = 'abcdefghijklmnopqrstuvwxyz';
     const seg = (n: number) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-    return `https://meet.beraxis.online/${seg(3)}-${seg(4)}-${seg(3)}`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.beraxis.online';
+    return `${origin}/meet/${seg(3)}-${seg(4)}-${seg(3)}`;
 }
 
 // ─── New Event Modal ────────────────────────────────────────────────────────
@@ -51,12 +53,14 @@ function NewEventModal({
     onSuccess,
     prefillSlot,
     companyId,
+    userEmail,
 }: {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: (created?: CalendarEntry) => void;
     prefillSlot?: { date: Date; hour: number };
     companyId: string;
+    userEmail?: string;
 }) {
     const defaultStart = () => {
         if (prefillSlot) {
@@ -148,7 +152,7 @@ function NewEventModal({
             const res = await fetch('/api/calendar/events', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...created, company_id: companyId }),
+                body: JSON.stringify({ ...created, company_id: companyId, owner_email: userEmail }),
             });
             if (res.ok) {
                 const saved = await res.json().catch(() => created);
@@ -418,10 +422,11 @@ function EventDetailModal({ entry, onClose, onDelete, companyId }: { entry: Cale
 // ─── Main Calendar Page ─────────────────────────────────────────────────────
 
 export default function CalendarPage() {
-    const { activeBranch, getEntityStorageKey } = useBranchContext();
-    const companyId = activeBranch?.id || 'default';
+    const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
+    const companyId = activeBranch?.id || '';
     const [events, setEvents] = useState<CalendarEntry[]>([]);
     const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState<CalendarEntry | null>(null);
     const [weekOffset, setWeekOffset] = useState(0);
     const [prefillSlot, setPrefillSlot] = useState<{ date: Date; hour: number } | undefined>();
@@ -465,13 +470,16 @@ export default function CalendarPage() {
         if (localEvents.length > 0) setEvents(localEvents);
 
         try {
-            const res = await fetch(`/api/calendar/events?company_id=${encodeURIComponent(companyId)}`, { cache: 'no-store' });
+            const params = new URLSearchParams();
+            if (companyId) params.set('company_id', companyId);
+            if (userEmail) params.set('email', userEmail);
+            const res = await fetch(`/api/calendar/events?${params.toString()}`, { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 const apiEvents: CalendarEntry[] = Array.isArray(data?.events) ? data.events : [];
                 if (apiEvents.length > 0) {
-                    const merged = [...localEvents];
-                    apiEvents.forEach((ev) => {
+                    const merged = [...apiEvents];
+                    localEvents.forEach((ev) => {
                         if (!merged.some((m) => m.id === ev.id)) merged.push(ev);
                     });
                     persistEvents(merged);
@@ -479,7 +487,7 @@ export default function CalendarPage() {
             }
         } catch (e) { console.error('Failed to load calendar events', e); }
         finally { setLoading(false); }
-    }, [companyId, getEntityStorageKey, persistEvents]);
+    }, [companyId, userEmail, getEntityStorageKey, persistEvents]);
 
     useEffect(() => { loadEvents(); }, [loadEvents]);
 
@@ -510,6 +518,11 @@ export default function CalendarPage() {
                 }}
                 prefillSlot={prefillSlot}
                 companyId={companyId}
+                userEmail={userEmail}
+            />
+            <ShareBookingCalendarModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
             />
             {selectedEntry && (
                 <EventDetailModal
@@ -564,7 +577,12 @@ export default function CalendarPage() {
                 <div className="flex items-center gap-2">
                     {loading && <span className="text-xs text-gray-500 animate-pulse">Loading...</span>}
                     <button className="px-3 py-1.5 bg-purple-600/10 text-purple-400 border border-purple-500/20 rounded-lg text-xs font-bold hover:bg-purple-600/20 transition-all">Google Sync</button>
-                    <button className="px-3 py-1.5 bg-[#1E293B] border border-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-700 text-gray-300 flex items-center gap-1.5">Share <Share2 size={12} /></button>
+                    <button
+                        onClick={() => setIsShareModalOpen(true)}
+                        className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+                    >
+                        Share Booking Link <Share2 size={12} />
+                    </button>
                 </div>
             </div>
 

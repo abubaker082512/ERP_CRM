@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import ShareBookingCalendarModal from "@/components/shared/ShareBookingCalendarModal";
 import { useBranchContext } from "@/lib/branchContext";
 import Link from "next/link";
 import {
@@ -564,87 +565,10 @@ export default function AppointmentsPage() {
             {/* ========================================================================= */}
             {/* SHARE HOST BOOKING LINK MODAL                                             */}
             {/* ========================================================================= */}
-            {showLinkModal && (
-                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="bg-[#0F172A] border border-gray-700 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-cyan-500/20 text-cyan-400 rounded-xl">
-                                    <Share2 size={22} />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-white text-base">Company & Host Booking Links</h3>
-                                    <p className="text-xs text-gray-400">Share your personalized scheduling calendar with clients</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setShowLinkModal(false)}
-                                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 cursor-pointer"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <div className="space-y-4 text-xs">
-                            <div>
-                                <label className="block text-gray-300 font-semibold mb-1">Select Host Specialist Calendar</label>
-                                <select
-                                    value={selectedHostSlug}
-                                    onChange={(e) => setSelectedHostSlug(e.target.value)}
-                                    className="w-full bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500 cursor-pointer font-semibold"
-                                >
-                                    <option value="salim-ghauri">Salim Ghauri (Principal Architect)</option>
-                                    <option value="sarah-vance">Sarah Vance (Lead UI/UX Designer)</option>
-                                    <option value="bilal-mahmood">Bilal Mahmood (ERP Specialist)</option>
-                                    <option value="erp-demo">Beraxis Solutions Engineering Team</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-gray-300 font-semibold mb-1">Public Scheduling Link</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value={`${typeof window !== "undefined" ? window.location.origin : "https://www.beraxis.online"}/appointments/book/${selectedHostSlug}`}
-                                        className="flex-1 bg-[#1E293B] border border-white/10 rounded-xl px-3 py-2 text-cyan-300 font-mono text-xs select-all focus:outline-none"
-                                    />
-                                    <button
-                                        onClick={() => {
-                                            const url = `${typeof window !== "undefined" ? window.location.origin : "https://www.beraxis.online"}/appointments/book/${selectedHostSlug}`;
-                                            navigator.clipboard.writeText(url);
-                                            showToast("📋 Public calendar booking link copied!");
-                                        }}
-                                        className="bg-cyan-600 hover:bg-cyan-500 text-white px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer"
-                                    >
-                                        <Copy size={14} /> Copy
-                                    </button>
-                                </div>
-                            </div>
-
-                            <p className="text-gray-400 text-[11px] leading-relaxed">
-                                When clients visit this URL, they see your company branding, host profile, and live calendar availability. Scheduled calls automatically generate an in-system video room.
-                            </p>
-
-                            <div className="flex gap-3 pt-2">
-                                <Link
-                                    href={`/appointments/book/${selectedHostSlug}`}
-                                    target="_blank"
-                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold py-2.5 rounded-xl text-center flex items-center justify-center gap-1.5"
-                                >
-                                    <ExternalLink size={14} /> Open Public Page
-                                </Link>
-                                <button
-                                    onClick={() => setShowLinkModal(false)}
-                                    className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2.5 rounded-xl"
-                                >
-                                    Done
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ShareBookingCalendarModal
+                isOpen={showLinkModal}
+                onClose={() => setShowLinkModal(false)}
+            />
 
             {/* ========================================================================= */}
             {/* EMAIL VIDEO INVITE MODAL                                                  */}

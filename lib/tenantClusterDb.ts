@@ -430,6 +430,29 @@ export async function resolvePublicFormCluster(formId: string): Promise<string |
   return ptr?.clusterId || null;
 }
 
+/**
+ * Public Calendar Booking Routing Pointer: maps a shareable booking slug (/appointments/book/[slug])
+ * to its owning isolated clusterId so external customers see ONLY anonymized busy slots for that host
+ * and booked meetings write directly into that company's isolated Calendar & Appointments collections.
+ */
+export async function savePublicBookingRoutePointer(bookingSlug: string, clusterId: string): Promise<void> {
+  const slug = sanitizeSegment(bookingSlug);
+  const cid = sanitizeSegment(clusterId);
+  if (!slug || !cid) return;
+  await writeVaultJson(`routes/bookings/${slug}.json`, {
+    slug,
+    clusterId: cid,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+export async function resolvePublicBookingCluster(bookingSlug: string): Promise<string | null> {
+  const slug = sanitizeSegment(bookingSlug);
+  if (!slug) return null;
+  const ptr = await readVaultJson<{ slug: string; clusterId: string }>(`routes/bookings/${slug}.json`);
+  return ptr?.clusterId || null;
+}
+
 export async function getOwnerClusterIds(ownerEmail: string): Promise<string[]> {
   const emailLower = (ownerEmail || "").trim().toLowerCase();
   if (!emailLower) return [];
