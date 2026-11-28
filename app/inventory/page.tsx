@@ -192,7 +192,7 @@ const UOM_OPTIONS = [
 ];
 
 export default function InventoryPage() {
-    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const { activeBranch, currencySymbol, getEntityStorageKey } = useBranchContext();
     const [products, setProducts] = useState<Product[]>([]);
     const [currentView, setCurrentView] = useState<ViewType>("list");
     const [searchQuery, setSearchQuery] = useState<string>("");
@@ -647,9 +647,9 @@ export default function InventoryPage() {
                                 <TrendingUp size={18} />
                             </div>
                         </div>
-                        <div className="text-2xl font-black text-emerald-400">${totalInventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div className="text-2xl font-black text-emerald-400">{currencySymbol}{totalInventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-1.5">
-                            Cost Value: <span className="text-gray-300 font-semibold">${totalCostValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            Cost Value: <span className="text-gray-300 font-semibold">{currencySymbol}{totalCostValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                     </div>
 
@@ -849,10 +849,10 @@ export default function InventoryPage() {
                                             </td>
 
                                             <td className="px-4 py-3.5 text-right text-gray-300 font-mono font-semibold">
-                                                ${product.unit_price.toFixed(2)}
+                                                {currencySymbol}{product.unit_price.toFixed(2)}
                                             </td>
                                             <td className="px-4 py-3.5 text-right font-black text-emerald-400 font-mono">
-                                                ${(product.quantity * product.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                {currencySymbol}{(product.quantity * product.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                             <td className="px-5 py-3.5 text-center">
                                                 {product.status === "in_stock" && (
@@ -934,7 +934,7 @@ export default function InventoryPage() {
                                         </div>
                                         <div className="flex justify-between text-gray-400">
                                             <span>Unit Retail:</span>
-                                            <span className="text-emerald-400 font-semibold">${product.unit_price.toFixed(2)}</span>
+                                            <span className="text-emerald-400 font-semibold">{currencySymbol}{product.unit_price.toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -950,7 +950,7 @@ export default function InventoryPage() {
                                         <div className="text-right">
                                             <div className="text-[10px] uppercase text-gray-500 font-semibold">Valuation</div>
                                             <div className="text-base font-black text-emerald-400">
-                                                ${(product.quantity * product.unit_price).toLocaleString()}
+                                                {currencySymbol}{(product.quantity * product.unit_price).toLocaleString()}
                                             </div>
                                         </div>
                                     </div>
@@ -1011,12 +1011,22 @@ export default function InventoryPage() {
                                 {activeBranch?.name ? `Your stock ledger for "${activeBranch.name}" is completely isolated and starting clean.` : "Start by registering your first SKU or importing items from CSV."}
                             </p>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center justify-center gap-3">
                             <button
                                 onClick={() => setIsAddModalOpen(true)}
                                 className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-purple-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
                             >
                                 <Plus size={16} /> Register First SKU
+                            </button>
+                            <button
+                                onClick={() => {
+                                    persistProducts(INITIAL_PRODUCTS);
+                                    if (INITIAL_PRODUCTS[0]?.id) setAdjustProdId(INITIAL_PRODUCTS[0].id);
+                                    showToast(`Loaded ${INITIAL_PRODUCTS.length} sample warehouse SKUs into inventory!`);
+                                }}
+                                className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-emerald-500/30 flex items-center gap-2 cursor-pointer transition"
+                            >
+                                <Sparkles size={15} /> Load Sample SKUs
                             </button>
                             <button
                                 onClick={() => setIsBulkCsvModalOpen(true)}
@@ -1148,7 +1158,7 @@ export default function InventoryPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Cost Price ($)</label>
+                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Cost Price ({currencySymbol.trim()})</label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -1159,7 +1169,7 @@ export default function InventoryPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Retail Price ($)</label>
+                                    <label className="block text-xs font-semibold text-gray-300 mb-1">Retail Price ({currencySymbol.trim()})</label>
                                     <input
                                         type="number"
                                         step="0.01"

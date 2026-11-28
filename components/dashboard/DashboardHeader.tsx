@@ -11,10 +11,14 @@ import {
     MessageSquare,
     Settings,
     RefreshCw,
-    UploadCloud
+    UploadCloud,
+    Sun,
+    Moon
 } from "lucide-react";
 import UniversalModuleSearch from "@/components/shared/UniversalModuleSearch";
 import UserProfileDropdown from "@/components/shared/UserProfileDropdown";
+import UniversalBranchSwitcher from "@/components/shared/UniversalBranchSwitcher";
+import { useTheme } from "@/lib/themeContext";
 
 interface DashboardHeaderProps {
     onSync?: () => void;
@@ -32,6 +36,7 @@ export default function DashboardHeader({
 }: DashboardHeaderProps) {
     const pathname = usePathname();
     const router = useRouter();
+    const { isLight, toggleTheme } = useTheme();
 
     const navItems = [
         { name: "Overview", href: "/dashboard" },
@@ -140,7 +145,16 @@ export default function DashboardHeader({
                 </div>
 
                 {/* Right Action Icons & User Profile Dropdown */}
-                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    <UniversalBranchSwitcher />
+                    <button
+                        type="button"
+                        onClick={toggleTheme}
+                        title={isLight ? "Switch to Dark Cosmic Theme" : "Switch to Frosted Light Theme"}
+                        className="p-1.5 rounded-lg text-amber-400 hover:bg-white/10 transition-colors cursor-pointer"
+                    >
+                        {isLight ? <Moon size={16} /> : <Sun size={16} />}
+                    </button>
                     {/* Migration Hub Quick Action */}
                     <Link
                         href="/migration"

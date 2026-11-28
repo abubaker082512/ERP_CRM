@@ -137,7 +137,7 @@ function LoginForm() {
                             <div className="flex items-center justify-between mb-1.5">
                                 <label className="block text-sm font-medium text-gray-300">Password</label>
                                 <a
-                                    href="/contact?subject=Password%20Reset%20Request"
+                                    href="/forgot-password"
                                     className="text-xs text-purple-400 hover:text-purple-300 font-medium transition-colors"
                                 >
                                     Forgot password?

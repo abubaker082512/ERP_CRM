@@ -40,7 +40,7 @@ type NGOProgram = {
 };
 
 export default function NGOsHubPage() {
-  const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
+  const { activeBranch, userEmail, currencySymbol, getEntityStorageKey } = useBranchContext();
   const [programs, setPrograms] = useState<NGOProgram[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [fundFilter, setFundFilter] = useState<string>("ALL");
@@ -174,7 +174,7 @@ export default function NGOsHubPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setToastMsg(`Disbursed +$5,000 field tranche & synced ${prog.fundType.toUpperCase()} grant pledge ($${prog.grantAmount.toLocaleString()}) to Fund Accounting!`);
+        setToastMsg(`Disbursed +${currencySymbol}5,000 field tranche & synced ${prog.fundType.toUpperCase()} grant pledge (${currencySymbol}${prog.grantAmount.toLocaleString()}) to Fund Accounting!`);
         setTimeout(() => setToastMsg(""), 5000);
       }
     } catch {}
@@ -193,8 +193,8 @@ export default function NGOsHubPage() {
         <hr style="border:none;border-top:1px solid #cbd5e1;margin:16px 0"/>
         <p><strong>Donor / Institution:</strong> ${prog.donorName} (${prog.donorEmail})</p>
         <p><strong>Program Allocation:</strong> ${prog.programTitle} (${prog.fundType.toUpperCase()} FUND)</p>
-        <p><strong>Committed Contribution:</strong> $${prog.grantAmount.toLocaleString()} USD</p>
-        <p><strong>Field Disbursement To Date:</strong> $${prog.disbursedAmount.toLocaleString()} USD • Beneficiaries: ${prog.beneficiariesReached.toLocaleString()}</p>
+        <p><strong>Committed Contribution:</strong> ${currencySymbol}${prog.grantAmount.toLocaleString()} (${activeBranch?.currency || "USD"})</p>
+        <p><strong>Field Disbursement To Date:</strong> ${currencySymbol}${prog.disbursedAmount.toLocaleString()} • Beneficiaries: ${prog.beneficiariesReached.toLocaleString()}</p>
         <p style="margin-top:28px;font-size:12px;color:#64748b">Certified compliant with Restricted/Unrestricted NGO Fund Accounting Standards. Date: ${new Date().toLocaleDateString()}</p>
       </div><script>window.print();</script></body></html>
     `);
@@ -232,7 +232,7 @@ export default function NGOsHubPage() {
           <div className="galaxy-card p-4 rounded-2xl bg-[#101422] border border-emerald-500/20 flex items-center justify-between">
             <div>
               <span className="text-[10px] font-bold uppercase text-gray-400">Total Grant & Donor Pool</span>
-              <h3 className="text-2xl font-bold text-emerald-400 mt-0.5">${totalGrantFunding.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-emerald-400 mt-0.5">{currencySymbol}{totalGrantFunding.toLocaleString()}</h3>
               <p className="text-[10px] text-gray-400 mt-0.5">Restricted & Unrestricted</p>
             </div>
             <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl">
@@ -356,7 +356,7 @@ export default function NGOsHubPage() {
                         <h4 className="font-bold text-white text-sm mt-0.5">{prog.programTitle}</h4>
                         <p className="text-xs text-gray-400">{prog.donorName}</p>
                       </div>
-                      <span className="text-xs font-bold text-emerald-400">${prog.grantAmount.toLocaleString()}</span>
+                      <span className="text-xs font-bold text-emerald-400">{currencySymbol}{prog.grantAmount.toLocaleString()}</span>
                     </div>
 
                     <p className="text-xs text-purple-300 line-clamp-1 font-medium">
@@ -407,7 +407,7 @@ export default function NGOsHubPage() {
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="p-4 rounded-2xl bg-gray-950/70 border border-gray-800">
                     <span className="text-gray-500 block text-[10px] uppercase">Total Committed Grant</span>
-                    <span className="font-bold text-emerald-400 text-lg">${selectedProgram.grantAmount.toLocaleString()} USD</span>
+                    <span className="font-bold text-emerald-400 text-lg">{currencySymbol}{selectedProgram.grantAmount.toLocaleString()}</span>
                     <span className="text-[10px] text-purple-300 block mt-1 uppercase font-semibold">
                       ● {selectedProgram.fundType} Fund Allocation
                     </span>
@@ -416,7 +416,7 @@ export default function NGOsHubPage() {
                     <span className="text-gray-500 block text-[10px] uppercase">Verified Beneficiaries Reached</span>
                     <span className="font-bold text-white text-lg">{selectedProgram.beneficiariesReached.toLocaleString()} People</span>
                     <span className="text-[10px] text-cyan-300 block mt-1">
-                      Disbursed: ${selectedProgram.disbursedAmount.toLocaleString()} USD
+                      Disbursed: {currencySymbol}{selectedProgram.disbursedAmount.toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -427,7 +427,7 @@ export default function NGOsHubPage() {
                     onClick={() => handleDisburseAndSyncGrant(selectedProgram)}
                     className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow cursor-pointer"
                   >
-                    ✓ Disburse Tranche (+$5,000) &amp; Sync Fund Accounting
+                    ✓ Disburse Tranche (+{currencySymbol}5,000) &amp; Sync Fund Accounting
                   </button>
                   <button
                     type="button"
@@ -522,7 +522,7 @@ export default function NGOsHubPage() {
 
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="font-bold text-gray-300 block mb-1">Grant Amount ($)</label>
+                <label className="font-bold text-gray-300 block mb-1">Grant Amount ({currencySymbol.trim()})</label>
                 <input
                   type="number"
                   value={grantAmount}

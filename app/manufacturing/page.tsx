@@ -210,6 +210,35 @@ export default function ManufacturingPage() {
                                         </td>
                                     </tr>
                                 ))}
+                                {orders.length === 0 && (
+                                    <tr>
+                                        <td colSpan={7} className="px-4 py-12 text-center text-gray-400 space-y-3">
+                                            <div>No active Manufacturing Orders yet. Create a new batch or load sample production orders.</div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const samples: ManufacturingOrder[] =
+                                                        batchSector === "agriculture_agritech"
+                                                            ? [
+                                                                  { id: "MO-001", product: "Cold-Pressed Extra Virgin Olive Oil (500L Batch)", quantity: 500, status: "confirmed", deadline: new Date(Date.now() + 3 * 86400000).toISOString().split("T")[0], source: "HARVEST-2026" },
+                                                                  { id: "MO-002", product: "5kW Hybrid Solar Inverter Kit", quantity: 15, status: "in_progress", deadline: new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0], source: "EPC-104" },
+                                                              ]
+                                                            : [
+                                                                  { id: "MO-001", product: "Enterprise 1U Cloud Server Rack", quantity: 10, status: "confirmed", deadline: new Date(Date.now() + 5 * 86400000).toISOString().split("T")[0], source: "SO-001" },
+                                                                  { id: "MO-002", product: "Smart POS Cash Drawer 24V", quantity: 25, status: "in_progress", deadline: new Date(Date.now() + 8 * 86400000).toISOString().split("T")[0], source: "SO-002" },
+                                                              ];
+                                                    setOrders(samples);
+                                                    try { localStorage.setItem(getEntityStorageKey("mrp_orders"), JSON.stringify(samples)); } catch {}
+                                                    setToastMsg(`Loaded ${samples.length} sample production orders!`);
+                                                    setTimeout(() => setToastMsg(""), 4000);
+                                                }}
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/30 text-emerald-300 hover:text-white text-xs font-bold cursor-pointer transition"
+                                            >
+                                                + Load Sample Production Batches
+                                            </button>
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

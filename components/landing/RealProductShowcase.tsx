@@ -15,25 +15,25 @@ import {
 const SHOWCASE_SCREENS = {
     apps: {
         id: "apps",
-        title: "All 28 Unified Business Apps",
+        title: "All 30+ Unified Business Apps",
         subtitle: "One-click access to Accounting, CRM, POS, Inventory, Payroll, Sign, and Leads Pool",
         url: "https://www.beraxis.online/apps",
         imageWebp: "/images/showcase/apps-screen.webp",
         imagePng: "/images/showcase/apps-screen.png",
-        alt: "Beraxis 28 Unified Business Apps Cockpit",
+        alt: "Beraxis 30+ Unified Business Apps Cockpit",
         ctaText: "Launch Free Apps Cockpit",
         ctaHref: "/apps",
         tag: "Apps Cockpit"
     },
     industry: {
         id: "industry",
-        title: "12 Global Industry Archetypes",
-        subtitle: "Pre-configured workflows, POS layouts, and modules tailored for F&B, Clinics, Auto, Real Estate, and more",
+        title: "15 Global Industry Archetypes",
+        subtitle: "Pre-configured workflows, POS layouts, and modules tailored for F&B, Clinics, Auto, Real Estate, Call Centers, and more",
         url: "https://www.beraxis.online/apps?onboarding=true",
         imageWebp: "/images/showcase/industry-screen.webp",
         imagePng: "/images/showcase/industry-screen.png",
-        alt: "Beraxis 12 Global Business Industries Setup",
-        ctaText: "Explore 12 Industry Engines",
+        alt: "Beraxis 15 Global Business Industries Setup",
+        ctaText: "Explore 15 Industry Engines",
         ctaHref: "#industries",
         tag: "Industry Engine"
     },
@@ -81,7 +81,7 @@ export default function RealProductShowcase() {
                     Experience the Real <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">Beraxis System</span>
                 </h2>
                 <p className="text-gray-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed">
-                    No dummy mockups or conceptual wireframes. See the actual command deck running 28 unified enterprise modules, real-time analytics, and Galaxy AI.
+                    No dummy mockups or conceptual wireframes. See the actual command deck running 30+ unified enterprise modules, real-time analytics, and Galaxy AI.
                 </p>
             </div>
 
@@ -98,7 +98,7 @@ export default function RealProductShowcase() {
                         }`}
                     >
                         <Grid3x3 size={15} className={activeTab === "apps" ? "text-white" : "text-purple-400"} />
-                        <span>Apps Cockpit (28 Modules)</span>
+                        <span>Apps Cockpit (30+ Modules)</span>
                     </button>
 
                     <button
@@ -111,7 +111,7 @@ export default function RealProductShowcase() {
                         }`}
                     >
                         <Building2 size={15} className={activeTab === "industry" ? "text-white" : "text-pink-400"} />
-                        <span>12 Industry Archetypes</span>
+                        <span>15 Industry Archetypes</span>
                     </button>
 
                     <button

@@ -115,7 +115,17 @@ const DEFAULT_DASHBOARD_WIDGETS: { id: DashboardWidgetId; label: string }[] = [
 
 export default function DashboardPage() {
     const router = useRouter();
-    const { branches, activeBranch, setActiveBranchId, getEntityStorageKey, currencySymbol } = useBranchContext();
+    const {
+        branches,
+        activeBranch,
+        setActiveBranchId,
+        getEntityStorageKey,
+        currencySymbol,
+        isFreePlan: branchIsFreePlan,
+        userPlan,
+        freeSelectedApp,
+        userEmail,
+    } = useBranchContext();
     const [scopeMode, setScopeMode] = useState<'single' | 'all'>('single');
     const [timeframe, setTimeframe] = useState<'today' | 'week' | 'month'>('month');
     const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
@@ -385,48 +395,59 @@ export default function DashboardPage() {
 
     useEffect(() => {
         if (typeof window === "undefined") return;
-        const targetBranches =
-            scopeMode === "all" && branches.length > 0
-                ? branches
-                : activeBranch
-                ? [activeBranch]
-                : [];
+        let cancelled = false;
 
-        let invRev = 0, billsExp = 0, invCount = 0, empCount = 0, tktCount = 0, prjCount = 0, moCount = 0;
-        for (const b of targetBranches) {
-            const prefix = `entity_${b.id}_`;
-            try {
-                const invs = JSON.parse(localStorage.getItem(`${prefix}accounting_invoices`) || "[]");
-                if (Array.isArray(invs)) {
-                    const activeInvs = invs.filter((i: any) => i.status !== "void");
-                    invCount += activeInvs.length;
-                    invRev += activeInvs.reduce((s: number, i: any) => s + (Number(i.amount) || 0), 0);
-                }
-                const bills = JSON.parse(localStorage.getItem(`${prefix}accounting_bills`) || "[]");
-                if (Array.isArray(bills)) {
-                    billsExp += bills.filter((x: any) => x.status !== "void").reduce((s: number, x: any) => s + (Number(x.amount) || 0), 0);
-                }
-                const emps = JSON.parse(localStorage.getItem(`${prefix}hr_employees`) || "[]");
-                if (Array.isArray(emps)) empCount += emps.length;
-                const tkts = JSON.parse(localStorage.getItem(`${prefix}helpdesk_tickets`) || "[]");
-                if (Array.isArray(tkts)) tktCount += tkts.length;
-                const prjs = JSON.parse(localStorage.getItem(`${prefix}projects_list`) || "[]");
-                if (Array.isArray(prjs)) prjCount += prjs.length;
-                const mos = JSON.parse(localStorage.getItem(`${prefix}mrp_orders`) || "[]");
-                if (Array.isArray(mos)) moCount += mos.length;
-            } catch {}
-        }
-        setEntityMetrics({
-            invoicedRevenue: invRev,
-            billsExpense: billsExp,
-            netProfit: invRev - billsExp,
-            invoicesCount: invCount,
-            employeesCount: empCount,
-            ticketsCount: tktCount,
-            projectsCount: prjCount,
-            moCount,
-        });
-    }, [scopeMode, branches, activeBranch, getEntityStorageKey]);
+        const loadClusterMetrics = async () => {
+            const targetBranches =
+                scopeMode === "all" && branches.length > 0
+                    ? branches
+                    : activeBranch
+                    ? [activeBranch]
+                    : [];
+
+            let invRev = 0, billsExp = 0, invCount = 0, empCount = 0, tktCount = 0, prjCount = 0, moCount = 0;
+
+            for (const b of targetBranches) {
+                try {
+                    const params = new URLSearchParams({ company_id: b.id });
+                    if (userEmail) params.set("email", userEmail);
+                    const [accRes, opsRes] = await Promise.all([
+                        fetch(`/api/accounting?${params.toString()}`, { cache: "no-store" }),
+                        fetch(`/api/industry-ops?${params.toString()}`, { cache: "no-store" }),
+                    ]);
+                    const accData = await accRes.json().catch(() => ({}));
+                    const opsData = await opsRes.json().catch(() => ({}));
+                    if (accData?.success && accData.summary) {
+                        invRev += Number(accData.summary.totalRevenue || 0);
+                        billsExp += Number(accData.summary.totalExpenses || 0);
+                        invCount += Array.isArray(accData.invoices) ? accData.invoices.length : 0;
+                    }
+                    if (opsData?.success) {
+                        if (Array.isArray(opsData.projects)) prjCount += opsData.projects.length;
+                        if (Array.isArray(opsData.mrpOrders)) moCount += opsData.mrpOrders.length;
+                    }
+                } catch {}
+            }
+
+            if (!cancelled) {
+                setEntityMetrics({
+                    invoicedRevenue: invRev,
+                    billsExpense: billsExp,
+                    netProfit: invRev - billsExp,
+                    invoicesCount: invCount,
+                    employeesCount: empCount,
+                    ticketsCount: tktCount,
+                    projectsCount: prjCount,
+                    moCount,
+                });
+            }
+        };
+
+        loadClusterMetrics();
+        return () => {
+            cancelled = true;
+        };
+    }, [scopeMode, branches, activeBranch?.id, userEmail]);
 
     const handleAiSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -435,14 +456,24 @@ export default function DashboardPage() {
     };
 
     const kpis = summary?.kpis;
-    const companyName = userData?.tenant?.name || userData?.email?.split('@')[1]?.split('.')[0]?.toUpperCase() || 'My Workspace';
+    const effectiveIsFree = branchIsFreePlan && !isAdmin;
+    const effectiveIsPaid = !branchIsFreePlan && !isAdmin;
+    const activeModLabel = freeSelectedApp ? freeSelectedApp.replace(/^\//, "").toUpperCase() : selectedModule;
+    const companyName =
+        activeBranch?.name ||
+        userData?.company_name ||
+        userData?.user_metadata?.company_name ||
+        userData?.tenant?.name ||
+        "My Workspace";
     const planBadge = isAdmin
-        ? 'Super Admin'
-        : isPaidUser
-        ? 'Pro Unlimited'
+        ? "Super Admin"
+        : userPlan === "premium"
+        ? "Custom Enterprise"
+        : userPlan === "standard"
+        ? "Standard Plan"
         : trialDays !== null
         ? `Trial (${trialDays}d)`
-        : `Free (${selectedModule})`;
+        : `Free (${activeModLabel})`;
 
     return (
         <div className="min-h-screen bg-[#020205] text-white flex flex-col relative overflow-hidden">
@@ -683,7 +714,11 @@ export default function DashboardPage() {
                                 <div className="text-3xl font-black text-white">
                                     <AnimatedCounter value={(kpis?.revenue || 0) + entityMetrics.invoicedRevenue} prefix={currencySymbol} />
                                 </div>
-                                <div className="text-[11px] text-[#34D399] font-bold">+18.4% vs prior {timeframe}</div>
+                                <div className="text-[11px] text-[#34D399] font-bold">
+                                    {((kpis?.revenue || 0) + entityMetrics.invoicedRevenue) > 0
+                                        ? `${entityMetrics.invoicesCount || kpis?.orders || 1} posted ledger record(s)`
+                                        : `Isolated ${timeframe} ledger ready`}
+                                </div>
                             </div>
                         </div>
 
@@ -776,7 +811,7 @@ export default function DashboardPage() {
                 )}
 
                 {/* ── TENANT BANNER: Free Tier / Single Module Mode ── */}
-                {isFreePlan && !isAdmin && (
+                {effectiveIsFree && (
                     <div className="bg-gradient-to-r from-purple-900/40 via-purple-950/60 to-pink-900/40 border border-purple-500/30 rounded-3xl p-5 md:p-6 shadow-2xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
@@ -790,10 +825,10 @@ export default function DashboardPage() {
                                     <span className="text-gray-400 text-xs">• {companyName}</span>
                                 </div>
                                 <h2 className="text-lg md:text-xl font-bold text-white mt-1">
-                                    Active Workspace Module: <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{selectedModule}</span>
+                                    Active Workspace Module: <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{activeModLabel}</span>
                                 </h2>
                                 <p className="text-gray-400 text-xs md:text-sm mt-0.5">
-                                    Your data is strictly isolated to <span className="text-gray-200 font-medium">{companyName}</span>. Upgrade to unlock all 28 business modules.
+                                    Your data is strictly isolated to <span className="text-gray-200 font-medium">{companyName}</span>. Upgrade to unlock all 30+ business modules.
                                 </p>
                             </div>
                         </div>
@@ -803,14 +838,14 @@ export default function DashboardPage() {
                                 href="/billing"
                                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs md:text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-purple-500/25 transition-all flex items-center gap-2 active:scale-95"
                             >
-                                <Zap size={14} /> Upgrade to Unlimited Pro
+                                <Zap size={14} /> Upgrade to Standard ($1/mo)
                             </Link>
                         </div>
                     </div>
                 )}
 
                 {/* ── TENANT BANNER: Free Trial Mode ── */}
-                {trialDays !== null && !isAdmin && !isPaidUser && !isFreePlan && (
+                {trialDays !== null && !isAdmin && !effectiveIsPaid && !effectiveIsFree && (
                     <div className="bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-500/30 rounded-3xl p-5 md:p-6 shadow-2xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
@@ -838,7 +873,7 @@ export default function DashboardPage() {
                 )}
 
                 {/* ── TENANT BANNER: Paid Company Owner ── */}
-                {isPaidUser && !isAdmin && (
+                {effectiveIsPaid && (
                     <div className="bg-[#0F172A]/70 border border-purple-500/20 rounded-3xl p-5 md:p-6 shadow-2xl backdrop-blur-xl flex flex-wrap justify-between items-center gap-4">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-purple-500/20 border border-white/10 shrink-0">

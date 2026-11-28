@@ -23,9 +23,12 @@ import {
   Lock,
   Globe,
   KeyRound,
+  Sun,
+  Moon,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useBranchContext } from "@/lib/branchContext";
+import { useTheme } from "@/lib/themeContext";
 import UniversalBranchSwitcher from "@/components/shared/UniversalBranchSwitcher";
 import {
   CALL_CENTER_CARRIERS,
@@ -35,6 +38,7 @@ import {
 
 export default function PublicFormsPage() {
   const { branches, activeBranch, getEntityStorageKey } = useBranchContext();
+  const { isLight, toggleTheme } = useTheme();
   const companyId = activeBranch?.id || "CMP-001";
   const companyName = activeBranch?.name || "Beraxis Workspace";
 
@@ -413,6 +417,14 @@ export default function PublicFormsPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           <UniversalBranchSwitcher />
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title={isLight ? "Switch to Dark Cosmic Theme" : "Switch to Frosted Light Theme"}
+            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-amber-400 cursor-pointer"
+          >
+            {isLight ? <Moon size={14} /> : <Sun size={14} />}
+          </button>
           <Link
             href="/call-center"
             className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-bold flex items-center gap-1.5"

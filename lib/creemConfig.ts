@@ -61,13 +61,15 @@ export const CREEM_PRODUCTS = {
 export type CreemPlanKey = "standard" | "pro" | "custom" | "leadspool" | "leads-pool" | "donate";
 
 /**
- * Returns the exact Creem checkout link based on plan and billing cycle
+ * Returns the exact Creem checkout link based on plan, billing cycle, and seat count
  */
 export function getCreemCheckoutUrl(
     plan: CreemPlanKey | string,
-    billing: "annually" | "monthly" | "annual" | string = "annually"
+    billing: "annually" | "monthly" | "annual" | string = "annually",
+    seats: number = 1
 ): string {
     const isYearly = billing === "annually" || billing === "annual" || billing === "yearly";
+    const safeSeats = Math.max(1, Math.floor(Number(seats) || 1));
 
     if (plan === "donate") {
         return CREEM_PRODUCTS.donate.url;
@@ -77,12 +79,11 @@ export function getCreemCheckoutUrl(
         return CREEM_PRODUCTS.leads_pool.url;
     }
 
-    if (plan === "custom" || plan === "premium") {
-        return isYearly ? CREEM_PRODUCTS.custom_yearly.url : CREEM_PRODUCTS.custom_monthly.url;
-    }
+    const baseUrl = (plan === "custom" || plan === "premium")
+        ? (isYearly ? CREEM_PRODUCTS.custom_yearly.url : CREEM_PRODUCTS.custom_monthly.url)
+        : (isYearly ? CREEM_PRODUCTS.pro_yearly.url : CREEM_PRODUCTS.pro_monthly.url);
 
-    // Default: Pro / Standard
-    return isYearly ? CREEM_PRODUCTS.pro_yearly.url : CREEM_PRODUCTS.pro_monthly.url;
+    return safeSeats > 1 ? `${baseUrl}?units=${safeSeats}&quantity=${safeSeats}` : baseUrl;
 }
 
 /**
@@ -90,9 +91,10 @@ export function getCreemCheckoutUrl(
  */
 export function openCreemCheckout(
     plan: CreemPlanKey | string,
-    billing: "annually" | "monthly" | "annual" | string = "annually"
+    billing: "annually" | "monthly" | "annual" | string = "annually",
+    seats: number = 1
 ) {
-    const url = getCreemCheckoutUrl(plan, billing);
+    const url = getCreemCheckoutUrl(plan, billing, seats);
     if (typeof window !== "undefined") {
         // If Creem embed script is loaded, trigger through creem or anchor click
         const existingAnchor = document.querySelector<HTMLAnchorElement>(`a[href="${url}"][data-creem-checkout]`);

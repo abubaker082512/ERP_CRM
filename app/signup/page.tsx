@@ -65,23 +65,23 @@ function SignupForm() {
                 referral_code: referralCode || undefined
             };
 
-            let resp = await fetchAPI('/auth/signup', {
+            // Primary: Instant Next.js + Isolated Cluster Provisioning + Immediate Session Token
+            let resp = await fetch('/api/auth/signup', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(signupPayload)
             }).catch(() => null);
 
-            // Instant Next.js + Isolated Cluster Provisioning fallback if Render backend is cold-starting
             if (!resp || resp.status >= 500) {
-                resp = await fetch('/api/auth/signup', {
+                resp = await fetchAPI('/auth/signup', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(signupPayload)
                 });
             }
 
             const data = await resp.json().catch(() => ({}));
             if (resp.ok) {
-                // Guarantee dedicated isolated micro-database cluster is provisioned even if Render handled signup
+                // Guarantee dedicated isolated micro-database cluster is provisioned
                 fetch('/api/workspace/cluster', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -122,8 +122,29 @@ function SignupForm() {
                 if (phone.trim()) {
                     try { localStorage.setItem("beraxis_user_phone", phone.trim()); } catch {}
                 }
-                setSuccess("Account created! Check your email to confirm, then log in.");
-                setTimeout(() => router.push("/login"), 3000);
+                if (typeof window !== "undefined") {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+
+                // Auto-login immediately into /apps Industry Onboarding Wizard!
+                if (data?.access_token && data?.user) {
+                    const sid = data.session_id || `sid_${Date.now()}`;
+                    localStorage.setItem("token", data.access_token);
+                    if (data.refresh_token) localStorage.setItem("refresh_token", data.refresh_token);
+                    localStorage.setItem("beraxis_session_id", sid);
+                    try { sessionStorage.setItem("beraxis_tab_session_id", sid); } catch {}
+                    localStorage.setItem("user", JSON.stringify({ ...data.user, session_id: sid }));
+                    localStorage.setItem("beraxis_pending_onboarding", JSON.stringify({
+                        companyName: accountType === "company" ? companyName.trim() : `${name.trim()}'s Workspace`,
+                        accountType,
+                    }));
+                    window.dispatchEvent(new Event("beraxis_auth_changed"));
+                    setSuccess("Workspace created! Launching your 30-second Industry Setup...");
+                    setTimeout(() => router.push("/apps"), 600);
+                } else {
+                    setSuccess("Account created! Redirecting to sign in...");
+                    setTimeout(() => router.push("/login"), 1800);
+                }
             } else {
                 setError(data.detail || 'Signup failed. Please try again.');
             }
@@ -255,7 +276,9 @@ function SignupForm() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1.5">Work Email</label>
+                        <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                            {accountType === "company" ? "Work Email" : "Email Address"}
+                        </label>
                         <input
                             type="email"
                             id="signup-email"

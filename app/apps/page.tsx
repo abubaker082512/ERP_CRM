@@ -261,30 +261,34 @@ export default function AppsDashboardPage() {
     const [bentoStats, setBentoStats] = useState({ revenue: 0, netProfit: 0, invoices: 0, staffAndTickets: 0 });
 
     useEffect(() => {
-        if (typeof window === "undefined") return;
-        const targets = scopeMode === "all" && branches.length > 0 ? branches : activeBranch ? [activeBranch] : [];
-        let rev = 0, exp = 0, invs = 0, staff = 0;
-        for (const b of targets) {
-            const prefix = `entity_${b.id}_`;
-            try {
-                const invList = JSON.parse(localStorage.getItem(`${prefix}accounting_invoices`) || "[]");
-                if (Array.isArray(invList)) {
-                    const activeInvs = invList.filter((i: any) => i.status !== "void");
-                    invs += activeInvs.length;
-                    rev += activeInvs.reduce((s: number, i: any) => s + (Number(i.amount) || 0), 0);
-                }
-                const billList = JSON.parse(localStorage.getItem(`${prefix}accounting_bills`) || "[]");
-                if (Array.isArray(billList)) {
-                    exp += billList.filter((x: any) => x.status !== "void").reduce((s: number, x: any) => s + (Number(x.amount) || 0), 0);
-                }
-                const emps = JSON.parse(localStorage.getItem(`${prefix}hr_employees`) || "[]");
-                const tkts = JSON.parse(localStorage.getItem(`${prefix}helpdesk_tickets`) || "[]");
-                if (Array.isArray(emps)) staff += emps.length;
-                if (Array.isArray(tkts)) staff += tkts.length;
-            } catch {}
+        if (typeof document !== "undefined") {
+            const planLabel = isFreePlan ? "Free Plan" : `${userPlan.charAt(0).toUpperCase() + userPlan.slice(1)} Plan`;
+            document.title = `${activeBranch?.name || "Workspace"} · ${planLabel} | BERAXIS AI`;
         }
-        setBentoStats({ revenue: rev, netProfit: rev - exp, invoices: invs, staffAndTickets: staff });
-    }, [scopeMode, branches, activeBranch]);
+    }, [activeBranch?.name, isFreePlan, userPlan]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const loadLiveBento = async () => {
+            if (!activeBranch?.id) return;
+            let email = "";
+            try { email = JSON.parse(localStorage.getItem("user") || "{}").email || ""; } catch {}
+            try {
+                const res = await fetch(`/api/accounting?company_id=${encodeURIComponent(activeBranch.id)}&email=${encodeURIComponent(email)}`, { cache: "no-store" });
+                const data = await res.json();
+                if (data?.success && data.summary) {
+                    setBentoStats((prev) => ({
+                        ...prev,
+                        revenue: Number(data.summary.totalRevenue || 0),
+                        netProfit: Number(data.summary.netProfit || 0),
+                        invoices: Array.isArray(data.invoices) ? data.invoices.length : 0,
+                    }));
+                    return;
+                }
+            } catch {}
+        };
+        loadLiveBento();
+    }, [scopeMode, branches, activeBranch?.id]);
 
     useEffect(() => {
         setMounted(true);
@@ -312,6 +316,19 @@ export default function AppsDashboardPage() {
                 }
             } catch {}
         }
+
+        // Pre-fill Industry Onboarding Wizard directly from /signup if present
+        try {
+            const pendingRaw = localStorage.getItem("beraxis_pending_onboarding");
+            if (pendingRaw) {
+                const pending = JSON.parse(pendingRaw);
+                if (pending.companyName) setCompanyName(pending.companyName);
+                if (pending.accountType === "company" || pending.accountType === "individual") {
+                    setEntityType(pending.accountType);
+                }
+                localStorage.removeItem("beraxis_pending_onboarding");
+            }
+        } catch {}
 
         const defaultInd = getIndustryById("professional_services");
         setSelectedSubSector(defaultInd.subSectors[0] || "");

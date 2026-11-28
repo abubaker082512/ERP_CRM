@@ -25,7 +25,7 @@ export default function PricingPage() {
     const [corpResult, setCorpResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
     const handleCreemCheckout = (planKey: "standard" | "custom" | "leadspool") => {
-        const url = getCreemCheckoutUrl(planKey, billingCycle);
+        const url = getCreemCheckoutUrl(planKey, billingCycle, usersCount);
         if (typeof window !== "undefined") {
             const anchor = document.createElement("a");
             anchor.href = url;
@@ -120,7 +120,7 @@ export default function PricingPage() {
         },
         {
             q: "How does company management work between Standard and Custom?",
-            a: "The Standard Plan is designed for operating a single company workspace (1 Company) with all 28 modules unlocked. If your business operates multiple entities, subsidiaries, or legal branches, the Custom Enterprise plan includes 3 companies out-of-the-box, with extra companies available for $15/company/month."
+            a: "The Standard Plan is designed for operating a single company workspace (1 Company) with all 30+ modules unlocked. If your business operates multiple entities, subsidiaries, or legal branches, the Custom Enterprise plan includes 3 companies out-of-the-box, with extra companies available for $15/company/month."
         },
         {
             q: "Can I buy additional Lead Credits in the Lead Pool?",
@@ -136,7 +136,7 @@ export default function PricingPage() {
         },
         {
             q: "Is there really a completely free option?",
-            a: "Absolutely. Our 'One App Free' plan lets you use any single module (like CRM, Inventory, or Discuss) with unlimited users forever, at $0 cost."
+            a: "Absolutely. Our 'One App Free' plan lets you use any single full ERP/CRM module (like CRM, Inventory, Accounting, or POS) in your own isolated single-company workspace with 1 active user seat forever, at $0 cost and no credit card required."
         },
         {
             q: "What support channels are active for the Custom plan?",
@@ -159,7 +159,7 @@ export default function PricingPage() {
                         Scale on Your Own <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Terms</span>
                     </h1>
                     <p className="text-xl text-gray-400 font-light leading-relaxed">
-                        Access all 28 modules, robust cloud infrastructure, and 24/7 human support. Simple, user-based plans mimicking industry-standard transparency.
+                        Access all 30+ enterprise modules, isolated cloud infrastructure, and 24/7 human support. Transparent, predictable per-seat pricing with zero hidden add-ons.
                     </p>
                 </div>
 
@@ -189,13 +189,13 @@ export default function PricingPage() {
                                 <span>250 Users</span>
                                 <span>500+ Users</span>
                             </div>
-                            <div className="flex flex-wrap gap-1.5 mt-3">
-                                {[10, 25, 50, 100, 200, 500].map((preset) => (
+                            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-3">
+                                {[5, 10, 25, 50, 100, 500].map((preset) => (
                                     <button
                                         key={preset}
                                         type="button"
                                         onClick={() => setUsersCount(preset)}
-                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                                        className={`px-2 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer text-center whitespace-nowrap ${
                                             usersCount === preset
                                                 ? "bg-purple-600 border-purple-500 text-white"
                                                 : "bg-white/5 border-white/10 text-gray-300 hover:text-white"
@@ -339,7 +339,7 @@ export default function PricingPage() {
                         <div>
                             <div className="mb-4 flex items-center gap-2">
                                 <span className="text-xs bg-purple-500/20 text-purple-300 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-purple-500/30">
-                                    All 28 Modules Included
+                                    All 30+ Modules Included
                                 </span>
                                 {pricing.standard.is_early_bird && (
                                     <span className="text-[10px] bg-amber-500/20 text-amber-300 uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full border border-amber-500/30">
@@ -348,7 +348,7 @@ export default function PricingPage() {
                                 )}
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-2">Standard Plan</h3>
-                            <p className="text-gray-400 text-sm mb-6 leading-relaxed">Unlock all 28 integrated modules on cloud hosting. Streamline all processes.</p>
+                            <p className="text-gray-400 text-sm mb-6 leading-relaxed">Unlock all 30+ integrated modules on isolated cloud hosting. Streamline all processes.</p>
                             
                             <div className="flex flex-col mb-8 border-b border-white/5 pb-8">
                                 {/* Strike-through comparison */}
@@ -413,12 +413,13 @@ export default function PricingPage() {
                         </div>
 
                         <a 
-                            href={isAnnual ? CREEM_PRODUCTS.pro_yearly.url : CREEM_PRODUCTS.pro_monthly.url}
+                            href={getCreemCheckoutUrl("standard", billingCycle, usersCount)}
                             data-creem-checkout
                             data-creem-theme="dark"
+                            onClick={() => { try { localStorage.setItem("beraxis_checkout_seats", String(usersCount)); } catch {} }}
                             className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl mt-8 transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 active:scale-95 text-center cursor-pointer"
                         >
-                            <Lock size={16} /> Pay Now ({isAnnual ? `$${12 * usersCount}/yr` : `$${5 * usersCount}/mo`}) <ArrowRight size={16} />
+                            <Lock size={16} /> Pay Now ({isAnnual ? `$${12 * usersCount}/yr` : `$${5 * usersCount}/mo`} · {usersCount} {usersCount === 1 ? "seat" : "seats"}) <ArrowRight size={16} />
                         </a>
                     </div>
 
@@ -478,12 +479,13 @@ export default function PricingPage() {
                         </div>
 
                         <a 
-                            href={isAnnual ? CREEM_PRODUCTS.custom_yearly.url : CREEM_PRODUCTS.custom_monthly.url}
+                            href={getCreemCheckoutUrl("custom", billingCycle, usersCount)}
                             data-creem-checkout
                             data-creem-theme="dark"
+                            onClick={() => { try { localStorage.setItem("beraxis_checkout_seats", String(usersCount)); } catch {} }}
                             className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 px-4 rounded-xl mt-8 transition-all border border-white/10 flex items-center justify-center gap-2 hover:border-pink-500/30 cursor-pointer"
                         >
-                            <Lock size={16} /> Pay Now ({isAnnual ? `$${(448.80 * usersCount).toFixed(2)}/yr` : `$${(46.80 * usersCount).toFixed(2)}/mo`}) <ArrowRight size={16} />
+                            <Lock size={16} /> Pay Now ({isAnnual ? `$${(448.80 * usersCount).toFixed(2)}/yr` : `$${(46.80 * usersCount).toFixed(2)}/mo`} · {usersCount} {usersCount === 1 ? "seat" : "seats"}) <ArrowRight size={16} />
                         </a>
                     </div>
                 </div>

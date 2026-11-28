@@ -120,7 +120,7 @@ const TERMINAL_REGISTERS = [
 const QUICK_MODIFIERS = ["No Onions", "Extra Spicy", "Gluten-Free", "No Ice", "Well Done", "Sauce on Side"];
 
 export default function POSPage() {
-  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { activeBranch, currencySymbol, getEntityStorageKey } = useBranchContext();
   const { isLight, toggleTheme } = useTheme();
   const [products, setProducts] = useState<any[]>([]);
   const [posTransactions, setPosTransactions] = useState<any[]>([]);
@@ -200,17 +200,7 @@ export default function POSPage() {
     return { companyId, email, userName };
   }, [activeBranch?.id]);
 
-  const getCurrencySymbol = () => {
-    if (typeof window !== "undefined") {
-      const keyPrefix = getEntityStorageKey("settings");
-      const cur = localStorage.getItem(`${keyPrefix}_currency`) || activeBranch?.currency || "USD";
-      const symbols: Record<string, string> = {
-        USD: "$", EUR: "€", GBP: "£", AUD: "$", CAD: "$", JPY: "¥", PKR: "₨", INR: "₹", AED: "AED ",
-      };
-      return symbols[cur] || "$";
-    }
-    return "$";
-  };
+  const getCurrencySymbol = () => currencySymbol || "$";
 
   const loadData = useCallback(async () => {
     try {
@@ -363,9 +353,13 @@ export default function POSPage() {
 
   const handleLoadStarterCatalog = async (modeOverride?: PosIndustryMode) => {
     const targetMode = modeOverride || posMode;
+    const curCode = activeBranch?.currency || "USD";
+    const fxScale = curCode === "PKR" ? 100 : curCode === "INR" ? 50 : curCode === "AED" ? 3.5 : curCode === "JPY" ? 150 : 1;
     const starter = (INDUSTRY_STARTER_CATALOGS[targetMode] || INDUSTRY_STARTER_CATALOGS.retail_supermarket).map(
       (item, i) => ({
         ...item,
+        list_price: fxScale === 1 ? item.list_price : Math.round(item.list_price * fxScale),
+        cost_price: fxScale === 1 ? item.cost_price : Math.round(item.cost_price * fxScale),
         id: `prod_${targetMode}_${i + 1}`,
         stockQty: item.weighed ? 50 : 120,
       })
@@ -468,8 +462,7 @@ export default function POSPage() {
   const subtotal = cart.reduce((sum, item) => sum + (Number(item.list_price) || 0) * item.qty, 0);
   const discountAmount = subtotal * (Math.min(100, Math.max(0, discountPct)) / 100);
   const afterDiscount = Math.max(0, subtotal - discountAmount);
-  const serviceChargeAmount =
-    posMode === "food_beverage" ? afterDiscount * (Math.max(0, serviceChargePct) / 100) : 0;
+  const serviceChargeAmount = afterDiscount * (Math.max(0, serviceChargePct) / 100);
   const taxable = afterDiscount + serviceChargeAmount;
   const taxAmount = taxable * (Math.max(0, taxPct) / 100);
   const total = Number((taxable + taxAmount).toFixed(2));
@@ -995,7 +988,7 @@ export default function POSPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm font-bold text-white truncate mt-0.5">{p.name}</p>
+                      <p className="text-sm font-bold text-white line-clamp-2 leading-snug mt-0.5">{p.name}</p>
                       <p className="text-emerald-400 font-black text-base mt-1">
                         {getCurrencySymbol()}{(Number(p.list_price) || 0).toFixed(2)}
                         {p.weighed ? <span className="text-[10px] text-gray-400 font-normal"> / kg</span> : null}
@@ -1191,7 +1184,7 @@ export default function POSPage() {
           </div>
 
           <div className="p-3.5 bg-[#0B101E] border-t border-gray-800 space-y-2.5 text-xs">
-            <div className={`grid ${posMode === "food_beverage" ? "grid-cols-3" : "grid-cols-2"} gap-2`}>
+            <div className="grid grid-cols-3 gap-2">
               <div className="flex items-center justify-between bg-[#141A28] border border-gray-800 rounded-xl px-2.5 py-1.5">
                 <span className="text-gray-400 text-[11px]">Disc %</span>
                 <input
@@ -1203,19 +1196,17 @@ export default function POSPage() {
                   className="w-10 text-right bg-transparent text-white font-bold outline-none"
                 />
               </div>
-              {posMode === "food_beverage" && (
-                <div className="flex items-center justify-between bg-[#141A28] border border-gray-800 rounded-xl px-2.5 py-1.5">
-                  <span className="text-gray-400 text-[11px]">Tip/Svc %</span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={50}
-                    value={serviceChargePct}
-                    onChange={(e) => setServiceChargePct(Number(e.target.value))}
-                    className="w-10 text-right bg-transparent text-amber-300 font-bold outline-none"
-                  />
-                </div>
-              )}
+              <div className="flex items-center justify-between bg-[#141A28] border border-gray-800 rounded-xl px-2.5 py-1.5">
+                <span className="text-gray-400 text-[11px]">Tip %</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={serviceChargePct}
+                  onChange={(e) => setServiceChargePct(Number(e.target.value))}
+                  className="w-10 text-right bg-transparent text-amber-300 font-bold outline-none"
+                />
+              </div>
               <div className="flex items-center justify-between bg-[#141A28] border border-gray-800 rounded-xl px-2.5 py-1.5">
                 <span className="text-gray-400 text-[11px]">Tax %</span>
                 <input
@@ -1226,6 +1217,40 @@ export default function POSPage() {
                   onChange={(e) => setTaxPct(Number(e.target.value))}
                   className="w-10 text-right bg-transparent text-white font-bold outline-none"
                 />
+              </div>
+            </div>
+
+            {/* Quick Tip Presets & Split-Bill Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-1.5 bg-[#141A28]/80 border border-gray-800 rounded-xl px-2.5 py-1.5 text-[10px]">
+              <div className="flex items-center gap-1">
+                <span className="text-gray-400 font-semibold">Tip:</span>
+                {[0, 5, 10, 15].map((tp) => (
+                  <button
+                    key={tp}
+                    type="button"
+                    onClick={() => setServiceChargePct(tp)}
+                    className={`px-1.5 py-0.5 rounded font-bold cursor-pointer ${
+                      serviceChargePct === tp ? "bg-amber-600 text-white" : "bg-[#0B101E] text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    {tp}%
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-400 font-semibold flex items-center gap-0.5"><Users size={10} /> Split:</span>
+                {[1, 2, 3, 4].map((way) => (
+                  <button
+                    key={way}
+                    type="button"
+                    onClick={() => setSplitBillWays(way)}
+                    className={`px-1.5 py-0.5 rounded font-bold cursor-pointer ${
+                      splitBillWays === way ? "bg-purple-600 text-white" : "bg-[#0B101E] text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    {way === 1 ? "1x" : `÷${way}`}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -1242,7 +1267,7 @@ export default function POSPage() {
               )}
               {serviceChargeAmount > 0 && (
                 <div className="flex justify-between text-purple-300">
-                  <span>Service Charge ({serviceChargePct}%)</span>
+                  <span>Tip / Service ({serviceChargePct}%)</span>
                   <span>+{getCurrencySymbol()}{serviceChargeAmount.toFixed(2)}</span>
                 </div>
               )}
@@ -1258,30 +1283,10 @@ export default function POSPage() {
                   {isRefundMode ? "-" : ""}{getCurrencySymbol()}{total.toFixed(2)}
                 </span>
               </div>
-              {posMode === "food_beverage" && total > 0 && (
-                <div className="flex items-center justify-between pt-1 text-[11px]">
-                  <span className="flex items-center gap-1 text-gray-400">
-                    <Users size={11} /> Split Guest Check:
-                  </span>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4].map((way) => (
-                      <button
-                        key={way}
-                        type="button"
-                        onClick={() => setSplitBillWays(way)}
-                        className={`px-2 py-0.5 rounded font-bold cursor-pointer ${
-                          splitBillWays === way ? "bg-purple-600 text-white" : "bg-[#141A28] text-gray-400"
-                        }`}
-                      >
-                        {way}x
-                      </button>
-                    ))}
-                    {splitBillWays > 1 && (
-                      <span className="text-purple-300 font-bold ml-1">
-                        ({getCurrencySymbol()}{(total / splitBillWays).toFixed(2)}/ea)
-                      </span>
-                    )}
-                  </div>
+              {splitBillWays > 1 && total > 0 && (
+                <div className="flex items-center justify-between pt-0.5 text-[11px] text-purple-300 font-bold">
+                  <span>Split Check ({splitBillWays} guests):</span>
+                  <span>{getCurrencySymbol()}{(total / splitBillWays).toFixed(2)} / person</span>
                 </div>
               )}
             </div>

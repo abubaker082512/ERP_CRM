@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import StandardModuleHeader from "@/components/shared/StandardModuleHeader";
+import ShareBookingCalendarModal from "@/components/shared/ShareBookingCalendarModal";
 import { useBranchContext } from "@/lib/branchContext";
 import {
   Dumbbell,
@@ -22,7 +23,8 @@ import {
   UserCheck,
   ChevronRight,
   ShieldCheck,
-  Zap
+  Zap,
+  Share2
 } from "lucide-react";
 
 const MENU_ITEMS = [
@@ -79,8 +81,9 @@ type GroupClass = {
 };
 
 export default function ClubAndFitnessPage() {
-  const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { activeBranch, currencySymbol, getEntityStorageKey } = useBranchContext();
   const [activeTab, setActiveTab] = useState<"courts" | "members" | "schedule" | "classes">("courts");
+  const [isShareCourtLinkOpen, setIsShareCourtLinkOpen] = useState(false);
 
   // State
   const [courts, setCourts] = useState<FacilityCourt[]>([]);
@@ -544,7 +547,7 @@ export default function ClubAndFitnessPage() {
           <div className="bg-[#14171d] border border-white/5 p-5 rounded-2xl flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Live Session Revenue</p>
-              <h3 className="text-2xl font-bold text-white mt-1">${totalRevenueToday.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-white mt-1">{currencySymbol}{totalRevenueToday.toLocaleString()}</h3>
               <p className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
                 + Gear Rentals & Court Fees
               </p>
@@ -584,8 +587,8 @@ export default function ClubAndFitnessPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
+          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-56">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
@@ -595,6 +598,14 @@ export default function ClubAndFitnessPage() {
                 className="w-full bg-[#14171d] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
               />
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsShareCourtLinkOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600/20 hover:bg-purple-600 border border-purple-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition"
+            >
+              <Share2 className="w-3.5 h-3.5" /> Share Court Booking Link
+            </button>
 
             {activeTab === "courts" && (
               <button
@@ -1108,6 +1119,11 @@ export default function ClubAndFitnessPage() {
           </div>
         </div>
       )}
+
+      <ShareBookingCalendarModal
+        isOpen={isShareCourtLinkOpen}
+        onClose={() => setIsShareCourtLinkOpen(false)}
+      />
     </div>
   );
 }

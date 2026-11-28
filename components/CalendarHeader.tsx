@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Calendar, Settings, MessageSquare, Bot, ArrowLeft, LayoutGrid, Globe } from 'lucide-react';
+import { Calendar, Settings, MessageSquare, Bot, ArrowLeft, LayoutGrid, Globe, Sun, Moon } from 'lucide-react';
 import UniversalModuleSearch from '@/components/shared/UniversalModuleSearch';
 import UserProfileDropdown from '@/components/shared/UserProfileDropdown';
+import UniversalBranchSwitcher from '@/components/shared/UniversalBranchSwitcher';
+import { useTheme } from '@/lib/themeContext';
 
 export default function CalendarHeader({
     searchTerm = '',
@@ -15,6 +17,7 @@ export default function CalendarHeader({
 }) {
     const pathname = usePathname();
     const router = useRouter();
+    const { isLight, toggleTheme } = useTheme();
 
     const navItems = [
         { name: 'Calendar', href: '/calendar' },
@@ -103,7 +106,16 @@ export default function CalendarHeader({
                 </div>
 
                 {/* Actions & User Profile Dropdown */}
-                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    <UniversalBranchSwitcher />
+                    <button
+                        type="button"
+                        onClick={toggleTheme}
+                        title={isLight ? "Switch to Dark Cosmic Theme" : "Switch to Frosted Light Theme"}
+                        className="p-1.5 rounded-lg text-amber-400 hover:bg-white/10 transition-colors cursor-pointer"
+                    >
+                        {isLight ? <Moon size={16} /> : <Sun size={16} />}
+                    </button>
                     <button
                         onClick={() => router.push("/ai")}
                         title="AI Search & Assistant"

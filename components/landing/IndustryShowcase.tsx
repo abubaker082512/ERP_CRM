@@ -129,7 +129,7 @@ export default function IndustryShowcase() {
           href="/industries"
           className="inline-flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 hover:border-purple-400/40 transition-all"
         >
-          <span>Explore All 12 Dedicated Industry Landing Pages &amp; Blueprints</span>
+          <span>Explore All 15 Dedicated Industry Landing Pages &amp; Blueprints</span>
           <ArrowRight size={13} />
         </Link>
       </div>
@@ -200,14 +200,14 @@ export default function IndustryShowcase() {
                 onClick={() => router.push("/signup")}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30 transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
               >
-                <span>Launch {selectedIndustry.name.split(" ")[0]} Workspace</span>
+                <span>Launch {selectedIndustry.name.split(" ")[0].replace(/[,/&]+$/, "")} Workspace</span>
                 <ArrowRight size={14} />
               </button>
               <Link
                 href={`/industries/${ID_TO_SLUG[selectedIndustry.id] || "padel-clubs"}`}
                 className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
               >
-                <span>View {selectedIndustry.name.split(" ")[0]} Blueprint Page</span>
+                <span>View {selectedIndustry.name.split(" ")[0].replace(/[,/&]+$/, "")} Blueprint Page</span>
                 <ArrowRight size={13} />
               </Link>
               <div className="flex items-center gap-2 text-xs text-emerald-400 font-semibold w-full sm:w-auto mt-1 sm:mt-0">

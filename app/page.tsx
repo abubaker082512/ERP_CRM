@@ -83,7 +83,7 @@ export default function Home() {
         },
         {
             q: "How does the $1/month Early Bird deal work?",
-            a: "During our Early Bird launch, you get all 28 integrated business modules for only $1.00/month billed annually ($12 for the entire year), saving 96%. You can also choose monthly billing for $5.00/month. You lock in this rate for life."
+            a: "During our Early Bird launch, you get all 30+ integrated business modules for only $1.00/month billed annually ($12 for the entire year), saving 96%. You can also choose monthly billing for $5.00/month. You lock in this rate for life."
         },
         {
             q: "Can I add team members and manage multiple companies?",
@@ -116,7 +116,7 @@ export default function Home() {
                         Simple, Unbeatable <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">Pricing</span>
                     </h2>
                     <p className="text-gray-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed">
-                        Start 100% free forever with 1 app (no credit card needed), or unlock all 28 integrated modules for as low as <strong className="text-amber-300 font-bold">$1/month</strong> ($12/year).
+                        Start 100% free forever with 1 app (no credit card needed), or unlock all 30+ integrated modules for as low as <strong className="text-amber-300 font-bold">$1/month</strong> ($12/year).
                     </p>
                 </div>
 
@@ -216,7 +216,7 @@ export default function Home() {
                         <div>
                             <div className="mb-4">
                                 <span className="text-xs bg-purple-500/20 text-purple-300 uppercase tracking-widest font-extrabold px-3 py-1 rounded-full border border-purple-500/30">
-                                    Full Enterprise Access · All 28 Apps
+                                    Full Enterprise Access · All 30+ Apps
                                 </span>
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">{pricing.standard.name}</h3>
@@ -242,7 +242,7 @@ export default function Home() {
                             <div className="space-y-3.5 text-xs text-gray-200">
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-purple-400 shrink-0" size={14} />
-                                    <span><strong>All 28 Unified Modules</strong> unlocked</span>
+                                    <span><strong>All 30+ Unified Modules</strong> unlocked</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="text-purple-400 shrink-0" size={14} />

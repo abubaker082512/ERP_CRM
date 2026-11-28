@@ -35,7 +35,7 @@ export default function ApprovalsInboxPage() {
   const { isLight } = useTheme();
   const companyId = activeBranch?.id || "CMP-001";
 
-  const [members, setMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [activeMemberId, setActiveMemberId] = useState<string>("USR-001");
   const [viewTab, setViewTab] = useState<"inbox" | "mine" | "team">("inbox");
@@ -49,7 +49,15 @@ export default function ApprovalsInboxPage() {
   const [bannerMsg, setBannerMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    let meEmail = "";
+    let meName = "";
     try {
+      const uRaw = localStorage.getItem("user");
+      if (uRaw) {
+        const u = JSON.parse(uRaw);
+        meEmail = (u.email || "").trim().toLowerCase();
+        meName = u.name || u.full_name || "";
+      }
       const cachedMembers = localStorage.getItem(getEntityStorageKey("team_members"));
       if (cachedMembers) {
         const parsed = JSON.parse(cachedMembers);
@@ -65,12 +73,41 @@ export default function ApprovalsInboxPage() {
       }
     } catch {}
 
-    fetch(`/api/team/members?company_id=${encodeURIComponent(companyId)}&limit=200`)
+    const fallbackSelf: TeamMember = {
+      id: "USR-001",
+      name: meName || (meEmail ? meEmail.split("@")[0] : "Workspace Owner"),
+      email: meEmail || "owner@workspace.local",
+      role: "Owner",
+      department: "Executive",
+      companyIds: [companyId],
+      reportsToId: null,
+      allowedModules: ["*"],
+      type: "full_time",
+      status: "active",
+      twoFactorEnabled: false,
+      avatarBg: "from-purple-600 to-indigo-600",
+      lastActive: "Online now",
+      joinedAt: new Date().toISOString().slice(0, 10),
+    };
+
+    const mParams = new URLSearchParams({ company_id: companyId, limit: "200" });
+    if (meEmail) mParams.set("owner_email", meEmail);
+    if (meName) mParams.set("owner_name", meName);
+
+    fetch(`/api/team/members?${mParams.toString()}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
-        if (Array.isArray(d?.allMembers) && d.allMembers.length > 0) setMembers(d.allMembers);
+        if (Array.isArray(d?.allMembers) && d.allMembers.length > 0) {
+          setMembers(d.allMembers);
+          setActiveMemberId(d.allMembers[0].id);
+        } else {
+          setMembers((prev) => (prev.length > 0 ? prev : [fallbackSelf]));
+          setActiveMemberId(fallbackSelf.id);
+        }
       })
-      .catch(() => {});
+      .catch(() => {
+        setMembers((prev) => (prev.length > 0 ? prev : [fallbackSelf]));
+      });
 
     fetch(`/api/approvals?company_id=${encodeURIComponent(companyId)}`)
       .then((r) => r.json())

@@ -60,7 +60,7 @@ export default function Navbar() {
                     Special Launch
                 </span>
                 <span className="text-gray-300">
-                    Get all 28 AI ERP &amp; CRM modules + 1,500 Lead Credits/mo for just <strong className="text-white font-semibold">$1/month</strong> ($12/yr billed upfront).
+                    Get all 30+ AI ERP &amp; CRM modules + 1,500 Lead Credits/mo for just <strong className="text-white font-semibold">$1/month</strong> ($12/yr billed upfront).
                 </span>
                 <Link href="/pricing" className="text-purple-300 hover:text-white font-bold ml-1 inline-flex items-center gap-0.5 hover:underline transition-colors">
                     View Plans <ArrowRight size={11} />
@@ -100,7 +100,7 @@ export default function Navbar() {
                             <button
                                 type="button"
                                 aria-expanded={activeDropdown === "products"}
-                                onClick={() => setActiveDropdown("products")}
+                                onClick={() => setActiveDropdown((prev) => (prev === "products" ? null : "products"))}
                                 className={`flex items-center gap-1 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
                                     activeDropdown === "products" ? "text-white bg-white/10" : "text-gray-300 hover:text-white hover:bg-white/5"
                                 }`}
@@ -231,7 +231,7 @@ export default function Navbar() {
                             <button
                                 type="button"
                                 aria-expanded={activeDropdown === "resources"}
-                                onClick={() => setActiveDropdown("resources")}
+                                onClick={() => setActiveDropdown((prev) => (prev === "resources" ? null : "resources"))}
                                 className={`flex items-center gap-1 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
                                     activeDropdown === "resources" ? "text-white bg-white/10" : "text-gray-300 hover:text-white hover:bg-white/5"
                                 }`}

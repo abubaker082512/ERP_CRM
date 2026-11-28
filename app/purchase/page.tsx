@@ -335,8 +335,41 @@ export default function PurchasePage() {
                 ))}
                 {filteredOrders.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
-                      No Purchase Orders yet. Click <strong>+ New RFQ / Purchase Order</strong> to replenish Inventory from suppliers.
+                    <td colSpan={6} className="px-4 py-12 text-center text-gray-400 space-y-3">
+                      <div>
+                        No Purchase Orders yet. Click <strong>+ New RFQ / Purchase Order</strong> to replenish Inventory from suppliers.
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const { companyId, email } = getAuthMeta();
+                          const res = await fetch("/api/purchase", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              action: "create_po",
+                              company_id: companyId,
+                              email,
+                              vendorName: "Global Fresh & FMCG Distributors",
+                              warehouse: "Main Storefront / Warehouse",
+                              industryId: activeBranch?.industryId || "retail_supermarket",
+                              status: "confirmed",
+                              lines: [
+                                { sku: "8901001", name: "Organic Whole Milk 1L", quantity: 50, uom: "Units", unitCost: 2.4 },
+                                { sku: "8901004", name: "Arabica Coffee Beans 500g", quantity: 25, uom: "Units", unitCost: 10.0 },
+                              ],
+                            }),
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            setOrders(data.orders || []);
+                            showToast(`Loaded sample Purchase Order ${data.order.poNumber}!`);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/30 text-emerald-300 hover:text-white text-xs font-bold cursor-pointer transition"
+                      >
+                        <Sparkles size={13} /> + Load Sample Purchase Order
+                      </button>
                     </td>
                   </tr>
                 )}

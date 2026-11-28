@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Target, Bot, MessageSquare, Plus, Settings, ArrowLeft, LayoutGrid, Globe } from 'lucide-react';
+import { Target, Bot, MessageSquare, Plus, Settings, ArrowLeft, LayoutGrid, Globe, Sun, Moon } from 'lucide-react';
 import UniversalModuleSearch from '@/components/shared/UniversalModuleSearch';
+import UniversalBranchSwitcher from '@/components/shared/UniversalBranchSwitcher';
 import { useBranchContext } from '@/lib/branchContext';
+import { useTheme } from '@/lib/themeContext';
 
 interface CRMHeaderProps {
     onNewClick?: () => void;
@@ -16,6 +18,7 @@ export default function CRMHeader({ onNewClick, searchTerm = '', onSearchChange 
     const pathname = usePathname();
     const router = useRouter();
     const { activeBranch, isFreePlan } = useBranchContext();
+    const { isLight, toggleTheme } = useTheme();
 
     const entityDisplayName = activeBranch?.name || "My Workspace";
     const entityInitial = entityDisplayName.charAt(0).toUpperCase() || "W";
@@ -110,6 +113,15 @@ export default function CRMHeader({ onNewClick, searchTerm = '', onSearchChange 
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 shrink-0">
+                    <UniversalBranchSwitcher />
+                    <button
+                        type="button"
+                        onClick={toggleTheme}
+                        title={isLight ? "Switch to Dark Cosmic Theme" : "Switch to Frosted Light Theme"}
+                        className="p-1.5 rounded-lg text-amber-400 hover:bg-white/10 transition-colors cursor-pointer"
+                    >
+                        {isLight ? <Moon size={16} /> : <Sun size={16} />}
+                    </button>
                     <button
                         onClick={() => router.push("/ai")}
                         title="AI Search & Assistant"

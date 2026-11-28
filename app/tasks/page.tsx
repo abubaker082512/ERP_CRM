@@ -111,7 +111,7 @@ export default function HierarchyTasksPage() {
   const { taskChatUnreads, markChannelSeen } = useNotifications();
   const companyId = activeBranch?.id || "CLS-DEFAULT";
 
-  const [members, setMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [activeMemberId, setActiveMemberId] = useState<string>("USR-001");
   const [tasks, setTasks] = useState<HierarchyTask[]>([]);
   const [msgCounts, setMsgCounts] = useState<Record<string, number>>({});
@@ -172,6 +172,23 @@ export default function HierarchyTasksPage() {
       }
     } catch {}
 
+    const fallbackSelf: TeamMember = {
+      id: "USR-001",
+      name: meName || (meEmail ? meEmail.split("@")[0] : "Workspace Owner"),
+      email: meEmail || "owner@workspace.local",
+      role: "Owner",
+      department: "Executive",
+      companyIds: [companyId],
+      reportsToId: null,
+      allowedModules: ["*"],
+      type: "full_time",
+      status: "active",
+      twoFactorEnabled: false,
+      avatarBg: "from-purple-600 to-indigo-600",
+      lastActive: "Online now",
+      joinedAt: new Date().toISOString().slice(0, 10),
+    };
+
     const ownerParams = new URLSearchParams({ company_id: companyId, limit: "200" });
     if (meEmail) ownerParams.set("owner_email", meEmail);
     if (meName) ownerParams.set("owner_name", meName);
@@ -188,9 +205,14 @@ export default function HierarchyTasksPage() {
             if (d.allMembers.some((m: TeamMember) => m.id === prev)) return prev;
             return (matchMe || d.allMembers[0]).id;
           });
+        } else {
+          setMembers((prev) => (prev.length > 0 ? prev : [fallbackSelf]));
+          setActiveMemberId(fallbackSelf.id);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setMembers((prev) => (prev.length > 0 ? prev : [fallbackSelf]));
+      });
   }, [companyId, getEntityStorageKey]);
 
   const activeMember = useMemo(

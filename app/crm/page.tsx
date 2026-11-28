@@ -64,7 +64,7 @@ const STAGE_COLOR_PRESETS = [
 ];
 
 export default function CRMPage() {
-    const { activeBranch, getEntityStorageKey } = useBranchContext();
+    const { activeBranch, currencySymbol, getEntityStorageKey } = useBranchContext();
     const companyId = activeBranch?.id || "default";
     const [leads, setLeads] = useState<Lead[]>([]);
     const [stages, setStages] = useState<StageColumn[]>(initialStages);
@@ -643,7 +643,7 @@ export default function CRMPage() {
                                         </div>
                                         <div className="flex justify-between text-xs font-medium">
                                             <span className="text-gray-400">Total</span>
-                                            <span className="text-gray-200">${getStageTotal(stage.id).toLocaleString()}</span>
+                                            <span className="text-gray-200">{currencySymbol}{getStageTotal(stage.id).toLocaleString()}</span>
                                         </div>
                                     </div>
 
@@ -665,15 +665,15 @@ export default function CRMPage() {
                                                     />
                                                 </div>
                                                 <div className="mb-4">
-                                                    <label className="text-xs text-gray-400 font-medium mb-1 block">Expected Revenue ($)</label>
+                                                    <label className="text-xs text-gray-400 font-medium mb-1 block">Expected Revenue ({currencySymbol.trim()})</label>
                                                     <div className="relative">
-                                                        <span className="absolute left-0 top-1 text-gray-500 text-sm">$</span>
+                                                        <span className="absolute left-0 top-1 text-gray-500 text-sm">{currencySymbol.trim()}</span>
                                                         <input
                                                             type="number"
                                                             value={newOppRevenue}
                                                             onChange={(e) => setNewOppRevenue(e.target.value)}
                                                             placeholder="10000"
-                                                            className="w-full bg-transparent border-b border-gray-600 focus:border-purple-500 outline-none text-sm py-1 pl-4 text-white"
+                                                            className="w-full bg-transparent border-b border-gray-600 focus:border-purple-500 outline-none text-sm py-1 pl-8 text-white"
                                                         />
                                                     </div>
                                                 </div>
@@ -731,7 +731,7 @@ export default function CRMPage() {
                                                             }`}></div>
                                                         </div>
                                                         <div className="text-sm text-gray-200 font-bold">
-                                                            ${(opp.expected_revenue || 0).toLocaleString()}
+                                                            {currencySymbol}{(opp.expected_revenue || 0).toLocaleString()}
                                                         </div>
                                                     </Link>
                                                 </div>
@@ -946,7 +946,7 @@ export default function CRMPage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 font-bold text-gray-200">
-                                                ${(item.expected_revenue || 0).toLocaleString()}
+                                                {currencySymbol}{(item.expected_revenue || 0).toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase border ${getStatusBadge(item.status)}`}>

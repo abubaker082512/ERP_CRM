@@ -57,7 +57,7 @@ type PropertyUnit = {
 const INITIAL_UNITS: PropertyUnit[] = [];
 
 export default function RealEstatePropertyPage() {
-  const { activeBranch, userEmail, getEntityStorageKey } = useBranchContext();
+  const { activeBranch, userEmail, currencySymbol, getEntityStorageKey } = useBranchContext();
   const [operatingMode, setOperatingMode] = useState<"property" | "hospitality">("property");
   const [units, setUnits] = useState<PropertyUnit[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
@@ -233,7 +233,7 @@ export default function RealEstatePropertyPage() {
           setUnits(next);
           setSelectedUnit(data.unit);
         }
-        setToastMsg(`Posted ${operatingMode === "hospitality" ? "Guest Stay Folio" : "Rent Invoice"} ($${unit.monthlyRent.toLocaleString()}) → Sales & Accounting Ledger!`);
+        setToastMsg(`Posted ${operatingMode === "hospitality" ? "Guest Stay Folio" : "Rent Invoice"} (${currencySymbol}${unit.monthlyRent.toLocaleString()}) → Sales & Accounting Ledger!`);
         setTimeout(() => setToastMsg(""), 5000);
       }
     } catch {}
@@ -329,8 +329,8 @@ export default function RealEstatePropertyPage() {
           <div className="galaxy-card p-4 rounded-2xl bg-[#101422] border border-purple-500/20 flex items-center justify-between">
             <div>
               <span className="text-[10px] font-bold uppercase text-gray-400">Monthly Contracted Rent Roll</span>
-              <h3 className="text-2xl font-bold text-purple-400 mt-0.5">${totalMonthlyRentRoll.toLocaleString()}</h3>
-              <p className="text-[10px] text-gray-400 mt-0.5">${(totalMonthlyRentRoll * 12 / 1000).toFixed(0)}k Annual Gross</p>
+              <h3 className="text-2xl font-bold text-purple-400 mt-0.5">{currencySymbol}{totalMonthlyRentRoll.toLocaleString()}</h3>
+              <p className="text-[10px] text-gray-400 mt-0.5">{currencySymbol}{(totalMonthlyRentRoll * 12 / 1000).toFixed(0)}k Annual Gross</p>
             </div>
             <div className="p-3 bg-purple-500/20 text-purple-400 rounded-xl">
               <DollarSign size={20} />
@@ -341,7 +341,7 @@ export default function RealEstatePropertyPage() {
             <div>
               <span className="text-[10px] font-bold uppercase text-gray-400">Security Deposits Held</span>
               <h3 className="text-2xl font-bold text-amber-400 mt-0.5">
-                ${units.reduce((acc, u) => acc + (u.depositHeld || 0), 0).toLocaleString()}
+                {currencySymbol}{units.reduce((acc, u) => acc + (u.depositHeld || 0), 0).toLocaleString()}
               </h3>
               <p className="text-[10px] text-gray-400 mt-0.5">Escrow protected</p>
             </div>
@@ -413,12 +413,35 @@ export default function RealEstatePropertyPage() {
                 {activeBranch?.name ? `No properties or lease units recorded for "${activeBranch.name}".` : "Add commercial suites, apartments, or retail stores to manage rent collection & leases."}
               </p>
             </div>
-            <button
-              onClick={() => setIsNewUnitModalOpen(true)}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
-            >
-              <Plus size={16} /> {operatingMode === "hospitality" ? "Add First Hotel Suite" : "Add First Property Unit"}
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
+              <button
+                onClick={() => setIsNewUnitModalOpen(true)}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+              >
+                <Plus size={16} /> {operatingMode === "hospitality" ? "Add First Hotel Suite" : "Add First Property Unit"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const samples: PropertyUnit[] = operatingMode === "hospitality"
+                    ? [
+                        { id: "STE-101", propertyName: "Grand Beraxis Resort", unitNumber: "Suite 101 (Ocean View)", unitType: "Executive Hotel Suite", sqft: 850, monthlyRent: 450, status: "occupied", housekeeping: "Clean", tenantName: "Nadia Al-Farsi", leaseStart: new Date().toISOString().slice(0, 10), leaseEnd: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10), depositHeld: 200 },
+                        { id: "VIL-202", propertyName: "Grand Beraxis Resort", unitNumber: "Villa 202 (Private Pool)", unitType: "Resort Pool Villa", sqft: 1800, monthlyRent: 980, status: "vacant", housekeeping: "Clean", depositHeld: 0 },
+                      ]
+                    : [
+                        { id: "UNT-401", propertyName: "Apex Corporate Tower", unitNumber: "Suite 401 — Floor 4", unitType: "Commercial Office", sqft: 3200, monthlyRent: 8500, status: "occupied", housekeeping: "Clean", tenantName: "Horizon Tech Partners", leaseStart: "2026-01-01", leaseEnd: "2026-12-31", depositHeld: 17000 },
+                        { id: "UNT-102", propertyName: "Apex Corporate Tower", unitNumber: "Retail Bay G-02", unitType: "Retail Storefront", sqft: 1450, monthlyRent: 5200, status: "vacant", housekeeping: "Clean", depositHeld: 0 },
+                      ];
+                  persistUnits(samples);
+                  setSelectedUnit(samples[0]);
+                  setToastMsg(`Loaded ${samples.length} sample ${operatingMode === "hospitality" ? "hotel suites" : "property units"}!`);
+                  setTimeout(() => setToastMsg(""), 4000);
+                }}
+                className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-emerald-500/30 flex items-center gap-1.5 cursor-pointer transition"
+              >
+                + Load Sample {operatingMode === "hospitality" ? "Suites" : "Portfolio"}
+              </button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -443,7 +466,7 @@ export default function RealEstatePropertyPage() {
                       <p className="text-xs text-purple-300">{unit.unitType} • {unit.sqft} sq ft</p>
                     </div>
                     <span className="text-sm font-bold text-emerald-400">
-                      ${unit.monthlyRent.toLocaleString()} / mo
+                      {currencySymbol}{unit.monthlyRent.toLocaleString()} / {operatingMode === "hospitality" ? "night" : "mo"}
                     </span>
                   </div>
 
@@ -481,16 +504,16 @@ export default function RealEstatePropertyPage() {
               {/* Lease Commercial Terms */}
               <div className="bg-gray-950/70 p-4 rounded-2xl border border-gray-800 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                 <div>
-                  <span className="text-gray-500 block text-[10px] uppercase">Monthly Rent Rate</span>
-                  <span className="font-bold text-emerald-400 text-base">${selectedUnit.monthlyRent.toLocaleString()}</span>
+                  <span className="text-gray-500 block text-[10px] uppercase">{operatingMode === "hospitality" ? "Nightly Rate" : "Monthly Rent Rate"}</span>
+                  <span className="font-bold text-emerald-400 text-base">{currencySymbol}{selectedUnit.monthlyRent.toLocaleString()}</span>
                 </div>
                 <div>
                   <span className="text-gray-500 block text-[10px] uppercase">Security Deposit</span>
-                  <span className="font-bold text-white text-base">${(selectedUnit.depositHeld || 0).toLocaleString()}</span>
+                  <span className="font-bold text-white text-base">{currencySymbol}{(selectedUnit.depositHeld || 0).toLocaleString()}</span>
                 </div>
                 <div>
-                  <span className="text-gray-500 block text-[10px] uppercase">Annual Contract Value</span>
-                  <span className="font-bold text-purple-300 text-base">${(selectedUnit.monthlyRent * 12).toLocaleString()}</span>
+                  <span className="text-gray-500 block text-[10px] uppercase">{operatingMode === "hospitality" ? "Est. Annual RevPAR" : "Annual Contract Value"}</span>
+                  <span className="font-bold text-purple-300 text-base">{currencySymbol}{(selectedUnit.monthlyRent * 12).toLocaleString()}</span>
                 </div>
               </div>
 
@@ -548,8 +571,8 @@ export default function RealEstatePropertyPage() {
                     className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md cursor-pointer"
                   >
                     {operatingMode === "hospitality"
-                      ? `Settle Stay Folio ($${selectedUnit.monthlyRent.toLocaleString()}) → Accounting`
-                      : `Bill Monthly Rent ($${selectedUnit.monthlyRent.toLocaleString()}) → Accounting`}
+                      ? `Settle Stay Folio (${currencySymbol}${selectedUnit.monthlyRent.toLocaleString()}) → Accounting`
+                      : `Bill Monthly Rent (${currencySymbol}${selectedUnit.monthlyRent.toLocaleString()}) → Accounting`}
                   </button>
                 </div>
               </div>
@@ -668,7 +691,7 @@ export default function RealEstatePropertyPage() {
                 />
               </div>
               <div>
-                <label className="font-bold text-gray-300 block mb-1">Monthly Rent ($)</label>
+                <label className="font-bold text-gray-300 block mb-1">{operatingMode === "hospitality" ? "Nightly Rate" : "Monthly Rent"} ({currencySymbol.trim()})</label>
                 <input
                   type="number"
                   value={rent}

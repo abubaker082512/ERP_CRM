@@ -34,8 +34,12 @@ import {
   Radio,
   PhoneIncoming,
   DollarSign,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useBranchContext } from "@/lib/branchContext";
+import { useTheme } from "@/lib/themeContext";
+import UniversalBranchSwitcher from "@/components/shared/UniversalBranchSwitcher";
 
 export type LeadDisposition =
   | "New"
@@ -174,6 +178,7 @@ function normalizeDigits(phone: string): string {
 
 export default function CallCenterPage() {
   const { activeBranch, getEntityStorageKey } = useBranchContext();
+  const { isLight, toggleTheme } = useTheme();
   const companyId = activeBranch?.id || "CMP-001";
 
   const [leads, setLeads] = useState<CallCenterLead[]>([]);
@@ -1058,6 +1063,15 @@ export default function CallCenterPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <UniversalBranchSwitcher />
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title={isLight ? "Switch to Dark Cosmic Theme" : "Switch to Frosted Light Theme"}
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-amber-400 cursor-pointer"
+          >
+            {isLight ? <Moon size={14} /> : <Sun size={14} />}
+          </button>
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelUpload} className="hidden" />
           <button
             type="button"

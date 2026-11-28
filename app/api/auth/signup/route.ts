@@ -9,9 +9,10 @@ import {
 export const dynamic = "force-dynamic";
 
 const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+const SUPABASE_SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 const SUPABASE_ANON_KEY = (
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  SUPABASE_SERVICE_KEY ||
   ""
 ).trim();
 
@@ -46,46 +47,80 @@ export async function POST(request: NextRequest) {
       : `CLS-${ownerHash}-${accountType === "individual" ? "SOLO" : "HQ01"}`;
     const isolationMode = accountType === "individual" ? "solo_individual" : "company_cluster";
 
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
-      method: "POST",
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        password,
-        data: {
-          name,
-          full_name: name,
-          phone,
-          account_type: accountType,
-          company_name: companyName,
-          primary_cluster_id: assignedClusterId,
-          isolation_mode: isolationMode,
-        },
-      }),
-      cache: "no-store",
-    });
+    const userMeta = {
+      name,
+      full_name: name,
+      phone,
+      account_type: accountType,
+      company_name: companyName,
+      primary_cluster_id: assignedClusterId,
+      isolation_mode: isolationMode,
+      plan: "One App Free",
+      subscription_status: "free",
+    };
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      return NextResponse.json(
-        {
-          detail:
-            data?.msg ||
-            data?.error_description ||
-            data?.message ||
-            "Signup failed. Please check your details.",
+    let createdUser: any = null;
+
+    // 1. Create pre-confirmed user via Admin API when service key is available so founders enter /apps in <3s
+    if (SUPABASE_SERVICE_KEY) {
+      const adminRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_SERVICE_KEY,
+          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+          "Content-Type": "application/json",
         },
-        { status: res.status || 400 }
-      );
+        body: JSON.stringify({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: userMeta,
+        }),
+        cache: "no-store",
+      });
+      const adminData = await adminRes.json().catch(() => ({}));
+      if (!adminRes.ok) {
+        return NextResponse.json(
+          {
+            detail:
+              adminData?.msg ||
+              adminData?.error_description ||
+              adminData?.message ||
+              "Signup failed. This email may already be registered.",
+          },
+          { status: adminRes.status || 400 }
+        );
+      }
+      createdUser = adminData?.user || adminData;
+    } else {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password, data: userMeta }),
+        cache: "no-store",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return NextResponse.json(
+          {
+            detail:
+              data?.msg ||
+              data?.error_description ||
+              data?.message ||
+              "Signup failed. Please check your details.",
+          },
+          { status: res.status || 400 }
+        );
+      }
+      createdUser = data?.user || data;
     }
 
-    const createdUser = data?.user || data;
     const newUid = String(createdUser?.id || "");
 
-    // Provision Dedicated Isolated Micro-Database Cluster
+    // 2. Provision Dedicated Isolated Micro-Database Cluster
     if (inviteClusterId) {
       const targetManifest = await getClusterManifest(inviteClusterId);
       if (targetManifest && targetManifest.isolationMode === "company_cluster") {
@@ -107,7 +142,6 @@ export async function POST(request: NextRequest) {
         entityType: accountType,
       });
 
-      // Seed clean empty isolated collections so zero shared/dummy data ever enters this cluster
       await Promise.all([
         writeClusterCollection(manifest.clusterId, "workspace_state", {}),
         writeClusterCollection(manifest.clusterId, "crm_leads", []),
@@ -133,11 +167,48 @@ export async function POST(request: NextRequest) {
       ]);
     }
 
+    // 3. Exchange credentials for an immediate session token so /signup redirects straight into /apps!
+    let accessToken = "";
+    let refreshToken = "";
+    try {
+      const tokenRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+        cache: "no-store",
+      });
+      const tokenData = await tokenRes.json().catch(() => ({}));
+      if (tokenRes.ok && tokenData?.access_token) {
+        accessToken = tokenData.access_token;
+        refreshToken = tokenData.refresh_token || "";
+      }
+    } catch {}
+
+    const sessionId = `sb_${Date.now()}`;
+    const formattedUser = {
+      id: newUid || createdUser?.id || email,
+      email,
+      name: name || email.split("@")[0],
+      role: "owner",
+      account_type: accountType,
+      company_name: companyName,
+      plan: "One App Free",
+      subscription_status: "free",
+      cluster_id: assignedClusterId,
+      user_metadata: userMeta,
+    };
+
     return NextResponse.json({
       message: "Account and isolated micro-database cluster created successfully.",
       cluster_id: assignedClusterId,
       isolation_mode: isolationMode,
-      user: createdUser,
+      access_token: accessToken || undefined,
+      refresh_token: refreshToken || undefined,
+      session_id: sessionId,
+      user: formattedUser,
     });
   } catch (err: any) {
     return NextResponse.json(
