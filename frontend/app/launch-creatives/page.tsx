@@ -419,22 +419,22 @@ export default function LaunchCreativesPage() {
               <h2 className="text-xl font-bold text-white">All 15 Global Industry Archetype Social Posts (1080x1080)</h2>
               <p className="text-xs text-slate-400 mt-1">Tailored graphics for every vertical — Padel Clubs, Call Centers, Hotels, Agribusiness & Solar, Clinics, Restaurants, Garages, Real Estate, Retail, Construction, Schools, NGOs, Manufacturing, 3PL & Agencies.</p>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5 mt-5">
-                {[
-                  { name: "01. Padel & Sports Clubs", img: "/social_media_assets/industries/industry_01_padel-sports-clubs.png" },
-                  { name: "02. Call Centers & BPO", img: "/social_media_assets/industries/industry_02_call-centers-bpo.png" },
-                  { name: "03. Hotels & Hospitality", img: "/social_media_assets/industries/industry_03_hospitality-hotels.png" },
-                  { name: "04. Agribusiness & Solar EPC", img: "/social_media_assets/industries/industry_04_agriculture-agritech.png" },
-                  { name: "05. Clinics & Pharmacies", img: "/social_media_assets/industries/industry_05_clinics-healthcare.png" },
-                  { name: "06. Restaurants & Bakeries", img: "/social_media_assets/industries/industry_06_restaurants-cafes.png" },
-                  { name: "07. Auto Repair Garages", img: "/social_media_assets/industries/industry_07_auto-repair-garages.png" },
-                  { name: "08. Real Estate Agencies", img: "/social_media_assets/industries/industry_08_real-estate-agencies.png" },
-                  { name: "09. Retail Supermarkets", img: "/social_media_assets/industries/industry_09_retail-supermarkets.png" },
-                  { name: "10. Construction & EPC", img: "/social_media_assets/industries/industry_10_construction-epc.png" },
-                  { name: "11. Schools & Academies", img: "/social_media_assets/industries/industry_11_schools-academies.png" },
-                  { name: "12. NGOs & Nonprofits", img: "/social_media_assets/industries/industry_12_ngos-nonprofits.png" },
-                  { name: "13. Manufacturing ERP", img: "/social_media_assets/industries/industry_13_manufacturing-erp.png" },
-                  { name: "14. Logistics & 3PL Fleets", img: "/social_media_assets/industries/industry_14_logistics-3pl.png" },
-                  { name: "15. Professional Services", img: "/social_media_assets/industries/industry_15_professional-services.png" },
+                                {[
+                  { name: "01. Padel & Sports Clubs", img: "/social_media_assets/industries/industry_01_padel-clubs.png" },
+                  { name: "02. Call Centers, BPO & Outbound Sales", img: "/social_media_assets/industries/industry_02_call-centers-bpo.png" },
+                  { name: "03. Dental & Healthcare Clinics", img: "/social_media_assets/industries/industry_03_dental-clinics.png" },
+                  { name: "04. Real Estate & Property Management", img: "/social_media_assets/industries/industry_04_real-estate.png" },
+                  { name: "05. Bakeries & Food Service", img: "/social_media_assets/industries/industry_05_bakeries-restaurants.png" },
+                  { name: "06. Retail & Supermarkets", img: "/social_media_assets/industries/industry_06_retail-supermarkets.png" },
+                  { name: "07. Hospitality, Hotels, Resorts & Travel", img: "/social_media_assets/industries/industry_07_hospitality-hotels.png" },
+                  { name: "08. Automotive Workshops & Garages", img: "/social_media_assets/industries/industry_08_automotive-garages.png" },
+                  { name: "09. Professional Services & Agencies", img: "/social_media_assets/industries/industry_09_professional-services.png" },
+                  { name: "10. Construction & Contracting", img: "/social_media_assets/industries/industry_10_construction-contracting.png" },
+                  { name: "11. Logistics & Wholesale Distribution", img: "/social_media_assets/industries/industry_11_logistics-wholesale.png" },
+                  { name: "12. Agriculture, Farming, Livestock & Solar/Energy", img: "/social_media_assets/industries/industry_12_agriculture-agritech.png" },
+                  { name: "13. Education & Academies", img: "/social_media_assets/industries/industry_13_education-academies.png" },
+                  { name: "14. Discrete & Process Manufacturing", img: "/social_media_assets/industries/industry_14_manufacturing.png" },
+                  { name: "15. NGOs & Non-Profit Organizations", img: "/social_media_assets/industries/industry_15_ngos-non-profits.png" },
                 ].map((ind, i) => (
                   <div key={i} className="bg-slate-900/80 rounded-2xl p-3.5 border border-slate-800 flex flex-col justify-between">
                     <div>
